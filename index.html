@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff7a1a">
+<meta name="description" content="Огонёк — ежедневное чтение Библии (Восстановительный перевод) с серией дней, как в Duolingo.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Огонёк — Библия за год</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&display=swap">
+<style>
+
+/* Layout: one narrow column like a phone app; streak hero → today's reading → reflection → calendar → awards */
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --ink:#1b2340; --muted:#626a85; --line:#dfe2ec;
+  --flame:#ff7a1a; --flame2:#ffc53d; --flame-soft:#fff0e2; --xp:#6b4fd8; --xp-soft:#ece7ff;
+  --ice:#3fa7e0; --ice-soft:#e2f3fc; --ok:#1f9d63; --off:#c9cddb;
+  --display:"Alegreya",Georgia,"Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:16px;
+  --s-nt:#6b4fd8; --s-ot:#e8650a;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
+  --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
+  --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:16px 48px}
+.app{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h2{font-size:1.35rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--xp);outline-offset:2px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:8px}
+.brand h1{font-size:1.6rem}
+.lvl{display:flex;align-items:center;gap:8px;min-width:0}
+.lvl-badge{background:var(--xp);color:#fff;font-weight:700;border-radius:10px;padding:2px 10px;font-size:.85rem;white-space:nowrap}
+.xpbar{height:8px;background:var(--xp-soft);border-radius:8px;overflow:hidden;width:90px}
+.xpbar i{display:block;height:100%;background:var(--xp);border-radius:8px;transition:width .5s}
+.xptext{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* streak hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.flame{width:84px;height:104px}
+.flame.off .f1{fill:var(--off)} .flame.off .f2{fill:var(--line)}
+.f1{fill:var(--flame)} .f2{fill:var(--flame2)}
+.streak-num{font-family:var(--display);font-size:3.4rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.streak-word{font-size:1.05rem;font-weight:600}
+.hero-sub{font-size:.9rem;color:var(--muted);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;border-radius:999px;padding:4px 10px}
+.chip.ice{background:var(--ice-soft);color:var(--ice)}
+.chip.fire{background:var(--flame-soft);color:var(--flame)}
+.chip svg{width:14px;height:14px}
+
+/* reading */
+.reading-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.daynum{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.refs{display:flex;flex-direction:column;gap:8px}
+.ref{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.ref .tag{font-size:.7rem;font-weight:700;letter-spacing:.06em;color:var(--muted);width:28px;flex:none}
+.ref .name{font-family:var(--display);font-size:1.2rem;font-weight:700;min-width:0}
+.ref .sub{font-size:.82rem;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:12px 16px;font-weight:600;background:var(--bg);color:var(--ink);border:1px solid var(--line);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px}
+.btn.grow{flex:1 1 160px}
+.btn-main{width:100%;padding:16px;font-size:1.05rem;font-weight:700;background:var(--flame);color:#fff;border-radius:14px;box-shadow:0 4px 0 color-mix(in srgb,var(--flame) 60%,#000)}
+.btn-main:active{transform:translateY(3px);box-shadow:0 1px 0 color-mix(in srgb,var(--flame) 60%,#000)}
+.btn-main.done{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
+.hint{font-size:.82rem;color:var(--muted)}
+.copyfield{width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+
+/* reflection */
+.question{font-family:var(--display);font-size:1.2rem;font-weight:700}
+textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);resize:vertical}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .wd{font-size:.7rem;text-align:center;color:var(--muted);font-weight:600}
+.cell{aspect-ratio:1;max-width:100%;border-radius:10px;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-variant-numeric:tabular-nums;color:var(--muted)}
+.cell.done{background:var(--flame);border-color:var(--flame);color:#fff;font-weight:700}
+.cell.frozen{background:var(--ice-soft);border-color:var(--ice);color:var(--ice);font-weight:700}
+.cell.today{outline:2px solid var(--ink);outline-offset:1px}
+.cell.future{opacity:.4}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+
+/* progress */
+.prog{display:flex;flex-direction:column;gap:10px}
+.prog-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:.9rem}
+.bar{grid-column:1/-1;height:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink)}
+.num{font-variant-numeric:tabular-nums;color:var(--muted)}
+
+/* badges */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 6px;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
+.medal{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.2rem;color:#fff;background:var(--flame)}
+.medal.book{background:var(--xp)}
+.badge.locked .medal{background:var(--off);color:var(--surface)}
+.badge.locked{color:var(--muted)}
+.badge b{font-size:.78rem;line-height:1.25}
+
+.foot{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;font-size:.8rem;color:var(--muted)}
+.linkbtn{background:none;color:var(--muted);text-decoration:underline;padding:4px}
+.danger{background:#d64545;color:#fff;padding:8px 14px}
+
+/* celebration */
+.celebrate{position:fixed;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 88%,transparent);z-index:20;padding:16px}
+.celebrate .box{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:340px}
+.celebrate .flame{width:140px;height:172px;animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
+.celebrate .big{font-family:var(--display);font-size:2.6rem;font-weight:800;line-height:1}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;z-index:30;max-width:calc(100% - 32px)}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes flicker{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.04)}}
+.flame:not(.off) .f2{transform-origin:50% 100%;animation:flicker 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.xpbar{width:60px}.streak-num{font-size:2.8rem}}
+
+/* two testaments */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:440px){.tgrid{grid-template-columns:1fr}}
+.tcard{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);min-width:0}
+.thead{display:flex;align-items:center;gap:10px}
+.thead .flame{width:34px;height:42px;flex:none}
+.thead b{display:block;font-size:.95rem}
+.thead span{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.tlink{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.tlink:hover{border-color:var(--flame)}
+.tlink .name{font-family:var(--display);font-size:1.25rem;font-weight:700}
+.tlink .sub{font-size:.8rem;color:var(--muted)}
+.tlink .go{font-size:.8rem;font-weight:600;color:var(--flame)}
+.tbtn{width:100%;padding:12px;font-weight:700;background:var(--flame);color:#fff;border-radius:12px;box-shadow:0 3px 0 color-mix(in srgb,var(--flame) 60%,#000)}
+.tbtn:active{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--flame) 60%,#000)}
+.tbtn.done{background:var(--ok);box-shadow:0 3px 0 color-mix(in srgb,var(--ok) 60%,#000)}
+.tbtn:disabled{cursor:default}
+.cell.half{background:var(--flame-soft);border-color:var(--flame);color:var(--flame);font-weight:700}
+.answered{background:var(--xp-soft);color:var(--xp);border-radius:12px;padding:10px 12px;font-size:.9rem}
+.weeknav{display:flex;align-items:center;gap:6px}
+.navbtn{padding:6px 12px;font-size:1.1rem;line-height:1}
+.navbtn:disabled{opacity:.4;cursor:default}
+#wkSel{font:inherit;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.sched{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:96px 1fr 1fr;gap:8px;align-items:center;padding:8px;border-radius:12px;border:1px solid transparent}
+.srow.snext{border-color:var(--flame);background:var(--flame-soft)}
+.sday{font-size:.85rem;font-weight:600;color:var(--muted)}
+.sitem{display:flex;align-items:center;gap:6px;min-width:0}
+.sref{flex:1;min-width:0;display:flex;flex-direction:column;text-decoration:none;color:var(--ink);font-size:.9rem;font-weight:600;font-variant-numeric:tabular-nums;padding:4px 6px;border-radius:8px}
+.sref:hover{background:var(--bg)}
+.sref span:last-child{white-space:nowrap}
+.stag{font-size:.65rem;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.sdone .sref{color:var(--muted)}
+.scheck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:transparent;display:grid;place-items:center;padding:0}
+.scheck svg{width:16px;height:16px}
+.sdone .scheck{background:var(--ok);border-color:var(--ok);color:#fff}
+@media (max-width:440px){.srow{grid-template-columns:1fr 1fr}.sday{grid-column:1/-1}}
+@keyframes ignite{0%{transform:scale(.4) rotate(-8deg);filter:drop-shadow(0 0 0 transparent)}45%{transform:scale(1.45) rotate(5deg);filter:drop-shadow(0 0 14px var(--flame))}70%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1);filter:drop-shadow(0 0 4px var(--flame))}}
+.flame.ignite{animation:ignite .8s cubic-bezier(.2,1.4,.4,1);transform-origin:50% 90%}
+.sparks{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50}
+.nextbtn{display:flex;align-items:center;justify-content:center;padding:11px;border-radius:12px;font-weight:700;text-decoration:none;color:var(--flame);background:var(--surface);border:2px solid var(--flame)}
+.nextbtn:hover{background:var(--flame-soft)}
+.nextbox{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;border:2px dashed var(--flame);background:var(--flame-soft)}
+.nextlink{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink)}
+.nextlink .name{font-family:var(--display);font-size:1.15rem;font-weight:700}
+.nextlink .sub{font-size:.8rem;color:var(--muted)}
+.nextlink .go{font-size:.8rem;font-weight:600;color:var(--flame)}
+.nextmark{display:flex;align-items:center;justify-content:center;gap:6px}
+.nextmark svg{width:16px;height:20px}
+.nextmark .f1{fill:#fff}.nextmark .f2{fill:var(--flame2)}
+.minis{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-top:2px}
+.thead .flame.mini{width:14px;height:18px}
+.minimore{font-size:.75rem;font-weight:700;color:var(--flame)}
+.pacebar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.pacebar>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;cursor:pointer;list-style:none}
+.pacebar>summary::-webkit-details-marker{display:none}
+.pacetitle{white-space:nowrap;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pacetitle::after{content:" ▾";font-size:.7rem}
+.pacebar[open] .pacetitle::after{content:" ▴"}
+.pacepills{display:flex;gap:8px;flex-wrap:wrap}
+.pacepill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:.88rem;white-space:nowrap}
+.pacepill .pk{color:var(--muted);font-weight:600}
+.pacepill b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.pacebody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.startlbl{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
+.startlbl input{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.pacetiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pacetile{padding:12px;border-radius:12px;background:var(--bg);border:1px solid var(--line);min-width:0}
+.pacelabel{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);font-weight:600}
+.pacekey{width:10px;height:10px;border-radius:3px;flex:none}
+.pacenum{font-family:var(--display);font-size:2rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.pacesub{font-size:.8rem;color:var(--muted)}
+.chartbox{position:relative;width:100%;min-width:0}
+.pacesvg{display:block;max-width:100%;touch-action:pan-y}
+.pacesvg .grid{stroke:var(--line);stroke-width:1}
+.pacesvg .zero{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
+.pacesvg .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.pacesvg .endlab{fill:var(--ink);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.pacesvg .cross{stroke:var(--muted);stroke-width:1}
+.pacesvg rect:focus{outline:none}
+.pacetip{position:absolute;top:4px;width:160px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.8rem;pointer-events:none}
+.tipdate{color:var(--muted);margin-bottom:4px}
+.tiprow{display:flex;align-items:center;gap:6px}
+.tiprow b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.tipkey{width:12px;height:2px;border-radius:2px;flex:none}
+.pacetable summary{cursor:pointer;font-size:.85rem;color:var(--muted)}
+.pacetable table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.85rem;font-variant-numeric:tabular-nums}
+.pacetable th,.pacetable td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.quizgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:440px){.quizgrid{grid-template-columns:1fr}}
+.qcard{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);min-width:0}
+.qref{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.qtext{font-family:var(--display);font-size:1.15rem;font-weight:700;line-height:1.3}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{text-align:left;padding:11px 14px;font-weight:600;background:var(--surface);color:var(--ink);border:2px solid var(--line);border-radius:12px}
+.qopt:not(:disabled):hover{border-color:var(--xp)}
+.qopt:disabled{cursor:default;opacity:.7}
+.qopt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface));opacity:1}
+.qopt.wrong{border-color:#d64545;background:color-mix(in srgb,#d64545 12%,var(--surface));opacity:1}
+.qres{font-weight:700;font-size:.9rem}
+.qcard{position:relative}
+.qopt{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qmark{flex:none;width:22px;height:22px;display:grid;place-items:center}
+.qmark svg{width:20px;height:20px}
+.qopt.right .qmark{color:var(--ok)}
+.qopt.wrong .qmark{color:#d64545}
+.qopt.wrong{text-decoration:line-through;text-decoration-thickness:1px}
+.qverdict{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:800;font-size:1.15rem;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none;animation:verdict 1.8s ease forwards;z-index:2;white-space:nowrap}
+.qverdict.ok{background:var(--ok)}
+.qverdict.no{background:#d64545}
+.qvicon svg{width:22px;height:22px;display:block}
+@keyframes verdict{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+.qcard.flash-ok{animation:flashok .9s ease}
+@keyframes flashok{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent)}100%{box-shadow:0 0 0 18px transparent}}
+.qcard.shake{animation:shake .45s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+.qres.ok{color:var(--ok)}
+.qres.no{color:var(--muted)}
+.medalsvg svg{display:block}
+.badge.locked .medalsvg{filter:grayscale(1);opacity:.35}
+.bdesc{font-size:.68rem;color:var(--muted);line-height:1.25}
+.chest{position:fixed;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 90%,transparent);z-index:22;padding:16px}
+.chestbox{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%;max-width:340px}
+.chesttitle{font-family:var(--display);font-size:2rem;font-weight:800}
+.chestart{position:relative;width:220px;height:230px;max-width:100%}
+.chestsvg{position:absolute;left:10px;bottom:0;width:200px;height:163px;overflow:visible;animation:wobble 1.4s ease-in-out infinite;transform-origin:50% 100%}
+.chest.open .chestsvg{animation:none}
+@keyframes wobble{0%,60%,100%{transform:rotate(0)}68%{transform:rotate(-5deg)}76%{transform:rotate(5deg)}84%{transform:rotate(-3deg)}92%{transform:rotate(2deg)}}
+.chestsvg .lid{transform-box:fill-box;transform-origin:50% 100%;transition:transform .55s cubic-bezier(.3,1.5,.5,1)}
+.chest.open .chestsvg .lid{transform:translateY(-30px) scaleY(.5)}
+.chestsvg .glow{opacity:0;transition:opacity .4s .2s}
+.chest.open .chestsvg .glow{opacity:1}
+.rays{position:absolute;left:50%;top:38%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,197,61,.55) 0 10deg,transparent 10deg 24deg);mask:radial-gradient(circle,#000 20%,transparent 70%);-webkit-mask:radial-gradient(circle,#000 20%,transparent 70%);opacity:0;transform:scale(.4);transition:opacity .4s .3s,transform .6s .3s}
+.chest.open .rays{opacity:1;transform:scale(1);animation:spin 12s linear infinite}
+@keyframes spin{to{rotate:360deg}}
+.chestmedal{position:absolute;left:50%;top:95px;width:120px;height:120px;margin-left:-60px;opacity:0;transform:translateY(40px) scale(.2);transition:opacity .3s .35s,transform .75s .35s cubic-bezier(.2,1.5,.4,1);filter:drop-shadow(0 6px 14px rgba(0,0,0,.25));z-index:1}
+.chest.open .chestmedal{opacity:1;transform:translateY(-95px) scale(1)}
+.chestreveal{opacity:0;transform:translateY(8px);transition:opacity .4s .7s,transform .4s .7s;min-height:3.4em}
+.chest.open .chestreveal{opacity:1;transform:none}
+.chestname{font-family:var(--display);font-size:1.5rem;font-weight:800}
+.chestdesc{color:var(--muted);font-size:.95rem}
+.chestsub{margin:0;color:var(--muted);font-size:.95rem}
+.chestsub:empty{display:none}
+.btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
+/* sign-in screen */
+.auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;gap:14px;text-align:left}
+.auth-card .flame{width:64px;height:80px}
+.auth-card h1{font-size:2rem}
+.auth-step{display:flex;flex-direction:column;gap:10px}
+.auth-input{width:100%;font:inherit;font-size:1.2rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.auth-input:focus-visible{outline:3px solid var(--xp);outline-offset:1px}
+.auth-error{margin:0;color:#d64545;font-size:.9rem}
+.btn-main:disabled{opacity:.6;cursor:default}
+.linkbtn:disabled{opacity:.5;cursor:default;text-decoration:none}
+.demo-note{background:var(--xp-soft);color:var(--xp);border-radius:12px;padding:10px 14px;font-size:.85rem}
+
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand"><h1>Огонёк</h1></div>
+    <div class="lvl" title="Уровень и опыт">
+      <span class="lvl-badge" id="lvl">Ур. 1</span>
+      <span class="xpbar"><i id="xpbar" style="width:0%"></i></span>
+      <span class="xptext" id="xptext">0 XP</span>
+    </div>
+  </header>
+
+  <details class="pacebar" id="paceCard">
+    <summary>
+      <span class="pacetitle">Опережение</span>
+      <span class="pacepills" id="paceTiles"></span>
+    </summary>
+    <div class="pacebody">
+      <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
+      <div class="legend" id="paceLegend"></div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <label class="startlbl">Начало плана <input type="date" id="startDate"></label>
+      </div>
+      <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
+    </div>
+  </details>
+
+  <section class="card">
+    <div class="hero">
+      <svg class="flame" id="heroFlame" viewBox="0 0 64 80" aria-hidden="true">
+        <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
+        <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
+      </svg>
+      <div>
+        <span class="label">Общий огонёк</span>
+        <div class="streak-num" id="streak">0</div>
+        <div class="streak-word" id="streakWord">дней подряд</div>
+        <div class="hero-sub" id="heroSub"></div>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip ice">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v14M2 4.5l12 7M2 11.5l12-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+        <span id="freezeText">Заморозки: 0 из 2</span>
+      </span>
+      <span class="chip fire" id="bestChip">Рекорд: 0</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="reading-head">
+      <h2>Чтение на сегодня</h2>
+      <span class="daynum">Нажмите на отрывок, чтобы открыть</span>
+    </div>
+    <div class="tgrid" id="testaments"></div>
+    <p class="hint">Прочитайте оба завета, чтобы зажечь общий огонёк и получить +10 XP бонуса.</p>
+  </section>
+
+  <section class="card" id="quizCard">
+    <div class="reading-head">
+      <h2>Вопросы по тексту</h2>
+      <span class="daynum">+5 XP за верный ответ с первого раза</span>
+    </div>
+    <div class="quizgrid" id="quiz"></div>
+  </section>
+
+  <section class="card" id="schedule">
+    <div class="reading-head">
+      <h2>Расписание</h2>
+      <div class="weeknav">
+        <button class="btn navbtn" id="wkPrev" type="button" aria-label="Предыдущая неделя">‹</button>
+        <select id="wkSel" aria-label="Неделя плана"></select>
+        <button class="btn navbtn" id="wkNext" type="button" aria-label="Следующая неделя">›</button>
+      </div>
+    </div>
+    <p class="hint" style="margin:0">Выберите любой день: нажмите на отрывок, чтобы открыть его, и на кружок, чтобы отметить прочитанным.</p>
+    <div class="sched" id="sched"></div>
+  </section>
+
+  <section class="card">
+    <div class="reading-head"><h2>Календарь</h2><span class="daynum" id="calMonth"></span></div>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span><i style="background:var(--flame)"></i>Оба завета</span>
+      <span><i style="background:var(--flame-soft);border:1px solid var(--flame)"></i>Один завет</span>
+      <span><i style="background:var(--ice-soft);border:1px solid var(--ice)"></i>Заморозка</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Прогресс плана</h2>
+    <div class="prog" id="prog"></div>
+  </section>
+
+  <section class="card">
+    <h2>Награды</h2>
+    <div class="badges" id="badges"></div>
+  </section>
+
+  <section class="card">
+    <span class="label">Как это работает</span>
+    <p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p>
+  </section>
+
+  <footer class="foot">
+    <span id="storage">Прогресс сохраняется в этом браузере</span>
+    <span id="account" hidden><span id="accountPhone"></span> · <button class="linkbtn" id="logoutBtn" type="button">Выйти</button></span>
+    <span id="resetWrap"><button class="linkbtn" id="resetBtn" type="button">Начать план заново</button></span>
+  </footer>
+</div>
+<div class="auth" id="auth" hidden>
+  <form class="auth-card" id="authForm" novalidate>
+    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
+      <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
+      <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
+    </svg>
+    <h1>Огонёк</h1>
+    <p class="muted" style="margin:0">Читайте Библию каждый день и не теряйте серию. Войдите по номеру телефона, чтобы прогресс сохранялся на всех устройствах.</p>
+    <div id="stepPhone" class="auth-step">
+      <label class="label" for="phone">Номер телефона</label>
+      <input class="auth-input" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 123-45-67" value="+7 ">
+      <button class="btn-main" id="sendBtn" type="button">Получить код по СМС</button>
+    </div>
+    <div id="stepCode" class="auth-step" hidden>
+      <label class="label" for="code">Код из СМС</label>
+      <input class="auth-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+      <button class="btn-main" id="verifyBtn" type="button">Войти</button>
+      <div class="row" style="justify-content:space-between">
+        <button class="linkbtn" id="changePhone" type="button">Изменить номер</button>
+        <button class="linkbtn" id="resendBtn" type="button" disabled>Отправить снова</button>
+      </div>
+    </div>
+    <p class="auth-error" id="authError" role="alert" hidden></p>
+  </form>
+</div>
+
+
+<div class="celebrate" id="celebrate" hidden role="dialog" aria-live="polite">
+  <div class="box">
+    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
+      <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
+      <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
+    </svg>
+    <div class="big" id="celebNum">1</div>
+    <div style="font-weight:700;font-size:1.1rem" id="celebText">день подряд!</div>
+    <div class="muted" id="celebSub"></div>
+    <button class="btn-main" id="celebClose" type="button" style="margin-top:8px">Продолжить</button>
+  </div>
+</div>
+<div class="chest" id="chest" hidden role="dialog" aria-live="polite" aria-label="Новая награда">
+  <div class="chestbox">
+    <div class="chesttitle" id="chestTitle">Новая награда!</div>
+    <div class="chestart" id="chestArt">
+      <div class="rays" aria-hidden="true"></div>
+      <div class="chestmedal" id="chestMedal"></div>
+      <svg class="chestsvg" viewBox="0 0 160 130" aria-hidden="true">
+        <ellipse cx="80" cy="122" rx="62" ry="6" fill="#000" opacity=".12"/>
+        <path class="glow" d="M22 64 L40 30 H120 L138 64 Z" fill="#ffd36b" opacity=".9"/><ellipse class="glow" cx="80" cy="64" rx="58" ry="9" fill="#fff3c4"/>
+        <rect x="20" y="62" width="120" height="56" rx="6" fill="#9b5b2a"/>
+        <path d="M20 80h120M20 98h120" stroke="#7a4420" stroke-width="2"/>
+        <rect x="38" y="62" width="10" height="56" fill="#e0a53a"/><rect x="112" y="62" width="10" height="56" fill="#e0a53a"/>
+        <rect x="69" y="66" width="22" height="24" rx="4" fill="#f2c14e" stroke="#a8730c" stroke-width="2"/>
+        <circle cx="80" cy="75" r="3" fill="#6b3a12"/><path d="M80 77v7" stroke="#6b3a12" stroke-width="3" stroke-linecap="round"/>
+        <g class="lid">
+          <path d="M20 64V46c0-18 26-28 60-28s60 10 60 28v18z" fill="#b56b30"/>
+          <path d="M20 54h120" stroke="#8a4f22" stroke-width="2"/>
+          <path d="M38 64V32M48 64V26M112 64V32M122 64V26" stroke="#e0a53a" stroke-width="0"/>
+          <rect x="38" y="24" width="10" height="40" fill="#e0a53a"/><rect x="112" y="24" width="10" height="40" fill="#e0a53a"/>
+          <rect x="69" y="54" width="22" height="10" rx="2" fill="#f2c14e" stroke="#a8730c" stroke-width="2"/>
+        </g>
+      </svg>
+    </div>
+    <div class="chestreveal">
+      <div class="chestname" id="chestName"></div>
+      <div class="chestdesc" id="chestDesc"></div>
+    </div>
+    <p class="chestsub" id="chestSub"></p>
+    <button class="btn-main" id="chestBtn" type="button">Открыть сундук</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+/* ---------- Schedule: «15 минут в день», Восстановительный перевод, год 1 (52 недели) ----------
+   each day: [NT book, NT passage, OT book, OT passage] */
+/* Вопросы по тексту: день плана → {nt:[вопрос, верный, неверный, неверный], ot:[...]} */
+const QUIZ={"0":{"nt":["Сыном каких двух людей назван Иисус Христос в первом стихе Евангелия?","Давида и Авраама","Моисея и Илии","Иосифа и Иакова"],"ot":["Что Бог создал в первый день?","Свет","Солнце и луну","Сушу и моря"]},"1":{"nt":["Какая женщина-моавитянка упомянута в родословии Иисуса?","Руфь","Сарра","Ревекка"],"ot":["В какой день Бог создал солнце, луну и звёзды?","В четвёртый","Во второй","В шестой"]},"2":{"nt":["Сколько родов от Авраама до Давида?","Четырнадцать","Двенадцать","Семь"],"ot":["В какой день Бог сотворил человека?","В шестой","В пятый","В седьмой"]},"3":{"nt":["Какое имя ангел велел Иосифу дать младенцу?","Иисус","Иоанн","Давид"],"ot":["Из чего Господь Бог создал человека?","Из праха земли","Из ребра","Из воды"]},"4":{"nt":["В каком городе родился Иисус?","В Вифлееме Иудейском","В Назарете","В Иерусалиме"],"ot":["Из чего Бог создал жену?","Из ребра, взятого у Адама","Из праха земли","Из дерева в саду"]},"5":{"nt":["Чем питался Иоанн Креститель?","Акридами и диким мёдом","Хлебом и рыбой","Манной"],"ot":["Кто обольстил жену в саду?","Змей","Каин","Ангел"]},"6":{"nt":["Как сошёл Дух Божий на Иисуса после крещения?","Как голубь","Как огонь","Как облако"],"ot":["Кого Бог поставил охранять путь к дереву жизни?","Херувимов с пламенным мечом","Ангела смерти","Змея"]},"7":{"nt":["Сколько дней постился Иисус в пустыне?","Сорок","Семь","Двенадцать"],"ot":["Как звали брата, которого убил Каин?","Авель","Сиф","Енох"]},"8":{"nt":["Кому Иисус сказал: «Я сделаю вас ловцами людей»?","Симону (Петру) и Андрею","Матфею и Фоме","Филиппу и Нафанаилу"],"ot":["Кто ходил с Богом, и не стало его, потому что Бог взял его?","Енох","Мафусаил","Ламех"]},"9":{"nt":["Кто блаженны, потому что они утешатся?","Плачущие","Нищие духом","Кроткие"],"ot":["Кто обрёл благодать в глазах Господа?","Ной","Енох","Сим"]},"10":{"nt":["Что унаследуют кроткие?","Землю","Небо","Богатство"],"ot":["Сколько дней и ночей шёл дождь на землю?","Сорок","Семь","Сто пятьдесят"]},"11":{"nt":["«Вы — ... земли». Как Иисус назвал учеников?","Солью","Хлебом","Камнем"],"ot":["Где остановился ковчег?","На горах Арарат","На горе Синай","На горе Хорив"]},"12":{"nt":["Что нужно сделать, если брат имеет что-то против тебя, прежде чем принести дар?","Примириться с братом","Принести дар побольше","Помолиться в храме"],"ot":["Что Бог дал в знак завета с Ноем и землёй?","Радугу в облаке","Звезду","Голубя"]},"13":{"nt":["Что Иисус велел делать по отношению к врагам?","Любить их","Избегать их","Судить их"],"ot":["Кто был сильным охотником перед Господом?","Нимрод","Исав","Иафет"]},"14":{"nt":["Как Иисус велел подавать милостыню?","Втайне","Открыто перед всеми","Только в храме"],"ot":["Где Господь смешал язык всей земли?","В Вавилоне (Вавиле)","В Уре","В Харране"]},"15":{"nt":["Что Иисус велел делать, когда постишься?","Помазать голову и умыть лицо","Посыпать голову пеплом","Ходить с унылым видом"],"ot":["Куда пошёл Аврам из-за голода в земле?","В Египет","В Вавилон","В Ассирию"]},"16":{"nt":["Где Иисус велел собирать сокровища?","На небе","На земле","В храме"],"ot":["Что выбрал себе Лот, когда разделился с Аврамом?","Всю окрестность Иордана","Гору Мориа","Землю Египта"]},"17":{"nt":["Что Иисус велел сначала вынуть из своего глаза?","Бревно","Соринку","Камень"],"ot":["Кто вынес Авраму хлеб и вино?","Мелхиседек","Лот","Царь Содома"]},"18":{"nt":["На чём построил свой дом благоразумный человек?","На скале","На песке","На холме"],"ot":["С чем Бог сравнил потомство Аврама в главе 15?","Со звёздами неба","С песком морским","С прахом земли"]},"19":{"nt":["Чей слуга был исцелён словом Иисуса на расстоянии?","Сотника","Петра","Первосвященника"],"ot":["Как звали сына Агари?","Измаил","Исаак","Иаков"]},"20":{"nt":["Кого Иисус исцелил от горячки в доме Петра?","Тёщу Петра","Жену Петра","Брата Петра"],"ot":["Какое новое имя Бог дал Авраму?","Авраам","Израиль","Иаков"]},"21":{"nt":["Куда вошли бесы, изгнанные из двух бесноватых?","В стадо свиней","В рыб","В пустыню"],"ot":["Что сделала Сарра, услышав, что у неё родится сын?","Рассмеялась","Заплакала","Запела"]},"22":{"nt":["Кого Иисус призвал, когда тот сидел у сбора пошлин?","Матфея","Закхея","Андрея"],"ot":["Во что превратилась жена Лота?","В соляной столп","В камень","В пепел"]},"23":{"nt":["Во что, по словам Иисуса, вливают молодое вино?","В новые мехи","В старые мехи","В кувшины"],"ot":["Какой царь взял Сарру в главе 20?","Авимелех, царь Герарский","Фараон","Мелхиседек"]},"24":{"nt":["Как получила исцеление женщина, страдавшая кровотечением?","Прикоснулась к краю одежды Иисуса","Омылась в реке","Иисус положил на неё руки"],"ot":["Сколько лет было Аврааму, когда родился Исаак?","Сто","Девяносто","Семьдесят пять"]},"25":{"nt":["Сколько учеников-апостолов призвал Иисус?","Двенадцать","Семьдесят","Семь"],"ot":["Кого Авраам принёс во всесожжение вместо Исаака?","Овна","Ягнёнка","Тельца"]},"26":{"nt":["Какими Иисус велел быть ученикам: мудрыми, как ..., и простыми, как ...?","Змеи и голуби","Львы и агнцы","Орлы и голуби"],"ot":["Где Авраам похоронил Сарру?","В пещере Махпела","В Вефиле","В Египте"]},"27":{"nt":["Что, по словам Иисуса, у вас все сочтены?","Волосы на голове","Дни жизни","Шаги"],"ot":["Кто стал женой Исаака?","Ревекка","Рахиль","Лия"]},"28":{"nt":["Где был Иоанн, когда послал своих учеников к Иисусу?","В темнице","В пустыне","В храме"],"ot":["За что Исав продал своё первородство?","За хлеб и похлёбку из чечевицы","За серебро","За стадо овец"]},"29":{"nt":["Каким Иисус назвал Своё бремя?","Лёгким","Тяжёлым","Вечным"],"ot":["К кому пошёл Исаак во время голода?","К Авимелеху, царю филистимскому, в Герар","К фараону в Египет","К Лавану в Харран"]},"30":{"nt":["Что ученики срывали в субботу, когда были голодны?","Колосья","Виноград","Смоквы"],"ot":["Как Иаков получил благословение Исаака?","Выдал себя за Исава","Купил его у брата","Получил во сне"]},"31":{"nt":["Какой грех, по словам Иисуса, не простится ни в этом веке, ни в будущем?","Хула на Духа","Ложь","Гнев"],"ot":["Что видел Иаков во сне в Вефиле?","Лестницу, достигающую неба","Горящий куст","Семь коров"]},"32":{"nt":["Какое знамение Иисус обещал дать этому роду?","Знамение Ионы-пророка","Знамение Моисея","Знамение Илии"],"ot":["Сколько лет Иаков служил за Рахиль в первый раз?","Семь","Три","Десять"]},"33":{"nt":["Кого Иисус назвал Своими братьями, сёстрами и матерью?","Тех, кто исполняет волю Отца Его","Только Своих родственников","Фарисеев"],"ot":["Как звали первого сына Рахили?","Иосиф","Вениамин","Рувим"]},"34":{"nt":["Какие семена в притче о сеятеле принесли плод?","Упавшие на добрую землю","Упавшие при дороге","Упавшие на каменистые места"],"ot":["Что Рахиль похитила у своего отца Лавана?","Его домашних идолов","Его золото","Его овец"]},"35":{"nt":["Что враг посеял среди пшеницы?","Плевелы","Терние","Горчицу"],"ot":["Какое новое имя получил Иаков после борьбы?","Израиль","Авраам","Иуда"]},"36":{"nt":["С каким семенем Иисус сравнил Царство Небесное?","С горчичным зерном","С пшеничным зерном","С зерном ячменя"],"ot":["С кем встретился и примирился Иаков в главе 33?","С Исавом","С Лаваном","С Иосифом"]},"37":{"nt":["Что сделал купец, найдя драгоценную жемчужину?","Продал всё, что имел, и купил её","Спрятал её в поле","Подарил её царю"],"ot":["Кто родился у Рахили в пути, когда она умерла при родах?","Вениамин","Иосиф","Дан"]},"38":{"nt":["Кто велел отсечь голову Иоанну Крестителю?","Ирод","Пилат","Каиафа"],"ot":["Чьи потомки перечислены в главе 36?","Исава (Едома)","Иакова","Лавана"]},"39":{"nt":["Сколько хлебов и рыб было у учеников, когда Иисус накормил пять тысяч?","Пять хлебов и две рыбы","Семь хлебов и несколько рыб","Три хлеба и одна рыба"],"ot":["Что братья сделали с Иосифом?","Продали его измаильтянам","Убили его","Оставили его в поле"]},"40":{"nt":["Кто вышел из лодки и пошёл по воде к Иисусу?","Пётр","Иоанн","Андрей"],"ot":["В чей дом попал Иосиф в Египте?","Потифара","Фараона","Авимелеха"]},"41":{"nt":["Что, по словам Иисуса, оскверняет человека?","То, что выходит из уст, из сердца","Еда немытыми руками","То, что входит в уста"],"ot":["Чьи сны Иосиф истолковал в темнице?","Виночерпия и хлебодара","Фараона и царицы","Своих братьев"]},"42":{"nt":["Женщина какого народа просила Иисуса исцелить её дочь?","Хананеянка","Самарянка","Египтянка"],"ot":["Что означали семь тучных и семь тощих коров?","Семь лет изобилия и семь лет голода","Семь войн","Семь царей"]},"43":{"nt":["Сколько хлебов было у учеников, когда Иисус накормил четыре тысячи?","Семь","Пять","Двенадцать"],"ot":["Кого Иаков не отпустил с братьями в Египет в первый раз?","Вениамина","Рувима","Иуду"]},"44":{"nt":["Закваски кого Иисус велел остерегаться?","Фарисеев и саддукеев","Римлян","Самарян"],"ot":["Кому Иосиф дал порцию в пять раз больше, чем другим?","Вениамину","Рувиму","Иуде"]},"45":{"nt":["Что ответил Пётр на вопрос Иисуса «А вы за кого почитаете Меня?»","Ты — Христос, Сын Бога живого","Ты — Илия","Ты — Иоанн Креститель"],"ot":["Что Иосиф велел положить в мешок Вениамина?","Свою серебряную чашу","Золотой перстень","Двойную порцию хлеба"]},"46":{"nt":["Что должен сделать тот, кто хочет идти за Иисусом?","Отвергнуться себя и взять свой крест","Продать всё и раздать нищим","Оставить свой дом"],"ot":["Кто, по словам Иосифа, на самом деле послал его в Египет?","Бог","Фараон","Его отец"]},"47":{"nt":["Кто явился и говорил с Иисусом на горе?","Моисей и Илия","Авраам и Давид","Иоанн и Иаков"],"ot":["В какой земле Египта поселилась семья Иакова?","В земле Гесем","В Ханаане","В Мадиаме"]},"48":{"nt":["Где Пётр нашёл монету для уплаты за себя и за Иисуса?","Во рту рыбы","В храме","В ящике для пожертвований"],"ot":["Сколько лет было Иакову, когда он стоял перед фараоном?","Сто тридцать","Сто","Сто сорок семь"]},"49":{"nt":["Кого Иисус поставил посреди учеников, говоря, кто больше в Царстве?","Ребёнка","Петра","Книжника"],"ot":["На чью голову Иаков положил правую руку, благословляя сыновей Иосифа?","Ефрема","Манассии","Вениамина"]},"50":{"nt":["Сколько раз, по словам Иисуса, нужно прощать брату?","До семидесяти раз по семь","До семи раз","До трёх раз"],"ot":["О ком Иаков сказал: «Не отойдёт скипетр от ...»?","Об Иуде","О Рувиме","О Левии"]},"51":{"nt":["Сколько был должен царю раб в притче о немилосердном должнике?","Десять тысяч талантов","Сто динариев","Тысячу сребреников"],"ot":["Где Иаков велел себя похоронить?","В пещере Махпела, где похоронен Авраам","В Египте","В Вефиле"]},"52":{"nt":["Что делали ученики, когда к Иисусу приносили детей?","Запрещали им","Благословляли их","Учили их"],"ot":["Сколько лет прожил Иосиф?","Сто десять","Сто двадцать","Сто тридцать"]},"53":{"nt":["Что, по словам Иисуса, легче, чем богатому войти в Царство Божье?","Верблюду пройти сквозь игольное ушко","Рыбе жить на суше","Горе сдвинуться в море"],"ot":["Что фараон приказал делать с новорождёнными еврейскими мальчиками?","Бросать в реку","Отдавать в рабство","Отдавать египтянам на воспитание"]},"54":{"nt":["Сколько получили работники, нанятые в одиннадцатом часу?","По динарию, как и все","Половину динария","Ничего"],"ot":["Кто нашёл младенца Моисея в корзине у реки?","Дочь фараона","Мать Моисея","Жена фараона"]},"55":{"nt":["Скольких слепых Иисус исцелил при выходе из Иерихона?","Двоих","Одного","Троих"],"ot":["Как Ангел Господа явился Моисею на горе Хорив?","В пламени огня из среды куста","В облаке","Во сне"]},"56":{"nt":["На чём Иисус въехал в Иерусалим?","На осле","На коне","На верблюде"],"ot":["Во что превратился жезл Моисея, брошенный на землю?","В змея","В дерево","В огонь"]},"57":{"nt":["Что случилось со смоковницей, на которой Иисус не нашёл плодов?","Засохла","Расцвела","Упала"],"ot":["Что фараон перестал давать израильтянам для кирпичей?","Солому","Глину","Воду"]},"58":{"nt":["Кто из двух сыновей в притче исполнил волю отца?","Первый: сначала отказался, но потом пошёл","Второй, который сказал «иду»","Оба сына"],"ot":["Как звали отца Моисея и Аарона?","Амрам","Левий","Кааф"]},"59":{"nt":["Что виноградари сделали с сыном хозяина виноградника?","Убили его","Приняли его с честью","Продали его"],"ot":["Во что превратилась вода в реке после удара жезлом?","В кровь","В вино","В лёд"]},"60":{"nt":["Что сказал Иисус о подати кесарю?","Отдавайте кесарево кесарю, а Божье Богу","Не платите подать","Платите подать вдвое"],"ot":["Что вышло из реки и покрыло землю Египта в начале главы 8?","Лягушки (жабы)","Змеи","Саранча"]},"61":{"nt":["Кто пришёл к Иисусу с вопросом, говоря, что нет воскресения?","Саддукеи","Фарисеи","Иродиане"],"ot":["Какая казнь в главе 9 сопровождалась огнём, сходившим на землю?","Град","Саранча","Тьма"]},"62":{"nt":["Какую заповедь Иисус назвал первой и наибольшей?","Люби Господа Бога твоего всем сердцем","Не убивай","Почитай отца и мать"],"ot":["Сколько дней была густая тьма по всей земле Египетской?","Три","Семь","Один"]},"63":{"nt":["Кто, по словам Иисуса, будет больший среди вас?","Тот, кто будет вам слугой","Тот, кто учит других","Старейший по возрасту"],"ot":["О какой последней казни Господь объявил в главе 11?","Смерть всех первенцев в Египте","Тьма","Град"]},"64":{"nt":["С чем Иисус сравнил книжников и фарисеев-лицемеров?","С побелёнными гробницами","С волками в овечьей шкуре","С пустыми колодцами"],"ot":["Чем помазали косяки дверей в ночь Пасхи?","Кровью ягнёнка","Маслом","Водой"]},"65":{"nt":["Что Иисус сказал о зданиях храма?","Не останется камня на камне","Храм будет стоять вечно","Храм будет расширен"],"ot":["Сколько дней нужно было есть пресный хлеб?","Семь","Три","Сорок"]},"66":{"nt":["С чем Иисус сравнил пришествие Сына Человеческого в стихе 27?","С молнией","С бурей","С восходом солнца"],"ot":["Сколько лет сыны Израиля прожили в Египте?","Четыреста тридцать","Четыреста","Сорок"]},"67":{"nt":["Кто знает день и час пришествия?","Никто, только Отец","Ангелы на небесах","Пророки"],"ot":["Как Господь вёл народ днём и ночью?","Днём столбом облака, ночью столбом огня","Звездой","Ангелом с мечом"]},"68":{"nt":["Сколько дев в притче были мудрыми?","Пять","Семь","Три"],"ot":["Что сделал Моисей, чтобы море расступилось?","Простёр руку над морем","Ударил жезлом по скале","Помолился в шатре"]},"69":{"nt":["Что сделал раб, получивший один талант?","Закопал его в землю","Удвоил его","Отдал бедным"],"ot":["Что сделало горькую воду в Мерре сладкой?","Дерево, брошенное в воду","Соль","Молитва Аарона"]},"70":{"nt":["Кого Царь поставит по правую сторону от Себя?","Овец","Козлов","Волков"],"ot":["Как сыны Израиля назвали хлеб, который Бог давал им в пустыне?","Манна","Опреснок","Лепёшка"]},"71":{"nt":["За сколько сребреников Иуда согласился предать Иисуса?","За тридцать","За двадцать","За сорок"],"ot":["Что сделал Моисей, чтобы из скалы пошла вода?","Ударил по скале жезлом","Бросил в неё дерево","Помолился у источника"]},"72":{"nt":["Что Иисус предсказал Петру в эту ночь?","Что он трижды отречётся от Него","Что он пойдёт по воде","Что он станет первосвященником"],"ot":["Кто посоветовал Моисею поставить начальников для суда над народом?","Иофор, его тесть","Аарон","Иисус Навин"]},"73":{"nt":["Как называлось место, где Иисус молился перед арестом?","Гефсимания","Вифания","Голгофа"],"ot":["На какую гору сошёл Господь в огне?","Синай","Сион","Кармил"]},"74":{"nt":["Каким знаком Иуда указал на Иисуса?","Поцелуем","Поклоном","Указал рукой"],"ot":["Сколько дней Бог велел работать перед субботой?","Шесть","Пять","Семь"]},"75":{"nt":["Что сделал Пётр, когда пропел петух?","Вышел и горько заплакал","Побежал к Иисусу","Ушёл в Галилею"],"ot":["Что, по закону, полагалось за глаз?","Глаз за глаз","Штраф серебром","Изгнание"]},"76":{"nt":["Кого народ попросил отпустить вместо Иисуса?","Варавву","Иуду","Симона"],"ot":["Кого запрещено притеснять и обижать в главе 22?","Пришельца, вдову и сироту","Левитов","Царя и князей"]},"77":{"nt":["Кого заставили нести крест Иисуса?","Симона Киринеянина","Петра","Иосифа из Аримафеи"],"ot":["Сколько раз в году народ должен был праздновать праздник Господу?","Три раза","Один раз","Семь раз"]},"78":{"nt":["Что произошло с завесой в храме, когда Иисус испустил дух?","Разорвалась надвое сверху донизу","Загорелась","Упала на землю"],"ot":["Сколько дней и ночей Моисей был на горе?","Сорок","Семь","Три"]},"79":{"nt":["Кто положил тело Иисуса в свою новую гробницу?","Иосиф из Аримафеи","Никодим","Пётр"],"ot":["Что должно было быть на крышке ковчега?","Два херувима из золота","Два льва","Два орла"]},"80":{"nt":["Что Иисус пообещал ученикам в конце Евангелия от Матфея?","Быть с ними во все дни до завершения века","Вернуться через три дня","Дать им царство Израилю"],"ot":["Сколько ветвей выходило из боков золотого светильника?","Шесть","Семь","Двенадцать"]},"81":{"nt":["Каким Сыном Марк называет Иисуса Христа в первом стихе?","Сыном Божьим","Сыном Давида","Сыном Авраама"],"ot":["Из скольких полотнищ состояла скиния?","Из десяти","Из двенадцати","Из семи"]},"82":{"nt":["Во что был одет Иоанн?","В одежду из верблюжьего волоса","В льняную одежду","В пурпурный плащ"],"ot":["Что отделяло святое место от Святого святых?","Завеса","Стена","Дверь"]},"83":{"nt":["Кто был с Иисусом в пустыне, кроме сатаны?","Звери, и ангелы служили Ему","Его ученики","Иоанн Креститель"],"ot":["Из чего был сделан жертвенник всесожжения?","Из дерева акации, обложенного медью","Из кедра, обложенного золотом","Из цельного камня"]},"84":{"nt":["Где Иисус изгнал нечистого духа в субботу?","В синагоге в Капернауме","В храме в Иерусалиме","На берегу моря"],"ot":["Сколько камней было на наперснике первосвященника?","Двенадцать","Семь","Десять"]},"85":{"nt":["Кого Иисус очистил, прикоснувшись к нему рукой?","Прокажённого","Слепого","Глухого"],"ot":["Что было вырезано на золотой пластинке на митре Аарона?","«Святыня Господу»","«Бог с нами»","«Слава Израилю»"]},"86":{"nt":["Как друзья принесли расслабленного к Иисусу?","Раскрыли крышу и спустили его","Внесли через окно","Подождали у дверей"],"ot":["Кого освящали в главе 29?","Аарона и его сыновей","Левитов","Старейшин народа"]},"87":{"nt":["Кого Иисус призвал, когда тот сидел у сбора пошлин?","Левия, сына Алфея","Закхея","Варфоломея"],"ot":["Сколько ягнят приносили во всесожжение каждый день?","Двух: утром и вечером","Одного","Семь"]},"88":{"nt":["Какое прозвище Иисус дал Иакову и Иоанну?","Воанергес, то есть сыны грома","Сыны света","Ловцы людей"],"ot":["Для чего был нужен золотой жертвенник в главе 30?","Для курения благовоний","Для всесожжения","Для омовения"]},"89":{"nt":["Что книжники говорили об Иисусе?","Что в Нём Веельзевул","Что Он Илия","Что Он Иоанн Креститель"],"ot":["Сколько должен был дать каждый при исчислении народа?","Полсикля","Один сикль","Два сикля"]},"90":{"nt":["Куда, по словам Иисуса, ставят светильник?","На подставку","Под сосуд","Под кровать"],"ot":["Кого Бог исполнил Своим Духом для работы над скинией?","Веселеила","Аарона","Мариам"]},"91":{"nt":["Где спал Иисус во время бури?","На корме, на подушке","На носу лодки","На берегу"],"ot":["Что сделал народ, пока Моисей был на горе?","Сделал золотого тельца","Построил храм","Ушёл обратно в Египет"]},"92":{"nt":["Как назвал себя нечистый дух в человеке из гробниц?","Легион","Веельзевул","Множество"],"ot":["Что Моисей попросил Бога показать ему?","Свою славу","Землю обетованную","Будущее народа"]},"93":{"nt":["Чью дочь воскресил Иисус?","Иаира, начальника синагоги","Сотника","Петра"],"ot":["Что стало с лицом Моисея, когда он сошёл с горы?","Оно сияло","Оно потемнело","Оно было в слезах"]},"94":{"nt":["По сколько Иисус посылал учеников на проповедь?","По двое","По одному","По трое"],"ot":["Кто приносил дары на строительство скинии?","Все, кого побуждало сердце","Только левиты","Только старейшины"]},"95":{"nt":["Сколько мужчин Иисус накормил пятью хлебами?","Пять тысяч","Четыре тысячи","Тысячу"],"ot":["Почему Моисей велел прекратить приносить дары?","Материала было больше, чем нужно","Народ устал","Начался голод"]},"96":{"nt":["В чём фарисеи упрекнули учеников?","Что ели хлеб неомытыми руками","Что не постились","Что срывали колосья"],"ot":["Кто сделал ковчег из дерева акации?","Веселеил","Моисей","Аарон"]},"97":{"nt":["Какое слово Иисус сказал глухому?","«Еффафа», то есть «откройся»","«Талифа куми»","«Авва»"],"ot":["Из чего сделали медный умывальник?","Из медных зеркал женщин","Из медных монет","Из медных щитов"]},"98":{"nt":["Сколько корзин остатков собрали, накормив четыре тысячи?","Семь","Двенадцать","Пять"],"ot":["Что было по краю одежды первосвященника?","Гранаты и золотые колокольчики","Звёзды","Кисти из шерсти"]},"99":{"nt":["Кто сказал Иисусу: «Ты — Христос»?","Пётр","Иоанн","Фома"],"ot":["Что покрыло скинию, когда Моисей закончил работу?","Облако","Огонь с неба","Ангелы"]},"100":{"nt":["Кого Иисус взял с Собой на высокую гору?","Петра, Иакова и Иоанна","Андрея и Филиппа","Всех двенадцать"],"ot":["Каким должно было быть животное для всесожжения?","Без порока, мужского пола","Любое из стада","Только белое"]},"101":{"nt":["Кого Иисус обнял, говоря о том, кто принимает Его?","Ребёнка","Петра","Больного"],"ot":["Чего нельзя было добавлять в хлебное приношение?","Закваски и мёда","Соли","Масла"]},"102":{"nt":["Что сказал Иисус о том, что Бог сочетал?","Человек да не разлучает","Закон может разлучить","Старейшины решают"],"ot":["Что израильтянам запрещено было есть по 3:17?","Тук и кровь","Хлеб","Рыбу"]},"103":{"nt":["Что Иисус велел сделать богатому человеку?","Продать всё, раздать нищим и следовать за Ним","Поститься сорок дней","Принести жертву в храм"],"ot":["О каких грехах говорится в главе 4?","Сделанных по неведению","Сделанных намеренно","Сделанных царями других народов"]},"104":{"nt":["Как звали слепого у дороги при выходе из Иерихона?","Вартимей","Лазарь","Закхей"],"ot":["Что мог принести бедный, если ему не хватало на ягнёнка?","Двух горлиц или двух молодых голубей","Тельца","Козла"]},"105":{"nt":["Какого осла ученики привели Иисусу?","Молодого осла, на которого никто не садился","Старого осла","Ослицу с дорогой упряжью"],"ot":["Каким должен был быть огонь на жертвеннике?","Непрестанно горящим, неугасающим","Зажигаемым только по субботам","Горящим только днём"]},"106":{"nt":["Как Иисус назвал дом Божий, выгоняя торгующих?","Домом молитвы для всех народов","Домом жертв","Домом суда"],"ot":["Кому принадлежала грудь мирной жертвы?","Аарону и его сыновьям","Тому, кто приносил","Бедным"]},"107":{"nt":["Чьё изображение было на динарии?","Кесаря","Ирода","Моисея"],"ot":["Сколько дней длилось посвящение Аарона и его сыновей?","Семь","Три","Сорок"]},"108":{"nt":["Сколько положила в сокровищницу бедная вдова?","Две лепты","Один динарий","Один сикль"],"ot":["Что сделал народ, когда огонь от Господа поглотил жертву?","Закричал от радости и пал на лица","Разбежался","Ничего не заметил"]},"109":{"nt":["Кто, по словам Иисуса, будет спасён?","Претерпевший до конца","Самый сильный","Самый богатый"],"ot":["Как звали сыновей Аарона, принёсших чуждый огонь?","Надав и Авиуд","Елеазар и Ифамар","Корей и Дафан"]},"110":{"nt":["Что прейдёт, а что не прейдёт, по словам Иисуса?","Небо и земля прейдут, а Его слова — нет","Храм прейдёт, а город — нет","Ничто не прейдёт"],"ot":["Каких животных разрешалось есть?","С раздвоенными копытами и жующих жвачку","Всех без исключения","Только птиц"]},"111":{"nt":["Что женщина вылила на голову Иисуса в Вифании?","Драгоценное миро из нарда","Вино","Воду"],"ot":["Что могла принести мать после родов, если ей не хватало на ягнёнка?","Двух горлиц или двух голубей","Козлёнка","Меру муки"]},"112":{"nt":["Что сделал юноша, которого схватили, когда брали Иисуса?","Оставил покрывало и убежал нагим","Громко закричал","Заступился за Иисуса"],"ot":["К кому должен был идти человек с признаками проказы?","К священнику","К царю","К старейшинам"]},"113":{"nt":["Сколько раз пропел петух, когда Пётр вспомнил слова Иисуса?","Дважды","Трижды","Один раз"],"ot":["Что должен был кричать прокажённый?","«Нечист, нечист!»","«Помилуйте!»","«Отойдите!»"]},"114":{"nt":["Почему Пилат отпустил Варавву и отдал Иисуса на распятие?","Желая угодить народу","Потому что Иисус признал вину","По приказу кесаря"],"ot":["Сколько живых птиц брали для очищения прокажённого?","Двух","Одну","Семь"]},"115":{"nt":["Что сказал сотник, увидев, как умер Иисус?","Истинно этот Человек был Сын Божий","Он был праведным пророком","Он был царём иудейским"],"ot":["Где помазывали кровью очищаемого?","На мочку правого уха, большие пальцы правой руки и ноги","На лоб","На обе ладони"]},"116":{"nt":["Кого женщины увидели в гробнице?","Юношу в белой одежде","Самого Иисуса","Петра и Иоанна"],"ot":["О проказе на чём говорится в стихах 33–57?","На доме","На одежде","На коже"]},"117":{"nt":["Кому первой явился воскресший Иисус?","Марии Магдалине","Петру","Иоанну"],"ot":["Что должен был сделать нечистый человек, прежде чем стать чистым?","Вымыть одежду и омыться водой","Принести тельца","Поститься семь дней"]},"118":{"nt":["Кому Лука написал своё Евангелие?","Феофилу","Тимофею","Титу"],"ot":["Сколько козлов Аарон брал у общества для жертвы за грех?","Двух","Одного","Семь"]},"119":{"nt":["Что случилось с Захарией за то, что он не поверил ангелу?","Он онемел","Он ослеп","Он заболел"],"ot":["Что делали с козлом отпущения?","Отпускали в пустыню","Сжигали на жертвеннике","Отдавали священникам"]},"120":{"nt":["Какой ангел пришёл к Марии?","Гавриил","Михаил","Херувим"],"ot":["Где, по главе 17, душа (жизнь) тела?","В крови","В сердце","В дыхании"]},"121":{"nt":["Сколько времени Мария пробыла у Елизаветы?","Около трёх месяцев","Один месяц","Полгода"],"ot":["Делам какой земли Бог велел не подражать вместе с делами Египта?","Ханаана","Вавилона","Ассирии"]},"122":{"nt":["Какое имя дали сыну Захарии?","Иоанн","Захария","Илия"],"ot":["Какая заповедь записана в 19:18?","Люби ближнего своего, как самого себя","Не кради","Почитай субботу"]},"123":{"nt":["Почему Иосиф и Мария пошли в Вифлеем?","Для записи (переписи)","На праздник","На свадьбу"],"ot":["Какому идолу запрещено было отдавать своих детей?","Молоху","Ваалу","Дагону"]},"124":{"nt":["Где, по словам ангела, пастухи найдут младенца?","В яслях","В доме","В храме"],"ot":["Для кого правила главы 21?","Для священников","Для царей","Для воинов"]},"125":{"nt":["Кто взял младенца Иисуса на руки в храме и благословил Бога?","Симеон","Захария","Иосиф"],"ot":["Что запрещено делать в один день по 22:28?","Закалывать животное и его детёныша","Есть хлеб и мясо вместе","Пить вино и молоко"]},"126":{"nt":["Сколько лет было Иисусу, когда Он остался в храме?","Двенадцать","Тридцать","Семь"],"ot":["Сколько дней отсчитывали до нового хлебного приношения?","Пятьдесят","Сорок","Семь"]},"127":{"nt":["Что Иоанн сказал сборщикам податей?","Не требуйте больше положенного","Оставьте свою работу","Раздайте всё бедным"],"ot":["Сколько дней нужно было жить в шалашах (кущах)?","Семь","Три","Сорок"]},"128":{"nt":["Сколько лет было Иисусу, когда Он начал служение?","Около тридцати","Двенадцать","Сорок"],"ot":["Какое наказание полагалось за хулу на имя Господа?","Побиение камнями","Изгнание","Штраф"]},"129":{"nt":["Что диавол предложил Иисусу сделать из камня?","Хлеб","Золото","Вино"],"ot":["Какой год назывался юбилейным?","Пятидесятый","Седьмой","Сороковой"]},"130":{"nt":["Книгу какого пророка Иисус читал в синагоге Назарета?","Исаии","Иеремии","Даниила"],"ot":["Кто мог выкупить обедневшего брата, который продал себя?","Его родственник: брат, дядя или двоюродный брат","Царь","Только священник"]},"131":{"nt":["Что кричали бесы, выходя из многих людей?","«Ты Сын Божий!»","«Мы уходим!»","«Пощади нас!»"],"ot":["Что Бог обещал, если народ будет ходить по Его постановлениям?","Дожди в своё время и урожай","Золото царей","Жизнь без смерти"]},"132":{"nt":["Что случилось, когда Симон закинул сети по слову Иисуса?","Поймали так много рыбы, что сети рвались","Не поймали ничего","Поймали одну рыбу с монетой"],"ot":["Что Бог обещал вспомнить, даже когда народ будет в земле врагов?","Свой завет с Иаковом, Исааком и Авраамом","Их прежние победы","Их жертвы"]},"133":{"nt":["Где Иисус провёл ночь перед избранием двенадцати?","На горе в молитве к Богу","В лодке","В доме Петра"],"ot":["Какая часть урожая и стада свята Господу?","Десятая","Половина","Седьмая"]},"134":{"nt":["Что Иисус велел делать тем, кто вас проклинает?","Благословлять их","Отвечать тем же","Избегать их"],"ot":["Какое колено не исчисляли вместе с другими?","Колено Левия","Колено Иуды","Колено Вениамина"]},"135":{"nt":["Что будет, по словам Иисуса, если слепой ведёт слепого?","Оба упадут в яму","Они дойдут медленно","Упадёт только ведущий"],"ot":["Какое колено стояло на востоке и шло первым?","Иуда","Дан","Рувим"]},"136":{"nt":["В каком городе Иисус воскресил сына вдовы?","В Наине","В Капернауме","В Вифании"],"ot":["Кого Бог взял Себе вместо всех первенцев Израиля?","Левитов","Назореев","Старейшин"]},"137":{"nt":["Кого Иоанн послал к Иисусу с вопросом?","Двух своих учеников","Петра","Ирода"],"ot":["Что переносили сыновья Каафа?","Святыни: ковчег, стол, светильник и жертвенники","Покрывала скинии","Брусья и столбы"]},"138":{"nt":["Кого Иисус назвал большим всех рождённых женщинами пророков?","Иоанна","Моисея","Илию"],"ot":["Что должен был сделать человек, признавший свой грех по главе 5?","Вернуть всё и прибавить пятую часть","Заплатить вдвое","Уйти из стана"]},"139":{"nt":["Чем женщина-грешница отёрла ноги Иисуса?","Своими волосами","Полотенцем","Платком"],"ot":["Что не должен был делать назорей?","Пить вино и стричь волосы","Есть хлеб","Ходить к скинии"]},"140":{"nt":["Что означает семя в притче о сеятеле?","Слово Божье","Веру","Деньги"],"ot":["Что принесли начальники колен для перевозки скинии?","Шесть крытых повозок и двенадцать волов","Двенадцать колесниц","Двенадцать верблюдов"]},"141":{"nt":["Кого Иисус назвал Своей матерью и братьями в Евангелии от Луки?","Слушающих слово Божье и исполняющих его","Своих родственников из Назарета","Двенадцать апостолов"],"ot":["Сколько дней начальники колен приносили свои дары?","Двенадцать, каждый в свой день","Семь","Три"]},"142":{"nt":["Куда бесы просили Иисуса не отсылать их?","В бездну","В море","В пустыню"],"ot":["Сколько светильников должны были светить с золотого светильника?","Семь","Шесть","Двенадцать"]},"143":{"nt":["Сколько лет было дочери Иаира?","Около двенадцати","Семь","Пятнадцать"],"ot":["Когда народ отправлялся в путь?","Когда облако поднималось от скинии","Каждое утро","Каждую субботу"]},"144":{"nt":["Сколько корзин остатков собрали после того, как накормили пять тысяч?","Двенадцать","Семь","Пять"],"ot":["Из чего Бог велел сделать две трубы?","Из чеканного серебра","Из золота","Из рога"]},"145":{"nt":["Как часто, по словам Иисуса, нужно брать свой крест?","Каждый день","Раз в год","Только в субботу"],"ot":["Каких птиц Бог послал народу, который хотел мяса?","Перепелов","Голубей","Горлиц"]},"146":{"nt":["О чём Моисей и Илия говорили с Иисусом на горе?","О Его исходе, который Он совершит в Иерусалиме","О Законе","О царстве Давида"],"ot":["Сколько человек Моисей послал разведать землю Ханаан?","Двенадцать, по одному от колена","Двоих","Семь"]},"147":{"nt":["Кто, по словам Иисуса, будет великим?","Тот, кто меньше всех среди вас","Самый старший","Самый учёный"],"ot":["Кто из взрослых мужчин, вышедших из Египта, должен был войти в землю?","Халев и Иисус, сын Навина","Моисей и Аарон","Корей и Дафан"]},"148":{"nt":["Что Иисус сказал о том, кто взялся за плуг и оглядывается назад?","Он не годится для Царства Божьего","Он скоро вернётся","Он соберёт большой урожай"],"ot":["Что Бог велел делать на краях одежд?","Кисти с голубой нитью","Колокольчики","Вышитые звёзды"]},"149":{"nt":["Сколько других учеников Иисус послал по двое?","Семьдесят","Двенадцать","Сто"],"ot":["Что произошло с Кореем и теми, кто был с ним?","Земля раскрылась и поглотила их","Их унесла вода","Их изгнали в Египет"]},"150":{"nt":["Чему Иисус велел ученикам радоваться больше всего?","Что их имена записаны на небесах","Что бесы им покоряются","Что их хвалят люди"],"ot":["Чей жезл расцвёл и принёс миндаль?","Аарона","Моисея","Корея"]},"151":{"nt":["Кто помог человеку, попавшему к разбойникам?","Самарянин","Священник","Левит"],"ot":["Что левиты получили в удел вместо земли?","Десятину от сынов Израиля","Города филистимлян","Стада Египта"]},"152":{"nt":["Какая сестра сидела у ног Иисуса и слушала Его слово?","Мария","Марфа","Елизавета"],"ot":["Корову какого цвета сжигали для воды очищения?","Рыжую","Белую","Чёрную"]},"153":{"nt":["Что, по словам Иисуса, Отец с неба даст просящим у Него?","Святого Духа","Богатство","Долгую жизнь"],"ot":["Что сделал Моисей вместо того, чтобы сказать скале?","Ударил по скале жезлом дважды","Бросил в неё камень","Промолчал"]},"154":{"nt":["Каким перстом, по словам Иисуса, Он изгоняет бесов?","Перстом Божьим","Перстом Моисея","Своей силой без Бога"],"ot":["Что сделал Моисей, когда змеи жалили народ?","Сделал медного змея и поставил на шест","Увёл народ в другое место","Велел убить всех змей"]},"155":{"nt":["Кого Иисус назвал блаженными в ответ женщине из толпы?","Слышащих слово Божье и соблюдающих его","Его мать","Богатых и сильных"],"ot":["Кто заговорил с Валаамом по дороге?","Его ослица","Его слуга","Царь Валак"]},"156":{"nt":["Что, по словам Иисуса, фарисеи очищают снаружи?","Чашу и блюдо","Свои руки","Свои дома"],"ot":["Сколько жертвенников велел построить Валаам?","Семь","Три","Двенадцать"]},"157":{"nt":["За сколько продают пять малых птиц, по словам Иисуса?","За два ассария","За один динарий","За пять лепт"],"ot":["Что сделал Валаам с Израилем вместо проклятия?","Благословил его","Ушёл молча","Проклял Моава"]},"158":{"nt":["Что задумал сделать богач в притче?","Сломать житницы и построить большие","Раздать всё бедным","Купить ещё одно поле"],"ot":["Кто остановил поражение в народе, пронзив нечестивцев копьём?","Финеес","Аарон","Халев"]},"159":{"nt":["На каких птиц Иисус велел посмотреть?","На воронов","На голубей","На орлов"],"ot":["Кто из исчисленных в первый раз остался в живых ко второй переписи?","Только Халев и Иисус, сын Навина","Все левиты","Все старейшины"]},"160":{"nt":["Что, по словам Иисуса, потребуют с того, кому много дано?","Много","Ничего","Немного"],"ot":["Чьи дочери просили дать им наследство отца?","Дочери Салпаада","Дочери Лавана","Дочери Иофора"]},"161":{"nt":["Что Иисус пришёл бросить на землю?","Огонь","Мир","Хлеб"],"ot":["Сколько ягнят приносили во всесожжение в субботу?","Двух, сверх ежедневной жертвы","Одного","Семь"]},"162":{"nt":["Сколько лет хозяин приходил искать плодов на смоковнице?","Три года","Один год","Семь лет"],"ot":["Сколько молодых быков приносили в первый день праздника кущей?","Тринадцать","Семь","Двенадцать"]},"163":{"nt":["Сколько лет женщина была скорчена (сгорблена)?","Восемнадцать","Двенадцать","Тридцать восемь"],"ot":["С каким народом Израиль воевал в главе 31?","С мадианитянами","С филистимлянами","С амаликитянами"]},"164":{"nt":["В какие ворота Иисус велел стараться войти?","В тесные","В широкие","В золотые"],"ot":["Сколько израильских воинов погибло в войне с Мадиамом?","Ни одного","Сто","Тысяча"]},"165":{"nt":["Как Иисус назвал Ирода?","Лисицей","Волком","Змеем"],"ot":["Какие колена попросили землю по ту сторону Иордана?","Рувим и Гад","Иуда и Вениамин","Дан и Асир"]},"166":{"nt":["Кого Иисус советовал звать на пир?","Нищих, увечных, хромых и слепых","Друзей и родственников","Богатых соседей"],"ot":["О чём рассказывает глава 33?","О стоянках израильтян на пути из Египта","О войнах с Ханааном","О царях Моава"]},"167":{"nt":["Что велел хозяин, когда званые отказались прийти?","Привести нищих и увечных с улиц","Отменить ужин","Позвать их снова завтра"],"ot":["Кто вместе со священником Елеазаром должен был разделить землю?","Иисус, сын Навина","Халев","Моисей"]},"168":{"nt":["Что делает человек, прежде чем строить башню, по словам Иисуса?","Садится и считает расходы","Зовёт соседей","Молится в храме"],"ot":["Для чего были города убежища?","Чтобы туда убегал тот, кто убил нечаянно","Для праздников левитов","Для хранения зерна"]},"169":{"nt":["Что делает пастух, потеряв одну овцу из ста?","Оставляет девяносто девять и ищет пропавшую","Покупает новую овцу","Ждёт, пока она вернётся"],"ot":["За кого должны были выйти замуж дочери Салпаада?","За мужчин из колена своего отца","За левитов","За чужеземцев"]},"170":{"nt":["Кем младший сын хотел попросить отца сделать его?","Одним из наёмников","Управляющим","Наследником"],"ot":["Сколько дней пути было от Хорива до Кадеш-Варни?","Одиннадцать","Сорок","Три"]},"171":{"nt":["Что сделал отец, когда вернулся младший сын?","Устроил пир и заколол откормленного телёнка","Наказал его","Отправил работать в поле"],"ot":["Землю каких народов Бог запретил брать Израилю?","Сынов Исава, Моава и Аммона","Ханаанеев","Египтян"]},"172":{"nt":["Каким двум господам, по словам Иисуса, нельзя служить одновременно?","Богу и богатству (мамоне)","Царю и священнику","Отцу и матери"],"ot":["Что Бог разрешил Моисею сделать с землёй обетованной?","Только увидеть её с вершины горы","Войти и поселиться в ней","Разделить её между коленами"]},"173":{"nt":["Как звали нищего у ворот богача?","Лазарь","Закхей","Вартимей"],"ot":["Что Моисей сказал о слове, которое он заповедал?","Не прибавляйте к нему и не убавляйте от него","К нему можно прибавлять","Его можно сокращать"]},"174":{"nt":["Кого богач просил послать к своим братьям?","Лазаря","Авраама","Ангела"],"ot":["Что Моисей повторяет народу в главе 5?","Десять заповедей","Родословие колен","Песнь у моря"]},"175":{"nt":["Сколько из десяти очищенных прокажённых вернулись благодарить Бога?","Один, и это был самарянин","Все десять","Двое"],"ot":["Как начинаются слова «Слушай, Израиль» в 6:4?","Господь, Бог наш, Господь один","Господь велик и страшен","Господь — пастырь мой"]},"176":{"nt":["Чью жену Иисус велел вспоминать?","Жену Лота","Жену Ноя","Жену Авраама"],"ot":["Чем живёт человек, по главе 8?","Не одним хлебом, а всяким словом из уст Господа","Только хлебом","Трудом своих рук"]},"177":{"nt":["Кто ушёл домой оправданным: фарисей или мытарь?","Мытарь","Фарисей","Оба"],"ot":["Сколько дней и ночей Моисей лежал перед Господом, молясь за народ?","Сорок","Семь","Три"]},"178":{"nt":["Что Иисус сказал о том, как нужно принимать Царство Божье?","Как ребёнок","Как царь","Как учёный"],"ot":["Куда Моисей положил новые скрижали?","В ковчег из дерева акации","В шатёр Аарона","На вершине горы"]},"179":{"nt":["Что кричал слепой у дороги возле Иерихона?","Иисус, Сын Давида, помилуй меня!","Учитель, научи меня!","Господи, спаси нас!"],"ot":["На каких горах нужно было произнести благословение и проклятие?","Гаризим и Гевал","Синай и Хорив","Сион и Мориа"]},"180":{"nt":["Куда залез Закхей, чтобы увидеть Иисуса?","На смоковницу","На крышу","На городскую стену"],"ot":["Где, по главе 12, нужно было приносить всесожжения?","На месте, которое изберёт Господь","Везде, где захочешь","На каждом высоком холме"]},"181":{"nt":["Сколько приобрёл первый раб на одну мину?","Десять мин","Пять мин","Ни одной"],"ot":["Что делать, если пророк зовёт служить другим богам, даже если его знамение сбылось?","Не слушать его","Слушать, раз знамение сбылось","Спросить совета у царя"]},"182":{"nt":["Что сделал Иисус, когда увидел Иерусалим?","Заплакал о нём","Обрадовался","Проклял его"],"ot":["Что нужно было делать с долгами в седьмой год?","Прощать их","Удваивать их","Передавать их детям"]},"183":{"nt":["Какой камень, по словам Иисуса, стал главой угла?","Камень, который отвергли строители","Камень из Иордана","Камень у гробницы"],"ot":["Какие три праздника нужно было праздновать каждый год?","Опресноков, седмиц и кущей","Пасхи, Пурима и Хануки","Новомесячия, субботы и юбилея"]},"184":{"nt":["Чей Бог Бог, по словам Иисуса?","Бог живых, а не мёртвых","Бог только Израиля","Бог только праведных"],"ot":["Чего царь не должен был умножать себе?","Коней, жён, серебра и золота","Хлеба и вина","Книг закона"]},"185":{"nt":["Что, по словам Иисуса, любят книжники?","Ходить в длинных одеждах и первые места","Работать в поле","Помогать вдовам"],"ot":["Кого Бог обещал воздвигнуть, подобного Моисею?","Пророка","Царя","Первосвященника"]},"186":{"nt":["Чем, по словам Иисуса, вы приобретёте свои души?","Своим терпением","Своим богатством","Своими жертвами"],"ot":["Кто мог вернуться домой перед битвой?","Тот, кто построил дом и не освятил его","Самый сильный воин","Сыновья священников"]},"187":{"nt":["Где Иисус проводил ночи в последние дни?","На горе, называемой Масличной","В храме","В Вифлееме"],"ot":["Что нужно было сделать на крыше нового дома?","Ограду (перила)","Сад","Жертвенник"]},"188":{"nt":["Кто, по Евангелию от Луки, вошёл в Иуду?","Сатана","Святой Дух","Ангел"],"ot":["Что разрешалось делать в чужом винограднике?","Есть виноград досыта, но не брать в сосуд","Собирать всё в корзины","Ничего нельзя трогать"]},"189":{"nt":["О чём спорили ученики на вечере?","Кто из них должен считаться большим","Кто заплатит за ужин","Куда идти дальше"],"ot":["Что запрещено было брать в залог?","Жернова","Серебро","Скот"]},"190":{"nt":["Кто явился с неба и укреплял Иисуса в молитве?","Ангел","Илия","Моисей"],"ot":["Память какого народа Бог велел изгладить из-под неба?","Амалика","Египта","Моава"]},"191":{"nt":["Что сделал Господь, когда пропел петух?","Обернулся и посмотрел на Петра","Позвал Петра по имени","Ничего не сделал"],"ot":["Что приносили священнику в корзине?","Первые плоды земли","Десятину скота","Серебро"]},"192":{"nt":["Что Иисус сказал раскаявшемуся разбойнику?","Сегодня будешь со Мной в раю","Ты будешь прощён через три дня","Молись о себе"],"ot":["На чём нужно было написать слова закона за Иорданом?","На больших камнях, покрытых известью","На медных досках","На свитке в ковчеге"]},"193":{"nt":["Что сказал Иисус, испуская дух, в Евангелии от Луки?","Отче, в руки Твои предаю дух Мой","Совершилось","Жажду"],"ot":["Чем, по главе 28, сделает Господь послушный народ?","Головой, а не хвостом","Хвостом, а не головой","Ни головой, ни хвостом"]},"194":{"nt":["О чём ангелы спросили женщин у гробницы?","Почему вы ищете Живого среди мёртвых?","Кого вы ищете ночью?","Где ученики Иисуса?"],"ot":["Сколько лет Бог вёл народ по пустыне, и одежда не обветшала?","Сорок","Двадцать","Семь"]},"195":{"nt":["В какое селение шли двое учеников, когда к ним подошёл Иисус?","В Еммаус","В Вифанию","В Наин"],"ot":["Что Бог предложил народу в 30:19?","Жизнь и смерть, благословение и проклятие","Мир и войну","Золото и серебро"]},"196":{"nt":["Что ел воскресший Иисус перед учениками?","Кусок печёной рыбы","Хлеб с вином","Смоквы"],"ot":["С какой горы Моисей должен был увидеть землю Ханаан перед смертью?","С горы Нево","С горы Синай","С горы Кармил"]},"197":{"nt":["Что было в начале, по первому стиху Евангелия от Иоанна?","Слово","Свет","Закон"],"ot":["Что делает Моисей в главе 33?","Благословляет колена Израиля","Поёт песнь у моря","Делит землю"]},"198":{"nt":["Что дано через Моисея, а что пришло через Иисуса Христа?","Закон через Моисея, благодать и истина через Иисуса Христа","Благодать через Моисея, закон через Иисуса","Скиния через Моисея, храм через Иисуса"],"ot":["Сколько лет было Моисею, когда он умер?","Сто двадцать","Сто","Восемьдесят"]},"199":{"nt":["Как Иоанн назвал Иисуса, увидев Его идущим к нему?","Агнец Божий","Сын Давида","Великий пророк"],"ot":["Какие слова Бог несколько раз сказал Иисусу Навину?","Будь твёрд и мужествен","Иди в Египет","Построй храм"]},"200":{"nt":["Какое имя Иисус дал Симону?","Кифа, что значит «камень» (Пётр)","Воанергес","Фома"],"ot":["Кто спрятал разведчиков в Иерихоне?","Раав","Руфь","Девора"]},"201":{"nt":["Во что Иисус превратил воду в Кане Галилейской?","В вино","В масло","В молоко"],"ot":["Что случилось, когда ноги священников с ковчегом вошли в Иордан?","Вода остановилась, и народ перешёл посуху","Вода стала красной","Начался дождь"]},"202":{"nt":["О каком храме говорил Иисус: «Разрушьте этот храм, и Я в три дня воздвигну его»?","О храме Своего тела","О храме в Иерусалиме","О скинии Моисея"],"ot":["Сколько камней взяли из середины Иордана?","Двенадцать","Семь","Два"]},"203":{"nt":["Кто пришёл к Иисусу ночью?","Никодим","Иосиф из Аримафеи","Нафанаил"],"ot":["Что прекратилось, когда народ поел плодов земли Ханаан?","Манна","Дождь","Вода из скалы"]},"204":{"nt":["Почему Бог дал Своего Единородного Сына?","Так возлюбил Бог мир","Так велел Закон","Чтобы наказать мир"],"ot":["Сколько раз обошли Иерихон в седьмой день?","Семь","Один","Три"]},"205":{"nt":["Что Иоанн сказал об Иисусе: «Ему должно расти, а мне...»?","Умаляться","Учить","Ждать"],"ot":["Кто взял себе заклятое в Иерихоне?","Ахан","Раав","Халев"]},"206":{"nt":["Какую воду Иисус обещал самарянке?","Живую воду","Воду из колодца Иакова","Воду из Иордана"],"ot":["Какой город Израиль взял в главе 8 с помощью засады?","Гай","Иерихон","Гаваон"]},"207":{"nt":["Как, по словам Иисуса, истинные поклонники будут поклоняться Отцу?","В духе и истине","Только в Иерусалиме","Только на этой горе"],"ot":["Как гаваонитяне обманули Израиль?","Притворились, что пришли из далёкой земли","Принесли богатые дары","Сказали, что они левиты"]},"208":{"nt":["Что сделала самарянка после разговора с Иисусом?","Оставила кувшин и пошла рассказать людям в городе","Набрала воды и ушла домой","Пошла в Иерусалим"],"ot":["Что сделали солнце и луна в день битвы при Гаваоне?","Остановились","Затмились","Поменялись местами"]},"209":{"nt":["Где Иисус сказал царедворцу: «Иди, сын твой жив»?","В Кане Галилейской","В Иерусалиме","В Назарете"],"ot":["У каких вод Иисус Навин разбил царей севера?","У вод Мером","У Иордана","У Мёртвого моря"]},"210":{"nt":["Сколько лет болел человек у купальни Вифезда?","Тридцать восемь","Восемнадцать","Двенадцать"],"ot":["Какому колену Моисей не дал удела земли?","Колену Левия","Колену Иуды","Колену Рувима"]},"211":{"nt":["Кому Отец отдал весь суд?","Сыну","Ангелам","Моисею"],"ot":["Сколько лет было Халеву, когда он попросил себе гору Хеврон?","Восемьдесят пять","Сорок","Сто двадцать"]},"212":{"nt":["О ком, по словам Иисуса, свидетельствуют Писания?","О Нём","О Моисее","Об Иоанне"],"ot":["Где сыны Израиля поставили скинию собрания?","В Силоме","В Иерусалиме","В Вефиле"]},"213":{"nt":["У кого были пять ячменных хлебов и две рыбки?","У мальчика","У Андрея","У Филиппа"],"ot":["Какой город получил в удел Иисус Навин?","Фамнаф-Сарах на горе Ефремовой","Иерихон","Хеврон"]},"214":{"nt":["Что сказал Иисус ученикам, подходя к лодке по воде?","Это Я, не бойтесь","Почему вы плывёте без Меня?","Плывите к другому берегу"],"ot":["Сколько городов получили левиты?","Сорок восемь","Двенадцать","Шесть"]},"215":{"nt":["Как назвал Себя Иисус в 6:35?","Хлеб жизни","Свет мира","Дверь"],"ot":["Что построили колена за Иорданом, чем встревожили других?","Большой жертвенник у Иордана","Новый город","Свой храм"]},"216":{"nt":["Что ответил Пётр: «Господи, к кому нам идти?...»","У Тебя слова вечной жизни","Мы пойдём к Иоанну","Мы вернёмся к рыбалке"],"ot":["Что сказал Иисус Навин: «А я и дом мой будем...»","Служить Господу","Жить в Ханаане","Хранить ковчег"]},"217":{"nt":["Верили ли в Иисуса Его братья в главе 7?","Нет, не верили","Да, все верили","Верил только Иаков"],"ot":["Какое колено первым пошло воевать с хананеями?","Иуда","Дан","Вениамин"]},"218":{"nt":["На каком празднике Иисус учил в храме в главе 7?","На празднике Кущей","На Пасхе","На Пятидесятнице"],"ot":["Кого Господь воздвигал, чтобы спасать народ от грабителей?","Судей","Царей","Первосвященников"]},"219":{"nt":["Кого фарисеи и первосвященники послали схватить Иисуса?","Служителей","Римских воинов","Левитов"],"ot":["Кто убил Еглона, царя Моава?","Аод","Гофониил","Самегар"]},"220":{"nt":["Что, по словам Иисуса, потечёт из чрева верующего в Него?","Реки живой воды","Мёд и молоко","Свет"],"ot":["Как звали пророчицу, которая судила Израиль в главе 4?","Девора","Иаиль","Мариам"]},"221":{"nt":["Что делал Иисус, когда к Нему привели женщину, взятую в прелюбодеянии?","Наклонился и писал пальцем на земле","Читал свиток","Молча ушёл"],"ot":["Кто воспел песнь в главе 5?","Девора и Варак","Моисей и Мариам","Давид"]},"222":{"nt":["Как назвал Себя Иисус в 8:12?","Свет мира","Хлеб жизни","Лоза"],"ot":["Что Гедеон положил на гумно, чтобы получить знак?","Шерстяное руно","Меч","Хлеб"]},"223":{"nt":["Что, по словам Иисуса, сделает вас свободными?","Истина","Закон","Богатство"],"ot":["Сколько человек осталось у Гедеона для битвы?","Триста","Тысяча","Двенадцать тысяч"]},"224":{"nt":["Что сказал Иисус: «Прежде чем Авраам был...»?","Я есть","Я был пророком","Я пришёл в мир"],"ot":["Что ответил Гедеон, когда его хотели сделать правителем?","Господь будет владеть вами","Я буду владеть вами","Мой сын будет владеть вами"]},"225":{"nt":["Где Иисус велел слепому умыться?","В купальне Силоам","В Иордане","В купальне Вифезда"],"ot":["Кто убил своих семьдесят братьев, чтобы стать царём?","Авимелех","Иеффай","Гаал"]},"226":{"nt":["Что сказал исцелённый: «Одно знаю: я был слеп, а...»?","Теперь вижу","Теперь хожу","Теперь слышу"],"ot":["Кто дал обет, из-за которого пострадала его дочь?","Иеффай","Гедеон","Самсон"]},"227":{"nt":["Как назвал Себя Иисус в 10:9?","Дверь","Путь","Свет"],"ot":["Кто явился жене Маноя и возвестил о рождении сына?","Ангел Господа","Пророк","Священник"]},"228":{"nt":["Что делает добрый пастырь ради овец?","Отдаёт за них жизнь","Продаёт их","Оставляет их наёмнику"],"ot":["Что Самсон нашёл в туше льва?","Рой пчёл и мёд","Золото","Змею"]},"229":{"nt":["Сестры которого были Мария и Марфа?","Лазаря","Петра","Иоанна"],"ot":["В чём была сила Самсона, как он признался Далиле?","В неостриженных волосах","В мече","В поясе"]},"230":{"nt":["Сколько дней Лазарь был в гробнице, когда пришёл Иисус?","Четыре","Три","Семь"],"ot":["Какое колено забрало идолов и священника Михи?","Дан","Иуда","Ефрем"]},"231":{"nt":["Что сказал Иисус Марфе: «Я — воскресение и...»?","Жизнь","Путь","Истина"],"ot":["В каком городе с левитом и его наложницей случилось зло?","В Гиве Вениаминовой","В Вифлееме","В Иерусалиме"]},"232":{"nt":["Кто сказал, что лучше одному человеку умереть за народ?","Каиафа","Пилат","Ирод"],"ot":["С каким коленом воевали остальные колена в главе 20?","С Вениамином","С Даном","С Иудой"]},"233":{"nt":["Кто возмутился, что миро не продали за триста динариев?","Иуда Искариот","Пётр","Марфа"],"ot":["Чего, по последнему стиху Судей, не было в те дни в Израиле?","Царя","Закона","Священника"]},"234":{"nt":["Что кричал народ, встречая Иисуса с пальмовыми ветвями?","Осанна! Благословен Грядущий во имя Господа","Распни Его!","Да здравствует кесарь!"],"ot":["Что сказала Руфь Ноемини?","Твой народ — мой народ, и твой Бог — мой Бог","Я вернусь к своей матери","Я пойду в Египет"]},"235":{"nt":["Что Иисус сделает, когда будет вознесён от земли?","Всех привлечёт к Себе","Станет царём Израиля","Уйдёт навсегда"],"ot":["На чьём поле Руфь подбирала колосья?","Вооза","Елимелеха","Ноемини"]},"236":{"nt":["Почему многие начальники не исповедовали Иисуса открыто?","Любили славу человеческую больше, чем славу Божью","Не слышали о Нём","Были в отъезде"],"ot":["Где Руфь легла ночью на гумне?","У ног Вооза","У входа","У стога пшеницы"]},"237":{"nt":["Что Иисус сделал ученикам перед праздником Пасхи?","Умыл им ноги","Дал им деньги","Отправил их в Галилею"],"ot":["Как звали сына Руфи и Вооза?","Овид","Иессей","Давид"]},"238":{"nt":["Что Иисус дал Иуде, показав, кто предаст Его?","Кусок хлеба, обмакнув его","Чашу с вином","Кошелёк"],"ot":["Как Анна назвала своего сына?","Самуил","Саул","Давид"]},"239":{"nt":["По чему все узнают, что вы ученики Иисуса?","Если будете любить друг друга","По одежде","По молитвам в храме"],"ot":["Как звали нечестивых сыновей Илия?","Офни и Финеес","Надав и Авиуд","Корей и Дафан"]},"240":{"nt":["Как Иисус назвал Себя в 14:6?","Путь, истина и жизнь","Хлеб, вода и вино","Дверь, пастырь и свет"],"ot":["Что ответил Самуил, когда Господь позвал его, по совету Илия?","Говори, ибо слышит раб Твой","Я здесь, Илий","Кто зовёт меня?"]},"241":{"nt":["Кого Отец даст ученикам, по словам Иисуса?","Другого Утешителя — Духа истины","Нового пророка","Ангела-хранителя"],"ot":["Что случилось с идолом Дагоном рядом с ковчегом?","Упал лицом на землю","Засиял","Исчез"]},"242":{"nt":["Что Иисус оставляет ученикам в 14:27?","Мир","Деньги","Свиток"],"ot":["Чего народ попросил у Самуила в главе 8?","Царя","Новый закон","Хлеба"]},"243":{"nt":["Кем назвал Себя Иисус в 15:1?","Истинной виноградной лозой","Садовником","Пастырем"],"ot":["Что искал Саул, когда встретил Самуила?","Ослиц своего отца","Пропавших овец","Невесту"]},"244":{"nt":["Как Иисус называет учеников в 15:15?","Друзьями","Рабами","Слугами"],"ot":["Где спрятался Саул, когда его избирали царём?","Среди поклажи (вещей)","В пещере","В поле"]},"245":{"nt":["Кто, по словам Иисуса, введёт учеников во всю истину?","Дух истины","Апостол Пётр","Книжники"],"ot":["Что сделал Саул, не дождавшись Самуила?","Сам принёс всесожжение","Ушёл домой","Отпустил войско"]},"246":{"nt":["Что сказал Иисус: «Мужайтесь, Я...»?","Победил мир","Ухожу навсегда","Останусь с вами в Иерусалиме"],"ot":["Кто вдвоём со своим оруженосцем напал на филистимлян?","Ионафан","Саул","Давид"]},"247":{"nt":["Что такое вечная жизнь, по молитве Иисуса?","Знать единственного истинного Бога и Иисуса Христа","Жить очень долго","Соблюдать все праздники"],"ot":["Что сказал Самуил: «Послушание лучше, чем...»?","Жертва","Золото","Сила"]},"248":{"nt":["Кто из учеников погиб, по молитве Иисуса?","Только сын погибели","Никто","Двое"],"ot":["Каким по счёту сыном Иессея был Давид?","Младшим","Старшим","Средним"]},"249":{"nt":["О чём молится Иисус: «чтобы все были...»?","Едино","Богаты","Сильны"],"ot":["Чем Давид победил Голиафа?","Пращой и камнем","Мечом Саула","Копьём"]},"250":{"nt":["Кому Пётр отсёк ухо?","Малху, рабу первосвященника","Римскому воину","Иуде"],"ot":["Чья душа прилепилась к душе Давида?","Ионафана","Саула","Мелхолы"]},"251":{"nt":["Где Пётр отрёкся от Иисуса?","Во дворе первосвященника у огня","В Гефсиманском саду","В лодке"],"ot":["Кто спустил Давида через окно, спасая его от Саула?","Мелхола","Ионафан","Самуил"]},"252":{"nt":["Что спросил Пилат: «Что есть...?»","Истина","Царство","Закон"],"ot":["Как Ионафан подал знак Давиду?","Стрелами","Песней","Огнём"]},"253":{"nt":["Что было на голове Иисуса, когда Пилат вывел Его к народу?","Терновый венец","Золотая корона","Белое покрывало"],"ot":["Что дал Давиду священник Ахимелех?","Священный хлеб и меч Голиафа","Коня и копьё","Серебро"]},"254":{"nt":["Что было написано на надписи над крестом?","Иисус Назорей, Царь Иудейский","Сын Божий","Пророк из Галилеи"],"ot":["Что Давид отрезал от одежды Саула в пещере?","Край одежды","Пояс","Рукав"]},"255":{"nt":["Что вытекло из бока Иисуса, когда воин пронзил его копьём?","Кровь и вода","Только кровь","Ничего"],"ot":["Кто смягчил гнев Давида дарами вместо своего мужа Навала?","Авигея","Мелхола","Вирсавия"]},"256":{"nt":["Кто первым прибежал к гробнице?","Другой ученик, которого любил Иисус","Пётр","Мария"],"ot":["Что Давид взял у изголовья спящего Саула?","Копьё и кувшин с водой","Корону","Меч"]},"257":{"nt":["За кого Мария сначала приняла воскресшего Иисуса?","За садовника","За ангела","За Петра"],"ot":["К кому обратился Саул перед последней битвой?","К волшебнице в Аэндоре","К пророку Нафану","К священнику Ахимелеху"]},"258":{"nt":["Что сделал Иисус, сказав ученикам: «Примите Святого Духа»?","Дунул на них","Возложил на них руки","Омыл их водой"],"ot":["Какой город сожгли амаликитяне, пока Давида не было?","Секелаг","Хеврон","Гат"]},"259":{"nt":["Что сказал Фома, увидев воскресшего Иисуса?","Господь мой и Бог мой!","Учитель, прости меня!","Теперь я верю ангелам"],"ot":["Как умер Саул?","Пал на свой меч","Утонул","Умер от болезни"]},"260":{"nt":["Сколько больших рыб было в сети?","Сто пятьдесят три","Сто","Семьдесят"],"ot":["Что сделал Давид, узнав о смерти Саула и Ионафана?","Разорвал одежды, плакал и постился","Устроил праздник","Сразу пошёл на войну"]},"261":{"nt":["Сколько раз Иисус спросил Петра: «Любишь ли ты Меня?»","Трижды","Дважды","Семь раз"],"ot":["Где Давид был помазан царём над домом Иуды?","В Хевроне","В Иерусалиме","В Вифлееме"]},"262":{"nt":["Что Иоанн говорит в конце о делах Иисуса?","Если описать всё подробно, мир не вместил бы книг","Всё уже записано в этой книге","Дел было совсем немного"],"ot":["Кого убил Иоав в воротах Хеврона?","Авенира","Иевосфея","Амессая"]},"263":{"nt":["Что ученики получат, когда сойдёт на них Святой Дух?","Силу","Богатство","Царство Израилю"],"ot":["Какую крепость взял Давид в Иерусалиме?","Сион","Иерихон","Гай"]},"264":{"nt":["Что сказали двое мужей в белом после вознесения Иисуса?","Он придёт так же, как вы видели Его уходящим","Ждите Его через сорок дней","Идите в Галилею"],"ot":["Кто умер, прикоснувшись к ковчегу?","Оза","Аведдар","Ахия"]},"265":{"nt":["Кто был избран по жребию вместо Иуды?","Матфий","Иосиф Варсава","Варнава"],"ot":["Кто передал Давиду, что дом Богу построит его сын?","Пророк Нафан","Пророк Гад","Самуил"]},"266":{"nt":["Какие языки явились над учениками в день Пятидесятницы?","Огненные","Водяные","Золотые"],"ot":["Кого Давид посадил за свой стол ради Ионафана?","Мемфивосфея","Авессалома","Иоава"]},"267":{"nt":["Пророчество какого пророка цитировал Пётр в день Пятидесятницы?","Иоиля","Исаии","Даниила"],"ot":["Кого Давид отправил на смерть, чтобы взять его жену?","Урию","Иоава","Авенира"]},"268":{"nt":["Кого, по словам Петра, Бог сделал Господом и Христом?","Того Иисуса, Которого вы распяли","Давида","Иоанна Крестителя"],"ot":["Какую притчу Нафан рассказал Давиду?","О богаче, отнявшем у бедного единственную овечку","О сеятеле","О блудном сыне"]},"269":{"nt":["Сколько душ присоединилось к ученикам в тот день?","Около трёх тысяч","Около пяти тысяч","Около ста двадцати"],"ot":["Кто отомстил Амнону за Фамарь?","Авессалом","Давид","Иоав"]},"270":{"nt":["В чём постоянно пребывали верующие в 2:42?","В учении апостолов, общении, преломлении хлеба и молитвах","В посте и жертвах","В торговле и работе"],"ot":["Кто с помощью мудрой женщины из Фекои вернул Авессалома?","Иоав","Нафан","Хусий"]},"271":{"nt":["Что Пётр дал хромому у ворот храма?","Исцеление во имя Иисуса Христа","Серебро","Хлеб"],"ot":["Кто восстал против Давида, и тот бежал из Иерусалима?","Авессалом","Адония","Савей"]},"272":{"nt":["Что сказал Пётр: «Нет другого имени под небом...»?","Которым надлежит нам спастись","Которое знали бы все","Которое назвал Моисей"],"ot":["Как Авессалом попал в беду в лесу?","Зацепился головой за ветви дуба","Упал в яму","Заблудился ночью"]},"273":{"nt":["Кто продал поле и принёс деньги апостолам (прозван «сыном утешения»)?","Варнава","Анания","Стефан"],"ot":["Кто вышел встретить Давида, не ухаживая за собой всё время его отсутствия?","Мемфивосфей","Семей","Сива"]},"274":{"nt":["Что случилось с Ананией, солгавшим Святому Духу?","Упал и умер","Ослеп","Был изгнан"],"ot":["Кто поднял восстание в главе 20 со словами «Нет нам доли в Давиде»?","Савей, сын Бихри","Авессалом","Адония"]},"275":{"nt":["Кто вывел апостолов из темницы ночью?","Ангел Господа","Стража","Гамалиил"],"ot":["Как Давид называет Господа в начале песни главы 22?","Скала моя, крепость моя и избавитель","Мой царь и мой воин","Мой отец и мать"]},"276":{"nt":["Кто из фарисеев посоветовал оставить апостолов в покое?","Гамалиил","Никодим","Каиафа"],"ot":["Что принесли Давиду трое храбрецов, рискуя жизнью?","Воды из колодца у ворот Вифлеема","Меч Голиафа","Корону царя Аммона"]},"277":{"nt":["Сколько мужей избрали для служения столам?","Семь","Двенадцать","Три"],"ot":["За какой поступок Давида пострадал народ в главе 24?","За перепись народа","За войну с филистимлянами","За постройку дворца"]},"278":{"nt":["Кому, по речи Стефана, явился Бог славы в Месопотамии?","Аврааму","Моисею","Иакову"],"ot":["Кто объявил себя царём, когда Давид состарился?","Адония","Авессалом","Соломон"]},"279":{"nt":["Что сказал Стефан, умирая?","Господи, не вмени им этого греха","Я прощаю только вас","Бог отомстит за меня"],"ot":["Кого помазали царём у Гиона?","Соломона","Адонию","Нафана"]},"280":{"nt":["Кто проповедовал Христа в городе Самарии?","Филипп","Пётр","Павел"],"ot":["Что Давид завещал Соломону в начале главы 2?","Будь твёрд и соблюдай заповеди Господа","Построй новый город","Не воюй никогда"]},"281":{"nt":["Что хотел купить за деньги Симон волхв?","Власть давать Святого Духа","Землю апостолов","Свиток пророков"],"ot":["О чём Соломон попросил Бога?","О разумном сердце, чтобы судить народ","О богатстве","О долгой жизни"]},"282":{"nt":["Что читал евнух в колеснице?","Пророка Исаию","Книгу Моисея","Псалмы"],"ot":["Сколько притчей изрёк Соломон?","Три тысячи","Тысячу","Сто"]},"283":{"nt":["Что случилось с Савлом по дороге в Дамаск?","Его осиял свет с неба, и он ослеп","На него напали разбойники","Он увидел сон"],"ot":["Какой царь Тира присылал Соломону кедр и кипарис?","Хирам","Ахав","Навуходоносор"]},"284":{"nt":["Кого Пётр воскресил в Иоппии?","Тавифу (Серну)","Лазаря","Евтиха"],"ot":["Как назывались два медных столба у притвора храма?","Иахин и Воаз","Сион и Мориа","Урим и Туммим"]},"285":{"nt":["Что видел Пётр в видении на крыше?","Полотно со всякими животными","Огненную колесницу","Лестницу до неба"],"ot":["Что называлось литым морем?","Большой медный бассейн на двенадцати волах","Озеро у храма","Золотой сосуд для вина"]},"286":{"nt":["Кто послал людей за Петром в Иоппию?","Корнилий, сотник","Ирод","Иаков"],"ot":["Что было в ковчеге, когда его внесли в храм?","Только две каменные скрижали","Манна и жезл Аарона","Свиток Закона и корона"]},"287":{"nt":["Что произошло, когда Пётр ещё говорил в доме Корнилия?","Святой Дух сошёл на всех, слушавших слово","Дом затрясся","Все ушли"],"ot":["Что сделал Соломон, закончив молитву при освящении храма?","Встал и благословил всё собрание","Ушёл во дворец","Принёс десятину"]},"288":{"nt":["Чем, по словам Господа, крестил Иоанн, а чем будут крещены ученики?","Иоанн — водой, а вы — Святым Духом","Иоанн — Духом, а вы — водой","Оба — водой"],"ot":["Сколько лет Соломон строил дом Господа и царский дом?","Двадцать","Семь","Сорок"]},"289":{"nt":["Где учеников впервые стали называть христианами?","В Антиохии","В Иерусалиме","В Риме"],"ot":["Какая царица пришла испытать Соломона загадками?","Царица Савская","Царица Египта","Царица Тира"]},"290":{"nt":["Кто узнала голос Петра у ворот дома Марии?","Служанка Рода","Тавифа","Лидия"],"ot":["Почему сердце Соломона отклонилось от Господа в старости?","Его жёны склонили его к другим богам","Он заболел","Он воевал с Египтом"]},"291":{"nt":["Кого Святой Дух велел отделить для дела служения?","Варнаву и Савла","Петра и Иоанна","Филиппа и Стефана"],"ot":["Что сделал Иеровоам, чтобы народ не ходил в Иерусалим?","Сделал двух золотых тельцов","Закрыл дороги войском","Построил свой храм на Сионе"]},"292":{"nt":["Кто отделился от Павла и Варнавы и вернулся в Иерусалим?","Иоанн (Марк)","Сила","Тимофей"],"ot":["Что случилось с рукой Иеровоама, когда он протянул её против человека Божьего?","Она онемела (иссохла)","Она засияла","Ничего не случилось"]},"293":{"nt":["К кому обратились Павел и Варнава, когда иудеи отвергли слово?","К язычникам","К римлянам в Иерусалиме","К самарянам"],"ot":["К какому пророку пошла переодетая жена Иеровоама?","К Ахии","К Илии","К Нафану"]},"294":{"nt":["За кого жители Листры приняли Варнаву и Павла?","За богов Зевса и Гермеса","За царей","За пророков Израиля"],"ot":["Какой царь Иуды делал угодное Господу, как Давид, в главе 15?","Аса","Ровоам","Авия"]},"295":{"nt":["О чём был спор на собрании в Иерусалиме?","Нужно ли обрезание язычникам","Где строить церковь","Кто будет старшим апостолом"],"ot":["Кто кормил Илию у потока?","Вороны","Ангелы","Вдова"]},"296":{"nt":["Кто высказал решение на собрании в Иерусалиме?","Иаков","Пётр","Павел"],"ot":["На какой горе Илия встретился с пророками Ваала?","Кармил","Синай","Сион"]},"297":{"nt":["Из-за кого разошлись Павел и Варнава?","Из-за Марка","Из-за Силы","Из-за Тимофея"],"ot":["В чём Господь заговорил с Илией на горе Хорив?","В тихом, веющем звуке","В сильном ветре","В огне"]},"298":{"nt":["Как звали торговку багряницей из Фиатиры, которая уверовала?","Лидия","Прискилла","Фива"],"ot":["Какой царь Сирии воевал с Ахавом в главе 20?","Венадад","Азаил","Нееман"]},"299":{"nt":["Что делали Павел и Сила в темнице около полуночи?","Молились и пели гимны Богу","Спали","Пытались бежать"],"ot":["Чей виноградник захотел получить Ахав?","Навуфея","Илии","Иосафата"]},"300":{"nt":["Чем жители Верии были благороднее фессалоникийцев?","Каждый день исследовали Писания","Они были богаче","Они строили синагогу"],"ot":["К какому божеству послал Охозия узнать о своей болезни?","К Веельзевулу, богу Екрона","К Ваалу Сидонскому","К Дагону"]},"301":{"nt":["Какую надпись Павел увидел на жертвеннике в Афинах?","«Неведомому Богу»","«Богу Израиля»","«Зевсу Великому»"],"ot":["Как Илия был взят на небо?","В вихре, когда появилась огненная колесница","На облаке","По лестнице"]},"302":{"nt":["С кем Павел жил и работал в Коринфе?","С Акилой и Прискиллой","С Варнавой","С Лукой"],"ot":["Что Елисей сделал для вдовы, у которой были долги?","Умножил масло в её сосуде","Дал ей золото","Простил ей долг от имени царя"]},"303":{"nt":["Кто был красноречив и силён в Писаниях, родом из Александрии?","Аполлос","Акила","Тимофей"],"ot":["Сколько раз Нееман окунулся в Иордан?","Семь","Три","Один"]},"304":{"nt":["Что сделали верующие в Ефесе с книгами о волшебстве?","Сожгли их","Продали их","Спрятали их"],"ot":["Кто первыми узнали, что сирийцы бежали из своего стана?","Четверо прокажённых","Царские разведчики","Елисей и Гиезий"]},"305":{"nt":["Какую богиню прославляли в Ефесе?","Артемиду","Афину","Астарту"],"ot":["Кому царь вернул поле, услышав рассказ Гиезия о Елисее?","Женщине, чьего сына воскресил Елисей","Нееману","Вдове с маслом"]},"306":{"nt":["Как звали юношу, упавшего из окна во время долгой беседы Павла?","Евтих","Тимофей","Тихик"],"ot":["Кто был помазан царём над Израилем в главе 9?","Ииуй","Иорам","Ахав"]},"307":{"nt":["Какие слова Господа Иисуса напомнил Павел ефесским старейшинам?","Блаженнее давать, чем принимать","Любите врагов ваших","Не судите"],"ot":["Кого истребил Ииуй в доме Ваала?","Служителей Ваала","Пророков Господа","Сирийцев"]},"308":{"nt":["Что сделал пророк Агав с поясом Павла?","Связал им себе руки и ноги","Сжёг его","Отдал его Луке"],"ot":["Сколько лет было Иоасу, когда он стал царём?","Семь","Двенадцать","Двадцать"]},"309":{"nt":["Кому Павел рассказал в Иерусалиме о делах Бога среди язычников?","Иакову и всем старейшинам","Первосвященнику","Римскому наместнику"],"ot":["Что случилось с мертвецом, которого бросили в гробницу Елисея?","Он ожил, коснувшись костей Елисея","Гробница обрушилась","Ничего не случилось"]},"310":{"nt":["Кто выхватил Павла из рук толпы у храма?","Тысяченачальник с воинами","Иаков","Ангел"],"ot":["Чем был поражён царь Азария до дня смерти?","Проказой","Слепотой","Хромотой"]},"311":{"nt":["У ног какого учителя воспитывался Павел?","Гамалиила","Никодима","Каиафы"],"ot":["Образец какого жертвенника Ахаз прислал в Иерусалим?","Жертвенника, который он увидел в Дамаске","Жертвенника в Египте","Жертвенника Соломона"]},"312":{"nt":["Почему Павла не стали бичевать?","Он был римским гражданином","Он заплатил выкуп","За него заступился народ"],"ot":["Царь какой страны взял Самарию и переселил Израиль?","Ассирии","Египта","Вавилона"]},"313":{"nt":["Что сказал Господь Павлу ночью в главе 23?","Мужайся: ты должен свидетельствовать и в Риме","Беги из Иерусалима","Замолчи и жди"],"ot":["Какой царь Иуды уповал на Господа и разбил медного змея?","Езекия","Ахаз","Иосафат"]},"314":{"nt":["Сколько человек поклялись не есть и не пить, пока не убьют Павла?","Более сорока","Двенадцать","Около ста"],"ot":["Сколько воинов в стане Ассирии поразил Ангел Господа?","Сто восемьдесят пять тысяч","Десять тысяч","Тысячу"]},"315":{"nt":["Кто узнал о заговоре против Павла и сказал об этом?","Сын сестры Павла","Тимофей","Лука"],"ot":["Какое знамение Бог дал больному Езекии?","Тень вернулась на десять ступеней назад","Пошёл дождь","Солнце погасло"]},"316":{"nt":["К какому наместнику отвели Павла в Кесарию?","К Феликсу","К Пилату","К Галлиону"],"ot":["Что нашёл первосвященник Хелкия в доме Господа?","Книгу закона","Золотой сосуд","Ковчег завета"]},"317":{"nt":["Кто сменил Феликса?","Порций Фест","Ирод Агриппа","Понтий Пилат"],"ot":["Какой праздник совершил Иосия, подобного которому не было со времён судей?","Пасху","Праздник кущей","Пятидесятницу"]},"318":{"nt":["К кому потребовал суда Павел?","К кесарю","К первосвященнику","К царю Агриппе"],"ot":["Какой царь Вавилона взял Иерусалим?","Навуходоносор","Кир","Дарий"]},"319":{"nt":["Перед каким царём защищался Павел в главе 26?","Перед Агриппой","Перед Иродом Антипой","Перед кесарем"],"ot":["С какого имени начинается родословие в 1 Паралипоменон?","С Адама","С Авраама","С Ноя"]},"320":{"nt":["Что сказал Агриппа Павлу в конце речи?","Ты почти убеждаешь меня стать христианином","Ты сошёл с ума","Тебя отпустят завтра"],"ot":["Чьи сыновья перечислены в главе 3?","Сыновья Давида","Сыновья Саула","Сыновья Аарона"]},"321":{"nt":["Что сказал Павлу ангел во время бури?","Не бойся: ты должен предстать перед кесарем","Возвращайся в Иерусалим","Брось корабль"],"ot":["Кто молился Богу, чтобы Он благословил его и расширил его пределы?","Иавис","Халев","Иоав"]},"322":{"nt":["Что сделал Павел, когда змея повисла на его руке?","Стряхнул её в огонь и не пострадал","Убил её мечом","Позвал врача"],"ot":["Потомки какого колена перечислены в главе 6?","Левия","Иуды","Дана"]},"323":{"nt":["В какой город наконец прибыл Павел в главе 28?","В Рим","В Афины","В Антиохию"],"ot":["Чьё имя есть в родословии Ефрема в главе 7?","Иисуса, сына Навина","Давида","Самуила"]},"324":{"nt":["Сколько лет Павел жил в Риме на собственном содержании?","Два года","Семь лет","Один год"],"ot":["Родословие какого колена приведено в главе 8, вместе с домом Саула?","Вениамина","Иуды","Ефрема"]},"325":{"nt":["Кем называет себя Павел в первом стихе Послания к Римлянам?","Рабом Христа Иисуса, призванным апостолом","Учеником Гамалиила","Царём Израиля"],"ot":["Кто охранял ворота дома Господа в главе 9?","Привратники из левитов","Воины Давида","Римские стражники"]},"326":{"nt":["От чьего семени произошёл Сын Божий по плоти?","От семени Давида","От семени Моисея","От семени Аарона"],"ot":["Где весь Израиль помазал Давида в царя?","В Хевроне","В Иерусалиме","В Силоме"]},"327":{"nt":["Чем, по словам Павла, является Евангелие?","Силой Божьей для спасения всякого верующего","Новым законом","Историей Израиля"],"ot":["К кому сходились храбрые люди в Секелаг?","К Давиду","К Саулу","К Иоаву"]},"328":{"nt":["На что люди променяли истину Божью?","На ложь","На серебро","На закон"],"ot":["Кто умер, взявшись рукой за ковчег?","Оза","Ахио","Аведдар"]},"329":{"nt":["Что делает тот, кто осуждает другого, сам делая то же?","Осуждает самого себя","Становится праведным","Исполняет закон"],"ot":["Как левиты понесли ковчег на этот раз?","На плечах, на шестах","На новой колеснице","На верблюдах"]},"330":{"nt":["Какое обрезание, по словам Павла, настоящее?","Обрезание сердца, в духе","Обрезание по закону","Обрезание только для левитов"],"ot":["Что Бог обещал Давиду через пророка Нафана в главе 17?","Утвердить его дом и престол навеки","Дать ему долгую жизнь","Избавить от всех войн"]},"331":{"nt":["Сколько праведных, по 3:10?","Нет ни одного","Двенадцать","Только Авраам"],"ot":["Что сделал Аннон с послами Давида?","Обрил их и обрезал им одежду","Принял их с почётом","Посадил в темницу"]},"332":{"nt":["Чем человек оправдывается, по 3:28?","Верой, независимо от дел закона","Делами закона","Жертвами"],"ot":["Где Давид построил жертвенник, чтобы прекратилось поражение?","На гумне Орны","В Хевроне","На горе Кармил"]},"333":{"nt":["Что вменилось Аврааму в праведность?","Его вера Богу","Его богатство","Его обрезание"],"ot":["Почему Бог не позволил Давиду строить храм?","Он пролил много крови и вёл войны","Он был слишком стар","У него не было золота"]},"334":{"nt":["Сколько лет было Аврааму, когда он не ослабел в вере, по 4:19?","Около ста","Около семидесяти","Около пятидесяти"],"ot":["Как распределяли священников по чредам служения?","По жребию","По возрасту","По богатству"]},"335":{"nt":["Что, по 5:5, излито в наши сердца через Святого Духа?","Любовь Божья","Закон","Страх"],"ot":["О ком в основном говорится в главе 26?","О привратниках","О певцах","О воинах"]},"336":{"nt":["Через кого грех вошёл в мир, по 5:12?","Через одного человека","Через змея","Через закон"],"ot":["Сколько отрядов служили царю по очереди, каждый свой месяц?","Двенадцать","Семь","Четыре"]},"337":{"nt":["Во что мы крестились, когда крестились во Христа Иисуса, по 6:3?","В Его смерть","В Его царство","В Иордан"],"ot":["Кому Давид передал образец (план) храма?","Соломону","Нафану","Садоку"]},"338":{"nt":["Кем Павел велит себя считать в 6:11?","Мёртвыми для греха и живыми для Бога","Рабами закона","Праведными по рождению"],"ot":["Где Бог явился Соломону и тот попросил мудрости?","В Гаваоне","В Хевроне","В Вифлееме"]},"339":{"nt":["Что является платой за грех, по 6:23?","Смерть","Болезнь","Бедность"],"ot":["На какой горе Соломон начал строить храм?","На горе Мориа","На горе Сион","На горе Елеонской"]},"340":{"nt":["Каков закон, по 7:12?","Свят, и заповедь свята, праведна и добра","Жесток","Устарел"],"ot":["Что наполнило храм, когда певцы славили Господа?","Облако","Дым от жертв","Огонь"]},"341":{"nt":["От чего просит избавления Павел: «Кто избавит меня от...»?","Тела этой смерти","Римской власти","Врагов в Иерусалиме"],"ot":["На чём стоял Соломон, когда молился при освящении храма?","На медном возвышении","На крыше храма","На горе"]},"342":{"nt":["Чего нет теперь тем, кто во Христе Иисусе, по 8:1?","Осуждения","Скорбей","Закона"],"ot":["Что сошло с неба после молитвы Соломона?","Огонь","Манна","Голубь"]},"343":{"nt":["Что такое мышление духа, по 8:6?","Жизнь и мир","Закон и порядок","Сила и власть"],"ot":["Кто отверг совет старцев и послушал молодых?","Ровоам","Иеровоам","Соломон"]},"344":{"nt":["Кто, по 8:8, не может угодить Богу?","Живущие во плоти","Дети","Язычники"],"ot":["Какой царь Египта напал на Иерусалим при Ровоаме?","Сусаким","Нехао","Фараон Соломона"]},"345":{"nt":["Как мы взываем к Богу духом сыновства?","Авва, Отец!","Господи, помилуй!","Царь небес!"],"ot":["Какой царь Иуды молился: «Господи, Тебе всё равно помочь сильному или бессильному»?","Аса","Ровоам","Авия"]},"346":{"nt":["Что, по словам Павла, может отлучить нас от любви Божьей во Христе?","Ничто","Смерть","Грех"],"ot":["Кого Иосафат посылал по городам учить народ закону?","Князей, левитов и священников","Только пророков","Воинов"]},"347":{"nt":["«Иакова Я возлюбил, а ... возненавидел». Кого?","Исава","Измаила","Каина"],"ot":["Какой пророк предсказал Ахаву поражение?","Михей","Илия","Иеремия"]},"348":{"nt":["С чем Павел сравнивает человека в руке Бога?","С глиной в руках горшечника","С овцой в руках пастыря","С мечом в руке воина"],"ot":["Что делали певцы перед войском Иосафата?","Шли впереди и славили Господа","Трубили в трубы позади","Оставались в Иерусалиме"]},"349":{"nt":["Что нужно, чтобы спастись, по 10:9?","Исповедовать устами Иисуса Господом и верить в сердце","Соблюдать все праздники","Принести жертву в храме"],"ot":["Кто спасла маленького Иоаса от Гофолии?","Иосавеф","Иезавель","Олдама"]},"350":{"nt":["Откуда приходит вера, по 10:17?","От слышания","От видения","От рождения"],"ot":["Что сделал Иоас для дома Господа?","Обновил его, собрав деньги в ящик","Перестроил в другом месте","Отдал его сирийцам"]},"351":{"nt":["Как Павел называет язычников, привитых к маслине?","Дикой маслиной","Виноградной лозой","Смоковницей"],"ot":["Почему царь Озия стал прокажённым?","Сам вошёл в храм, чтобы воскурить благовония","Убил пророка","Построил идола"]},"352":{"nt":["Что сказано в 11:36: «Ибо всё из Него, через Него и...»?","К Нему","Без Него","Против Него"],"ot":["Что сделал царь Ахаз во время бедствия?","Ещё больше грешил против Господа","Смирился и молился","Отдал престол сыну"]},"353":{"nt":["Что Павел просит представить Богу в живую жертву?","Свои тела","Своё имение","Своих животных"],"ot":["Что сделал Езекия в первый месяц своего царствования?","Открыл двери дома Господа и починил их","Объявил войну Ассирии","Построил дворец"]},"354":{"nt":["Чем, по 12:21, нужно побеждать зло?","Добром","Силой","Молчанием"],"ot":["Какой праздник Езекия праздновал со всем Израилем и Иудой?","Пасху","Праздник кущей","Новомесячие"]},"355":{"nt":["Что является исполнением закона, по 13:10?","Любовь","Пост","Жертва"],"ot":["Кто молился вместе с Езекией, когда угрожал Сеннахирим?","Пророк Исаия","Пророк Иеремия","Священник Хелкия"]},"356":{"nt":["Перед чьим судилищем мы все предстанем, по 14:10?","Перед судилищем Бога","Перед кесарем","Перед старейшинами"],"ot":["Что сделал Манассия, когда оказался в беде?","Смирился и молился Богу","Убежал в Египет","Проклял Бога"]},"357":{"nt":["Что такое Царство Божье, по 14:17?","Праведность, мир и радость в Святом Духе","Еда и питьё","Власть и сила"],"ot":["Какой персидский царь объявил о строительстве дома Господа в конце книги?","Кир","Дарий","Артаксеркс"]},"358":{"nt":["Как Павел называет Бога в 15:13?","Бог надежды","Бог войны","Бог закона"],"ot":["Что царь Кир вернул иудеям?","Сосуды дома Господа","Землю Египта","Царский престол"]},"359":{"nt":["В какую страну Павел хотел отправиться, проходя через Рим?","В Испанию","В Египет","В Индию"],"ot":["О чём глава 2 книги Эздры?","Список вернувшихся из плена","Молитва Эздры","Восстановление стен"]},"360":{"nt":["Как звали служительницу церкви в Кенхреях?","Фива","Лидия","Прискилла"],"ot":["Что произошло, когда заложили основание храма?","Многие радовались громко, а старейшие плакали","Все молчали","Враги разрушили его"]},"361":{"nt":["Каким поцелуем Павел велит приветствовать друг друга?","Святым","Братским","Царским"],"ot":["Какой царь разрешил продолжить строительство, найдя указ Кира?","Дарий","Артаксеркс","Навуходоносор"]},"362":{"nt":["Кому слава вовеки, по последним стихам Послания к Римлянам?","Единому премудрому Богу через Иисуса Христа","Апостолам","Церкви в Риме"],"ot":["Кем был Эздра?","Книжником, сведущим в законе Моисея","Царём","Воином"]},"363":{"nt":["Кому написано Первое послание к Коринфянам?","Церкви Божьей в Коринфе","Церкви в Риме","Тимофею"],"ot":["Что сделал Эздра перед дорогой вместо того, чтобы просить у царя отряд?","Объявил пост и молился","Нанял стражу","Отложил путешествие"]}};
+const XP_QUIZ=5;
+const PLAN=[["Мф.","1:1–2","Быт.","1:1–5"],["Мф.","1:3–7","Быт.","1:6–23"],["Мф.","1:8–17","Быт.","1:24–31"],["Мф.","1:18–25","Быт.","2:1–9"],["Мф.","2:1–23","Быт.","2:10–25"],["Мф.","3:1–6","Быт.","3:1–13"],["Мф.","3:7–17","Быт.","3:14–24"],["Мф.","4:1–11","Быт.","4:1–26"],["Мф.","4:12–25","Быт.","5:1–32"],["Мф.","5:1–4","Быт.","6:1—22"],["Мф.","5:5–12","Быт.","7:1—8:3"],["Мф.","5:13–20","Быт.","8:4–22"],["Мф.","5:21–26","Быт.","9:1–29"],["Мф.","5:27–48","Быт.","10:1–32"],["Мф.","6:1–8","Быт.","11:1–32"],["Мф.","6:9–18","Быт.","12:1–20"],["Мф.","6:19–34","Быт.","13:1–18"],["Мф.","7:1–12","Быт.","14:1–24"],["Мф.","7:13–29","Быт.","15:1–21"],["Мф.","8:1–13","Быт.","16:1–16"],["Мф.","8:14–22","Быт.","17:1–27"],["Мф.","8:23–34","Быт.","18:1–33"],["Мф.","9:1–13","Быт.","19:1–38"],["Мф.","9:14–17","Быт.","20:1–18"],["Мф.","9:18–34","Быт.","21:1–34"],["Мф.","9:35—10:5","Быт.","22:1–24"],["Мф.","10:6–25","Быт.","23:1—24:27"],["Мф.","10:26–42","Быт.","24:28–67"],["Мф.","11:1–15","Быт.","25:1–34"],["Мф.","11:16–30","Быт.","26:1–35"],["Мф.","12:1–14","Быт.","27:1–46"],["Мф.","12:15–32","Быт.","28:1–22"],["Мф.","12:33–42","Быт.","29:1–35"],["Мф.","12:43—13:2","Быт.","30:1–43"],["Мф.","13:3–12","Быт.","31:1–55"],["Мф.","13:13–30","Быт.","32:1–32"],["Мф.","13:31–43","Быт.","33:1—34:31"],["Мф.","13:44–58","Быт.","35:1–29"],["Мф.","14:1–13","Быт.","36:1–43"],["Мф.","14:14–21","Быт.","37:1–36"],["Мф.","14:22–36","Быт.","38:1—39:23"],["Мф.","15:1–20","Быт.","40:1—41:13"],["Мф.","15:21–31","Быт.","41:14–57"],["Мф.","15:32–39","Быт.","42:1–38"],["Мф.","16:1–12","Быт.","43:1–34"],["Мф.","16:13–20","Быт.","44:1–34"],["Мф.","16:21–28","Быт.","45:1–28"],["Мф.","17:1–13","Быт.","46:1–34"],["Мф.","17:14–27","Быт.","47:1–31"],["Мф.","18:1–14","Быт.","48:1–22"],["Мф.","18:15–22","Быт.","49:1–15"],["Мф.","18:23–35","Быт.","49:16–33"],["Мф.","19:1–15","Быт.","50:1–26"],["Мф.","19:16–30","Исх.","1:1–22"],["Мф.","20:1–16","Исх.","2:1–25"],["Мф.","20:17–34","Исх.","3:1–22"],["Мф.","21:1–11","Исх.","4:1–31"],["Мф.","21:12–22","Исх.","5:1–23"],["Мф.","21:23–32","Исх.","6:1–30"],["Мф.","21:33–46","Исх.","7:1–25"],["Мф.","22:1–22","Исх.","8:1–32"],["Мф.","22:23–33","Исх.","9:1–35"],["Мф.","22:34–46","Исх.","10:1–29"],["Мф.","23:1–12","Исх.","11:1–10"],["Мф.","23:13–39","Исх.","12:1–14"],["Мф.","24:1–14","Исх.","12:15–36"],["Мф.","24:15–31","Исх.","12:37–51"],["Мф.","24:32–51","Исх.","13:1–22"],["Мф.","25:1–13","Исх.","14:1–31"],["Мф.","25:14–30","Исх.","15:1–27"],["Мф.","25:31–46","Исх.","16:1–36"],["Мф.","26:1–16","Исх.","17:1–16"],["Мф.","26:17–35","Исх.","18:1–27"],["Мф.","26:36–46","Исх.","19:1–25"],["Мф.","26:47–64","Исх.","20:1–26"],["Мф.","26:65–75","Исх.","21:1–36"],["Мф.","27:1–26","Исх.","22:1–31"],["Мф.","27:27–44","Исх.","23:1–33"],["Мф.","27:45–56","Исх.","24:1–18"],["Мф.","27:57—28:15","Исх.","25:1–22"],["Мф.","28:16–20","Исх.","25:23–40"],["Мк.","1:1","Исх.","26:1–14"],["Мк.","1:2–6","Исх.","26:15–37"],["Мк.","1:7–13","Исх.","27:1–21"],["Мк.","1:14–28","Исх.","28:1–21"],["Мк.","1:29–45","Исх.","28:22–43"],["Мк.","2:1–12","Исх.","29:1–21"],["Мк.","2:13–28","Исх.","29:22–46"],["Мк.","3:1–19","Исх.","30:1–10"],["Мк.","3:20–35","Исх.","30:11–38"],["Мк.","4:1–25","Исх.","31:1–17"],["Мк.","4:26–41","Исх.","31:18—32:35"],["Мк.","5:1–20","Исх.","33:1–23"],["Мк.","5:21–43","Исх.","34:1–35"],["Мк.","6:1–29","Исх.","35:1–35"],["Мк.","6:30–56","Исх.","36:1–38"],["Мк.","7:1–23","Исх.","37:1–29"],["Мк.","7:24–37","Исх.","38:1–31"],["Мк.","8:1–26","Исх.","39:1–43"],["Мк.","8:27–9:1","Исх.","40:1–38"],["Мк.","9:2–29","Лев.","1:1–17"],["Мк.","9:30–50","Лев.","2:1–16"],["Мк.","10:1–16","Лев.","3:1–17"],["Мк.","10:17–34","Лев.","4:1–35"],["Мк.","10:35–52","Лев.","5:1–19"],["Мк.","11:1–16","Лев.","6:1–30"],["Мк.","11:17–33","Лев.","7:1–38"],["Мк.","12:1–27","Лев.","8:1–36"],["Мк.","12:28–44","Лев.","9:1–24"],["Мк.","13:1–13","Лев.","10:1–20"],["Мк.","13:14–37","Лев.","11:1–47"],["Мк.","14:1–26","Лев.","12:1–8"],["Мк.","14:27–52","Лев.","13:1–28"],["Мк.","14:53–72","Лев.","13:29–59"],["Мк.","15:1–15","Лев.","14:1–18"],["Мк.","15:16–47","Лев.","14:19–32"],["Мк.","16:1–8","Лев.","14:33–57"],["Мк.","16:9–20","Лев.","15:1–33"],["Лк.","1:1–4","Лев.","16:1–17"],["Лк.","1:5–25","Лев.","16:18–34"],["Лк.","1:26–46","Лев.","17:1–16"],["Лк.","1:47–56","Лев.","18:1–30"],["Лк.","1:57–80","Лев.","19:1–37"],["Лк.","2:1–8","Лев.","20:1–27"],["Лк.","2:9–20","Лев.","21:1–24"],["Лк.","2:21–39","Лев.","22:1–33"],["Лк.","2:40–52","Лев.","23:1–22"],["Лк.","3:1–20","Лев.","23:23–44"],["Лк.","3:21–38","Лев.","24:1–23"],["Лк.","4:1–13","Лев.","25:1–23"],["Лк.","4:14–30","Лев.","25:24–55"],["Лк.","4:31–44","Лев.","26:1–24"],["Лк.","5:1–26","Лев.","26:25–46"],["Лк.","5:27–6:16","Лев.","27:1–34"],["Лк.","6:17–38","Числ.","1:1–54"],["Лк.","6:39–49","Числ.","2:1–34"],["Лк.","7:1–17","Числ.","3:1–51"],["Лк.","7:18–23","Числ.","4:1–49"],["Лк.","7:24–35","Числ.","5:1–31"],["Лк.","7:36–50","Числ.","6:1–27"],["Лк.","8:1–15","Числ.","7:1–41"],["Лк.","8:16–25","Числ.","7:42–88"],["Лк.","8:26–39","Числ.","7:89—8:26"],["Лк.","8:40–56","Числ.","9:1–23"],["Лк.","9:1–17","Числ.","10:1–36"],["Лк.","9:18–26","Числ.","11:1–35"],["Лк.","9:27–36","Числ.","12:1—13:33"],["Лк.","9:37–50","Числ.","14:1–45"],["Лк.","9:51–62","Числ.","15:1–41"],["Лк.","10:1–11","Числ.","16:1–50"],["Лк.","10:12–24","Числ.","17:1–18:7"],["Лк.","10:25–37","Числ.","18:8–32"],["Лк.","10:38–42","Числ.","19:1–22"],["Лк.","11:1–13","Числ.","20:1–29"],["Лк.","11:14–26","Числ.","21:1–35"],["Лк.","11:27–36","Числ.","22:1–41"],["Лк.","11:37–54","Числ.","23:1–30"],["Лк.","12:1–12","Числ.","24:1–25"],["Лк.","12:13–21","Числ.","25:1–18"],["Лк.","12:22–34","Числ.","26:1–65"],["Лк.","12:35–48","Числ.","27:1–23"],["Лк.","12:49–59","Числ.","28:1–31"],["Лк.","13:1–9","Числ.","29:1–40"],["Лк.","13:10–17","Числ.","30:1–31:24"],["Лк.","13:18–30","Числ.","31:25–54"],["Лк.","13:31–14:6","Числ.","32:1–42"],["Лк.","14:7–14","Числ.","33:1–56"],["Лк.","14:15–24","Числ.","34:1–29"],["Лк.","14:25–35","Числ.","35:1–34"],["Лк.","15:1–10","Числ.","36:1–13"],["Лк.","15:11–21","Втор.","1:1–46"],["Лк.","15:22–32","Втор.","2:1–37"],["Лк.","16:1–13","Втор.","3:1–29"],["Лк.","16:14–22","Втор.","4:1–49"],["Лк.","16:23–31","Втор.","5:1–33"],["Лк.","17:1–19","Втор.","6:1–7:26"],["Лк.","17:20–37","Втор.","8:1–20"],["Лк.","18:1–14","Втор.","9:1–29"],["Лк.","18:15–30","Втор.","10:1–22"],["Лк.","18:31–43","Втор.","11:1–32"],["Лк.","19:1–10","Втор.","12:1–32"],["Лк.","19:11–27","Втор.","13:1–14:21"],["Лк.","19:28–48","Втор.","14:22—15:23"],["Лк.","20:1–19","Втор.","16:1–22"],["Лк.","20:20–38","Втор.","17:1—18:8"],["Лк.","20:39—21:4","Втор.","18:9—19:21"],["Лк.","21:5–27","Втор.","20:1—21:17"],["Лк.","21:28–38","Втор.","21:18—22:30"],["Лк.","22:1–20","Втор.","23:1–25"],["Лк.","22:21–38","Втор.","24:1—22"],["Лк.","22:39–54","Втор.","25:1–19"],["Лк.","22:55–71","Втор.","26:1–19"],["Лк.","23:1–43","Втор.","27:1–26"],["Лк.","23:44–56","Втор.","28:1–68"],["Лк.","24:1–12","Втор.","29:1–29"],["Лк.","24:13–35","Втор.","30:1—31:29"],["Лк.","24:36–53","Втор.","31:30—32:52"],["Ин.","1:1–13","Втор.","33:1–29"],["Ин.","1:14–18","Втор.","34:1–12"],["Ин.","1:19–34","Иис. Н.","1:1–18"],["Ин.","1:35–51","Иис. Н.","2:1–24"],["Ин.","2:1–11","Иис. Н.","3:1–17"],["Ин.","2:12–22","Иис. Н.","4:1–24"],["Ин.","2:23—3:13","Иис. Н.","5:1–15"],["Ин.","3:14–21","Иис. Н.","6:1–27"],["Ин.","3:22–36","Иис. Н.","7:1–26"],["Ин.","4:1–14","Иис. Н.","8:1–35"],["Ин.","4:15–26","Иис. Н.","9:1–27"],["Ин.","4:27–42","Иис. Н.","10:1–43"],["Ин.","4:43–54","Иис. Н.","11:1—12:24"],["Ин.","5:1–16","Иис. Н.","13:1–33"],["Ин.","5:17–30","Иис. Н.","14:1—15:63"],["Ин.","5:31–47","Иис. Н.","16:01—18:28"],["Ин.","6:1–15","Иис. Н.","19:1–51"],["Ин.","6:16–31","Иис. Н.","20:1—21:45"],["Ин.","6:32–51","Иис. Н.","22:1—34"],["Ин.","6:52–71","Иис. Н.","23:1—24:33"],["Ин.","7:1–9","Суд.","1:1–36"],["Ин.","7:10–24","Суд.","2:1–23"],["Ин.","7:25–36","Суд.","3:1–31"],["Ин.","7:37–52","Суд.","4:1–24"],["Ин.","7:53—8:11","Суд.","5:1–31"],["Ин.","8:12–27","Суд.","6:1–40"],["Ин.","8:28–44","Суд.","7:1–25"],["Ин.","8:45–59","Суд.","8:1–35"],["Ин.","9:1–13","Суд.","9:1–57"],["Ин.","9:14–34","Суд.","10:1—11:40"],["Ин.","9:35—10:9","Суд.","12:1—13:25"],["Ин.","10:10–30","Суд.","14:1—15:20"],["Ин.","10:31—11:4","Суд.","16:1–31"],["Ин.","11:5–22","Суд.","17:1—18:31"],["Ин.","11:23–40","Суд.","19:1–30"],["Ин.","11:47–57","Суд.","20:1–48"],["Ин.","12:1–11","Суд.","21:1–25"],["Ин.","12:12–24","Руф.","1:1–22"],["Ин.","12:25–36","Руф.","2:1–23"],["Ин.","12:37–50","Руф.","3:1–18"],["Ин.","13:1–11","Руф.","4:1–22"],["Ин.","13:12–30","1 Цар.","1:1–28"],["Ин.","13:31–38","1 Цар.","2:1–36"],["Ин.","14:1–6","1 Цар.","3:1—4:22"],["Ин.","14:7–20","1 Цар.","5:1—6:21"],["Ин.","14:21–31","1 Цар.","7:1—8:22"],["Ин.","15:1–11","1 Цар.","9:1–27"],["Ин.","15:12–27","1 Цар.","10:1—11:15"],["Ин.","16:1–15","1 Цар.","12:1—13:23"],["Ин.","16:16–33","1 Цар.","14:1–52"],["Ин.","17:1–5","1 Цар.","15:1–35"],["Ин.","17:6–13","1 Цар.","16:1–23"],["Ин.","17:14–24","1 Цар.","17:1–58"],["Ин.","17:25—18:11","1 Цар.","18:1–30"],["Ин.","18:12–27","1 Цар.","19:1–24"],["Ин.","18:28–40","1 Цар.","20:1–42"],["Ин.","19:1–16","1 Цар.","21:1—22:23"],["Ин.","19:17–30","1 Цар.","23:1—24:22"],["Ин.","19:31–42","1 Цар.","25:1–44"],["Ин.","20:1–13","1 Цар.","26:1–25"],["Ин.","20:14–18","1 Цар.","27:1—28:25"],["Ин.","20:19–22","1 Цар.","29:1—30:31"],["Ин.","20:23–31","1 Цар.","31:1–13"],["Ин.","21:1–14","2 Цар.","1:1–27"],["Ин.","21:15–22","2 Цар.","2:1–32"],["Ин.","21:23–25","2 Цар.","3:1–39"],["Деян.","1:1–8","2 Цар.","4:1—5:25"],["Деян.","1:9–14","2 Цар.","6:1–23"],["Деян.","1:15–26","2 Цар.","7:1–29"],["Деян.","2:1–13","2 Цар.","8:1—9:13"],["Деян.","2:14–21","2 Цар.","10:1—11:27"],["Деян.","2:22–36","2 Цар.","12:1–31"],["Деян.","2:37–41","2 Цар.","13:1–39"],["Деян.","2:42–47","2 Цар.","14:1–33"],["Деян.","3:1–18","2 Цар.","15:1—16:23"],["Деян.","3:19—4:22","2 Цар.","17:1—18:33"],["Деян.","4:23–37","2 Цар.","19:1–43"],["Деян.","5:1–16","2 Цар.","20:1—21:22"],["Деян.","5:17–32","2 Цар.","22:1–51"],["Деян.","5:33–42","2 Цар.","23:1–39"],["Деян.","6:1—7:1","2 Цар.","24:1–25"],["Деян.","7:2–29","3 Цар.","1:1–19"],["Деян.","7:30–60","3 Цар.","1:20–53"],["Деян.","8:1–13","3 Цар.","2:1–46"],["Деян.","8:14–25","3 Цар.","3:1–28"],["Деян.","8:26–40","3 Цар.","4:1–34"],["Деян.","9:1–19","3 Цар.","5:1—6:38"],["Деян.","9:20–43","3 Цар.","7:1–22"],["Деян.","10:1–16","3 Цар.","7:23–51"],["Деян.","10:17–33","3 Цар.","8:1–36"],["Деян.","10:34–48","3 Цар.","8:37–66"],["Деян.","11:1–18","3 Цар.","9:1–28"],["Деян.","11:19–30","3 Цар.","10:1–29"],["Деян.","12:1–25","3 Цар.","11:1–43"],["Деян.","13:1–12","3 Цар.","12:1–33"],["Деян.","13:13–43","3 Цар.","13:1–34"],["Деян.","13:44–14:5","3 Цар.","14:1–31"],["Деян.","14:6–28","3 Цар.","15:1–34"],["Деян.","15:1–12","3 Цар.","16:1—17:24"],["Деян.","15:13–34","3 Цар.","18:1–46"],["Деян.","15:35—16:5","3 Цар.","19:1–21"],["Деян.","16:6–18","3 Цар.","20:1–43"],["Деян.","16:19–40","3 Цар.","21:1—22:53"],["Деян.","17:1–18","4 Цар.","1:1–18"],["Деян.","17:19–34","4 Цар.","2:1—3:27"],["Деян.","18:1–17","4 Цар.","4:1–44"],["Деян.","18:18–28","4 Цар.","5:1–6:33"],["Деян.","19:1–20","4 Цар.","7:1–20"],["Деян.","19:21–41","4 Цар.","8:1–29"],["Деян.","20:1–12","4 Цар.","9:1–37"],["Деян.","20:13–38","4 Цар.","10:1–36"],["Деян.","21:1–14","4 Цар.","11:1—12:21"],["Деян.","21:15–26","4 Цар.","13:1—14:29"],["Деян.","21:27–40","4 Цар.","15:1–38"],["Деян.","22:1–21","4 Цар.","16:1–20"],["Деян.","22:22–29","4 Цар.","17:1–41"],["Деян.","22:30—23:11","4 Цар.","18:1–37"],["Деян.","23:12–15","4 Цар.","19:1–37"],["Деян.","23:16–30","4 Цар.","20:1—21:26"],["Деян.","23:31—24:21","4 Цар.","22:1–20"],["Деян.","24:22—25:5","4 Цар.","23:1–37"],["Деян.","25:6–27","4 Цар.","24:1—25:30"],["Деян.","26:1–13","1 Пар.","1:1–54"],["Деян.","26:14–32","1 Пар.","2:1—3:24"],["Деян.","27:1–26","1 Пар.","4:1—5:26"],["Деян.","27:27—28:10","1 Пар.","6:1–81"],["Деян.","28:11–22","1 Пар.","7:1–40"],["Деян.","28:23–31","1 Пар.","8:1–40"],["Рим.","1:1–2","1 Пар.","9:1–44"],["Рим.","1:3–7","1 Пар.","10:1—11:47"],["Рим.","1:8–17","1 Пар.","12:1–40"],["Рим.","1:18–25","1 Пар.","13:1—14:17"],["Рим.","1:26—2:1","1 Пар.","15:1—16:43"],["Рим.","2:2–29","1 Пар.","17:1–27"],["Рим.","3:1–20","1 Пар.","18:1—19:19"],["Рим.","3:21–31","1 Пар.","20:1—21:30"],["Рим.","4:1–12","1 Пар.","22:1—23:32"],["Рим.","4:13–25","1 Пар.","24:1—25:31"],["Рим.","5:1–11","1 Пар.","26:1–32"],["Рим.","5:12–17","1 Пар.","27:1–34"],["Рим.","5:18—6:5","1 Пар.","28:1—29:30"],["Рим.","6:6–11","2 Пар.","1:1–17"],["Рим.","6:12–23","2 Пар.","2:1—3:17"],["Рим.","7:1–12","2 Пар.","4:1—5:14"],["Рим.","7:13–25","2 Пар.","6:1–42"],["Рим.","8:1–2","2 Пар.","7:1—8:18"],["Рим.","8:3–6","2 Пар.","9:1—10:19"],["Рим.","8:7–13","2 Пар.","11:1—12:16"],["Рим.","8:14–25","2 Пар.","13:1—15:19"],["Рим.","8:26–39","2 Пар.","16:1—17:19"],["Рим.","9:1–18","2 Пар.","18:1—19:11"],["Рим.","9:19—10:3","2 Пар.","20:1–37"],["Рим.","10:4–15","2 Пар.","21:1—22:12"],["Рим.","10:16—11:1","2 Пар.","23:1—24:27"],["Рим.","11:11–22","2 Пар.","25:1—26:23"],["Рим.","11:23–36","2 Пар.","27:1—28:27"],["Рим.","12:1–3","2 Пар.","29:1–36"],["Рим.","12:4–21","2 Пар.","30:1—31:21"],["Рим.","13:1–14","2 Пар.","32:1–33"],["Рим.","14:1–12","2 Пар.","33:1—34:33"],["Рим.","14:13–23","2 Пар.","35:1—36:23"],["Рим.","15:1–13","Эздр.","1:1–11"],["Рим.","15:14–33","Эздр.","2:1–70"],["Рим.","16:1–5","Эздр.","3:1—4:24"],["Рим.","16:6–24","Эздр.","5:1—6:22"],["Рим.","16:25–27","Эздр.","7:1–28"],["1 Кор.","1:1–4","Эздр.","8:1–36"]];
+const DAYS=PLAN.length;
+const FULL={"Мф.":"Евангелие от Матфея","Мк.":"Евангелие от Марка","Лк.":"Евангелие от Луки","Ин.":"Евангелие от Иоанна","Деян.":"Деяния","Рим.":"Римлянам","1 Кор.":"1 Коринфянам","Быт.":"Бытие","Исх.":"Исход","Лев.":"Левит","Числ.":"Числа","Втор.":"Второзаконие","Иис. Н.":"Иисус Навин","Суд.":"Судьи","Руф.":"Руфь","1 Цар.":"1 Царств","2 Цар.":"2 Царств","3 Цар.":"3 Царств","4 Цар.":"4 Царств","1 Пар.":"1 Паралипоменон","2 Пар.":"2 Паралипоменон","Эздр.":"Эздра"};
+/* Адреса глав на bible.recoveryversion.ru: https://bible.recoveryversion.ru/<код>/<глава>.
+   «gen» и «matt» подтверждены; остальные — по сокращениям Восстановительного перевода, поправьте здесь, если какой-то не открывается. */
+const SLUG={"Мф.":"matt","Мк.":"mark","Лк.":"luke","Ин.":"john","Деян.":"acts","Рим.":"rom","1 Кор.":"1cor","Быт.":"gen","Исх.":"exo","Лев.":"lev","Числ.":"num","Втор.":"deut","Иис. Н.":"josh","Суд.":"judg","Руф.":"ruth","1 Цар.":"1sam","2 Цар.":"2sam","3 Цар.":"1kings","4 Цар.":"2kings","1 Пар.":"1chron","2 Пар.":"2chron","Эздр.":"ezra"};
+const BIBLE="https://bible.recoveryversion.ru/";
+const WEEKDAYS=["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+const T={nt:{label:"Новый Завет",bi:0,ri:1},ot:{label:"Ветхий Завет",bi:2,ri:3}};
+const KEYS=["nt","ot"];
+const XP_PART=10, XP_BOTH=10, XP_ANSWER=15;
+function part(k,p){const d=PLAN[Math.min(p,DAYS-1)];return {book:d[T[k].bi],ref:d[T[k].ri]}}
+function refStr(x){return x.book+" "+x.ref}
+function chapterUrl(x){ // открывает с первого стиха отрывка: /matt/1/3
+  const m=/^(\d+)(?::(\d+))?/.exec(x.ref)||[], ch=m[1]||1, v=m[2]||1;
+  return SLUG[x.book]?BIBLE+SLUG[x.book]+"/"+ch+"/"+v:BIBLE;
+}
+function dayLabel(p){return "Неделя "+(Math.floor(p/7)+1)+" · "+WEEKDAYS[p%7]}
+function startDay(k,book){return PLAN.findIndex(d=>d[T[k].bi]===book)}
+
+const QUESTIONS=["Что в сегодняшнем чтении больше всего коснулось вас?","Что этот отрывок открывает о Боге?","Какой стих вы хотели бы запомнить сегодня? Почему?","Есть ли здесь обещание, которое можно взять для себя?","Что вы узнали о человеке и его отношениях с Богом?","За что из прочитанного можно поблагодарить Господа?","Какой вопрос возник у вас при чтении?","Есть ли в отрывке пример, которому стоит последовать?","Как прочитанное связано с вашим сегодняшним днём?","Как связаны сегодняшние отрывки из Нового и Ветхого Завета?","О чём вы хотите помолиться после этого чтения?","Что в тексте показывает Христа?","Чему этот отрывок учит о жизни церкви?","Какую одну мысль вы расскажете сегодня другому человеку?"];
+
+/* ---------- dates ---------- */
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parse(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function add(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}
+const today=()=>iso(new Date());
+function dayNo(s){return Math.round(parse(s).getTime()/864e5)}
+function plural(n,one,few,many){const a=n%10,b=n%100;if(a===1&&b!==11)return one;if(a>=2&&a<=4&&(b<12||b>14))return few;return many}
+const daysWord=n=>plural(n,"день","дня","дней");
+
+/* ---------- state ---------- */
+const KEY="ogonek-rv-year1";
+function fresh(){return {v:3,start:today(),nt:{log:[],read:[]},ot:{log:[],read:[]},xp:0,frz:0,frzDays:[],best:0,answers:{},quiz:{}}}
+function migrate(s){
+  if(!s||typeof s!=="object")return fresh();
+  if(s.v===3)return Object.assign(fresh(),s);
+  if(s.v===2){const f=Object.assign(fresh(),s);f.v=3;KEYS.forEach(k=>{const log=(s[k]&&s[k].log)||[];f[k]={log,read:[...new Set(log.map(x=>x.p))]}});return f}
+  if(s.v===1){ // old format: one mark per day for both testaments
+    const log=(s.comp||[]).map(c=>({d:c.d,p:c.p}));
+    const read=log.map(x=>x.p);
+    return Object.assign(fresh(),{start:s.start||today(),nt:{log:log.slice(),read:read.slice()},ot:{log:log.slice(),read:read.slice()},xp:s.xp||0,frz:s.frz||0,frzDays:s.frzDays||[],best:s.best||0});
+  }
+  return fresh();
+}
+function score(s){s=migrate(s);return s.nt.read.length+s.ot.read.length+Object.keys(s.answers).length+Object.keys(s.quiz||{}).length}
+const readSet=k=>new Set(state[k].read);
+function nextP(k){const r=readSet(k);let p=0;while(p<DAYS&&r.has(p))p++;return p}
+let state=fresh();
+try{state=migrate(JSON.parse(localStorage.getItem(KEY)||"null"))}catch(e){}
+let remoteSave=null;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+  if(remoteSave)remoteSave(JSON.parse(JSON.stringify(state)));
+}
+
+const datesOf=k=>new Set(state[k].log.map(x=>x.d));
+function bothSet(){const a=datesOf("nt"),b=datesOf("ot");return new Set([...a].filter(d=>b.has(d)))}
+function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));return s}
+function streakOf(set){let cur=today();if(!set.has(cur))cur=add(cur,-1);let n=0;while(set.has(cur)){n++;cur=add(cur,-1)}return n}
+const streak=k=>streakOf(withFrozen(k?datesOf(k):bothSet()));
+function applyFreezes(){
+  const s=withFrozen(bothSet());if(!s.size)return 0;
+  const last=[...s].sort().pop(), y=add(today(),-1);
+  if(last>=y)return 0;
+  const gap=[];let d=add(last,1);while(d<=y){gap.push(d);d=add(d,1)}
+  if(gap.length<=state.frz){state.frz-=gap.length;state.frzDays.push(...gap);save();return gap.length}
+  return 0;
+}
+function level(xp){let k=1;while(xp>=50*k*(k+1))k++;const lo=50*(k-1)*k,hi=50*k*(k+1);return {k,pct:(xp-lo)/(hi-lo)*100}}
+
+/* (awards are defined after the reaction helpers below) */
+
+/* ---------- render ---------- */
+const $=id=>document.getElementById(id);
+const FLAME='<path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>';
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+
+const ahead={nt:false,ot:false}; // «следующий отрывок» открыт, но ещё не отмечен
+function renderTestament(k){
+  const t=today(), st=state[k], np=nextP(k);
+  if(np>=DAYS)ahead[k]=false;
+  const isAhead=ahead[k], doneToday=datesOf(k).has(t), s=streak(k);
+  const todays=st.log.filter(x=>x.d===t);
+  const lit=doneToday&&!isAhead;
+  const viewP=(doneToday&&!isAhead)?todays[todays.length-1].p:Math.min(np,DAYS-1);
+  const x=part(k,viewP);
+  const card=el("div","tcard");
+  const head=el("div","thead");
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 64 80");svg.setAttribute("class","flame"+(lit?"":" off"));svg.id="flame-"+k;svg.innerHTML=FLAME;
+  const hb=el("div");hb.append(el("b",null,T[k].label),el("span",null,s+" "+plural(s,"день подряд","дня подряд","дней подряд")));
+  // огонёк за каждый прочитанный сегодня отрывок
+  if(todays.length){
+    const mm=el("div","minis");mm.id="minis-"+k;mm.title="Отрывков прочитано сегодня: "+todays.length;
+    todays.slice(-8).forEach(()=>{const f=document.createElementNS("http://www.w3.org/2000/svg","svg");f.setAttribute("viewBox","0 0 64 80");f.setAttribute("class","flame mini");f.innerHTML=FLAME;mm.append(f)});
+    if(todays.length>8)mm.append(el("span","minimore","+"+(todays.length-8)));
+    hb.append(mm);
+  }
+  head.append(svg,hb);
+  const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
+  a.append(el("span","sub",dayLabel(viewP)),el("span","name",refStr(x)),el("span","sub",FULL[x.book]||x.book),el("span","go","Читать ↗"));
+  const btn=el("button","tbtn");btn.type="button";
+  if(np>=DAYS&&!doneToday){btn.textContent="Завет пройден!";btn.classList.add("done");btn.disabled=true}
+  else if(doneToday&&!isAhead){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
+  else{btn.textContent="Прочитал(а) · +"+XP_PART+" XP";btn.addEventListener("click",()=>complete(k))}
+  card.append(head,a,btn);
+  if(lit&&np<DAYS){
+    // следующий отрывок: видно, какой он; ссылка открывает его, кнопка сразу зажигает огонёк
+    const nx=part(k,np), box=el("div","nextbox");
+    const a2=el("a","nextlink");a2.href=chapterUrl(nx);a2.target="_blank";a2.rel="noopener";
+    a2.append(el("span","label","Следующий отрывок"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np)+" · "+(FULL[nx.book]||nx.book)),el("span","go","Читать ↗"));
+    const b2=el("button","tbtn nextmark");b2.type="button";
+    b2.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true">'+FLAME+'</svg>';
+    b2.append(document.createTextNode("Прочитал(а) · +"+XP_PART+" XP"));
+    b2.addEventListener("click",()=>{ahead[k]=true;complete(k,np)});
+    box.append(a2,b2);card.append(box);
+  }else if(isAhead){
+    const back=el("button","linkbtn","Вернуться к прочитанному");back.type="button";
+    back.addEventListener("click",()=>{ahead[k]=false;render()});
+    card.append(back);
+  }
+  return card;
+}
+
+function render(){
+  const t=today(), st=streak(), both=bothSet().has(t), lv=level(state.xp);
+  $("lvl").textContent="Ур. "+lv.k; $("xpbar").style.width=lv.pct.toFixed(1)+"%"; $("xptext").textContent=state.xp+" XP";
+  $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
+  $("heroFlame").classList.toggle("off",!both);
+  const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
+  $("heroSub").textContent=both?"Оба завета прочитаны. Возвращайтесь завтра!":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":(st>0?"Прочитайте оба завета сегодня, чтобы не потерять серию.":"Прочитайте Новый и Ветхий Завет, чтобы зажечь огонёк.");
+  $("freezeText").textContent="Заморозки: "+state.frz+" из 2"; $("bestChip").textContent="Рекорд: "+state.best;
+
+  const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
+
+  renderSchedule();
+  renderQuiz();
+  renderPace();
+
+  // calendar: 5 weeks ending this week (Mon first)
+  const cal=$("cal");cal.textContent="";
+  ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].forEach(w=>cal.append(el("div","wd",w)));
+  const now=parse(t), dow=(now.getDay()+6)%7, startD=add(t,-dow-28), bs=bothSet(), nt=datesOf("nt"), ot=datesOf("ot"), frz=new Set(state.frzDays);
+  for(let i=0;i<35;i++){
+    const d=add(startD,i),e=el("div","cell",parse(d).getDate());
+    if(bs.has(d))e.classList.add("done");else if(nt.has(d)||ot.has(d))e.classList.add("half");else if(frz.has(d))e.classList.add("frozen");
+    if(d===t)e.classList.add("today"); if(d>t)e.classList.add("future");
+    e.title=d; cal.append(e);
+  }
+  $("calMonth").textContent=now.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
+
+  const pr=$("prog");pr.textContent="";
+  KEYS.forEach(k=>{
+    const a=state[k].read.length, cur=part(k,nextP(k));
+    const row=el("div","prog-row");
+    const v=el("span","num",a+" / "+DAYS+" дн.");
+    const bar=el("div","bar");const i=el("i");i.style.width=(a/DAYS*100).toFixed(1)+"%";bar.append(i);
+    row.append(el("span",null,T[k].label+(nextP(k)<DAYS?" · сейчас: "+(FULL[cur.book]||cur.book):"")),v,bar);pr.append(row);
+  });
+
+  const bg=$("badges");bg.textContent="";
+  awards().forEach(a=>{
+    const e=el("div","badge"+(a.ok?"":" locked"));e.title=a.desc+(a.ok?"":" (ещё не получена)");
+    const m=el("div","medalsvg");m.innerHTML=medalSvg(a,56);
+    e.append(m,el("b",null,a.name),el("span","bdesc",a.desc));bg.append(e);
+  });
+}
+
+/* ---------- pace: days ahead of / behind the plan ---------- */
+const SVGNS="http://www.w3.org/2000/svg";
+function sv(tag,attrs,text){const e=document.createElementNS(SVGNS,tag);for(const a in attrs)e.setAttribute(a,attrs[a]);if(text!=null)e.textContent=text;return e}
+function fmtAhead(n){return n>0?"+"+n:n<0?"−"+Math.abs(n):"0"}
+function paceWords(n){return n>0?n+" "+daysWord(n)+" впереди":n<0?"отставание "+Math.abs(n)+" "+daysWord(Math.abs(n)):"точно по графику"}
+// for each date since the plan start: passages read by that date minus passages due by that date
+function paceSeries(){
+  const t=today(), start=state.start<=t?state.start:t, n=dayNo(t)-dayNo(start)+1;
+  const dates=[];for(let i=0;i<n;i++)dates.push(add(start,i));
+  const out={dates,nt:[],ot:[]};
+  KEYS.forEach(k=>{
+    const counts={};state[k].log.forEach(x=>{counts[x.d]=(counts[x.d]||0)+1});
+    let run=state[k].log.filter(x=>x.d<start).length;
+    dates.forEach((d,i)=>{
+      run+=counts[d]||0;
+      let v=run-Math.min(DAYS,i+1);
+      if(d===t&&v<0)v=run-Math.min(DAYS,i); // today's passage isn't overdue until the day ends
+      out[k].push(v);
+    });
+  });
+  return out;
+}
+function niceStep(range){const raw=range/4;const m=Math.pow(10,Math.floor(Math.log10(raw||1)));for(const f of [1,2,5,10])if(f*m>=raw)return f*m;return 10*m}
+const shortDate=d=>parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"short"});
+function renderPace(){
+  const sd=$("startDate"); if(document.activeElement!==sd){sd.value=state.start;sd.max=today()}
+  const S=paceSeries(), last=S.dates.length-1;
+  const tiles=$("paceTiles");tiles.textContent="";
+  KEYS.forEach(k=>{
+    const v=S[k][last], pill=el("span","pacepill"+(v>0?" ahead":v<0?" behind":""));
+    const key=el("span","pacekey");key.style.background="var(--s-"+k+")";
+    pill.append(key,el("span","pk",k==="nt"?"НЗ":"ВЗ"),el("b",null,v===0?"по плану":fmtAhead(v)+" "+daysWord(Math.abs(v))));
+    pill.title=T[k].label+": "+paceWords(v);
+    tiles.append(pill);
+  });
+  const leg=$("paceLegend");leg.textContent="";
+  KEYS.forEach(k=>{const s=el("span");const i=el("i");i.style.cssText="height:2px;width:16px;border-radius:2px;background:var(--s-"+k+")";s.append(i,document.createTextNode(T[k].label));leg.append(s)});
+  const tb=$("paceTable");tb.textContent="";const table=el("table");
+  const hr=el("tr");["Дата","Новый Завет","Ветхий Завет"].forEach(h=>hr.append(el("th",null,h)));table.append(hr);
+  for(let i=last;i>=Math.max(0,last-13);i--){const r=el("tr");r.append(el("td",null,shortDate(S.dates[i])),el("td",null,fmtAhead(S.nt[i])),el("td",null,fmtAhead(S.ot[i])));table.append(r)}
+  tb.append(table);
+  drawPace(S);
+}
+function drawPace(S){
+  const box=$("paceChart");box.textContent="";
+  if(!$("paceCard").open)return;
+  const W=Math.max(260,box.clientWidth||320), H=200, m={l:40,r:58,t:12,b:26};
+  const n=S.dates.length, all=[0,...S.nt,...S.ot];
+  let lo=Math.min(...all), hi=Math.max(...all); if(hi-lo<4){hi+=2;lo-=2}
+  const step=niceStep(hi-lo); lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
+  const pw=W-m.l-m.r, x=i=>m.l+(n<=1?pw/2:i*pw/(n-1)), y=v=>m.t+(hi-v)*(H-m.t-m.b)/(hi-lo);
+  const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pacesvg"});
+  for(let v=lo;v<=hi;v+=step){
+    svg.append(sv("line",{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),class:v===0?"zero":"grid"}));
+    svg.append(sv("text",{x:m.l-6,y:y(v)+4,"text-anchor":"end",class:"tick"},v===0?"план":fmtAhead(v)));
+  }
+  svg.append(sv("text",{x:x(0),y:H-6,"text-anchor":n<=1?"middle":"start",class:"tick"},shortDate(S.dates[0])));
+  if(n>1)svg.append(sv("text",{x:x(n-1),y:H-6,"text-anchor":"end",class:"tick"},shortDate(S.dates[n-1])));
+  const ends=[];
+  KEYS.forEach(k=>{
+    const pts=S[k].map((v,i)=>x(i).toFixed(1)+","+y(v).toFixed(1)).join(" ");
+    if(n>1)svg.append(sv("polyline",{points:pts,fill:"none",stroke:"var(--s-"+k+")","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+    const v=S[k][n-1];ends.push({k,v,y:y(v)});
+    svg.append(sv("circle",{cx:x(n-1),cy:y(v),r:4.5,fill:"var(--s-"+k+")",stroke:"var(--surface)","stroke-width":2}));
+  });
+  ends.sort((a,b)=>a.y-b.y); if(ends[1].y-ends[0].y<14){const mid=(ends[0].y+ends[1].y)/2;ends[0].y=mid-7;ends[1].y=mid+7}
+  ends.forEach(e=>svg.append(sv("text",{x:x(n-1)+9,y:e.y+4,class:"endlab"},(e.k==="nt"?"НЗ ":"ВЗ ")+fmtAhead(e.v))));
+  const cross=sv("line",{y1:m.t,y2:H-m.b,class:"cross",visibility:"hidden"});svg.append(cross);
+  const hit=sv("rect",{x:m.l-8,y:0,width:pw+16,height:H,fill:"transparent",tabindex:0,"aria-label":"Показать значения по дням (стрелки влево и вправо)"});svg.append(hit);
+  const tip=el("div","pacetip");tip.hidden=true;
+  function show(i){
+    i=Math.max(0,Math.min(n-1,i));const cx=x(i);cross.setAttribute("x1",cx);cross.setAttribute("x2",cx);cross.setAttribute("visibility","visible");
+    tip.textContent="";tip.append(el("div","tipdate",shortDate(S.dates[i])+" · день плана "+Math.min(DAYS,i+1)));
+    KEYS.forEach(k=>{const r=el("div","tiprow");const key=el("span","tipkey");key.style.background="var(--s-"+k+")";r.append(key,el("b",null,fmtAhead(S[k][i])),el("span",null,T[k].label));tip.append(r)});
+    tip.hidden=false;tip.style.left=Math.min(Math.max(cx-80,0),W-160)+"px";
+  }
+  const hide=()=>{tip.hidden=true;cross.setAttribute("visibility","hidden")};
+  const toIdx=ev=>{const r=svg.getBoundingClientRect();return n<=1?0:Math.round((ev.clientX-r.left-m.l)/(pw/(n-1)))};
+  hit.addEventListener("pointermove",ev=>show(toIdx(ev)));
+  hit.addEventListener("pointerdown",ev=>show(toIdx(ev)));
+  hit.addEventListener("pointerleave",hide);
+  let fi=n-1;hit.addEventListener("focus",()=>show(fi));hit.addEventListener("blur",hide);
+  hit.addEventListener("keydown",ev=>{if(ev.key==="ArrowLeft"){fi=Math.max(0,fi-1);show(fi);ev.preventDefault()}if(ev.key==="ArrowRight"){fi=Math.min(n-1,fi+1);show(fi);ev.preventDefault()}});
+  box.append(svg,tip);
+  if(n===1)box.append(el("p","hint","Линии появятся, когда пройдёт хотя бы один день плана. Дату начала можно изменить выше."));
+}
+$("paceCard").addEventListener("toggle",()=>{if($("paceCard").open)drawPace(paceSeries())});
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>drawPace(paceSeries()),150)});
+$("startDate").addEventListener("change",ev=>{
+  const v=ev.target.value; if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||v>today())return;
+  state.start=v; save(); renderPace(); toast("Начало плана: "+parse(v).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}));
+});
+
+/* ---------- quiz: questions answered strictly from the passage ---------- */
+function viewDay(k){const t=today(),todays=state[k].log.filter(x=>x.d===t);return todays.length?todays[todays.length-1].p:Math.min(nextP(k),DAYS-1)}
+function shuffled(arr,seed){const a=arr.slice();let x=seed*9301+49297;for(let i=a.length-1;i>0;i--){x=(x*9301+49297)%233280;const j=Math.floor(x/233280*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+// state.quiz[id] = {ok: solved, first: solved on the first try, wrong: [wrong picks]}
+function quizRes(id){
+  const r=state.quiz[id]; if(!r)return null;
+  if(r.pick!==undefined&&r.wrong===undefined)return {ok:r.ok,first:!!r.ok,wrong:r.ok?[]:[r.pick]}; // older format
+  return r;
+}
+const CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CROSS_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+function renderQuiz(){
+  if(!state.quiz)state.quiz={};
+  const box=$("quiz");box.textContent="";
+  KEYS.forEach((k,ki)=>{
+    const p=viewDay(k), x=part(k,p), q=QUIZ[p]&&QUIZ[p][k], id=k+"-"+p;
+    const card=el("div","qcard");card.dataset.id=id;
+    card.append(el("div","qref",T[k].label+" · "+refStr(x)));
+    if(!q){card.append(el("p","hint","Вопросы к этому отрывку скоро появятся."));box.append(card);return}
+    card.append(el("div","qtext",q[0]));
+    const res=quizRes(id), solved=!!(res&&res.ok), wrong=(res&&res.wrong)||[], opts=el("div","qopts");
+    shuffled([q[1],q[2],q[3]],p*2+ki+1).forEach(o=>{
+      const b=el("button","qopt");b.type="button";
+      const mark=el("span","qmark");b.append(el("span",null,o),mark);
+      if(solved&&o===q[1]){b.classList.add("right");mark.innerHTML=CHECK_SVG}
+      if(wrong.includes(o)){b.classList.add("wrong");mark.innerHTML=CROSS_SVG}
+      if(solved||wrong.includes(o))b.disabled=true;
+      else b.addEventListener("click",()=>answerQuiz(k,p,o,q));
+      opts.append(b);
+    });
+    card.append(opts);
+    const badge=el("div","qverdict");badge.hidden=true;card.append(badge);
+    if(solved)card.append(el("div","qres ok",res.first?"Правильно с первого раза · +"+XP_QUIZ+" XP":"Правильно. Награда даётся только за ответ с первого раза."));
+    else if(wrong.length)card.append(el("div","qres no","Неправильно. Перечитайте отрывок и попробуйте ещё раз."));
+    else if(!readSet(k).has(p))card.append(el("p","hint","Сначала прочитайте отрывок, ответ есть в тексте. Награда только за верный ответ с первого раза."));
+    else card.append(el("p","hint","Награда +"+XP_QUIZ+" XP только за верный ответ с первого раза."));
+    box.append(card);
+  });
+}
+function quizReaction(id,ok){
+  const card=document.querySelector('#quiz .qcard[data-id="'+id+'"]'); if(!card)return;
+  const v=card.querySelector(".qverdict");
+  v.className="qverdict "+(ok?"ok":"no");v.textContent="";
+  const ic=el("span","qvicon");ic.innerHTML=ok?CHECK_SVG:CROSS_SVG;
+  v.append(ic,el("span",null,ok?"Правильно!":"Неправильно"));v.hidden=false;
+  card.classList.remove("flash-ok","shake");void card.offsetWidth;card.classList.add(ok?"flash-ok":"shake");
+  if(ok){const r=card.getBoundingClientRect();burst(r.left+r.width/2,r.top+40,36)}
+  setTimeout(()=>{v.hidden=true},1800);
+}
+function answerQuiz(k,p,pick,q){
+  const id=k+"-"+p, prev=quizRes(id)||{ok:false,first:false,wrong:[]};
+  if(prev.ok||prev.wrong.includes(pick))return;
+  const ok=pick===q[1], firstTry=prev.wrong.length===0;
+  const next={ok,first:ok&&firstTry,wrong:ok?prev.wrong:prev.wrong.concat([pick])};
+  state.quiz[id]=next;
+  if(next.first)state.xp+=XP_QUIZ;
+  vibrate(ok?[40,30,40]:[160]);
+  save();render();quizReaction(id,ok);
+  if(ok)toast(next.first?"Правильно с первого раза! +"+XP_QUIZ+" XP":"Правильно! Без награды: ответ не с первого раза");
+  else toast("Неправильно. Попробуйте ещё раз");
+  checkAwards();
+}
+
+/* ---------- schedule ---------- */
+let selWeek=null;
+const sel=$("wkSel");
+for(let w=1;w<=Math.ceil(DAYS/7);w++){const o=el("option",null,"Неделя "+w);o.value=w;sel.append(o)}
+function currentWeek(){return Math.floor(Math.min(nextP("nt"),nextP("ot"),DAYS-1)/7)+1}
+function renderSchedule(){
+  const w=selWeek||currentWeek(), max=Math.ceil(DAYS/7);
+  sel.value=String(w); $("wkPrev").disabled=w<=1; $("wkNext").disabled=w>=max;
+  const box=$("sched");box.textContent="";
+  const rs={nt:readSet("nt"),ot:readSet("ot")}, np={nt:nextP("nt"),ot:nextP("ot")};
+  for(let i=0;i<7;i++){
+    const p=(w-1)*7+i; if(p>=DAYS)break;
+    const row=el("div","srow"+((p===np.nt||p===np.ot)?" snext":""));
+    row.append(el("div","sday",WEEKDAYS[i]));
+    KEYS.forEach(k=>{
+      const x=part(k,p), done=rs[k].has(p);
+      const item=el("div","sitem"+(done?" sdone":""));
+      const a=el("a","sref");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";a.title=FULL[x.book]||x.book;
+      a.append(el("span","stag",k==="nt"?"НЗ":"ВЗ"),el("span",null,refStr(x)));
+      const c=el("button","scheck");c.type="button";
+      c.setAttribute("aria-pressed",done?"true":"false");
+      c.setAttribute("aria-label",(done?"Снять отметку: ":"Отметить прочитанным: ")+T[k].label+", "+dayLabel(p));
+      c.innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      c.addEventListener("click",()=>done?unmark(k,p):complete(k,p));
+      item.append(a,c);row.append(item);
+    });
+    box.append(row);
+  }
+}
+sel.addEventListener("change",()=>{selWeek=Number(sel.value);renderSchedule()});
+$("wkPrev").addEventListener("click",()=>{selWeek=Math.max(1,(selWeek||currentWeek())-1);renderSchedule()});
+$("wkNext").addEventListener("click",()=>{selWeek=Math.min(Math.ceil(DAYS/7),(selWeek||currentWeek())+1);renderSchedule()});
+
+/* ---------- actions ---------- */
+let toastT;
+function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3500)}
+
+/* ---------- reaction: vibration + flame ignition + sparks ---------- */
+const reduceMotion=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function vibrate(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern)}catch(e){}}
+function burst(x,y,n){
+  if(reduceMotion())return;
+  const c=document.createElement("canvas"),dpr=window.devicePixelRatio||1;
+  c.className="sparks";c.width=innerWidth*dpr;c.height=innerHeight*dpr;document.body.append(c);
+  const g=c.getContext("2d");g.scale(dpr,dpr);
+  const cols=["#ff7a1a","#ffc53d","#ff9f43","#ffe08a","#ff5b1f"];
+  const ps=Array.from({length:n},()=>{const a=Math.random()*Math.PI*2,sp=2+Math.random()*6;return {x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,r:2+Math.random()*3.5,c:cols[n%5===0?0:Math.floor(Math.random()*5)],life:1}});
+  let last=performance.now();
+  (function frame(now){
+    const dt=Math.min(32,now-last)/16;last=now;g.clearRect(0,0,innerWidth,innerHeight);let alive=0;
+    ps.forEach(p=>{if(p.life<=0)return;p.vy+=.18*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=.018*dt;if(p.life>0){alive++;g.globalAlpha=p.life;g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}});
+    if(alive)requestAnimationFrame(frame);else c.remove();
+  })(last);
+}
+// level 1 = one testament lit, 2 = common flame lit
+function ignite(svgEl,level){
+  if(level)vibrate(level===2?[90,60,90,60,220]:[60,40,60]);
+  if(!svgEl)return;
+  svgEl.classList.remove("ignite");void svgEl.getBoundingClientRect();svgEl.classList.add("ignite");
+  if(level===1){const r=svgEl.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,28)}
+}
+
+/* ---------- awards: medals with their own emblems ---------- */
+const TIERS={bronze:["#d08a4a","#8a5226"],silver:["#b9c1cf","#6f7888"],gold:["#f2b632","#a8730c"],ruby:["#e0475b","#951c30"],violet:["#8a6cf2","#4a32b0"],green:["#34a874","#1b6a48"],blue:["#3d93e2","#1f5896"],flame:["#ff8a33","#b8480a"]};
+const IC={ // emblems drawn in a 64×64 box, light ink on the medal
+  flame:n=>'<g transform="translate(19 9) scale(.4)"><path fill="#fff" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffd36b" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><text x="32" y="51" text-anchor="middle" font-size="'+(n.length>2?11:13)+'" font-weight="800" fill="#fff" font-family="Golos Text,system-ui,sans-serif">'+n+'</text>',
+  book:t=>'<path fill="#fff" d="M13 20c7-3 13-3 18 1v24c-5-4-11-4-18-1z"/><path fill="#fff" opacity=".85" d="M51 20c-7-3-13-3-18 1v24c5-4 11-4 18-1z"/><text x="32" y="56" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" font-family="Golos Text,system-ui,sans-serif">'+t+'</text>',
+  gospels:()=>'<g fill="#fff"><rect x="15" y="20" width="7" height="24" rx="1.5"/><rect x="24" y="16" width="7" height="28" rx="1.5" opacity=".9"/><rect x="33" y="18" width="7" height="26" rx="1.5"/><rect x="42" y="22" width="7" height="22" rx="1.5" opacity=".9"/></g><rect x="13" y="45" width="38" height="3" rx="1.5" fill="#fff" opacity=".7"/>',
+  fire3:()=>'<g fill="#fff"><path d="M20 44c-5 0-7-4-6-8 1-3 4-5 4-9 3 3 8 7 8 11s-2 6-6 6z"/><path d="M32 44c-6 0-9-5-7-10 1-4 5-6 5-12 4 4 9 9 9 14 0 5-3 8-7 8z"/><path d="M44 44c-4 0-6-2-6-6 0-4 5-8 8-11 0 4 3 6 4 9 1 4-1 8-6 8z"/></g>',
+  sun:()=>'<circle cx="32" cy="32" r="8" fill="#fff"/><g stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M32 13v6M32 45v6M13 32h6M45 32h6M18.5 18.5l4.2 4.2M41.3 41.3l4.2 4.2M18.5 45.5l4.2-4.2M41.3 22.7l4.2-4.2"/></g>',
+  tablets:()=>'<g fill="#fff"><path d="M14 46V24a8 8 0 0 1 16 0v22z"/><path d="M34 46V24a8 8 0 0 1 16 0v22z" opacity=".9"/></g><g stroke="#8a6a3a" stroke-width="1.6" opacity=".55"><path d="M18 27h8M18 32h8M18 37h8M38 27h8M38 32h8M38 37h8"/></g>',
+  wheat:()=>'<path d="M32 50V18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><g fill="#fff"><ellipse cx="32" cy="16" rx="3" ry="5"/><ellipse cx="27" cy="23" rx="3" ry="5" transform="rotate(-30 27 23)"/><ellipse cx="37" cy="23" rx="3" ry="5" transform="rotate(30 37 23)"/><ellipse cx="27" cy="31" rx="3" ry="5" transform="rotate(-30 27 31)"/><ellipse cx="37" cy="31" rx="3" ry="5" transform="rotate(30 37 31)"/><ellipse cx="27" cy="39" rx="3" ry="5" transform="rotate(-30 27 39)"/><ellipse cx="37" cy="39" rx="3" ry="5" transform="rotate(30 37 39)"/></g>',
+  quill:()=>'<path fill="#fff" d="M46 14c-12 2-22 12-25 26l-3 8 4-3c12-2 21-12 24-31z"/><path d="M20 49l10-14" stroke="#7a2a3a" stroke-width="1.6" opacity=".5"/><rect x="14" y="50" width="22" height="2.6" rx="1.3" fill="#fff" opacity=".7"/>',
+  quiz:()=>'<path fill="#fff" d="M14 16h36a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H30l-9 8v-8h-7a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z"/><path d="M27 25.5a5 5 0 1 1 7.5 4.3c-1.6.9-2.5 1.8-2.5 3.7" stroke="#1f5896" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="38.5" r="1.9" fill="#1f5896"/>',
+  crown:()=>'<path fill="#fff" d="M14 42l-2-20 11 9 9-14 9 14 11-9-2 20z"/><rect x="14" y="44" width="36" height="5" rx="2" fill="#fff"/><g fill="#e0475b"><circle cx="32" cy="34" r="2.4"/><circle cx="22" cy="37" r="1.8"/><circle cx="42" cy="37" r="1.8"/></g>'
+};
+function medalSvg(a,size){
+  const [c1,c2]=TIERS[a.tier], g="mg"+a.id;
+  return '<svg viewBox="0 0 64 64" width="'+(size||52)+'" height="'+(size||52)+'" aria-hidden="true"><defs><linearGradient id="'+g+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs>'+
+    '<circle cx="32" cy="32" r="31" fill="'+c2+'"/><circle cx="32" cy="32" r="27.5" fill="url(#'+g+')"/><circle cx="32" cy="32" r="27.5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.5"/>'+
+    '<path d="M12 22a22 22 0 0 1 40 0" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="3" stroke-linecap="round"/>'+a.icon+'</svg>';
+}
+const quizRight=()=>Object.values(state.quiz||{}).filter(x=>x&&x.ok&&(x.first||(x.first===undefined&&x.pick!==undefined))).length;
+const bookDone=(k,b)=>nextP(k)>=startDay(k,b);
+const AWARDS=[
+  {id:"s3",name:"Первая искра",desc:"3 дня подряд читать оба завета",tier:"bronze",icon:IC.flame("3"),ok:()=>state.best>=3},
+  {id:"s7",name:"Неделя",desc:"7 дней подряд",tier:"silver",icon:IC.flame("7"),ok:()=>state.best>=7},
+  {id:"s30",name:"Месяц",desc:"30 дней подряд",tier:"gold",icon:IC.flame("30"),ok:()=>state.best>=30},
+  {id:"s100",name:"Сто дней",desc:"100 дней подряд",tier:"ruby",icon:IC.flame("100"),ok:()=>state.best>=100},
+  {id:"s364",name:"Год без пропусков",desc:"364 дня подряд",tier:"flame",icon:IC.flame("364"),ok:()=>state.best>=364},
+  {id:"mt",name:"Матфей",desc:"Прочитано Евангелие от Матфея",tier:"blue",icon:IC.book("МФ"),ok:()=>bookDone("nt","Мк.")},
+  {id:"gosp",name:"Четыре Евангелия",desc:"Прочитаны все четыре Евангелия",tier:"violet",icon:IC.gospels(),ok:()=>bookDone("nt","Деян.")},
+  {id:"acts",name:"Деяния",desc:"Прочитана книга Деяний",tier:"ruby",icon:IC.fire3(),ok:()=>bookDone("nt","Рим.")},
+  {id:"gen",name:"Бытие",desc:"Прочитана книга Бытия",tier:"gold",icon:IC.sun(),ok:()=>bookDone("ot","Исх.")},
+  {id:"pent",name:"Пятикнижие",desc:"Прочитаны пять книг Моисея",tier:"silver",icon:IC.tablets(),ok:()=>bookDone("ot","Иис. Н.")},
+  {id:"ruth",name:"Судьи и Руфь",desc:"Прочитаны книги Судей и Руфь",tier:"green",icon:IC.wheat(),ok:()=>bookDone("ot","1 Цар.")},
+  {id:"quiz10",name:"Знаток текста",desc:"10 верных ответов с первого раза",tier:"blue",icon:IC.quiz(),ok:()=>quizRight()>=10},
+  {id:"year",name:"Первый год плана",desc:"Прочитаны все 364 дня плана",tier:"gold",icon:IC.crown(),ok:()=>state.nt.read.length>=DAYS&&state.ot.read.length>=DAYS}
+];
+function awards(){return AWARDS.map(a=>Object.assign({},a,{ok:a.ok()}))}
+
+/* new award → chest pops up; tap to open it and reveal the medal */
+let chestQueue=[];
+function checkAwards(){
+  if(!state.seenAwards)state.seenAwards=[];
+  const fresh=AWARDS.filter(a=>a.ok()&&!state.seenAwards.includes(a.id));
+  if(!fresh.length)return;
+  fresh.forEach(a=>{state.seenAwards.push(a.id);chestQueue.push(a)});
+  save();
+  showChest();
+}
+function showChest(){
+  const ov=$("chest");
+  if(!ov.hidden||!$("celebrate").hidden||!chestQueue.length)return;
+  const a=chestQueue[0];
+  ov.classList.remove("open");
+  $("chestTitle").textContent="Новая награда!";
+  $("chestSub").textContent="Вы заслужили награду. Откройте сундук, чтобы увидеть её.";
+  $("chestMedal").innerHTML=medalSvg(a,120);
+  $("chestName").textContent=a.name;$("chestDesc").textContent=a.desc;
+  $("chestBtn").textContent="Открыть сундук";
+  $("toast").hidden=true;ov.hidden=false;$("chestBtn").focus();
+  vibrate([30,40,30]);
+}
+$("chestBtn").addEventListener("click",()=>{
+  const ov=$("chest");
+  if(!ov.classList.contains("open")){
+    ov.classList.add("open");
+    $("chestTitle").textContent="Поздравляем!";
+    $("chestSub").textContent="";
+    $("chestBtn").textContent=chestQueue.length>1?"Следующая награда":"Забрать награду";
+    vibrate([80,50,80,50,200]);
+    const r=$("chestArt").getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height*.4,70);
+  }else{
+    chestQueue.shift();ov.hidden=true;ov.classList.remove("open");
+    setTimeout(showChest,250);
+  }
+});
+
+function complete(k,pp){
+  const st=state[k], p=(pp==null?nextP(k):pp); if(p>=DAYS||readSet(k).has(p))return;
+  const wasAhead=ahead[k]; ahead[k]=false;
+  const t=today(), firstK=!datesOf(k).has(t), bothBefore=bothSet().has(t), awBefore=awards().filter(a=>a.ok).length;
+  st.log.push({d:t,p}); st.read.push(p);
+  let gain=XP_PART, gotFreeze=false;
+  const bothNow=!bothBefore&&bothSet().has(t);
+  const common=streak();
+  if(bothNow){
+    gain+=XP_BOTH;
+    if(common>0&&common%7===0&&state.frz<2){state.frz++;gotFreeze=true}
+    state.best=Math.max(state.best,common);
+  }
+  state.xp+=gain;
+  save(); render();
+  const newAw=awards().filter(a=>a.ok).length-awBefore;
+  if(firstK)ignite($("flame-"+k),bothNow?0:1);
+  else{const ms=document.querySelectorAll("#minis-"+k+" .mini");ignite(ms[ms.length-1],1)}
+  if(bothNow){
+    ignite($("heroFlame"),2);
+    $("celebNum").textContent=common;
+    $("celebText").textContent="Общий огонёк: "+plural(common,"день","дня","дней")+" подряд!";
+    const lines=["Оба завета прочитаны","+"+gain+" XP"];if(gotFreeze)lines.push("Вы получили заморозку");if(newAw>0)lines.push("Новая награда!");
+    $("celebSub").textContent=lines.join(" · ");
+    $("toast").hidden=true;$("celebrate").hidden=false;$("celebClose").focus();
+    const cf=document.querySelector("#celebrate .flame");cf.classList.remove("ignite");void cf.getBoundingClientRect();cf.classList.add("ignite");
+    burst(window.innerWidth/2,window.innerHeight/2-60,90);
+  }else if(firstK){
+    const s=streak(k);
+    toast("+"+gain+" XP · "+T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""));
+  }else{
+    toast("Огонёк зажжён: "+refStr(part(k,p))+" · +"+gain+" XP"+(newAw>0?" · Новая награда!":""));
+  }
+  checkAwards();
+}
+function unmark(k,p){
+  const st=state[k]; if(!readSet(k).has(p))return;
+  st.read=st.read.filter(x=>x!==p); st.log=st.log.filter(x=>x.p!==p);
+  state.xp=Math.max(0,state.xp-XP_PART);
+  save(); render(); toast("Отметка снята · "+T[k].label+", "+dayLabel(p));
+}
+$("celebClose").addEventListener("click",()=>{$("celebrate").hidden=true;setTimeout(showChest,250)});
+
+
+
+function showResetLink(){
+  const w=$("resetWrap");w.textContent="";
+  const b=el("button","linkbtn","Начать план заново");b.type="button";b.addEventListener("click",askReset);w.append(b);
+}
+function askReset(){
+  const w=$("resetWrap");w.textContent="";
+  const yes=el("button","danger","Да, начать заново");yes.type="button";
+  const no=el("button","linkbtn","Отмена");no.type="button";
+  yes.addEventListener("click",()=>{state=fresh();save();render();showResetLink();toast("План начат заново")});
+  no.addEventListener("click",showResetLink);
+  w.append(el("span",null,"Удалить весь прогресс? "),yes,no);
+}
+$("resetBtn").addEventListener("click",askReset);
+
+/* ---------- start ---------- */
+function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
+initSeen();
+const used=applyFreezes();
+render();
+if(used)toast("Заморозка сохранила вашу серию ("+used+" "+daysWord(used)+")");
+// re-render when the day changes while the page stays open
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyFreezes();render()}});
+
+window.Ogonek={
+  fresh, score,
+  getState:()=>JSON.parse(JSON.stringify(state)),
+  setState(s){state=migrate(s);initSeen();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+    const u=applyFreezes();render();if(u)toast("Заморозка сохранила вашу серию");},
+  setRemote(fn){remoteSave=fn},
+  toast
+};
+
+})();
+</script>
+<script type="module" src="auth.js"></script>
+
+</body>
+</html>
