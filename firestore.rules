@@ -31,6 +31,21 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['name', 'photo']);
     }
 
+    // воодушевления: друг пишет мне одно сообщение в день, читаю и удаляю только я
+    match /cheers/{to}/inbox/{id} {
+      allow read, delete: if request.auth != null && request.auth.uid == to;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['from', 'name', 'photo', 'msg', 'day', 'at'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.day is string
+        && request.resource.data.day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && id == request.auth.uid + '_' + request.resource.data.day
+        && request.resource.data.msg is int
+        && request.resource.data.msg >= 0 && request.resource.data.msg < 4
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
+    }
+
     // профиль для друзей: имя, огонёк, где читает
     match /profiles/{uid} {
       // читать может сам пользователь и его друзья

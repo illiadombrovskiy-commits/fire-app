@@ -41,6 +41,7 @@ async function main() {
     import(SDK + "firebase-auth.js"),
     import(SDK + "firebase-firestore.js")
   ]);
+  try { if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
   const app = initializeApp(firebaseConfig);
   const auth = A.getAuth(app);
   auth.languageCode = "ru";
@@ -181,6 +182,140 @@ async function main() {
     const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
   }
+  /* ---------- воодушевление ---------- */
+  const CHEERS = [
+    "Брат, зажги огонь!",
+    "Сестра, не хватает твоего огня!",
+    "Мой огонёк уже горит — зажги и свой!",
+    "Духом пламенейте! Ждём тебя сегодня на чтении"
+  ];
+  const SENT_KEY = "ogonek-cheers-sent";
+  const sentMap = () => { try { return JSON.parse(lsGet(SENT_KEY) || "{}"); } catch (e) { return {}; } };
+  const sentToday = (uid) => sentMap()[uid] === O().today();
+  function markSent(uid) { const m = sentMap(), t = O().today(); Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(SENT_KEY, JSON.stringify(m)); }
+  const litToday = (d) => d && d.ntLast === O().today() && d.otLast === O().today();
+  // воодушевлять можно, когда мой огонёк сегодня горит, а у друга ещё нет
+  const canCheer = (d) => litToday(O().summary()) && !litToday(d);
+
+  function cheerButton(uid, d) {
+    const b = el("button", "cheerbtn"); b.type = "button";
+    const sent = sentToday(uid);
+    b.append(flameSvg(true), document.createTextNode(sent ? "Вы воодушевили сегодня ✓" : "Воодушевить"));
+    b.disabled = sent;
+    b.addEventListener("click", (e) => { e.stopPropagation(); openCheerPicker(uid, d); });
+    b.addEventListener("keydown", (e) => e.stopPropagation());
+    return b;
+  }
+
+  function openCheerPicker(uid, d) {
+    closeProfile();
+    const modal = el("div", "fmodal"), sheet = el("div", "fsheet");
+    sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
+    document.addEventListener("keydown", escClose);
+    const head = el("div", "fhead"), ht = el("div");
+    ht.append(el("h2", null, "Воодушевить"), el("div", "hint", (d.name || "Друг") + " получит уведомление"));
+    const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
+    head.append(avatarEl(d.name, d.photo, 64), ht, x);
+    const list = el("div", "cheerlist");
+    CHEERS.forEach((txt, i) => {
+      const o = el("button", "cheeropt", txt); o.type = "button";
+      o.addEventListener("click", async () => {
+        list.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+        const ok = await sendCheer(uid, i);
+        closeProfile();
+        if (ok) { renderFriends(); try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {} }
+      });
+      list.append(o);
+    });
+    sheet.append(head, el("span", "label", "Выберите слова"), list);
+    modal.append(sheet); document.body.append(modal); list.querySelector("button").focus();
+  }
+
+  async function sendCheer(uid, i) {
+    const day = O().today();
+    try {
+      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day), {
+        from: me.uid, name: String(me.displayName || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp()
+      });
+      markSent(uid);
+      O().toast("Отправлено! Пусть огонёк разгорится");
+      return true;
+    } catch (e) {
+      console.warn(e);
+      if (e && e.code === "permission-denied") { markSent(uid); O().toast("Сегодня вы уже воодушевляли этого друга"); return true; }
+      O().toast("Не удалось отправить. Проверьте интернет.");
+      return false;
+    }
+  }
+
+  // входящие: показываем по одному
+  let inboxUnsub = null, cheerQueue = [], cheerShown = null;
+  const seenCheers = new Set();
+  function listenCheers() {
+    if (inboxUnsub) inboxUnsub();
+    inboxUnsub = F.onSnapshot(F.collection(db, "cheers", me.uid, "inbox"), (qs) => {
+      const fresh = [];
+      qs.forEach((docSnap) => {
+        const c = docSnap.data();
+        if (seenCheers.has(docSnap.id)) return;
+        seenCheers.add(docSnap.id);
+        fresh.push({ id: docSnap.id, ...c });
+      });
+      fresh.sort((a, b) => String(a.day).localeCompare(String(b.day)));
+      fresh.forEach((c) => { cheerQueue.push(c); systemNotify(c); });
+      showNextCheer();
+    }, (e) => console.warn(e));
+  }
+
+  function systemNotify(c) {
+    if (!("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
+    const title = (c.name || "Друг") + " воодушевляет вас";
+    const opts = { body: CHEERS[c.msg] || CHEERS[0], icon: "icon-192.png", tag: "cheer-" + c.id, lang: "ru" };
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then((r) => r.showNotification(title, opts)).catch(() => { try { new Notification(title, opts); } catch (e) {} });
+    } else { try { new Notification(title, opts); } catch (e) {} }
+  }
+
+  function showNextCheer() {
+    if (cheerShown || !cheerQueue.length) return;
+    if (document.querySelector(".fmodal")) { setTimeout(showNextCheer, 1500); return; }
+    const c = cheerQueue.shift(); cheerShown = c;
+    const modal = el("div", "fmodal"), sheet = el("div", "fsheet cheerin");
+    sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+    const from = el("div", "from"); from.append(avatarEl(c.name, c.photo, 36), el("span", null, (c.name || "Друг") + " воодушевляет вас"));
+    const fl = flameSvg(true);
+    const q = el("blockquote", null, "«" + (CHEERS[c.msg] || CHEERS[0]) + "»");
+    const acts = el("div", "acts");
+    const lit = litToday(O().summary());
+    const go = el("button", "btn-main", lit ? "Спасибо!" : "Зажечь огонёк"); go.type = "button";
+    acts.append(go);
+    const done = () => {
+      modal.remove(); document.removeEventListener("keydown", esc);
+      F.deleteDoc(F.doc(db, "cheers", me.uid, "inbox", c.id)).catch((e) => console.warn(e));
+      cheerShown = null; setTimeout(showNextCheer, 400);
+    };
+    const esc = (e) => { if (e.key === "Escape") done(); };
+    document.addEventListener("keydown", esc);
+    go.addEventListener("click", () => { done(); if (!lit) window.scrollTo({ top: 0, behavior: "smooth" }); });
+    if (!lit) { const later = el("button", "linkbtn", "Позже"); later.type = "button"; later.addEventListener("click", done); acts.append(later); }
+    sheet.append(fl, from, q, acts);
+    modal.append(sheet); document.body.append(modal); go.focus();
+    try { navigator.vibrate && navigator.vibrate([60, 40, 60, 40, 140]); } catch (e) {}
+  }
+
+  function bellButton() {
+    if (!("Notification" in window) || Notification.permission !== "default") return null;
+    const b = el("button", "linkbtn bellbtn", "Включить уведомления, чтобы видеть, когда вас воодушевляют");
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      try { await Notification.requestPermission(); } catch (e) {}
+      if (Notification.permission === "granted") O().toast("Уведомления включены");
+      renderFriends();
+    });
+    return b;
+  }
+
   function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
 
   function friendRow(d, isMe, uid) {
@@ -201,6 +336,7 @@ async function main() {
     const lit = d.ntLast === t && d.otLast === t;
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
     row.append(av, mid, right);
+    if (!isMe && canCheer(d)) row.append(cheerButton(uid, d));
     row.tabIndex = 0; row.setAttribute("role", "button");
     row.title = isMe ? "Мой профиль" : "Открыть профиль";
     row.addEventListener("click", () => openProfile(isMe ? "me" : uid));
@@ -266,7 +402,10 @@ async function main() {
     if (!(d.awards || []).length) bw.append(el("span", "hint", "Пока нет наград"));
     badges.append(bw);
 
-    sheet.append(head, stats, reading, aboutBox, badges);
+    sheet.append(head, stats, reading);
+    if (!isMe && canCheer(d)) sheet.append(cheerButton(id, d));
+    else if (!isMe && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
+    sheet.append(aboutBox, badges);
 
     if (!isMe) {
       // друзья друга: можно сразу добавить к себе
@@ -309,6 +448,7 @@ async function main() {
     rows.forEach((r) => box.append(friendRow(r.d, r.me, r.uid)));
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
+    const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
   }
 
   $("addFriend").addEventListener("click", () => addFriendByCode($("friendCode").value));
@@ -325,6 +465,7 @@ async function main() {
   A.onAuthStateChanged(auth, async (user) => {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
     if (myUnsub) { myUnsub(); myUnsub = null; }
+    if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (!user) {
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true; $("logoutBtn").hidden = false;
@@ -372,6 +513,7 @@ async function main() {
       publishSummary();
       myUnsub = F.onSnapshot(myRef, (snap) => { myProfile = snap.exists() ? snap.data() : {}; syncFriendSubs(myProfile.friends || []); });
       O().onPersonClick = (id) => openProfile(id);
+      listenCheers();
       const add = new URLSearchParams(location.search).get("add");
       if (add) { history.replaceState(null, "", location.pathname); addFriendByCode(add); }
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить друзей. Проверьте настройки Firestore."); }

@@ -381,6 +381,21 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .ffrow span{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ffrow button{padding:7px 12px;font-size:.85rem}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
+.cheerbtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:12px;font-weight:700;font-size:.9rem;background:var(--flame-soft);color:var(--ink);border:1.5px solid var(--flame)}
+.cheerbtn svg{width:16px;height:20px}
+.cheerbtn:disabled{opacity:.65;cursor:default;background:transparent;border-style:dashed}
+.cheerlist{display:flex;flex-direction:column;gap:8px}
+.cheeropt{text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:1rem;line-height:1.3}
+.cheeropt:hover,.cheeropt:focus-visible{border-color:var(--flame);background:var(--flame-soft)}
+.cheerin{align-items:center;text-align:center}
+.cheerin .flame{width:72px;height:90px;animation:cheerglow 1.6s ease-in-out infinite}
+@keyframes cheerglow{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.cheerin .from{display:flex;align-items:center;gap:10px;justify-content:center;color:var(--muted);font-weight:600}
+.cheerin .from .favatar{width:36px;height:36px}
+.cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
+.cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
+.bellbtn{align-self:flex-start;font-size:.85rem}
+@media (prefers-reduced-motion:reduce){.cheerin .flame{animation:none}}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
 .auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;gap:14px;text-align:left}
@@ -1333,7 +1348,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610032036"></script>
+<script type="module" src="auth.js?v=202610032308"></script>
 
 </body>
 </html>
