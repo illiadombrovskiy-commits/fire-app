@@ -330,6 +330,10 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pinit{font-size:14px;font-weight:800;fill:#fff}
 .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .pname.small{font-size:9.5px}
+.pplanline{stroke:var(--link);stroke-width:1.5;stroke-dasharray:6 5;opacity:.8}
+.pplanring{fill:none;stroke:var(--link);stroke-width:2.5}
+.pplanflag text{font-size:11px;font-weight:800;fill:var(--link);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.pplanflag .pplansub{font-weight:600;font-size:10.5px}
 .pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
 .fold{display:block}
 .foldhead{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;user-select:none}
@@ -389,7 +393,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
       <div class="legend" id="paceLegend"></div>
       <div class="row" style="justify-content:space-between;align-items:center">
-        <label class="startlbl">Начало плана <input type="date" id="startDate"></label>
+        <span class="startlbl">План начался 27 сентября</span>
       </div>
       <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
     </div>
@@ -440,15 +444,6 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <span class="daynum">Кто где читает</span>
     </div>
     <div class="friends" id="friendsList"></div>
-    <div class="mycode">
-      <span>Ваш код: <b id="myCode">…</b></span>
-      <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
-      <span class="myids">Вас также можно найти по почте <b id="myEmail"></b> или по ID <code id="myId"></code></span>
-    </div>
-    <div class="addfriend">
-      <input id="friendCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код, почта или ID друга" aria-label="Код, почта или ID друга">
-      <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
-    </div>
   </section>
 
   <section class="card" id="pathCard">
@@ -503,6 +498,19 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p></div>
   </details>
+
+  <section class="card" id="inviteCard" hidden>
+    <h2>Добавить друга</h2>
+    <div class="mycode">
+      <span>Ваш код: <b id="myCode">…</b></span>
+      <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
+      <span class="myids">Вас также можно найти по почте <b id="myEmail"></b> или по ID <code id="myId"></code></span>
+    </div>
+    <div class="addfriend">
+      <input id="friendCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код, почта или ID друга" aria-label="Код, почта или ID друга">
+      <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
+    </div>
+  </section>
 
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
@@ -597,7 +605,11 @@ function chapterUrl(x){ // открывает с первого стиха от�
   const m=/^(\d+)(?::(\d+))?/.exec(x.ref)||[], ch=m[1]||1, v=m[2]||1;
   return SLUG[x.book]?BIBLE+SLUG[x.book]+"/"+ch+"/"+v:BIBLE;
 }
-function dayLabel(p){return "Неделя "+(Math.floor(p/7)+1)+" · "+WEEKDAYS[p%7]}
+const PLAN_START="2026-09-27"; // день 1 плана: Мф. 1:1–2 и Быт. 1:1–5
+const planDate=p=>add(PLAN_START,p);
+const todayP=()=>dayNo(today())-dayNo(PLAN_START);
+function shortDay(p){return parse(planDate(p)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}
+function dayLabel(p){const s=parse(planDate(p)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});return s.charAt(0).toUpperCase()+s.slice(1)}
 function startDay(k,book){return PLAN.findIndex(d=>d[T[k].bi]===book)}
 
 const QUESTIONS=["Что в сегодняшнем чтении больше всего коснулось вас?","Что этот отрывок открывает о Боге?","Какой стих вы хотели бы запомнить сегодня? Почему?","Есть ли здесь обещание, которое можно взять для себя?","Что вы узнали о человеке и его отношениях с Богом?","За что из прочитанного можно поблагодарить Господа?","Какой вопрос возник у вас при чтении?","Есть ли в отрывке пример, которому стоит последовать?","Как прочитанное связано с вашим сегодняшним днём?","Как связаны сегодняшние отрывки из Нового и Ветхого Завета?","О чём вы хотите помолиться после этого чтения?","Что в тексте показывает Христа?","Чему этот отрывок учит о жизни церкви?","Какую одну мысль вы расскажете сегодня другому человеку?"];
@@ -683,7 +695,8 @@ function renderTestament(k){
   // слева — сегодняшний отрывок, справа — следующий
   const cols=el("div","tcols"), left=el("div","tcol"), right=el("div","tcol");
   const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
-  a.append(el("span","label","Сегодня"),el("span","name",refStr(x)),el("span","sub",dayLabel(viewP)));
+  const tp=todayP(), lab=lit?"Прочитано сегодня":viewP===tp?"Сегодня":viewP<tp?"Догнать":"Заранее";
+  a.append(el("span","label",lab),el("span","name",refStr(x)),el("span","sub",dayLabel(viewP)));
   const btn=el("button","tbtn");btn.type="button";
   if(np>=DAYS&&!doneToday){btn.textContent="Завет пройден!";btn.classList.add("done");btn.disabled=true}
   else if(doneToday&&!isAhead){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
@@ -761,7 +774,7 @@ function fmtAhead(n){return n>0?"+"+n:n<0?"−"+Math.abs(n):"0"}
 function paceWords(n){return n>0?n+" "+daysWord(n)+" впереди":n<0?"отставание "+Math.abs(n)+" "+daysWord(Math.abs(n)):"точно по графику"}
 // for each date since the plan start: passages read by that date minus passages due by that date
 function paceSeries(){
-  const t=today(), start=state.start<=t?state.start:t, n=dayNo(t)-dayNo(start)+1;
+  const t=today(), start=PLAN_START<=t?PLAN_START:t, n=dayNo(t)-dayNo(start)+1;
   const dates=[];for(let i=0;i<n;i++)dates.push(add(start,i));
   const out={dates,nt:[],ot:[]};
   KEYS.forEach(k=>{
@@ -779,7 +792,7 @@ function paceSeries(){
 function niceStep(range){const raw=range/4;const m=Math.pow(10,Math.floor(Math.log10(raw||1)));for(const f of [1,2,5,10])if(f*m>=raw)return f*m;return 10*m}
 const shortDate=d=>parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"short"});
 function renderPace(){
-  const sd=$("startDate"); if(document.activeElement!==sd){sd.value=state.start;sd.max=today()}
+
   const S=paceSeries(), last=S.dates.length-1;
   const tiles=$("paceTiles");tiles.textContent="";
   KEYS.forEach(k=>{
@@ -842,10 +855,7 @@ function drawPace(S){
 }
 $("paceCard").addEventListener("toggle",()=>{if($("paceCard").open)drawPace(paceSeries())});
 let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{drawPace(paceSeries());renderPath()},150)});
-$("startDate").addEventListener("change",ev=>{
-  const v=ev.target.value; if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||v>today())return;
-  state.start=v; save(); renderPace(); toast("Начало плана: "+parse(v).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}));
-});
+
 
 /* ---------- quiz: questions answered strictly from the passage ---------- */
 function viewDay(k){const t=today(),todays=state[k].log.filter(x=>x.d===t);return todays.length?todays[todays.length-1].p:Math.min(nextP(k),DAYS-1)}
@@ -938,7 +948,8 @@ function renderPath(){
   const box=$("path"); if(!box)return;
   const mePos=Math.floor((nextP("nt")+nextP("ot"))/2);
   const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>({id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)})));
-  const ps=people.map(x=>x.pos), lo=Math.max(0,Math.floor(Math.min(...ps))-3), hi=Math.min(DAYS-1,Math.ceil(Math.max(...ps))+5);
+  const tp=Math.min(DAYS-1,Math.max(0,todayP()));
+  const ps=people.map(x=>x.pos).concat([tp]), lo=Math.max(0,Math.floor(Math.min(...ps))-3), hi=Math.min(DAYS-1,Math.ceil(Math.max(...ps))+5);
   const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
   const X=i=>cx+A*Math.sin((i-lo)*Math.PI/3.5), Y=i=>padT+(hi-i)*gap;
   const posXY=pos=>{const a=Math.floor(pos),b=Math.min(hi,a+1),t=pos-a;return [X(a)+(X(b)-X(a))*t,Y(a)+(Y(b)-Y(a))*t]};
@@ -952,12 +963,21 @@ function renderPath(){
     const both=rn.has(i)&&ro.has(i), one=rn.has(i)||ro.has(i);
     const g=sv("g",{class:"pnode"+(both?" both":one?" one":"")});
     g.append(sv("circle",{cx:X(i),cy:Y(i),r:15}));
-    g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(i%7+1)));
+    g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate())));
     const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
     if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-26:X(i)+26,y:Y(i)+4,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
+  // где по плану нужно быть сегодня: пунктир через всю тропинку и флажок
+  {const ty=Y(tp), tx=X(tp), left=tx>cx;
+   svg.insertBefore(sv("line",{x1:6,x2:W-6,y1:ty,y2:ty,class:"pplanline"}),svg.firstChild);
+   svg.append(sv("circle",{cx:tx,cy:ty,r:20,class:"pplanring"}));
+   const fx=left?14:W-14, anchor=left?"start":"end";
+   const lab=sv("g",{class:"pplanflag"});
+   lab.append(sv("text",{x:fx,y:ty-8,"text-anchor":anchor},"⚑ По плану сегодня"));
+   lab.append(sv("text",{x:fx,y:ty+16,"text-anchor":anchor,class:"pplansub"},shortDay(tp)));
+   svg.append(lab);}
   // people: grouped by position so avatars on the same spot sit side by side
   const groups={};people.forEach(pp=>{const k=pp.pos.toFixed(2);(groups[k]=groups[k]||[]).push(pp)});
   let meY=0;
@@ -1021,8 +1041,8 @@ $("pzLevel").textContent=Math.round(pathZoom*100)+"%";
 /* ---------- schedule ---------- */
 let selWeek=null;
 const sel=$("wkSel");
-for(let w=1;w<=Math.ceil(DAYS/7);w++){const o=el("option",null,"Неделя "+w);o.value=w;sel.append(o)}
-function currentWeek(){return Math.floor(Math.min(nextP("nt"),nextP("ot"),DAYS-1)/7)+1}
+for(let w=1;w<=Math.ceil(DAYS/7);w++){const o=el("option",null,shortDay((w-1)*7)+" – "+shortDay(Math.min(DAYS-1,w*7-1)));o.value=w;sel.append(o)}
+function currentWeek(){return Math.floor(Math.min(Math.max(0,todayP()),DAYS-1)/7)+1}
 function renderSchedule(){
   const w=selWeek||currentWeek(), max=Math.ceil(DAYS/7);
   sel.value=String(w); $("wkPrev").disabled=w<=1; $("wkNext").disabled=w>=max;
@@ -1030,8 +1050,8 @@ function renderSchedule(){
   const rs={nt:readSet("nt"),ot:readSet("ot")}, np={nt:nextP("nt"),ot:nextP("ot")};
   for(let i=0;i<7;i++){
     const p=(w-1)*7+i; if(p>=DAYS)break;
-    const row=el("div","srow"+((p===np.nt||p===np.ot)?" snext":""));
-    row.append(el("div","sday",WEEKDAYS[i]));
+    const row=el("div","srow"+(p===todayP()?" snext":""));
+    row.append(el("div","sday",(p===todayP()?"Сегодня · ":"")+dayLabel(p)));
     KEYS.forEach(k=>{
       const x=part(k,p), done=rs[k].has(p);
       const item=el("div","sitem"+(done?" sdone":""));
@@ -1280,7 +1300,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610031904"></script>
+<script type="module" src="auth.js?v=202610031926"></script>
 
 </body>
 </html>

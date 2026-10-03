@@ -204,6 +204,7 @@ async function main() {
     const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
     rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
     rows.forEach((r) => box.append(friendRow(r.d, r.me, r.uid)));
+    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
   }
 
@@ -222,15 +223,15 @@ async function main() {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (!user) {
-      me = null; O().setRemote(null); O().onSave = null;
-      $("friendsCard").hidden = true; $("logoutBtn").hidden = false;
+      me = null; O().setRemote(null); O().onSave = null; O().setPathPeople([]);
+      $("friendsCard").hidden = true; $("inviteCard").hidden = true; $("logoutBtn").hidden = false;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
       top.textContent = "Войти"; top.classList.remove("user"); topAction = () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; };
       if (lsGet(SKIP_KEY)) { $("auth").hidden = true; showLoginLink(); }
       else { $("account").hidden = true; $("auth").hidden = false; }
       return;
     }
-    me = user; lsSet(SKIP_KEY, null);
+    me = user; lsSet(SKIP_KEY, null); O().setMyPhoto(user.photoURL);
     top.textContent = (user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
     top.title = "Вы вошли как " + (user.displayName || user.email || "") + ". Нажмите, чтобы выйти.";
     topAction = () => {
@@ -263,7 +264,7 @@ async function main() {
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;
-      $("friendsCard").hidden = false;
+      $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
       myUnsub = F.onSnapshot(myRef, (snap) => { syncFriendSubs((snap.exists() && snap.data().friends) || []); });
