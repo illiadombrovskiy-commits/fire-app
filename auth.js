@@ -191,17 +191,30 @@ async function main() {
   ];
   const SENT_KEY = "ogonek-cheers-sent";
   const sentMap = () => { try { return JSON.parse(lsGet(SENT_KEY) || "{}"); } catch (e) { return {}; } };
-  const sentToday = (uid) => sentMap()[uid] === O().today();
-  function markSent(uid) { const m = sentMap(), t = O().today(); Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(SENT_KEY, JSON.stringify(m)); }
+  const CHEER_LIMIT = 2; // в день можно воодушевить только двух друзей
+  // кого я воодушевил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
+  function cheeredToday() {
+    const t = O().today(), m = sentMap(), set = new Set(Object.keys(m).filter((k) => m[k] === t));
+    const c = myProfile && myProfile.cheer; if (c && c.d === t) (c.u || []).forEach((u) => set.add(u));
+    return set;
+  }
+  const sentToday = (uid) => cheeredToday().has(uid);
+  const cheersLeft = () => Math.max(0, CHEER_LIMIT - cheeredToday().size);
+  function markSent(uid) {
+    const m = sentMap(), t = O().today(); Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(SENT_KEY, JSON.stringify(m));
+    const u = [...cheeredToday()];
+    myProfile = Object.assign({}, myProfile, { cheer: { d: t, u } });
+    F.setDoc(myRef, { cheer: { d: t, u } }, { merge: true }).catch((e) => console.warn(e));
+  }
   const litToday = (d) => d && d.ntLast === O().today() && d.otLast === O().today();
   // воодушевлять можно, когда мой огонёк сегодня горит, а у друга ещё нет
   const canCheer = (d) => litToday(O().summary()) && !litToday(d);
 
   function cheerButton(uid, d) {
     const b = el("button", "cheerbtn"); b.type = "button";
-    const sent = sentToday(uid);
-    b.append(flameSvg(true), document.createTextNode(sent ? "Вы воодушевили сегодня ✓" : "Воодушевить"));
-    b.disabled = sent;
+    const sent = sentToday(uid), full = !sent && cheersLeft() === 0;
+    b.append(flameSvg(true), document.createTextNode(sent ? "Вы воодушевили сегодня ✓" : full ? "Сегодня вы уже воодушевили двух друзей" : "Воодушевить"));
+    b.disabled = sent || full;
     b.addEventListener("click", (e) => { e.stopPropagation(); openCheerPicker(uid, d); });
     b.addEventListener("keydown", (e) => e.stopPropagation());
     return b;
@@ -214,6 +227,8 @@ async function main() {
     modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
     document.addEventListener("keydown", escClose);
     const head = el("div", "fhead"), ht = el("div");
+    if (!sentToday(uid) && cheersLeft() === 0) { O().toast("Воодушевить можно только двух друзей в день"); return; }
+    const left = cheersLeft();
     ht.append(el("h2", null, "Воодушевить"), el("div", "hint", (d.name || "Друг") + " получит уведомление"));
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64), ht, x);
@@ -228,7 +243,9 @@ async function main() {
       });
       list.append(o);
     });
-    sheet.append(head, el("span", "label", "Выберите слова"), list);
+    const note = el("p", "hint", "Воодушевить можно только двух друзей в день. " + (left === 2 ? "Сегодня осталось: 2." : "Сегодня остался ещё один."));
+    note.style.margin = "0";
+    sheet.append(head, note, el("span", "label", "Выберите слова"), list);
     modal.append(sheet); document.body.append(modal); list.querySelector("button").focus();
   }
 
