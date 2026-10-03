@@ -21,16 +21,16 @@
   --display:"Alegreya",Georgia,"Times New Roman",serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:16px;
-  --s-nt:#6b4fd8; --s-ot:#e8650a; --link:#1d6fd6; --link-soft:#e6f0fc;
+  --s-nt:#6b4fd8; --s-ot:#e8650a; --link:#1d6fd6; --link-soft:#e6f0fc; --trail:#e7dcc8;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
   --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
-  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; color-scheme:dark}}
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; --trail:#3a3550; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
   --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
-  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; color-scheme:dark}
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; --trail:#3a3550; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--ink)}
@@ -319,6 +319,17 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .loginTop.user{background:var(--bg);color:var(--ink);border:1px solid var(--line);max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top{flex-wrap:wrap}
 @media (max-width:440px){.top .xptext{display:none}.top .xpbar{width:56px}}
+.pathbox{max-height:440px;overflow-y:auto;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+.pathsvg{display:block;max-width:100%}
+.pnode circle{fill:var(--surface);stroke:var(--line);stroke-width:3}
+.pnode text{font-size:11px;font-weight:700;fill:var(--muted);font-variant-numeric:tabular-nums}
+.pnode.one circle{fill:var(--flame-soft);stroke:var(--flame)}
+.pnode.both circle{fill:var(--flame);stroke:var(--flame)}
+.pnode.both text{fill:#fff}
+.pweek{font-size:11px;font-weight:700;fill:var(--muted);letter-spacing:.04em}
+.pinit{font-size:14px;font-weight:800;fill:#fff}
+.pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -411,6 +422,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <h2>Друзья</h2>
       <span class="daynum">Кто где читает</span>
     </div>
+    <div class="friends" id="friendsList"></div>
     <div class="mycode">
       <span>Ваш код: <b id="myCode">…</b></span>
       <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
@@ -420,7 +432,14 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <input id="friendCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код, почта или ID друга" aria-label="Код, почта или ID друга">
       <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
     </div>
-    <div class="friends" id="friendsList"></div>
+  </section>
+
+  <section class="card" id="pathCard">
+    <div class="reading-head">
+      <h2>Тропинка</h2>
+      <span class="daynum" id="pathSub">Вперёд — вверх</span>
+    </div>
+    <div class="pathbox" id="pathBox"><div id="path"></div></div>
   </section>
 
   <section class="card" id="schedule">
@@ -677,6 +696,7 @@ function render(){
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
 
   renderSchedule();
+  renderPath();
   renderQuiz();
   renderPace();
 
@@ -796,7 +816,7 @@ function drawPace(S){
   if(n===1)box.append(el("p","hint","Линии появятся, когда пройдёт хотя бы один день плана. Дату начала можно изменить выше."));
 }
 $("paceCard").addEventListener("toggle",()=>{if($("paceCard").open)drawPace(paceSeries())});
-let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>drawPace(paceSeries()),150)});
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{drawPace(paceSeries());renderPath()},150)});
 $("startDate").addEventListener("change",ev=>{
   const v=ev.target.value; if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||v>today())return;
   state.start=v; save(); renderPace(); toast("Начало плана: "+parse(v).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}));
@@ -875,6 +895,59 @@ function answerQuiz(k,p,pick,q){
   save();render();quizReaction(id,ok);
 
   checkAwards();
+}
+
+/* ---------- path: everyone walks the same zigzag trail of plan days ---------- */
+let pathPeople=[]; // friends: {id,name,photo,nt,ot}
+const PCOL=["#3d93e2","#34a874","#8a6cf2","#e0475b","#2bb3b1","#c7559c","#5b6bd6"];
+function hashCol(id){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))|0;return PCOL[Math.abs(h)%PCOL.length]}
+function renderPath(){
+  const box=$("path"); if(!box)return;
+  const mePos=Math.floor((nextP("nt")+nextP("ot"))/2);
+  const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>({id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)})));
+  const ps=people.map(x=>x.pos), lo=Math.max(0,Math.floor(Math.min(...ps))-3), hi=Math.min(DAYS-1,Math.ceil(Math.max(...ps))+5);
+  const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
+  const X=i=>cx+A*Math.sin((i-lo)*Math.PI/3.5), Y=i=>padT+(hi-i)*gap;
+  const posXY=pos=>{const a=Math.floor(pos),b=Math.min(hi,a+1),t=pos-a;return [X(a)+(X(b)-X(a))*t,Y(a)+(Y(b)-Y(a))*t]};
+  const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка чтения: где вы и ваши друзья по плану"});
+  let d="";for(let i=lo;i<=hi;i++)d+=(i===lo?"M":"L")+X(i).toFixed(1)+" "+Y(i).toFixed(1);
+  svg.append(sv("path",{d,fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  const doneTo=Math.min(hi,mePos);let dd="";for(let i=lo;i<=Math.floor(doneTo);i++)dd+=(i===lo?"M":"L")+X(i).toFixed(1)+" "+Y(i).toFixed(1);
+  if(doneTo>lo){const [ex,ey]=posXY(doneTo);dd+="L"+ex.toFixed(1)+" "+ey.toFixed(1);svg.append(sv("path",{d:dd,fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-linejoin":"round","stroke-dasharray":"2 8"}))}
+  const rn=readSet("nt"),ro=readSet("ot");
+  for(let i=lo;i<=hi;i++){
+    const both=rn.has(i)&&ro.has(i), one=rn.has(i)||ro.has(i);
+    const g=sv("g",{class:"pnode"+(both?" both":one?" one":"")});
+    g.append(sv("circle",{cx:X(i),cy:Y(i),r:15}));
+    g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(i%7+1)));
+    const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
+    svg.append(g);
+    if(i%7===0){const left=X(i)>cx;svg.append(sv("text",{x:left?X(i)-26:X(i)+26,y:Y(i)+4,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
+  }
+  if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
+  // people: grouped by position so avatars on the same spot sit side by side
+  const groups={};people.forEach(pp=>{const k=pp.pos.toFixed(2);(groups[k]=groups[k]||[]).push(pp)});
+  let meY=0;
+  Object.values(groups).forEach(gr=>{
+    const [nx,by]=posXY(gr[0].pos), dir=nx>cx?-1:1; // stand next to the day node, toward the middle
+    gr.forEach((pp,j)=>{
+      const x=nx+dir*(34+j*32), y=by, col=pp.me?"var(--flame)":hashCol(pp.id), cid="pc"+pp.id.replace(/[^a-zA-Z0-9]/g,"")+j;
+      const g=sv("g",{class:"pperson"+(pp.me?" me":"")});
+      g.append(sv("circle",{cx:x,cy:y,r:16,fill:col,stroke:"var(--surface)","stroke-width":3}));
+      if(pp.photo){const cp=sv("clipPath",{id:cid});cp.append(sv("circle",{cx:x,cy:y,r:13}));g.append(cp);
+        const im=sv("image",{href:pp.photo,x:x-13,y:y-13,width:26,height:26,"clip-path":"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice",referrerpolicy:"no-referrer"});g.append(im)}
+      else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
+      g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"},pp.me?"Вы":(pp.name||"").split(" ")[0]));
+      g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+dayLabel(Math.min(DAYS-1,Math.floor(pp.pos)))));
+      svg.append(g); if(pp.me)meY=y;
+    });
+  });
+  box.textContent="";box.append(svg);
+  const lead=people.slice().sort((a,b)=>b.pos-a.pos)[0];
+  $("pathSub").textContent=pathPeople.length?(lead.me?"Вы впереди всех!":"Впереди: "+(lead.name||"").split(" ")[0]):"Вперёд — вверх";
+  const pb=$("pathBox");
+  if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY-pb.clientHeight/2)}
+  if(pb&&!pb.dataset.bound){pb.dataset.bound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{pb.dataset.touched="1"},{passive:true}))}
 }
 
 /* ---------- schedule ---------- */
@@ -1127,6 +1200,8 @@ window.Ogonek={
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   onSave:null,
+  setPathPeople(list){pathPeople=list||[];renderPath()},
+  setMyPhoto(url){state.photo=url||"";renderPath()},
   fresh, score,
   getState:()=>JSON.parse(JSON.stringify(state)),
   setState(s){state=migrate(s);initSeen();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
@@ -1137,7 +1212,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610031821"></script>
+<script type="module" src="auth.js?v=202610031854"></script>
 
 </body>
 </html>
