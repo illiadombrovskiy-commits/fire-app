@@ -343,6 +343,17 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .chev::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-2px) rotate(45deg)}
 .fold[open] .chev{transform:rotate(180deg)}
 .foldbody{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.fold2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.fold2:has(details[open]){grid-template-columns:1fr}
+.fold2 .card{padding-top:14px;padding-bottom:14px}
+.fold2:not(:has(details[open])) .foldhead h2{font-size:1rem;line-height:1.2}
+.fold2:not(:has(details[open])) .foldhead{gap:6px}
+.invite{background:var(--xp-soft);border:2px solid var(--xp)}
+.invite .foldhead h2{color:var(--xp)}
+.invite .chev{border-color:var(--xp);background:var(--surface)}
+.invite .chev::before{border-color:var(--xp)}
+.invite .plus{width:32px;height:32px;border-radius:50%;background:var(--xp);color:#fff;display:grid;place-items:center;font-size:1.4rem;font-weight:800;line-height:1;flex:none}
+.invite .addfriend input{background:var(--surface)}
 .pzoom{display:flex;align-items:center;gap:6px;justify-content:flex-end}
 .pzbtn{padding:4px 12px;font-size:1.2rem;line-height:1.1}
 .pzlevel{padding:5px 10px;font-size:.8rem;font-variant-numeric:tabular-nums;min-width:4.2em}
@@ -529,23 +540,27 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     </div>
   </details>
 
-  <section class="card">
-    <h2>Прогресс плана</h2>
-    <div class="prog" id="prog"></div>
-  </section>
 
   <details class="card fold" id="awardsCard">
     <summary class="foldhead"><h2>Награды</h2><span class="daynum" id="awardsCount"></span><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody"><div class="badges" id="badges"></div></div>
   </details>
 
+  <div class="fold2">
+  <details class="card fold" id="progCard">
+    <summary class="foldhead"><h2>Прогресс плана</h2><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody"><div class="prog" id="prog"></div></div>
+  </details>
+
   <details class="card fold" id="howCard">
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p></div>
   </details>
+  </div>
 
-  <section class="card" id="inviteCard" hidden>
-    <h2>Добавить друга</h2>
+  <details class="card fold invite" id="inviteCard" hidden>
+    <summary class="foldhead"><span class="plus" aria-hidden="true">+</span><h2>Добавить друга</h2><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody">
     <div class="mycode">
       <span>Ваш код: <b id="myCode">…</b></span>
       <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
@@ -555,7 +570,8 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <input id="friendCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код, почта или ID друга" aria-label="Код, почта или ID друга">
       <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
     </div>
-  </section>
+    </div>
+  </details>
 
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
@@ -1349,7 +1365,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610032314"></script>
+<script type="module" src="auth.js?v=202610032323"></script>
 
 </body>
 </html>
