@@ -1,11 +1,8 @@
-// Настройки вашего проекта Firebase.
-// Скопируйте их из консоли Firebase: Настройки проекта → Общие → Ваши приложения → Конфигурация SDK.
-// Пока здесь стоят заглушки, приложение работает без входа и хранит прогресс только в браузере.
 export const firebaseConfig = {
-  apiKey: "ВСТАВЬТЕ_API_KEY",
-  authDomain: "ВАШ-ПРОЕКТ.firebaseapp.com",
-  projectId: "ВАШ-ПРОЕКТ",
-  storageBucket: "ВАШ-ПРОЕКТ.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "ВСТАВЬТЕ_APP_ID"
+  apiKey: "AIzaSyBYIOlOcQ3xw5nsyM0h4O_Ab4BktRy0nRM",
+  authDomain: "fire-app-a69cc.firebaseapp.com",
+  projectId: "fire-app-a69cc",
+  storageBucket: "fire-app-a69cc.firebasestorage.app",
+  messagingSenderId: "464397700670",
+  appId: "1:464397700670:web:f80b3ef1d1205ce2bacb6f"
 };
