@@ -1,5 +1,5 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig } from "./firebase-config.js?v=202610031821";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -25,11 +25,16 @@ const errText = (e) => ERRORS[e && e.code] || ("Не получилось вой
 
 async function main() {
   if (!O()) return;
+  const top = $("loginTop"); top.hidden = false;
   if (!configured) {
-    const note = el("div", "demo-note", "Демо-режим: вход ещё не настроен, прогресс хранится только в этом браузере.");
+    const msg = "Вход не настроен: в файле firebase-config.js на GitHub ещё стоят заглушки «ВСТАВЬТЕ_API_KEY». Вставьте туда настройки из Firebase (Project settings → Your apps).";
+    const note = el("div", "demo-note", "Демо-режим. " + msg);
     document.querySelector(".app").prepend(note);
+    top.addEventListener("click", () => { O().toast(msg); note.scrollIntoView({ behavior: "smooth" }); });
     return;
   }
+  let topAction = () => { $("auth").hidden = false; };
+  top.addEventListener("click", () => topAction());
 
   const [{ initializeApp }, A, F] = await Promise.all([
     import(SDK + "firebase-app.js"),
@@ -220,11 +225,19 @@ async function main() {
       me = null; O().setRemote(null); O().onSave = null;
       $("friendsCard").hidden = true; $("logoutBtn").hidden = false;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
+      top.textContent = "Войти"; top.classList.remove("user"); topAction = () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; };
       if (lsGet(SKIP_KEY)) { $("auth").hidden = true; showLoginLink(); }
       else { $("account").hidden = true; $("auth").hidden = false; }
       return;
     }
     me = user; lsSet(SKIP_KEY, null);
+    top.textContent = (user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
+    top.title = "Вы вошли как " + (user.displayName || user.email || "") + ". Нажмите, чтобы выйти.";
+    topAction = () => {
+      if (top.dataset.armed) { O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
+      top.dataset.armed = "1"; const t = top.textContent; top.textContent = "Выйти?";
+      setTimeout(() => { delete top.dataset.armed; if (me) top.textContent = t; }, 3000);
+    };
     $("auth").hidden = true; $("account").hidden = false; $("logoutBtn").hidden = false;
     $("accountPhone").textContent = "Вы вошли: " + (user.displayName || user.email || "");
     $("storage").textContent = "Прогресс сохраняется в вашем аккаунте";
@@ -260,4 +273,8 @@ async function main() {
   });
 }
 
-main().catch((e) => { console.error(e); });
+main().catch((e) => {
+  console.error(e);
+  const top = $("loginTop"); if (top) { top.hidden = false; top.textContent = "Войти"; top.onclick = () => O() && O().toast("Не удалось загрузить вход Google. Проверьте интернет и обновите страницу."); }
+  if (O()) O().toast("Не удалось загрузить вход Google. Проверьте интернет и обновите страницу.");
+});

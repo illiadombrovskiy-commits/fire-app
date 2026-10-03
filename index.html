@@ -315,6 +315,10 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .myids{flex-basis:100%;font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
 .myids b{font-size:.8rem;letter-spacing:0}
 .myids code{font-size:.72rem;user-select:all}
+.loginTop{flex:none;padding:7px 14px;border-radius:999px;font-weight:700;font-size:.9rem;background:var(--xp);color:#fff}
+.loginTop.user{background:var(--bg);color:var(--ink);border:1px solid var(--line);max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top{flex-wrap:wrap}
+@media (max-width:440px){.top .xptext{display:none}.top .xpbar{width:56px}}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -345,6 +349,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <span class="xpbar"><i id="xpbar" style="width:0%"></i></span>
       <span class="xptext" id="xptext">0 XP</span>
     </div>
+    <button class="loginTop" id="loginTop" type="button" hidden>Войти</button>
   </header>
 
   <details class="pacebar" id="paceCard">
@@ -1132,7 +1137,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js"></script>
+<script type="module" src="auth.js?v=202610031821"></script>
 
 </body>
 </html>
