@@ -99,12 +99,22 @@ async function main() {
   }
 
   let pubTimer = null;
+  let lastFof = "";
+  function fofChanged() {
+    const fof = {};
+    myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
+    return JSON.stringify(fof) !== lastFof;
+  }
   function publishSummary() {
     clearTimeout(pubTimer);
     pubTimer = setTimeout(() => {
       if (!me) return;
       const s = O().summary();
-      F.setDoc(myRef, Object.assign(s, { name: me.displayName || "Читатель", photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
+      // имена и фото моих друзей — чтобы мои друзья видели, кто у меня в друзьях
+      const fof = {};
+      myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
+      lastFof = JSON.stringify(fof);
+      F.setDoc(myRef, Object.assign(s, { fof, name: me.displayName || "Читатель", photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
       F.setDoc(F.doc(db, "cards", me.uid), { name: me.displayName || "Читатель", photo: me.photoURL || "" }).catch((e) => console.warn(e));
     }, 1200);
@@ -161,7 +171,7 @@ async function main() {
     list.forEach((uid) => {
       if (friendUnsubs[uid]) return;
       friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
-        (snap) => { if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid]; renderFriends(); },
+        (snap) => { if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid]; renderFriends(); if (fofChanged()) publishSummary(); },
         () => { delete friendData[uid]; renderFriends(); });
     });
     renderFriends();
@@ -267,7 +277,11 @@ async function main() {
       others.slice(0, 50).forEach(async (u) => {
         const row = el("div", "ffrow"); fof.append(row);
         let c = {}; try { const snap = await F.getDoc(F.doc(db, "cards", u)); c = snap.exists() ? snap.data() : {}; } catch (e) {}
-        row.append(avatarEl(c.name, c.photo, 34), el("span", null, c.name || "Читатель"));
+        // имя: из карточки человека, из списка друзей друга или из моих друзей
+        const known = (d.fof && d.fof[u]) || {}, mine = friendData[u] || {};
+        const nm = c.name || known.n || mine.name || "", ph = c.photo || known.p || mine.photo || "";
+        row.append(avatarEl(nm, ph, 34), el("span", null, nm || "Читатель"));
+        if (!nm) { const h = el("small", "hint", "имя появится, когда он откроет Огонёк"); h.style.margin = "0"; row.querySelector("span").append(document.createElement("br"), h); }
         if (myFriends.includes(u)) { const b = el("span", "hint", "Уже друзья"); b.style.flex = "none"; row.append(b); }
         else {
           const b = el("button", "btn btn-xp", "Добавить"); b.type = "button";
