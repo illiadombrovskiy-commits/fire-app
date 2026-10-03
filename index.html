@@ -319,7 +319,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .loginTop.user{background:var(--bg);color:var(--ink);border:1px solid var(--line);max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top{flex-wrap:wrap}
 @media (max-width:440px){.top .xptext{display:none}.top .xpbar{width:56px}}
-.pathbox{max-height:440px;overflow-y:auto;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+.pathbox{max-height:440px;overflow:auto;touch-action:pan-x pan-y;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
 .pathsvg{display:block;max-width:100%}
 .pnode circle{fill:var(--surface);stroke:var(--line);stroke-width:3}
 .pnode text{font-size:11px;font-weight:700;fill:var(--muted);font-variant-numeric:tabular-nums}
@@ -329,7 +329,24 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pweek{font-size:11px;font-weight:700;fill:var(--muted);letter-spacing:.04em}
 .pinit{font-size:14px;font-weight:800;fill:#fff}
 .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.pname.small{font-size:9.5px}
 .pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
+.fold{display:block}
+.foldhead{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;user-select:none}
+.foldhead::-webkit-details-marker{display:none}
+.foldhead h2{flex:1}
+.chev{width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;flex:none;transition:transform .2s}
+.chev::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-2px) rotate(45deg)}
+.fold[open] .chev{transform:rotate(180deg)}
+.foldbody{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.pzoom{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.pzbtn{padding:4px 12px;font-size:1.2rem;line-height:1.1}
+.pzlevel{padding:5px 10px;font-size:.8rem;font-variant-numeric:tabular-nums;min-width:4.2em}
+.pathsvg{max-width:none}
+.pmore{cursor:pointer}
+.pmore circle{fill:var(--ink);stroke:var(--surface);stroke-width:3}
+.pmore text{font-size:12px;font-weight:800;fill:var(--bg)}
+.pless{font-size:11px;font-weight:700;fill:var(--link);cursor:pointer;text-decoration:underline}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -439,46 +456,53 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <h2>Тропинка</h2>
       <span class="daynum" id="pathSub">Вперёд — вверх</span>
     </div>
+    <div class="pzoom">
+      <button class="btn pzbtn" id="pzOut" type="button" aria-label="Отдалить">−</button>
+      <button class="btn pzlevel" id="pzLevel" type="button" title="Сбросить масштаб">100%</button>
+      <button class="btn pzbtn" id="pzIn" type="button" aria-label="Приблизить">+</button>
+    </div>
     <div class="pathbox" id="pathBox"><div id="path"></div></div>
   </section>
 
-  <section class="card" id="schedule">
-    <div class="reading-head">
-      <h2>Расписание</h2>
+  <details class="card fold" id="schedule">
+    <summary class="foldhead"><h2>Расписание</h2><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody">
       <div class="weeknav">
         <button class="btn navbtn" id="wkPrev" type="button" aria-label="Предыдущая неделя">‹</button>
         <select id="wkSel" aria-label="Неделя плана"></select>
         <button class="btn navbtn" id="wkNext" type="button" aria-label="Следующая неделя">›</button>
       </div>
+      <p class="hint" style="margin:0">Выберите любой день: нажмите на отрывок, чтобы открыть его, и на кружок, чтобы отметить прочитанным.</p>
+      <div class="sched" id="sched"></div>
     </div>
-    <p class="hint" style="margin:0">Выберите любой день: нажмите на отрывок, чтобы открыть его, и на кружок, чтобы отметить прочитанным.</p>
-    <div class="sched" id="sched"></div>
-  </section>
+  </details>
 
-  <section class="card">
-    <div class="reading-head"><h2>Календарь</h2><span class="daynum" id="calMonth"></span></div>
-    <div class="cal" id="cal"></div>
-    <div class="legend">
+  <details class="card fold" id="calendarCard">
+    <summary class="foldhead"><h2>Календарь</h2><span class="daynum" id="calMonth"></span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody">
+      <div class="cal" id="cal"></div>
+      <div class="legend">
       <span><i style="background:var(--flame)"></i>Оба завета</span>
       <span><i style="background:var(--flame-soft);border:1px solid var(--flame)"></i>Один завет</span>
       <span><i style="background:var(--ice-soft);border:1px solid var(--ice)"></i>Заморозка</span>
     </div>
-  </section>
+    </div>
+  </details>
 
   <section class="card">
     <h2>Прогресс плана</h2>
     <div class="prog" id="prog"></div>
   </section>
 
-  <section class="card">
-    <h2>Награды</h2>
-    <div class="badges" id="badges"></div>
-  </section>
+  <details class="card fold" id="awardsCard">
+    <summary class="foldhead"><h2>Награды</h2><span class="daynum" id="awardsCount"></span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody"><div class="badges" id="badges"></div></div>
+  </details>
 
-  <section class="card">
-    <span class="label">Как это работает</span>
-    <p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p>
-  </section>
+  <details class="card fold" id="howCard">
+    <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p></div>
+  </details>
 
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
@@ -722,7 +746,8 @@ function render(){
   });
 
   const bg=$("badges");bg.textContent="";
-  awards().forEach(a=>{
+  const aw=awards(); $("awardsCount").textContent=aw.filter(a=>a.ok).length+" из "+aw.length;
+  aw.forEach(a=>{
     const e=el("div","badge"+(a.ok?"":" locked"));e.title=a.desc+(a.ok?"":" (ещё не получена)");
     const m=el("div","medalsvg");m.innerHTML=medalSvg(a,56);
     e.append(m,el("b",null,a.name),el("span","bdesc",a.desc));bg.append(e);
@@ -899,6 +924,14 @@ function answerQuiz(k,p,pick,q){
 
 /* ---------- path: everyone walks the same zigzag trail of plan days ---------- */
 let pathPeople=[]; // friends: {id,name,photo,nt,ot}
+let pathZoom=1, pathKeep=null; const pathOpen=new Set();
+try{pathZoom=Math.min(3,Math.max(0.5,Number(localStorage.getItem("ogonek-path-zoom"))||1))}catch(e){}
+function setPathZoom(z){
+  z=Math.min(3,Math.max(0.5,Math.round(z*100)/100)); if(z===pathZoom)return;
+  const pb=$("pathBox"); if(pb&&pb.scrollWidth)pathKeep={x:(pb.scrollLeft+pb.clientWidth/2)/pb.scrollWidth,y:(pb.scrollTop+pb.clientHeight/2)/pb.scrollHeight};
+  pathZoom=z; try{localStorage.setItem("ogonek-path-zoom",String(z))}catch(e){}
+  $("pzLevel").textContent=Math.round(z*100)+"%"; renderPath();
+}
 const PCOL=["#3d93e2","#34a874","#8a6cf2","#e0475b","#2bb3b1","#c7559c","#5b6bd6"];
 function hashCol(id){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))|0;return PCOL[Math.abs(h)%PCOL.length]}
 function renderPath(){
@@ -922,33 +955,68 @@ function renderPath(){
     g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(i%7+1)));
     const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
-    if(i%7===0){const left=X(i)>cx;svg.append(sv("text",{x:left?X(i)-26:X(i)+26,y:Y(i)+4,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
+    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-26:X(i)+26,y:Y(i)+4,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
   // people: grouped by position so avatars on the same spot sit side by side
   const groups={};people.forEach(pp=>{const k=pp.pos.toFixed(2);(groups[k]=groups[k]||[]).push(pp)});
   let meY=0;
-  Object.values(groups).forEach(gr=>{
+  const drawPerson=(pp,x,y,j,crowd)=>{
+    const col=pp.me?"var(--flame)":hashCol(pp.id), cid="pc"+pp.id.replace(/[^a-zA-Z0-9]/g,"")+j;
+    const g=sv("g",{class:"pperson"+(pp.me?" me":"")});
+    g.append(sv("circle",{cx:x,cy:y,r:16,fill:col,stroke:"var(--surface)","stroke-width":3}));
+    if(pp.photo){const cp=sv("clipPath",{id:cid});cp.append(sv("circle",{cx:x,cy:y,r:13}));g.append(cp);
+      g.append(sv("image",{href:pp.photo,x:x-13,y:y-13,width:26,height:26,"clip-path":"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice",referrerpolicy:"no-referrer"}))}
+    else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
+    // в толпе имена показываются при приближении (от 150%), иначе только по наведению
+    if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
+    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+dayLabel(Math.min(DAYS-1,Math.floor(pp.pos)))));
+    svg.append(g); if(pp.me)meY=y;
+  };
+  Object.entries(groups).forEach(([key,gr])=>{
+    gr.sort((a,b)=>(b.me?1:0)-(a.me?1:0)); // «Вы» first
     const [nx,by]=posXY(gr[0].pos), dir=nx>cx?-1:1; // stand next to the day node, toward the middle
-    gr.forEach((pp,j)=>{
-      const x=nx+dir*(34+j*32), y=by, col=pp.me?"var(--flame)":hashCol(pp.id), cid="pc"+pp.id.replace(/[^a-zA-Z0-9]/g,"")+j;
-      const g=sv("g",{class:"pperson"+(pp.me?" me":"")});
-      g.append(sv("circle",{cx:x,cy:y,r:16,fill:col,stroke:"var(--surface)","stroke-width":3}));
-      if(pp.photo){const cp=sv("clipPath",{id:cid});cp.append(sv("circle",{cx:x,cy:y,r:13}));g.append(cp);
-        const im=sv("image",{href:pp.photo,x:x-13,y:y-13,width:26,height:26,"clip-path":"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice",referrerpolicy:"no-referrer"});g.append(im)}
-      else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
-      g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"},pp.me?"Вы":(pp.name||"").split(" ")[0]));
-      g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+dayLabel(Math.min(DAYS-1,Math.floor(pp.pos)))));
-      svg.append(g); if(pp.me)meY=y;
-    });
+    const space=dir>0?W-nx-34:nx-34, perRow=Math.max(1,Math.floor(space/36));
+    const open=pathOpen.has(key), maxShow=open?gr.length:Math.min(gr.length,perRow*2);
+    const shown=gr.length>maxShow?maxShow-1:maxShow;
+    const crowd=gr.length>1, rowH=crowd&&pathZoom<1.5?38:46;
+    for(let j=0;j<shown;j++){const r=Math.floor(j/perRow),c=j%perRow;drawPerson(gr[j],nx+dir*(34+c*36),by+r*rowH,j,crowd)}
+    if(shown<gr.length){ // too many on one day: a "+N" bubble opens the whole group
+      const j=shown,r=Math.floor(j/perRow),c=j%perRow,x=nx+dir*(34+c*36),y=by+r*rowH;
+      const g=sv("g",{class:"pmore",tabindex:0,role:"button"});
+      g.append(sv("circle",{cx:x,cy:y,r:16}));g.append(sv("text",{x,y:y+5,"text-anchor":"middle"},"+"+(gr.length-shown)));
+      g.append(sv("title",{},gr.slice(shown).map(pp=>pp.name).join(", ")));
+      const openIt=()=>{pathOpen.add(key);renderPath()};g.addEventListener("click",openIt);g.addEventListener("keydown",e=>{if(e.key==="Enter")openIt()});
+      svg.append(g);
+    }else if(open&&gr.length>perRow*2){
+      const r=Math.ceil(gr.length/perRow),x=nx+dir*34,y=by+r*rowH-8;
+      const t=sv("text",{x,y,"text-anchor":dir>0?"start":"end",class:"pless"},"свернуть");
+      t.addEventListener("click",()=>{pathOpen.delete(key);renderPath()});svg.append(t);
+    }
   });
+  // zoom: scale the whole drawing; the box scrolls both ways
+  svg.setAttribute("width",Math.round(W*pathZoom));svg.setAttribute("height",Math.round(H*pathZoom));
   box.textContent="";box.append(svg);
   const lead=people.slice().sort((a,b)=>b.pos-a.pos)[0];
   $("pathSub").textContent=pathPeople.length?(lead.me?"Вы впереди всех!":"Впереди: "+(lead.name||"").split(" ")[0]):"Вперёд — вверх";
   const pb=$("pathBox");
-  if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY-pb.clientHeight/2)}
+  if(pb&&pathKeep){pb.scrollLeft=pathKeep.x*pb.scrollWidth-pb.clientWidth/2;pb.scrollTop=pathKeep.y*pb.scrollHeight-pb.clientHeight/2;pathKeep=null}
+  else if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY*pathZoom-pb.clientHeight/2);pb.scrollLeft=(pb.scrollWidth-pb.clientWidth)/2}
   if(pb&&!pb.dataset.bound){pb.dataset.bound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{pb.dataset.touched="1"},{passive:true}))}
 }
+
+$("pzIn").addEventListener("click",()=>setPathZoom(pathZoom*1.25));
+$("pzOut").addEventListener("click",()=>setPathZoom(pathZoom/1.25));
+$("pzLevel").addEventListener("click",()=>setPathZoom(1));
+$("pzLevel").textContent=Math.round(pathZoom*100)+"%";
+(function(){ // Ctrl+колесо и щипок двумя пальцами
+  const pb=$("pathBox"), pts=new Map(); let d0=0,z0=1;
+  pb.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();setPathZoom(pathZoom*(e.deltaY<0?1.1:1/1.1))},{passive:false});
+  const dist=()=>{const a=[...pts.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+  pb.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch")return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===2){d0=dist();z0=pathZoom}});
+  pb.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===2&&d0>0)setPathZoom(z0*dist()/d0)});
+  ["pointerup","pointercancel","pointerleave"].forEach(t=>pb.addEventListener(t,e=>{pts.delete(e.pointerId);if(pts.size<2)d0=0}));
+})();
 
 /* ---------- schedule ---------- */
 let selWeek=null;
@@ -1212,7 +1280,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610031854"></script>
+<script type="module" src="auth.js?v=202610031904"></script>
 
 </body>
 </html>
