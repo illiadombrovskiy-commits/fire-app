@@ -21,16 +21,16 @@
   --display:"Alegreya",Georgia,"Times New Roman",serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:16px;
-  --s-nt:#6b4fd8; --s-ot:#e8650a;
+  --s-nt:#6b4fd8; --s-ot:#e8650a; --link:#1d6fd6; --link-soft:#e6f0fc;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
   --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
-  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; color-scheme:dark}}
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10142a; --surface:#1a1f3a; --ink:#eef0fa; --muted:#a2a8c4; --line:#2c3356;
   --flame:#ff8a33; --flame2:#ffcf5c; --flame-soft:#3a2614; --xp:#a08cff; --xp-soft:#2a2550;
-  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; color-scheme:dark}
+  --ice:#5cbcf0; --ice-soft:#16324a; --ok:#3fcf8a; --off:#3a4166; --s-nt:#8a72f0; --s-ot:#e06a12; --link:#6aa8ff; --link-soft:#1a2b4a; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--ink)}
@@ -134,8 +134,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 @media (max-width:380px){.xpbar{width:60px}.streak-num{font-size:2.8rem}}
 
 /* two testaments */
-.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:440px){.tgrid{grid-template-columns:1fr}}
+.tgrid{display:grid;grid-template-columns:1fr;gap:12px}
 .tcard{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);min-width:0}
 .thead{display:flex;align-items:center;gap:10px}
 .thead .flame{width:34px;height:42px;flex:none}
@@ -176,10 +175,14 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .nextbtn{display:flex;align-items:center;justify-content:center;padding:11px;border-radius:12px;font-weight:700;text-decoration:none;color:var(--flame);background:var(--surface);border:2px solid var(--flame)}
 .nextbtn:hover{background:var(--flame-soft)}
 .nextbox{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;border:2px dashed var(--flame);background:var(--flame-soft)}
-.nextlink{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink)}
-.nextlink .name{font-family:var(--display);font-size:1.15rem;font-weight:700}
+.nextlink{display:flex;flex-direction:column;gap:3px;text-decoration:none;color:var(--ink);padding:10px 12px;border-radius:12px;background:var(--surface);border:2px solid var(--link);box-shadow:0 2px 0 color-mix(in srgb,var(--link) 35%,transparent);transition:background .15s}
+.nextlink:hover,.nextlink:focus-visible{background:var(--link-soft)}
+.nextlink .name{font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--link);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
 .nextlink .sub{font-size:.8rem;color:var(--muted)}
-.nextlink .go{font-size:.8rem;font-weight:600;color:var(--flame)}
+.nextlink .go{align-self:flex-start;margin-top:4px;font-size:.82rem;font-weight:700;color:var(--surface);background:var(--link);padding:5px 12px;border-radius:999px}
+.tlink .name{color:var(--link);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.tlink .go{align-self:flex-start;margin-top:4px;font-size:.82rem;font-weight:700;color:var(--link);border:1.5px solid var(--link);padding:4px 11px;border-radius:999px}
+.tlink:hover{background:var(--link-soft)}
 .nextmark{display:flex;align-items:center;justify-content:center;gap:6px}
 .nextmark svg{width:16px;height:20px}
 .nextmark .f1{fill:#fff}.nextmark .f2{fill:var(--flame2)}
@@ -221,8 +224,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacetable summary{cursor:pointer;font-size:.85rem;color:var(--muted)}
 .pacetable table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.85rem;font-variant-numeric:tabular-nums}
 .pacetable th,.pacetable td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
-.quizgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:440px){.quizgrid{grid-template-columns:1fr}}
+.quizgrid{display:grid;grid-template-columns:1fr;gap:12px}
 .qcard{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);min-width:0}
 .qref{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .qtext{font-family:var(--display);font-size:1.15rem;font-weight:700;line-height:1.3}
@@ -276,6 +278,40 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .chestdesc{color:var(--muted);font-size:.95rem}
 .chestsub{margin:0;color:var(--muted);font-size:.95rem}
 .chestsub:empty{display:none}
+.tbtn.armed,.nextmark.armed{background:var(--ink);color:var(--bg);box-shadow:0 3px 0 color-mix(in srgb,var(--ink) 60%,#000);animation:armpulse 1s ease-in-out infinite}
+.scheck.armed{border-color:var(--flame);background:var(--flame-soft);animation:armpulse 1s ease-in-out infinite}
+@keyframes armpulse{0%,100%{outline:3px solid transparent;outline-offset:2px}50%{outline:3px solid var(--flame);outline-offset:2px}}
+.undolink{align-self:center;font-size:.85rem}
+.toast{display:flex;align-items:center;gap:12px}
+.toastbtn{flex:none;background:var(--bg);color:var(--ink);font-weight:800;padding:6px 12px;border-radius:999px}
+.toast{width:max-content;max-width:calc(100% - 32px)}
+.mycode{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--flame-soft)}
+.mycode b{font-size:1.2rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}
+.addfriend{display:flex;gap:8px}
+.addfriend input{flex:1;min-width:0;font:inherit;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.friends{display:flex;flex-direction:column;gap:8px}
+.friend{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.friend.me{border-color:var(--flame);background:var(--flame-soft)}
+.favatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--line);display:grid;place-items:center;font-weight:800;color:var(--muted);overflow:hidden}
+.fname{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fline{font-size:.8rem;color:var(--muted);display:flex;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fline .ok{color:var(--ok);font-weight:700}
+.fstreak{display:flex;flex-direction:column;align-items:center;font-weight:800;font-variant-numeric:tabular-nums;min-width:44px}
+.fstreak svg{width:22px;height:28px}
+.fahead{font-size:.72rem;color:var(--muted);font-weight:600}
+.fremove{font-size:.75rem}
+.tcols{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.tcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.tlink,.nextlink{gap:2px;padding:9px 10px}
+.tlink .label,.nextlink .label{font-size:.68rem}
+.tlink .name,.nextlink .name{font-size:1.08rem;line-height:1.2;overflow-wrap:anywhere}
+.tlink .sub,.nextlink .sub{font-size:.74rem}
+.tcol .tbtn{padding:10px 8px;font-size:.88rem;line-height:1.2}
+.nextbox{padding:0;border:0;background:none;gap:8px}
+.nextlink.later{opacity:.65;border-style:dashed;box-shadow:none}
+@media (max-width:360px){.tcols{grid-template-columns:1fr}}
+.qcard.qin{animation:qin .35s ease}
+@keyframes qin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -289,6 +325,10 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .btn-main:disabled{opacity:.6;cursor:default}
 .linkbtn:disabled{opacity:.5;cursor:default;text-decoration:none}
 .demo-note{background:var(--xp-soft);color:var(--xp);border-radius:12px;padding:10px 14px;font-size:.85rem}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;font-weight:700;font-size:1.02rem;border-radius:14px;background:var(--surface);color:var(--ink);border:2px solid var(--line)}
+.gbtn:hover{border-color:var(--xp)}
+.gbtn svg{width:22px;height:22px}
+.gbtn:disabled{opacity:.6;cursor:default}
 
 </style>
 
@@ -353,9 +393,25 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
   <section class="card" id="quizCard">
     <div class="reading-head">
       <h2>Вопросы по тексту</h2>
-      <span class="daynum">+5 XP за верный ответ с первого раза</span>
+      <span class="daynum" id="quizCount"></span>
     </div>
     <div class="quizgrid" id="quiz"></div>
+  </section>
+
+  <section class="card" id="friendsCard" hidden>
+    <div class="reading-head">
+      <h2>Друзья</h2>
+      <span class="daynum">Кто где читает</span>
+    </div>
+    <div class="mycode">
+      <span>Ваш код: <b id="myCode">…</b></span>
+      <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
+    </div>
+    <div class="addfriend">
+      <input id="friendCode" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="Код друга" aria-label="Код друга">
+      <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
+    </div>
+    <div class="friends" id="friendsList"></div>
   </section>
 
   <section class="card" id="schedule">
@@ -403,31 +459,21 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
   </footer>
 </div>
 <div class="auth" id="auth" hidden>
-  <form class="auth-card" id="authForm" novalidate>
+  <div class="auth-card">
     <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
       <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
       <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
     </svg>
     <h1>Огонёк</h1>
-    <p class="muted" style="margin:0">Читайте Библию каждый день и не теряйте серию. Войдите по номеру телефона, чтобы прогресс сохранялся на всех устройствах.</p>
-    <div id="stepPhone" class="auth-step">
-      <label class="label" for="phone">Номер телефона</label>
-      <input class="auth-input" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 123-45-67" value="+7 ">
-      <button class="btn-main" id="sendBtn" type="button">Получить код по СМС</button>
-    </div>
-    <div id="stepCode" class="auth-step" hidden>
-      <label class="label" for="code">Код из СМС</label>
-      <input class="auth-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
-      <button class="btn-main" id="verifyBtn" type="button">Войти</button>
-      <div class="row" style="justify-content:space-between">
-        <button class="linkbtn" id="changePhone" type="button">Изменить номер</button>
-        <button class="linkbtn" id="resendBtn" type="button" disabled>Отправить снова</button>
-      </div>
-    </div>
+    <p class="muted" style="margin:0">Читайте Библию каждый день вместе с друзьями. Войдите через Google, чтобы прогресс сохранялся на всех устройствах и друзья видели, где вы читаете.</p>
+    <button class="gbtn" id="googleBtn" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+      Войти через Google
+    </button>
     <p class="auth-error" id="authError" role="alert" hidden></p>
-  </form>
+    <button class="linkbtn" id="skipLogin" type="button">Продолжить без входа (прогресс только в этом браузере, без друзей)</button>
+  </div>
 </div>
-
 
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-live="polite">
   <div class="box">
@@ -439,6 +485,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <div style="font-weight:700;font-size:1.1rem" id="celebText">день подряд!</div>
     <div class="muted" id="celebSub"></div>
     <button class="btn-main" id="celebClose" type="button" style="margin-top:8px">Продолжить</button>
+    <button class="linkbtn" id="celebUndo" type="button">Отменить отметку</button>
   </div>
 </div>
 <div class="chest" id="chest" hidden role="dialog" aria-live="polite" aria-label="Новая награда">
@@ -535,6 +582,7 @@ let remoteSave=null;
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
   if(remoteSave)remoteSave(JSON.parse(JSON.stringify(state)));
+  if(window.Ogonek&&window.Ogonek.onSave)try{window.Ogonek.onSave()}catch(e){}
 }
 
 const datesOf=k=>new Set(state[k].log.map(x=>x.d));
@@ -580,28 +628,31 @@ function renderTestament(k){
     hb.append(mm);
   }
   head.append(svg,hb);
+  // слева — сегодняшний отрывок, справа — следующий
+  const cols=el("div","tcols"), left=el("div","tcol"), right=el("div","tcol");
   const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
-  a.append(el("span","sub",dayLabel(viewP)),el("span","name",refStr(x)),el("span","sub",FULL[x.book]||x.book),el("span","go","Читать ↗"));
+  a.append(el("span","label","Сегодня"),el("span","name",refStr(x)),el("span","sub",dayLabel(viewP)));
   const btn=el("button","tbtn");btn.type="button";
   if(np>=DAYS&&!doneToday){btn.textContent="Завет пройден!";btn.classList.add("done");btn.disabled=true}
   else if(doneToday&&!isAhead){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
-  else{btn.textContent="Прочитал(а) · +"+XP_PART+" XP";btn.addEventListener("click",()=>complete(k))}
-  card.append(head,a,btn);
+  else{btn.textContent="Прочитал(а)";btn.title="+"+XP_PART+" XP";confirmTap(btn,"Нажмите ещё раз",()=>complete(k))}
+  left.append(a,btn);
+  if(lit){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>undoMark(k,viewP));left.append(u)}
   if(lit&&np<DAYS){
-    // следующий отрывок: видно, какой он; ссылка открывает его, кнопка сразу зажигает огонёк
     const nx=part(k,np), box=el("div","nextbox");
     const a2=el("a","nextlink");a2.href=chapterUrl(nx);a2.target="_blank";a2.rel="noopener";
-    a2.append(el("span","label","Следующий отрывок"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np)+" · "+(FULL[nx.book]||nx.book)),el("span","go","Читать ↗"));
+    a2.append(el("span","label","Следующий"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np)));
     const b2=el("button","tbtn nextmark");b2.type="button";
     b2.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true">'+FLAME+'</svg>';
-    b2.append(document.createTextNode("Прочитал(а) · +"+XP_PART+" XP"));
-    b2.addEventListener("click",()=>{ahead[k]=true;complete(k,np)});
-    box.append(a2,b2);card.append(box);
-  }else if(isAhead){
-    const back=el("button","linkbtn","Вернуться к прочитанному");back.type="button";
-    back.addEventListener("click",()=>{ahead[k]=false;render()});
-    card.append(back);
+    b2.append(document.createTextNode("Прочитал(а)"));b2.title="+"+XP_PART+" XP";
+    confirmTap(b2,"Нажмите ещё раз",()=>{ahead[k]=true;complete(k,np)});
+    box.append(a2,b2);right.append(box);
+  }else if(!lit&&np+1<DAYS){
+    const nx=part(k,np+1), a3=el("a","nextlink later");a3.href=chapterUrl(nx);a3.target="_blank";a3.rel="noopener";
+    a3.append(el("span","label","Потом"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np+1)));
+    right.append(a3);
   }
+  cols.append(left,right);card.append(head,cols);
   return card;
 }
 
@@ -753,33 +804,45 @@ function quizRes(id){
 }
 const CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CROSS_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+/* questions for every read passage, oldest first; answered today stay visible */
+let quizShow=6;
+function quizCard(k,p){
+  const x=part(k,p), q=QUIZ[p]&&QUIZ[p][k], id=k+"-"+p, ki=KEYS.indexOf(k);
+  const card=el("div","qcard");card.dataset.id=id;
+  card.append(el("div","qref",T[k].label+" · "+refStr(x)+" · "+dayLabel(p)));
+  card.append(el("div","qtext",q[0]));
+  const res=quizRes(id), solved=!!(res&&res.ok), wrong=(res&&res.wrong)||[], opts=el("div","qopts");
+  shuffled([q[1],q[2],q[3]],p*2+ki+1).forEach(o=>{
+    const b=el("button","qopt");b.type="button";
+    const mark=el("span","qmark");b.append(el("span",null,o),mark);
+    if(solved&&o===q[1]){b.classList.add("right");mark.innerHTML=CHECK_SVG}
+    if(wrong.includes(o)){b.classList.add("wrong");mark.innerHTML=CROSS_SVG}
+    if(solved||wrong.includes(o))b.disabled=true;
+    else b.addEventListener("click",()=>answerQuiz(k,p,o,q));
+    opts.append(b);
+  });
+  card.append(opts);
+  const badge=el("div","qverdict");badge.hidden=true;card.append(badge);
+  return card;
+}
+let quizPinned=null, quizTimer=null; // answered question stays 2 s, then the next one takes its place
+function pendingQuiz(){
+  const items=[];
+  KEYS.forEach(k=>state[k].read.forEach(p=>{
+    if(!(QUIZ[p]&&QUIZ[p][k]))return;
+    const r=quizRes(k+"-"+p); if(!r||!r.ok)items.push({k,p});
+  }));
+  return items.sort((a,b)=>a.p-b.p||KEYS.indexOf(a.k)-KEYS.indexOf(b.k));
+}
 function renderQuiz(){
   if(!state.quiz)state.quiz={};
-  const box=$("quiz");box.textContent="";
-  KEYS.forEach((k,ki)=>{
-    const p=viewDay(k), x=part(k,p), q=QUIZ[p]&&QUIZ[p][k], id=k+"-"+p;
-    const card=el("div","qcard");card.dataset.id=id;
-    card.append(el("div","qref",T[k].label+" · "+refStr(x)));
-    if(!q){card.append(el("p","hint","Вопросы к этому отрывку скоро появятся."));box.append(card);return}
-    card.append(el("div","qtext",q[0]));
-    const res=quizRes(id), solved=!!(res&&res.ok), wrong=(res&&res.wrong)||[], opts=el("div","qopts");
-    shuffled([q[1],q[2],q[3]],p*2+ki+1).forEach(o=>{
-      const b=el("button","qopt");b.type="button";
-      const mark=el("span","qmark");b.append(el("span",null,o),mark);
-      if(solved&&o===q[1]){b.classList.add("right");mark.innerHTML=CHECK_SVG}
-      if(wrong.includes(o)){b.classList.add("wrong");mark.innerHTML=CROSS_SVG}
-      if(solved||wrong.includes(o))b.disabled=true;
-      else b.addEventListener("click",()=>answerQuiz(k,p,o,q));
-      opts.append(b);
-    });
-    card.append(opts);
-    const badge=el("div","qverdict");badge.hidden=true;card.append(badge);
-    if(solved)card.append(el("div","qres ok",res.first?"Правильно с первого раза · +"+XP_QUIZ+" XP":"Правильно. Награда даётся только за ответ с первого раза."));
-    else if(wrong.length)card.append(el("div","qres no","Неправильно. Перечитайте отрывок и попробуйте ещё раз."));
-    else if(!readSet(k).has(p))card.append(el("p","hint","Сначала прочитайте отрывок, ответ есть в тексте. Награда только за верный ответ с первого раза."));
-    else card.append(el("p","hint","Награда +"+XP_QUIZ+" XP только за верный ответ с первого раза."));
-    box.append(card);
-  });
+  const box=$("quiz"), items=pendingQuiz();
+  $("quizCount").textContent=items.length?"Осталось: "+items.length:"";
+  const cur=quizPinned||items[0];
+  const key=cur?cur.k+"-"+cur.p:"none";
+  const fresh=box.dataset.cur!==key; box.dataset.cur=key; box.textContent="";
+  if(!cur){const any=state.nt.read.length+state.ot.read.length;box.append(el("p","hint",any?"Все вопросы отвечены. Новый вопрос появится после следующего прочитанного отрывка.":"Вопросы появятся после того, как вы прочитаете отрывок."));return}
+  const card=quizCard(cur.k,cur.p); if(fresh)card.classList.add("qin"); box.append(card);
 }
 function quizReaction(id,ok){
   const card=document.querySelector('#quiz .qcard[data-id="'+id+'"]'); if(!card)return;
@@ -795,13 +858,13 @@ function answerQuiz(k,p,pick,q){
   const id=k+"-"+p, prev=quizRes(id)||{ok:false,first:false,wrong:[]};
   if(prev.ok||prev.wrong.includes(pick))return;
   const ok=pick===q[1], firstTry=prev.wrong.length===0;
-  const next={ok,first:ok&&firstTry,wrong:ok?prev.wrong:prev.wrong.concat([pick])};
+  const next={ok,first:ok&&firstTry,wrong:ok?prev.wrong:prev.wrong.concat([pick])};if(ok)next.d=today();
   state.quiz[id]=next;
   if(next.first)state.xp+=XP_QUIZ;
   vibrate(ok?[40,30,40]:[160]);
+  if(ok){clearTimeout(quizTimer);quizPinned={k,p};quizTimer=setTimeout(()=>{quizPinned=null;renderQuiz()},2000)}
   save();render();quizReaction(id,ok);
-  if(ok)toast(next.first?"Правильно с первого раза! +"+XP_QUIZ+" XP":"Правильно! Без награды: ответ не с первого раза");
-  else toast("Неправильно. Попробуйте ещё раз");
+
   checkAwards();
 }
 
@@ -828,7 +891,8 @@ function renderSchedule(){
       c.setAttribute("aria-pressed",done?"true":"false");
       c.setAttribute("aria-label",(done?"Снять отметку: ":"Отметить прочитанным: ")+T[k].label+", "+dayLabel(p));
       c.innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      c.addEventListener("click",()=>done?unmark(k,p):complete(k,p));
+      if(done)c.addEventListener("click",()=>unmark(k,p));
+      else confirmTap(c,null,()=>complete(k,p));
       item.append(a,c);row.append(item);
     });
     box.append(row);
@@ -840,7 +904,33 @@ $("wkNext").addEventListener("click",()=>{selWeek=Math.min(Math.ceil(DAYS/7),(se
 
 /* ---------- actions ---------- */
 let toastT;
-function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3500)}
+function toast(msg,action){
+  const t=$("toast");t.textContent="";t.append(el("span",null,msg));
+  if(action){const b=el("button","toastbtn",action.label);b.type="button";b.addEventListener("click",()=>{t.hidden=true;action.fn()});t.append(b)}
+  t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,action?6000:3500);
+}
+/* two taps to confirm: first tap arms the button, second tap within 4 s confirms */
+function confirmTap(btn,armedText,fn){
+  btn.addEventListener("click",()=>{
+    if(btn.dataset.armed){clearTimeout(btn._t);delete btn.dataset.armed;btn.classList.remove("armed");fn();return}
+    btn.dataset.armed="1";btn.classList.add("armed");vibrate(12);
+    const orig=btn.innerHTML;
+    if(armedText)btn.textContent=armedText;else toast("Нажмите ещё раз, чтобы отметить прочитанным");
+    btn._t=setTimeout(()=>{delete btn.dataset.armed;btn.classList.remove("armed");btn.innerHTML=orig},4000);
+  });
+}
+/* undo: restores the exact state from before the last mark */
+let undoSnap=null;
+function undoLast(){
+  if(!undoSnap)return;
+  state=undoSnap.state;undoSnap=null;
+  chestQueue=[];$("chest").hidden=true;$("celebrate").hidden=true;
+  save();render();toast("Отметка отменена");
+}
+function undoMark(k,p){
+  if(undoSnap&&undoSnap.k===k&&undoSnap.p===p)return undoLast();
+  unmark(k,p);
+}
 
 /* ---------- reaction: vibration + flame ignition + sparks ---------- */
 const reduceMotion=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -946,6 +1036,7 @@ $("chestBtn").addEventListener("click",()=>{
 
 function complete(k,pp){
   const st=state[k], p=(pp==null?nextP(k):pp); if(p>=DAYS||readSet(k).has(p))return;
+  undoSnap={state:JSON.parse(JSON.stringify(state)),k,p};
   const wasAhead=ahead[k]; ahead[k]=false;
   const t=today(), firstK=!datesOf(k).has(t), bothBefore=bothSet().has(t), awBefore=awards().filter(a=>a.ok).length;
   st.log.push({d:t,p}); st.read.push(p);
@@ -973,9 +1064,9 @@ function complete(k,pp){
     burst(window.innerWidth/2,window.innerHeight/2-60,90);
   }else if(firstK){
     const s=streak(k);
-    toast("+"+gain+" XP · "+T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""));
+    toast("+"+gain+" XP · "+T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }else{
-    toast("Огонёк зажжён: "+refStr(part(k,p))+" · +"+gain+" XP"+(newAw>0?" · Новая награда!":""));
+    toast("Огонёк зажжён: "+refStr(part(k,p))+" · +"+gain+" XP"+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }
   checkAwards();
 }
@@ -985,6 +1076,7 @@ function unmark(k,p){
   state.xp=Math.max(0,state.xp-XP_PART);
   save(); render(); toast("Отметка снята · "+T[k].label+", "+dayLabel(p));
 }
+$("celebUndo").addEventListener("click",undoLast);
 $("celebClose").addEventListener("click",()=>{$("celebrate").hidden=true;setTimeout(showChest,250)});
 
 
@@ -1012,7 +1104,20 @@ if(used)toast("Заморозка сохранила вашу серию ("+used
 // re-render when the day changes while the page stays open
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyFreezes();render()}});
 
+function summary(){
+  const S=paceSeries(), last=S.dates.length-1, out={};
+  out.streak=streak(); out.best=state.best; out.xp=state.xp; out.level=level(state.xp).k;
+  KEYS.forEach(k=>{
+    const np=nextP(k), dates=[...datesOf(k)].sort();
+    out[k+"Streak"]=streak(k); out[k+"Next"]=np; out[k+"Read"]=state[k].read.length;
+    out[k+"Last"]=dates.length?dates[dates.length-1]:""; out[k+"Ahead"]=S[k][last];
+  });
+  return out;
+}
 window.Ogonek={
+  summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME,
+  refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
+  onSave:null,
   fresh, score,
   getState:()=>JSON.parse(JSON.stringify(state)),
   setState(s){state=migrate(s);initSeen();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
