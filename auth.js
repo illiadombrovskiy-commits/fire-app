@@ -372,7 +372,7 @@ async function main() {
     head.append(avatarEl(d.name, d.photo, 64), ht, x);
 
     const stats = el("div", "fstats");
-    [[d.streak || 0, "дней подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
+    [[d.streak || 0, "дней подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
     O().KEYS.forEach((k) => {
