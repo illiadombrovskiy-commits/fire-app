@@ -351,6 +351,35 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pmore circle{fill:var(--ink);stroke:var(--surface);stroke-width:3}
 .pmore text{font-size:12px;font-weight:800;fill:var(--bg)}
 .pless{font-size:11px;font-weight:700;fill:var(--link);cursor:pointer;text-decoration:underline}
+.friend{cursor:pointer}
+.friend:hover{border-color:var(--link)}
+.fmodal{position:fixed;inset:0;z-index:35;background:color-mix(in srgb,var(--ink) 45%,transparent);display:grid;place-items:end center;padding:0}
+@media (min-width:560px){.fmodal{place-items:center;padding:16px}}
+.fsheet{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:var(--surface);border-radius:20px 20px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;animation:qin .25s ease}
+@media (min-width:560px){.fsheet{border-radius:20px}}
+.fhead{display:flex;align-items:center;gap:14px}
+.fhead .favatar{width:64px;height:64px;font-size:1.6rem;flex:none}
+.fhead h2{font-size:1.5rem;overflow-wrap:anywhere}
+.fclose{margin-left:auto;align-self:flex-start;width:36px;height:36px;border-radius:50%;background:var(--bg);color:var(--ink);font-size:1.3rem;flex:none}
+.fstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fstat{padding:10px;border-radius:12px;background:var(--bg);text-align:center}
+.fstat b{display:block;font-family:var(--display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+.fstat span{font-size:.72rem;color:var(--muted)}
+.freading{display:flex;flex-direction:column;gap:8px}
+.frow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line)}
+.frow a{color:var(--link);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.frow small{color:var(--muted);display:block}
+.frow .ok{color:var(--ok);font-weight:700;white-space:nowrap}
+.frow .hint{white-space:nowrap;margin:0}
+.fbadges{display:flex;flex-wrap:wrap;gap:6px}
+.fbadges svg{width:40px;height:40px;display:block}
+.fabout{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;color:var(--ink)}
+.fabout.empty{color:var(--muted)}
+.ffof{display:flex;flex-direction:column;gap:6px}
+.ffrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--bg)}
+.ffrow .favatar{width:34px;height:34px;flex:none}
+.ffrow span{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ffrow button{padding:7px 12px;font-size:.85rem}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -991,6 +1020,7 @@ function renderPath(){
     // в толпе имена показываются при приближении (от 150%), иначе только по наведению
     if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
     g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+dayLabel(Math.min(DAYS-1,Math.floor(pp.pos)))));
+    if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
     svg.append(g); if(pp.me)meY=y;
   };
   Object.entries(groups).forEach(([key,gr])=>{
@@ -1282,6 +1312,7 @@ function summary(){
     out[k+"Streak"]=streak(k); out[k+"Next"]=np; out[k+"Read"]=state[k].read.length;
     out[k+"Last"]=dates.length?dates[dates.length-1]:""; out[k+"Ahead"]=S[k][last];
   });
+  out.awards=awards().filter(a=>a.ok).map(a=>a.id);
   return out;
 }
 window.Ogonek={
@@ -1289,6 +1320,8 @@ window.Ogonek={
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   onSave:null,
   setPathPeople(list){pathPeople=list||[];renderPath()},
+  onPersonClick:null,
+  medal(id,size){const a=AWARDS.find(x=>x.id===id);return a?{svg:medalSvg(a,size||40),name:a.name,desc:a.desc}:null},
   setMyPhoto(url){state.photo=url||"";renderPath()},
   fresh, score,
   getState:()=>JSON.parse(JSON.stringify(state)),
@@ -1300,7 +1333,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610031926"></script>
+<script type="module" src="auth.js?v=202610032036"></script>
 
 </body>
 </html>

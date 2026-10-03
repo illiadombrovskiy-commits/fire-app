@@ -106,6 +106,7 @@ async function main() {
       const s = O().summary();
       F.setDoc(myRef, Object.assign(s, { name: me.displayName || "Читатель", photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
+      F.setDoc(F.doc(db, "cards", me.uid), { name: me.displayName || "Читатель", photo: me.photoURL || "" }).catch((e) => console.warn(e));
     }, 1200);
   }
 
@@ -132,13 +133,18 @@ async function main() {
       const fuid = await findFriendUid(raw);
       if (fuid === undefined) { O().toast("Введите код из 6 знаков, почту Google или ID друга"); return; }
       if (!fuid) { O().toast(raw.includes("@") ? "Человек с такой почтой ещё не входил в Огонёк" : "Код не найден. Проверьте его ещё раз."); return; }
-      if (fuid === me.uid) { O().toast("Это вы сами"); return; }
-      if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return; }
+      if (await addFriendUid(fuid)) $("friendCode").value = "";
+    } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
+  }
+
+  async function addFriendUid(fuid) {
+    if (fuid === me.uid) { O().toast("Это вы сами"); return false; }
+    if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return false; }
+    try {
       await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayUnion(me.uid) });
       await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
-      $("friendCode").value = "";
-      O().toast("Друг добавлен!");
-    } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
+      O().toast("Друг добавлен!"); return true;
+    } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Попробуйте позже."); return false; }
   }
 
   async function removeFriend(fuid) {
@@ -185,15 +191,98 @@ async function main() {
     const lit = d.ntLast === t && d.otLast === t;
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
     row.append(av, mid, right);
-    if (!isMe) {
-      const rm = el("button", "linkbtn fremove", "Удалить"); rm.type = "button";
-      rm.addEventListener("click", () => {
-        if (rm.dataset.armed) { removeFriend(uid); return; }
-        rm.dataset.armed = "1"; rm.textContent = "Точно удалить?"; setTimeout(() => { delete rm.dataset.armed; rm.textContent = "Удалить"; }, 4000);
-      });
-      mid.append(rm);
-    }
+    row.tabIndex = 0; row.setAttribute("role", "button");
+    row.title = isMe ? "Мой профиль" : "Открыть профиль";
+    row.addEventListener("click", () => openProfile(isMe ? "me" : uid));
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter") openProfile(isMe ? "me" : uid); });
     return row;
+  }
+
+  /* ---------- profile screen ---------- */
+  let myProfile = {};
+  function avatarEl(name, photo, size) {
+    const av = el("div", "favatar");
+    if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; img.referrerPolicy = "no-referrer"; img.width = size; img.height = size; av.append(img); }
+    else av.textContent = (name || "?").trim().charAt(0).toUpperCase();
+    return av;
+  }
+  function closeProfile() { const m = document.querySelector(".fmodal"); if (m) m.remove(); document.removeEventListener("keydown", escClose); }
+  function escClose(e) { if (e.key === "Escape") closeProfile(); }
+
+  async function openProfile(id) {
+    if (!me) return;
+    const isMe = id === "me" || id === me.uid;
+    const d = isMe ? Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
+    if (!d) { O().toast("Профиль друга ещё загружается"); return; }
+    closeProfile();
+    const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
+    sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
+    document.addEventListener("keydown", escClose);
+
+    const head = el("div", "fhead"), ht = el("div");
+    ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", "Уровень " + (d.level || 1) + " · " + (d.xp || 0) + " XP"));
+    const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
+    head.append(avatarEl(d.name, d.photo, 64), ht, x);
+
+    const stats = el("div", "fstats");
+    [[d.streak || 0, "дней подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
+
+    const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
+    O().KEYS.forEach((k) => {
+      const p = Math.min(d[k + "Next"] || 0, O().DAYS - 1), done = (d[k + "Next"] || 0) >= O().DAYS, readToday = d[k + "Last"] === t;
+      const row = el("div", "frow"), left = el("div");
+      left.append(el("small", null, k === "nt" ? "Новый Завет · " + fmtAhead(d[k + "Ahead"]) : "Ветхий Завет · " + fmtAhead(d[k + "Ahead"])));
+      if (done) left.append(el("b", null, "Завет пройден"));
+      else { const a = el("a", null, O().refOf(k, p)); a.href = O().urlOf(k, p); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
+      row.append(left, el("span", readToday ? "ok" : "hint", readToday ? "✓ сегодня" : "сегодня ещё нет"));
+      reading.append(row);
+    });
+
+    const aboutBox = el("div", "freading"); aboutBox.append(el("span", "label", "О себе"));
+    if (isMe) {
+      const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "70px";
+      const save = el("button", "btn btn-xp", "Сохранить"); save.type = "button";
+      save.addEventListener("click", async () => {
+        try { await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300) }, { merge: true }); O().toast("Сохранено"); }
+        catch (e) { console.warn(e); O().toast("Не удалось сохранить. Попробуйте позже."); }
+      });
+      aboutBox.append(ta, save);
+    } else aboutBox.append(el("p", "fabout" + (d.about ? "" : " empty"), d.about || "Пока ничего не написал(а)."));
+
+    const badges = el("div", "freading"); badges.append(el("span", "label", "Награды: " + ((d.awards || []).length)));
+    const bw = el("div", "fbadges");
+    (d.awards || []).forEach((aid) => { const m = O().medal(aid, 40); if (!m) return; const w = el("div"); w.innerHTML = m.svg; w.title = m.name + " — " + m.desc; bw.append(w); });
+    if (!(d.awards || []).length) bw.append(el("span", "hint", "Пока нет наград"));
+    badges.append(bw);
+
+    sheet.append(head, stats, reading, aboutBox, badges);
+
+    if (!isMe) {
+      // друзья друга: можно сразу добавить к себе
+      const fof = el("div", "ffof"), others = (d.friends || []).filter((u) => u !== me.uid);
+      fof.append(el("span", "label", "Друзья · " + others.length));
+      if (!others.length) fof.append(el("span", "hint", "Других друзей пока нет"));
+      sheet.append(fof);
+      others.slice(0, 50).forEach(async (u) => {
+        const row = el("div", "ffrow"); fof.append(row);
+        let c = {}; try { const snap = await F.getDoc(F.doc(db, "cards", u)); c = snap.exists() ? snap.data() : {}; } catch (e) {}
+        row.append(avatarEl(c.name, c.photo, 34), el("span", null, c.name || "Читатель"));
+        if (myFriends.includes(u)) { const b = el("span", "hint", "Уже друзья"); b.style.flex = "none"; row.append(b); }
+        else {
+          const b = el("button", "btn btn-xp", "Добавить"); b.type = "button";
+          b.addEventListener("click", async () => { b.disabled = true; const ok = await addFriendUid(u); b.textContent = ok ? "Добавлен ✓" : "Добавить"; b.disabled = ok; });
+          row.append(b);
+        }
+      });
+      const rm = el("button", "linkbtn", "Удалить из друзей"); rm.type = "button"; rm.style.alignSelf = "center";
+      rm.addEventListener("click", () => {
+        if (rm.dataset.armed) { removeFriend(id); closeProfile(); return; }
+        rm.dataset.armed = "1"; rm.textContent = "Нажмите ещё раз, чтобы удалить"; setTimeout(() => { delete rm.dataset.armed; rm.textContent = "Удалить из друзей"; }, 4000);
+      });
+      sheet.append(rm);
+    }
+    modal.append(sheet); document.body.append(modal); x.focus();
   }
 
   function renderFriends() {
@@ -223,7 +312,7 @@ async function main() {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (!user) {
-      me = null; O().setRemote(null); O().onSave = null; O().setPathPeople([]);
+      me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true; $("logoutBtn").hidden = false;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
       top.textContent = "Войти"; top.classList.remove("user"); topAction = () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; };
@@ -267,7 +356,8 @@ async function main() {
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
-      myUnsub = F.onSnapshot(myRef, (snap) => { syncFriendSubs((snap.exists() && snap.data().friends) || []); });
+      myUnsub = F.onSnapshot(myRef, (snap) => { myProfile = snap.exists() ? snap.data() : {}; syncFriendSubs(myProfile.friends || []); });
+      O().onPersonClick = (id) => openProfile(id);
       const add = new URLSearchParams(location.search).get("add");
       if (add) { history.replaceState(null, "", location.pathname); addFriendByCode(add); }
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить друзей. Проверьте настройки Firestore."); }
