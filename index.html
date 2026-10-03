@@ -288,7 +288,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .mycode{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--flame-soft)}
 .mycode b{font-size:1.2rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}
 .addfriend{display:flex;gap:8px}
-.addfriend input{flex:1;min-width:0;font:inherit;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.addfriend input{flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .friends{display:flex;flex-direction:column;gap:8px}
 .friend{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
 .friend.me{border-color:var(--flame);background:var(--flame-soft)}
@@ -312,6 +312,9 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 @media (max-width:360px){.tcols{grid-template-columns:1fr}}
 .qcard.qin{animation:qin .35s ease}
 @keyframes qin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.myids{flex-basis:100%;font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.myids b{font-size:.8rem;letter-spacing:0}
+.myids code{font-size:.72rem;user-select:all}
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 /* sign-in screen */
 .auth{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -406,9 +409,10 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <div class="mycode">
       <span>Ваш код: <b id="myCode">…</b></span>
       <button class="btn" id="copyInvite" type="button">Скопировать приглашение</button>
+      <span class="myids">Вас также можно найти по почте <b id="myEmail"></b> или по ID <code id="myId"></code></span>
     </div>
     <div class="addfriend">
-      <input id="friendCode" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="Код друга" aria-label="Код друга">
+      <input id="friendCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код, почта или ID друга" aria-label="Код, почта или ID друга">
       <button class="btn btn-xp" id="addFriend" type="button">Добавить</button>
     </div>
     <div class="friends" id="friendsList"></div>

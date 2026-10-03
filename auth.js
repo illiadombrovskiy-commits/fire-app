@@ -1,46 +1,32 @@
-// Вход по номеру телефона (Firebase Authentication) и хранение прогресса (Cloud Firestore).
+// Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
 const OWNER_KEY = "ogonek-owner";
+const SKIP_KEY = "ogonek-skip-login";
+const CODE_ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const configured = firebaseConfig && firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("ВСТАВЬТЕ");
-
+const O = () => window.Ogonek;
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function showError(msg) { const e = $("authError"); e.textContent = msg; e.hidden = !msg; }
 
 const ERRORS = {
-  "auth/invalid-phone-number": "Номер введён неверно. Пример: +7 900 123-45-67.",
-  "auth/missing-phone-number": "Введите номер телефона.",
-  "auth/too-many-requests": "Слишком много попыток. Подождите немного и попробуйте снова.",
-  "auth/quota-exceeded": "Лимит СМС на сегодня исчерпан. Попробуйте позже.",
-  "auth/invalid-verification-code": "Неверный код. Проверьте СМС и введите код ещё раз.",
-  "auth/code-expired": "Код устарел. Нажмите «Отправить снова».",
-  "auth/operation-not-allowed": "Вход по телефону не включён или СМС в этот регион запрещены. Проверьте настройки Firebase (см. инструкцию).",
-  "auth/billing-not-enabled": "Для отправки СМС в проекте Firebase нужно подключить оплату (тариф Blaze).",
-  "auth/captcha-check-failed": "Проверка «я не робот» не прошла. Обновите страницу и попробуйте снова.",
+  "auth/popup-closed-by-user": "Окно входа закрыто. Попробуйте ещё раз.",
+  "auth/cancelled-popup-request": "Окно входа закрыто. Попробуйте ещё раз.",
   "auth/network-request-failed": "Нет связи с сервером. Проверьте интернет.",
-  "auth/unauthorized-domain": "Этот адрес сайта не добавлен в разрешённые домены Firebase."
+  "auth/unauthorized-domain": "Адрес сайта не добавлен в разрешённые домены Firebase (Authentication → Settings → Authorized domains).",
+  "auth/operation-not-allowed": "Вход через Google не включён в Firebase (Authentication → Sign-in method → Google)."
 };
-const errText = (e) => ERRORS[e && e.code] || ("Не получилось: " + ((e && (e.code || e.message)) || "неизвестная ошибка"));
-
-function normalizePhone(raw) {
-  let d = (raw || "").replace(/\D/g, "");
-  if (d.length === 11 && d[0] === "8") d = "7" + d.slice(1);
-  if (d.length === 10 && d[0] === "9") d = "7" + d;
-  return d ? "+" + d : "";
-}
-function prettyPhone(p) {
-  const m = /^\+7(\d{3})(\d{3})(\d{2})(\d{2})$/.exec(p || "");
-  return m ? `+7 ${m[1]} ${m[2]}-${m[3]}-${m[4]}` : (p || "");
-}
+const errText = (e) => ERRORS[e && e.code] || ("Не получилось войти: " + ((e && (e.code || e.message)) || "неизвестная ошибка"));
 
 async function main() {
-  if (!window.Ogonek) return;
+  if (!O()) return;
   if (!configured) {
-    const note = document.createElement("div");
-    note.className = "demo-note";
-    note.textContent = "Демо-режим: вход по телефону ещё не настроен, прогресс хранится только в этом браузере.";
+    const note = el("div", "demo-note", "Демо-режим: вход ещё не настроен, прогресс хранится только в этом браузере.");
     document.querySelector(".app").prepend(note);
     return;
   }
@@ -54,104 +40,223 @@ async function main() {
   const auth = A.getAuth(app);
   auth.languageCode = "ru";
   const db = F.getFirestore(app);
+  const provider = new A.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
 
-  let verifier = null, confirmation = null, lastPhone = "", resendTimer = null;
+  /* ---------- sign in / out ---------- */
+  try { await A.getRedirectResult(auth); } catch (e) { showError(errText(e)); }
 
-  function getVerifier() {
-    if (!verifier) verifier = new A.RecaptchaVerifier(auth, "sendBtn", { size: "invisible" });
-    return verifier;
+  $("googleBtn").addEventListener("click", async () => {
+    showError(""); const b = $("googleBtn"); b.disabled = true;
+    try { await A.signInWithPopup(auth, provider); }
+    catch (e) {
+      // in some phone browsers popups are blocked: fall back to a full-page redirect
+      if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) {
+        try { await A.signInWithRedirect(auth, provider); return; } catch (e2) { showError(errText(e2)); }
+      } else showError(errText(e));
+    } finally { b.disabled = false; }
+  });
+  $("skipLogin").addEventListener("click", () => { lsSet(SKIP_KEY, "1"); $("auth").hidden = true; showLoginLink(); });
+  $("logoutBtn").addEventListener("click", async () => { O().setRemote(null); O().onSave = null; await A.signOut(auth); });
+
+  function showLoginLink() {
+    $("account").hidden = false; $("logoutBtn").hidden = true;
+    const t = $("accountPhone"); t.textContent = "";
+    const b = el("button", "linkbtn", "Войти через Google, чтобы видеть друзей"); b.type = "button";
+    b.addEventListener("click", () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; });
+    t.append(b);
   }
-  function resetVerifier() { try { verifier && verifier.clear(); } catch (e) {} verifier = null; }
 
-  function startResendCountdown() {
-    const b = $("resendBtn"); let left = 60; b.disabled = true;
-    clearInterval(resendTimer);
-    const tick = () => { b.textContent = left > 0 ? `Отправить снова (${left})` : "Отправить снова"; if (left-- <= 0) { b.disabled = false; clearInterval(resendTimer); } };
-    tick(); resendTimer = setInterval(tick, 1000);
-  }
+  /* ---------- friends ---------- */
+  let me = null, myRef = null, myCode = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [];
 
-  async function sendCode(phone) {
-    showError("");
-    const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Отправляем…";
-    try {
-      confirmation = await A.signInWithPhoneNumber(auth, phone, getVerifier());
-      lastPhone = phone;
-      $("stepPhone").hidden = true; $("stepCode").hidden = false;
-      $("code").value = ""; $("code").focus();
-      startResendCountdown();
-    } catch (e) {
-      console.warn(e); showError(errText(e)); resetVerifier();
-    } finally {
-      btn.disabled = false; btn.textContent = "Получить код по СМС";
+  function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
+
+  async function ensureProfile(user) {
+    const snap = await F.getDoc(myRef);
+    const data = snap.exists() ? snap.data() : null;
+    if (data && data.code) { myCode = data.code; return; }
+    for (let i = 0; i < 6; i++) {
+      const code = randomCode(), cref = F.doc(db, "codes", code);
+      const ok = await F.runTransaction(db, async (tx) => {
+        const c = await tx.get(cref);
+        if (c.exists()) return false;
+        tx.set(cref, { uid: user.uid });
+        return true;
+      }).catch(() => false);
+      if (ok) {
+        myCode = code;
+        await F.setDoc(myRef, { code, friends: (data && data.friends) || [], name: user.displayName || "Читатель", photo: user.photoURL || "" }, { merge: true });
+        return;
+      }
     }
+    throw new Error("Не удалось создать код");
   }
 
-  $("sendBtn").addEventListener("click", () => {
-    const phone = normalizePhone($("phone").value);
-    if (phone.length < 11) { showError(ERRORS["auth/invalid-phone-number"]); return; }
-    sendCode(phone);
-  });
-  $("phone").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("sendBtn").click(); } });
-
-  async function verify() {
-    const code = $("code").value.replace(/\D/g, "");
-    if (code.length < 6) { showError("Введите 6 цифр из СМС."); return; }
-    showError("");
-    const btn = $("verifyBtn"); btn.disabled = true; btn.textContent = "Проверяем…";
-    try { await confirmation.confirm(code); }
-    catch (e) { console.warn(e); showError(errText(e)); }
-    finally { btn.disabled = false; btn.textContent = "Войти"; }
+  let pubTimer = null;
+  function publishSummary() {
+    clearTimeout(pubTimer);
+    pubTimer = setTimeout(() => {
+      if (!me) return;
+      const s = O().summary();
+      F.setDoc(myRef, Object.assign(s, { name: me.displayName || "Читатель", photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
+        .catch((e) => console.warn(e));
+    }, 1200);
   }
-  $("verifyBtn").addEventListener("click", verify);
-  $("code").addEventListener("input", () => { if ($("code").value.replace(/\D/g, "").length === 6) verify(); });
-  $("code").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); verify(); } });
-  $("changePhone").addEventListener("click", () => { $("stepCode").hidden = true; $("stepPhone").hidden = false; showError(""); resetVerifier(); });
-  $("resendBtn").addEventListener("click", () => { resetVerifier(); $("stepCode").hidden = true; $("stepPhone").hidden = false; sendCode(lastPhone); });
-  $("authForm").addEventListener("submit", (e) => e.preventDefault());
 
-  $("logoutBtn").addEventListener("click", async () => {
-    window.Ogonek.setRemote(null);
-    await A.signOut(auth);
+  // друг ищется по коду (6 знаков), по почте Google или по ID
+  async function findFriendUid(input) {
+    const raw = (input || "").trim();
+    if (raw.includes("@")) {
+      const e = await F.getDoc(F.doc(db, "emails", raw.toLowerCase()));
+      return e.exists() ? e.data().uid : null;
+    }
+    const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length === 6) {
+      const c = await F.getDoc(F.doc(db, "codes", code));
+      return c.exists() ? c.data().uid : null;
+    }
+    if (/^[A-Za-z0-9]{20,40}$/.test(raw)) return raw; // ID пользователя
+    return undefined;
+  }
+
+  async function addFriendByCode(input) {
+    const raw = (input || "").trim();
+    if (!raw) { O().toast("Введите код, почту или ID друга"); return; }
+    try {
+      const fuid = await findFriendUid(raw);
+      if (fuid === undefined) { O().toast("Введите код из 6 знаков, почту Google или ID друга"); return; }
+      if (!fuid) { O().toast(raw.includes("@") ? "Человек с такой почтой ещё не входил в Огонёк" : "Код не найден. Проверьте его ещё раз."); return; }
+      if (fuid === me.uid) { O().toast("Это вы сами"); return; }
+      if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return; }
+      await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayUnion(me.uid) });
+      await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
+      $("friendCode").value = "";
+      O().toast("Друг добавлен!");
+    } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
+  }
+
+  async function removeFriend(fuid) {
+    try {
+      await F.updateDoc(myRef, { friends: F.arrayRemove(fuid) });
+      await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayRemove(me.uid) }).catch(() => {});
+      O().toast("Друг удалён");
+    } catch (e) { console.warn(e); O().toast("Не удалось удалить. Попробуйте позже."); }
+  }
+
+  function syncFriendSubs(list) {
+    myFriends = list;
+    Object.keys(friendUnsubs).forEach((uid) => { if (!list.includes(uid)) { friendUnsubs[uid](); delete friendUnsubs[uid]; delete friendData[uid]; } });
+    list.forEach((uid) => {
+      if (friendUnsubs[uid]) return;
+      friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
+        (snap) => { if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid]; renderFriends(); },
+        () => { delete friendData[uid]; renderFriends(); });
+    });
+    renderFriends();
+  }
+
+  function flameSvg(lit) {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
+  }
+  function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
+
+  function friendRow(d, isMe, uid) {
+    const t = O().today(), row = el("div", "friend" + (isMe ? " me" : ""));
+    const av = el("div", "favatar");
+    if (d.photo) { const img = document.createElement("img"); img.src = d.photo; img.alt = ""; img.referrerPolicy = "no-referrer"; img.width = 40; img.height = 40; av.append(img); }
+    else av.textContent = (d.name || "?").trim().charAt(0).toUpperCase();
+    const mid = el("div"); mid.style.minWidth = "0";
+    mid.append(el("div", "fname", isMe ? "Вы" : (d.name || "Читатель")));
+    O().KEYS.forEach((k) => {
+      const line = el("div", "fline");
+      const p = Math.min(d[k + "Next"] || 0, O().DAYS - 1), readToday = d[k + "Last"] === t;
+      line.append(el("span", null, (k === "nt" ? "НЗ: " : "ВЗ: ") + (d[k + "Next"] >= O().DAYS ? "пройден" : O().refOf(k, p))));
+      const st = el("span", readToday ? "ok" : null, readToday ? "✓" : "—"); st.title = readToday ? "Прочитано сегодня" : "Сегодня ещё не читал(а)"; line.append(st);
+      mid.append(line);
+    });
+    const right = el("div", "fstreak");
+    const lit = d.ntLast === t && d.otLast === t;
+    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
+    row.append(av, mid, right);
+    if (!isMe) {
+      const rm = el("button", "linkbtn fremove", "Удалить"); rm.type = "button";
+      rm.addEventListener("click", () => {
+        if (rm.dataset.armed) { removeFriend(uid); return; }
+        rm.dataset.armed = "1"; rm.textContent = "Точно удалить?"; setTimeout(() => { delete rm.dataset.armed; rm.textContent = "Удалить"; }, 4000);
+      });
+      mid.append(rm);
+    }
+    return row;
+  }
+
+  function renderFriends() {
+    if (!me) return;
+    $("myCode").textContent = myCode || "…";
+    const box = $("friendsList"); box.textContent = "";
+    const mine = Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL });
+    const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
+    rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
+    rows.forEach((r) => box.append(friendRow(r.d, r.me, r.uid)));
+    if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
+  }
+
+  $("addFriend").addEventListener("click", () => addFriendByCode($("friendCode").value));
+  $("friendCode").addEventListener("keydown", (e) => { if (e.key === "Enter") addFriendByCode($("friendCode").value); });
+  $("copyInvite").addEventListener("click", () => {
+    const link = location.origin + location.pathname + "?add=" + myCode;
+    const text = "Читаем Библию вместе в «Огоньке»! Мой код: " + myCode + "\n" + link;
+    const done = () => O().toast("Приглашение скопировано. Отправьте его другу.");
+    try { navigator.clipboard.writeText(text).then(done, () => window.prompt("Скопируйте приглашение:", text)); }
+    catch (e) { window.prompt("Скопируйте приглашение:", text); }
   });
 
+  /* ---------- session ---------- */
   A.onAuthStateChanged(auth, async (user) => {
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
+    if (myUnsub) { myUnsub(); myUnsub = null; }
     if (!user) {
-      window.Ogonek.setRemote(null);
-      try { localStorage.removeItem(OWNER_KEY); } catch (e) {}
-      window.Ogonek.setState(window.Ogonek.fresh());
-      $("account").hidden = true;
-      $("stepCode").hidden = true; $("stepPhone").hidden = false;
-      $("auth").hidden = false;
+      me = null; O().setRemote(null); O().onSave = null;
+      $("friendsCard").hidden = true; $("logoutBtn").hidden = false;
+      if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
+      if (lsGet(SKIP_KEY)) { $("auth").hidden = true; showLoginLink(); }
+      else { $("account").hidden = true; $("auth").hidden = false; }
       return;
     }
-    $("auth").hidden = true;
-    $("account").hidden = false;
-    $("accountPhone").textContent = "Вы вошли: " + prettyPhone(user.phoneNumber);
+    me = user; lsSet(SKIP_KEY, null);
+    $("auth").hidden = true; $("account").hidden = false; $("logoutBtn").hidden = false;
+    $("accountPhone").textContent = "Вы вошли: " + (user.displayName || user.email || "");
     $("storage").textContent = "Прогресс сохраняется в вашем аккаунте";
 
     // progress left on this device by another account is not mixed in
-    let owner = null; try { owner = localStorage.getItem(OWNER_KEY); } catch (e) {}
-    if (owner && owner !== user.uid) window.Ogonek.setState(window.Ogonek.fresh());
-    try { localStorage.setItem(OWNER_KEY, user.uid); } catch (e) {}
+    const owner = lsGet(OWNER_KEY);
+    if (owner && owner !== user.uid) O().setState(O().fresh());
+    lsSet(OWNER_KEY, user.uid);
 
     const ref = F.doc(db, "users", user.uid);
+    myRef = F.doc(db, "profiles", user.uid);
     try {
       const snap = await F.getDoc(ref);
-      const local = window.Ogonek.getState();
-      const remote = snap.exists() ? snap.data() : null;
-      if (remote && window.Ogonek.score(remote) >= window.Ogonek.score(local)) {
-        window.Ogonek.setState(remote);
-      } else {
-        await F.setDoc(ref, local);
-      }
-    } catch (e) {
-      console.warn(e);
-      window.Ogonek.toast("Не удалось загрузить прогресс с сервера. Проверьте интернет.");
-    }
+      const local = O().getState(), remote = snap.exists() ? snap.data() : null;
+      if (remote && O().score(remote) >= O().score(local)) O().setState(remote);
+      else await F.setDoc(ref, local);
+    } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     let chain = Promise.resolve();
-    window.Ogonek.setRemote((s) => {
-      chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); window.Ogonek.toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); });
-    });
+    O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); });
+
+    try {
+      await ensureProfile(user);
+      if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
+      $("myEmail").textContent = user.email || "";
+      $("myId").textContent = user.uid;
+      $("friendsCard").hidden = false;
+      O().onSave = () => { publishSummary(); renderFriends(); };
+      publishSummary();
+      myUnsub = F.onSnapshot(myRef, (snap) => { syncFriendSubs((snap.exists() && snap.data().friends) || []); });
+      const add = new URLSearchParams(location.search).get("add");
+      if (add) { history.replaceState(null, "", location.pathname); addFriendByCode(add); }
+    } catch (e) { console.warn(e); O().toast("Не удалось загрузить друзей. Проверьте настройки Firestore."); }
   });
 }
 
