@@ -438,6 +438,7 @@ async function main() {
     modal.append(sheet); document.body.append(modal); x.focus();
   }
 
+  let friendsOpen = false;
   function renderFriends() {
     if (!me) return;
     $("myCode").textContent = myCode || "…";
@@ -445,7 +446,18 @@ async function main() {
     const mine = Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL });
     const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
     rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
-    rows.forEach((r) => box.append(friendRow(r.d, r.me, r.uid)));
+    // видно: я и два друга; остальные — в свёрнутом списке
+    let shown = 0; const extra = [];
+    rows.forEach((r) => { if (r.me || shown < 2) { if (!r.me) shown++; box.append(friendRow(r.d, r.me, r.uid)); } else extra.push(r); });
+    if (extra.length) {
+      const more = el("div", "friends"); more.hidden = !friendsOpen;
+      extra.forEach((r) => more.append(friendRow(r.d, r.me, r.uid)));
+      const tg = el("button", "btn fmore"); tg.type = "button"; tg.setAttribute("aria-expanded", String(friendsOpen));
+      const label = () => { tg.textContent = friendsOpen ? "Свернуть" : "Показать остальных (" + extra.length + ")"; };
+      label();
+      tg.addEventListener("click", () => { friendsOpen = !friendsOpen; more.hidden = !friendsOpen; tg.setAttribute("aria-expanded", String(friendsOpen)); label(); });
+      box.append(more, tg);
+    }
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
     const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
