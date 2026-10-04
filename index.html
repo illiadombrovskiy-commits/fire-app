@@ -362,6 +362,10 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pplanflag text{font-size:11px;font-weight:800;fill:var(--link);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .pplanflag .pplansub{font-weight:600;font-size:10.5px}
 .pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
+.pstart line{stroke:var(--ok);stroke-width:2.5;stroke-linecap:round}
+.pstart path{fill:var(--ok)}
+.pstart text{font-size:12px;font-weight:800;fill:var(--ok);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.pstart .pstartsub{font-size:10.5px;font-weight:600;fill:var(--muted)}
 .fold{display:block}
 .foldhead{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;user-select:none}
 .foldhead::-webkit-details-marker{display:none}
@@ -563,7 +567,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
       <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
       <div class="legend" id="paceLegend"></div>
       <div class="row" style="justify-content:space-between;align-items:center">
-        <span class="startlbl">План начался 27 сентября</span>
+        <span class="startlbl" id="planStartLbl">План начался 28 сентября</span>
       </div>
       <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
     </div>
@@ -782,7 +786,7 @@ function chapterUrl(x){ // открывает с первого стиха от�
   const m=/^(\d+)(?::(\d+))?/.exec(x.ref)||[], ch=m[1]||1, v=m[2]||1;
   return SLUG[x.book]?BIBLE+SLUG[x.book]+"/"+ch+"/"+v:BIBLE;
 }
-const PLAN_START="2026-09-27"; // день 1 плана: Мф. 1:1–2 и Быт. 1:1–5
+const PLAN_START="2026-09-28"; // день 1 плана: Мф. 1:1–2 и Быт. 1:1–5 (4 октября — Мф. 3:7–17 и Быт. 3:14–24)
 const planDate=p=>add(PLAN_START,p);
 const todayP=()=>dayNo(today())-dayNo(PLAN_START);
 function shortDay(p){return parse(planDate(p)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}
@@ -1138,7 +1142,7 @@ function renderPath(){
   const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>({id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)})));
   const tp=Math.min(DAYS-1,Math.max(0,todayP()));
   const ps=people.map(x=>x.pos).concat([tp]), lo=Math.max(0,Math.floor(Math.min(...ps))-3), hi=Math.min(DAYS-1,Math.ceil(Math.max(...ps))+5);
-  const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
+  const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=lo===0?104:40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
   const X=i=>cx+A*Math.sin((i-lo)*Math.PI/3.5), Y=i=>padT+(hi-i)*gap;
   const posXY=pos=>{const a=Math.floor(pos),b=Math.min(hi,a+1),t=pos-a;return [X(a)+(X(b)-X(a))*t,Y(a)+(Y(b)-Y(a))*t]};
   const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка чтения: где вы и ваши друзья по плану"});
@@ -1154,9 +1158,16 @@ function renderPath(){
     if(i!==tp)g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate()))); // у дня «по плану» дата подписана справа
     const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
-    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-17,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
+    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-17,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)+" · "+shortDay(i)))}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
+  // старт: все начинают читать в один день
+  if(lo===0){const sx=X(0), sy=Y(0), g=sv("g",{class:"pstart"}), tx=Math.min(W-95,Math.max(95,sx));
+    g.append(sv("line",{x1:sx,y1:sy+36,x2:sx,y2:sy+60}));
+    g.append(sv("path",{d:"M"+sx+" "+(sy+36)+"h22l-6 6 6 6h-22z"}));
+    g.append(sv("text",{x:tx,y:sy+76,"text-anchor":"middle"},"Старт · "+parse(PLAN_START).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})));
+    g.append(sv("text",{x:tx,y:sy+90,"text-anchor":"middle",class:"pstartsub"},"все начинают отсюда"));
+    svg.append(g)}
   // где по плану нужно быть сегодня: пунктир через всю тропинку и флажок
   {const ty=Y(tp), tx=X(tp), left=tx>cx;
    svg.insertBefore(sv("line",{x1:6,x2:W-6,y1:ty,y2:ty,class:"pplanline"}),svg.firstChild);
@@ -1720,7 +1731,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041544"></script>
+<script type="module" src="auth.js?v=202610041810"></script>
 
 </body>
 </html>
