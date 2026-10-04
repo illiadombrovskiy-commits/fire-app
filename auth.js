@@ -67,13 +67,14 @@ async function main() {
   function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
-  let me = null, myRef = null, myCode = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
+  let me = null, myRef = null, myCode = "", myNick = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
   async function ensureProfile(user) {
     const snap = await F.getDoc(myRef);
     const data = snap.exists() ? snap.data() : null;
+    myNick = (data && data.nick) || "";
     if (data && data.code) { myCode = data.code; return; }
     for (let i = 0; i < 6; i++) {
       const code = randomCode(), cref = F.doc(db, "codes", code);
@@ -99,6 +100,9 @@ async function main() {
     myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
     return JSON.stringify(fof) !== lastFof;
   }
+  // имя, которое видят друзья: своё (если задано) или из Google
+  const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
+  function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
   function publishSummary() {
     clearTimeout(pubTimer);
     pubTimer = setTimeout(() => {
@@ -108,9 +112,9 @@ async function main() {
       const fof = {};
       myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
       lastFof = JSON.stringify(fof);
-      F.setDoc(myRef, Object.assign(s, { fof, name: me.displayName || "Читатель", photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
+      F.setDoc(myRef, Object.assign(s, { fof, name: myName(), photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
-      F.setDoc(F.doc(db, "cards", me.uid), { name: me.displayName || "Читатель", photo: me.photoURL || "" }).catch((e) => console.warn(e));
+      F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
     }, 1200);
   }
 
@@ -312,7 +316,7 @@ async function main() {
 
   async function sendMsg(uid, i, kind) {
     const K = KIND[kind], day = O().today();
-    const data = { from: me.uid, name: String(me.displayName || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp() };
+    const data = { from: me.uid, name: String(myName() || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp() };
     if (kind === "invite") data.kind = "invite";
     try {
       await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + (kind === "invite" ? "_inv" : "")), data);
@@ -435,7 +439,7 @@ async function main() {
   async function openProfile(id, edit) {
     if (!me) return;
     const isMe = id === "me" || id === me.uid;
-    const d = isMe ? Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
+    const d = isMe ? Object.assign(O().summary(), { name: myName(), photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
     if (!d) { O().toast("Профиль друга ещё загружается"); return; }
     closeProfile();
     const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
@@ -464,20 +468,31 @@ async function main() {
 
     const aboutBox = el("div", "freading"); aboutBox.append(el("span", "label", "О себе"));
     if (isMe && edit) {
+      const nameIn = document.createElement("input"); nameIn.type = "text"; nameIn.maxLength = 40; nameIn.className = "nickin";
+      nameIn.value = myName(); nameIn.placeholder = "Как вас называть, например: Илья"; nameIn.setAttribute("aria-label", "Имя");
+      const nameLbl = el("span", "label", "Имя (его видят друзья)");
+      aboutBox.querySelector(".label").textContent = "О себе";
+      aboutBox.prepend(nameLbl, nameIn);
       const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "70px";
       const save = el("button", "btn btn-xp aboutsave", "Сохранить"); save.type = "button";
       const count = el("small", "hint", ta.value.length + " / 300"); count.style.margin = "0";
       ta.addEventListener("input", () => { count.textContent = ta.value.length + " / 300"; save.classList.remove("saved"); save.textContent = "Сохранить"; });
+      nameIn.addEventListener("input", () => { save.classList.remove("saved"); save.textContent = "Сохранить"; });
       save.addEventListener("click", async () => {
         save.disabled = true; save.textContent = "Сохраняю…";
         try {
-          await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300) }, { merge: true });
-          myProfile = Object.assign({}, myProfile, { about: ta.value.trim().slice(0, 300) });
+          const nick = nameIn.value.replace(/\s+/g, " ").trim().slice(0, 40);
+          myNick = nick && nick !== me.displayName ? nick : "";
+          await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300), nick: myNick, name: myName() }, { merge: true });
+          await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
+          myProfile = Object.assign({}, myProfile, { about: ta.value.trim().slice(0, 300), nick: myNick });
+          nameIn.value = myName(); setTopName(); renderFriends();
+          const h2 = document.querySelector(".fsheet .fhead h2"); if (h2) h2.textContent = myName() + " (вы)";
           save.classList.add("saved"); save.textContent = "Сохранено ✓";
           ta.classList.remove("aboutok"); void ta.offsetWidth; ta.classList.add("aboutok");
           const r = save.getBoundingClientRect(); if (O().burst) O().burst(r.left + r.width / 2, r.top + r.height / 2, 30);
           try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {}
-          O().toast("Информация о себе сохранена — друзья её увидят");
+          O().toast("Сохранено — друзья увидят ваше имя и «О себе»");
         } catch (e) { console.warn(e); save.textContent = "Сохранить"; O().toast("Не удалось сохранить. Попробуйте позже."); }
         finally { save.disabled = false; }
       });
@@ -555,7 +570,7 @@ async function main() {
       });
       box.append(rq);
     }
-    const mine = Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL });
+    const mine = Object.assign(O().summary(), { name: myName(), photo: me.photoURL });
     const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
     rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
     // видно: я и два друга; остальные — в свёрнутом списке
@@ -641,8 +656,8 @@ async function main() {
   function toggleUserMenu() {
     if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
-    const who = el("div", "umwho", (me && (me.displayName || me.email)) || "");
-    const about = el("button", "umitem", "О себе"); about.type = "button"; about.setAttribute("role", "menuitem");
+    const who = el("div", "umwho", me ? myName() : "");
+    const about = el("button", "umitem", "Имя и о себе"); about.type = "button"; about.setAttribute("role", "menuitem");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
     const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
     out.addEventListener("click", () => {
@@ -674,7 +689,7 @@ async function main() {
       return;
     }
     me = user; lsSet(SKIP_KEY, null); O().setMyPhoto(user.photoURL);
-    top.textContent = (user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
+    top.textContent = (myNick || user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
     top.title = "Вы вошли как " + (user.displayName || user.email || "");
     top.setAttribute("aria-haspopup", "menu"); top.setAttribute("aria-expanded", "false");
     topAction = () => toggleUserMenu();
@@ -708,6 +723,7 @@ async function main() {
       myUnsub = F.onSnapshot(myRef, (snap) => {
         myProfile = snap.exists() ? snap.data() : {};
         myFollowers = myProfile.followers || []; myDeclined = myProfile.declined || [];
+        if ((myProfile.nick || "") !== myNick) { myNick = myProfile.nick || ""; setTopName(); }
         // новая заявка — короткое уведомление
         const pend = pendingRequests();
         if (knownReq) pend.filter((u) => !knownReq.has(u)).forEach((u) => cardOf(u).then((c) => O().toast((c.name || "Читатель") + " хочет стать вашим другом")));
