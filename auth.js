@@ -453,7 +453,7 @@ async function main() {
     head.append(avatarEl(d.name, d.photo, 64), ht, x);
 
     const stats = el("div", "fstats");
-    [[d.streak || 0, "дней подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
+    [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
     O().KEYS.forEach((k) => {
@@ -473,7 +473,7 @@ async function main() {
       const nameLbl = el("span", "label", "Имя (его видят друзья)");
       aboutBox.querySelector(".label").textContent = "О себе";
       aboutBox.prepend(nameLbl, nameIn);
-      const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "70px";
+      const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "160px"; ta.rows = 6;
       const save = el("button", "btn btn-xp aboutsave", "Сохранить"); save.type = "button";
       const count = el("small", "hint", ta.value.length + " / 300"); count.style.margin = "0";
       ta.addEventListener("input", () => { count.textContent = ta.value.length + " / 300"; save.classList.remove("saved"); save.textContent = "Сохранить"; });
