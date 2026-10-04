@@ -49,20 +49,29 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
     }
 
-    // профиль для друзей: имя, огонёк, где читает
+    // профиль: читают сам человек, его друзья и подписчики
     match /profiles/{uid} {
-      // читать может сам пользователь и его друзья
       allow read: if request.auth != null
-        && (request.auth.uid == uid || request.auth.uid in resource.data.get('friends', []));
+        && (request.auth.uid == uid
+            || request.auth.uid in resource.data.get('friends', [])
+            || request.auth.uid in resource.data.get('followers', []));
       // владелец меняет свой профиль как угодно
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.get('about', '').size() <= 300;
-      // другой человек может только добавить или убрать СЕБЯ из списка друзей
+      // другой человек может только подписаться / отписаться (добавить или убрать СЕБЯ в followers)
+      allow update: if request.auth != null && request.auth.uid != uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers'])
+        && (
+          request.resource.data.followers.toSet() == resource.data.get('followers', []).toSet().union([request.auth.uid].toSet())
+          || request.resource.data.followers.toSet() == resource.data.get('followers', []).toSet().difference([request.auth.uid].toSet())
+        );
+      // дружба: убрать себя из друзей можно всегда; добавить себя — только если этот человек сам подал мне заявку (подписан на меня)
       allow update: if request.auth != null && request.auth.uid != uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends'])
         && (
-          request.resource.data.friends.toSet() == resource.data.get('friends', []).toSet().union([request.auth.uid].toSet())
-          || request.resource.data.friends.toSet() == resource.data.get('friends', []).toSet().difference([request.auth.uid].toSet())
+          request.resource.data.friends.toSet() == resource.data.get('friends', []).toSet().difference([request.auth.uid].toSet())
+          || (request.resource.data.friends.toSet() == resource.data.get('friends', []).toSet().union([request.auth.uid].toSet())
+              && request.auth.uid in resource.data.get('following', []))
         );
     }
   }

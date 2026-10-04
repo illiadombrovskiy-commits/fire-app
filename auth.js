@@ -67,7 +67,7 @@ async function main() {
   function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
-  let me = null, myRef = null, myCode = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [];
+  let me = null, myRef = null, myCode = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
@@ -141,26 +141,58 @@ async function main() {
     } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
   }
 
+  // заявка в друзья: я подписываюсь на человека; дружба — когда он примет заявку (или если он уже подписан на меня)
   async function addFriendUid(fuid) {
     if (fuid === me.uid) { O().toast("Это вы сами"); return false; }
     if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return false; }
+    const ref = F.doc(db, "profiles", fuid), already = myFollowing.includes(fuid);
     try {
-      await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayUnion(me.uid) });
-      await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
-      O().toast("Друг добавлен!"); return true;
-    } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Попробуйте позже."); return false; }
+      await F.updateDoc(ref, { followers: F.arrayUnion(me.uid) });
+      await F.updateDoc(myRef, { following: F.arrayUnion(fuid) });
+      let their = {}; try { const sn = await F.getDoc(ref); their = sn.exists() ? sn.data() : {}; } catch (e) {}
+      if ((their.following || []).includes(me.uid)) {          // он уже звал меня — сразу друзья
+        await F.updateDoc(ref, { friends: F.arrayUnion(me.uid) });
+        await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
+        O().toast("Вы теперь друзья!");
+      } else if (already) O().toast("Заявка уже отправлена — ждём, когда друг её примет");
+      else O().toast("Заявка отправлена. Пока друг её не примет, вы подписаны на него");
+      return true;
+    } catch (e) { console.warn(e); O().toast("Не удалось отправить заявку. Попробуйте позже."); return false; }
+  }
+
+  async function acceptRequest(uid) {
+    try {
+      await F.updateDoc(myRef, { friends: F.arrayUnion(uid), following: F.arrayUnion(uid), declined: F.arrayRemove(uid) });
+      await F.updateDoc(F.doc(db, "profiles", uid), { friends: F.arrayUnion(me.uid) });
+      await F.updateDoc(F.doc(db, "profiles", uid), { followers: F.arrayUnion(me.uid) }).catch(() => {});
+      O().toast("Заявка принята — теперь вы друзья!"); if (O().vibrate) O().vibrate([30, 40, 30]);
+    } catch (e) { console.warn(e); O().toast("Не удалось принять заявку. Попробуйте позже."); }
+  }
+  async function declineRequest(uid) {
+    try { await F.updateDoc(myRef, { declined: F.arrayUnion(uid) }); O().toast("Заявка отклонена — человек останется подписчиком"); }
+    catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
   }
 
   async function removeFriend(fuid) {
     try {
-      await F.updateDoc(myRef, { friends: F.arrayRemove(fuid) });
+      await F.updateDoc(myRef, { friends: F.arrayRemove(fuid), following: F.arrayRemove(fuid) });
       await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayRemove(me.uid) }).catch(() => {});
+      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
       O().toast("Друг удалён");
     } catch (e) { console.warn(e); O().toast("Не удалось удалить. Попробуйте позже."); }
   }
+  async function unfollow(fuid) {
+    try {
+      await F.updateDoc(myRef, { following: F.arrayRemove(fuid) });
+      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
+      O().toast("Вы отписались");
+    } catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
+  }
 
-  function syncFriendSubs(list) {
-    myFriends = list;
+  // подписка на профили: друзья и те, на кого я подписан
+  function syncFriendSubs(friends, following) {
+    myFriends = friends; myFollowing = following;
+    const list = [...new Set(friends.concat(following))];
     Object.keys(friendUnsubs).forEach((uid) => { if (!list.includes(uid)) { friendUnsubs[uid](); delete friendUnsubs[uid]; delete friendData[uid]; } });
     list.forEach((uid) => {
       if (friendUnsubs[uid]) return;
@@ -169,6 +201,13 @@ async function main() {
         () => { delete friendData[uid]; renderFriends(); });
     });
     renderFriends();
+  }
+  const pendingRequests = () => myFollowers.filter((u) => !myFriends.includes(u) && !myDeclined.includes(u));
+  const cardCache = {};
+  async function cardOf(uid) {
+    if (cardCache[uid]) return cardCache[uid];
+    let c = {}; try { const sn = await F.getDoc(F.doc(db, "cards", uid)); c = sn.exists() ? sn.data() : {}; } catch (e) {}
+    return (cardCache[uid] = c);
   }
 
   function flameSvg(lit) {
@@ -374,7 +413,7 @@ async function main() {
     const lit = d.ntLast === t && d.otLast === t;
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
     row.append(av, mid, right);
-    const act = !isMe && friendAction(uid, d); if (act) row.append(act);
+    const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
     row.tabIndex = 0; row.setAttribute("role", "button");
     row.title = isMe ? "Мой профиль" : "Открыть профиль";
     row.addEventListener("click", () => openProfile(isMe ? "me" : uid));
@@ -456,7 +495,7 @@ async function main() {
     badges.append(bw);
 
     sheet.append(head, stats, reading);
-    const act = !isMe && friendAction(id, d);
+    const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
     else if (!isMe && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
     sheet.append(aboutBox, badges);
@@ -475,17 +514,19 @@ async function main() {
         const nm = c.name || known.n || mine.name || "", ph = c.photo || known.p || mine.photo || "";
         row.append(avatarEl(nm, ph, 34), el("span", null, nm || "Читатель"));
         if (!nm) { const h = el("small", "hint", "имя появится, когда он откроет Огонёк"); h.style.margin = "0"; row.querySelector("span").append(document.createElement("br"), h); }
-        if (myFriends.includes(u)) { const b = el("span", "hint", "Уже друзья"); b.style.flex = "none"; row.append(b); }
+        if (myFriends.includes(u) || myFollowing.includes(u)) { const b = el("span", "hint", myFriends.includes(u) ? "Уже друзья" : "Заявка отправлена"); b.style.flex = "none"; row.append(b); }
         else {
           const b = el("button", "btn btn-xp", "Добавить"); b.type = "button";
-          b.addEventListener("click", async () => { b.disabled = true; const ok = await addFriendUid(u); b.textContent = ok ? "Добавлен ✓" : "Добавить"; b.disabled = ok; });
+          b.addEventListener("click", async () => { b.disabled = true; const ok = await addFriendUid(u); b.textContent = ok ? "Заявка ✓" : "Добавить"; b.disabled = ok; });
           row.append(b);
         }
       });
-      const rm = el("button", "linkbtn", "Удалить из друзей"); rm.type = "button"; rm.style.alignSelf = "center";
+      const isFriend = myFriends.includes(id), lbl = isFriend ? "Удалить из друзей" : "Отменить заявку и отписаться";
+      if (!isFriend) { const h = el("p", "hint", "Заявка в друзья отправлена. Пока друг её не примет, вы подписаны на него."); h.style.margin = "0"; sheet.insertBefore(h, sheet.children[1]); }
+      const rm = el("button", "linkbtn", lbl); rm.type = "button"; rm.style.alignSelf = "center";
       rm.addEventListener("click", () => {
-        if (rm.dataset.armed) { removeFriend(id); closeProfile(); return; }
-        rm.dataset.armed = "1"; rm.textContent = "Нажмите ещё раз, чтобы удалить"; setTimeout(() => { delete rm.dataset.armed; rm.textContent = "Удалить из друзей"; }, 4000);
+        if (rm.dataset.armed) { (isFriend ? removeFriend : unfollow)(id); closeProfile(); return; }
+        rm.dataset.armed = "1"; rm.textContent = "Нажмите ещё раз для подтверждения"; setTimeout(() => { delete rm.dataset.armed; rm.textContent = lbl; }, 4000);
       });
       sheet.append(rm);
     }
@@ -498,6 +539,22 @@ async function main() {
     if (!me) return;
     $("myCode").textContent = myCode || "…";
     const box = $("friendsList"); box.textContent = "";
+    // заявки в друзья (мои подписчики, которых я ещё не принял)
+    const reqs = pendingRequests();
+    if (reqs.length) {
+      const rq = el("div", "freqs"); rq.append(el("span", "label", "Заявки в друзья · " + reqs.length));
+      reqs.forEach((u) => {
+        const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
+        row.append(av, nm);
+        cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
+        const ok = el("button", "btn btn-xp", "Принять"); ok.type = "button";
+        ok.addEventListener("click", () => { ok.disabled = true; acceptRequest(u); });
+        const no = el("button", "btn", "Отклонить"); no.type = "button";
+        no.addEventListener("click", () => { no.disabled = true; declineRequest(u); });
+        const bt = el("div", "fbtns"); bt.append(ok, no); row.append(bt); rq.append(row);
+      });
+      box.append(rq);
+    }
     const mine = Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL });
     const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
     rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
@@ -513,8 +570,22 @@ async function main() {
       tg.addEventListener("click", () => { friendsOpen = !friendsOpen; more.hidden = !friendsOpen; tg.setAttribute("aria-expanded", String(friendsOpen)); label(); });
       box.append(more, tg);
     }
+    // подписки: заявка отправлена, но ещё не принята — видны в списке, но не на тропинке
+    const subs = myFollowing.filter((u) => !myFriends.includes(u));
+    if (subs.length) {
+      const sb = el("div", "fsubs"); sb.append(el("span", "label", "Вы подписаны · ждут подтверждения"));
+      subs.forEach((u) => {
+        const d = friendData[u] || {}, row = el("div", "ffrow"); row.tabIndex = 0; row.setAttribute("role", "button");
+        row.append(avatarEl(d.name, d.photo, 34), el("span", null, d.name || "Читатель"), el("small", "hint", "заявка отправлена"));
+        row.addEventListener("click", () => openProfile(u)); sb.append(row);
+      });
+      box.append(sb);
+    }
+    const nf = myFollowers.filter((u) => !myFriends.includes(u)).length;
+    if (nf && !reqs.length) box.append(el("p", "hint", "Подписчиков (не друзей): " + nf));
+    // на тропинке — только друзья
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
-    if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
+    if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
     const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
   }
 
@@ -574,7 +645,7 @@ async function main() {
 
   /* ---------- session ---------- */
   A.onAuthStateChanged(auth, async (user) => {
-    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (!user) {
@@ -619,7 +690,15 @@ async function main() {
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
-      myUnsub = F.onSnapshot(myRef, (snap) => { myProfile = snap.exists() ? snap.data() : {}; syncFriendSubs(myProfile.friends || []); });
+      myUnsub = F.onSnapshot(myRef, (snap) => {
+        myProfile = snap.exists() ? snap.data() : {};
+        myFollowers = myProfile.followers || []; myDeclined = myProfile.declined || [];
+        // новая заявка — короткое уведомление
+        const pend = pendingRequests();
+        if (knownReq) pend.filter((u) => !knownReq.has(u)).forEach((u) => cardOf(u).then((c) => O().toast((c.name || "Читатель") + " хочет стать вашим другом")));
+        knownReq = new Set(pend);
+        syncFriendSubs(myProfile.friends || [], myProfile.following || []);
+      });
       O().onPersonClick = (id) => openProfile(id);
       listenCheers();
       const add = new URLSearchParams(location.search).get("add");

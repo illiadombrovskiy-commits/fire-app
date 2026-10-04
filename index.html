@@ -382,6 +382,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .invite .plus{width:32px;height:32px;border-radius:50%;background:var(--xp);color:#fff;display:grid;place-items:center;font-size:1.4rem;font-weight:800;line-height:1;flex:none}
 .invite .addfriend input{background:var(--surface)}
 .pzoom{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.pzoom .pathtitle{margin-right:auto}
 .pzbtn{padding:4px 12px;font-size:1.2rem;line-height:1.1}
 .pzlevel{padding:5px 10px;font-size:.8rem;font-variant-numeric:tabular-nums;min-width:4.2em}
 .pathsvg{max-width:none}
@@ -435,6 +436,13 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.freqs,.fsubs{display:flex;flex-direction:column;gap:6px}
+.freqs{padding:10px;border-radius:14px;background:var(--xp-soft);border:1.5px solid var(--xp)}
+.freq{background:var(--surface);flex-wrap:wrap}
+.freq span{min-width:110px}
+.freq .fbtns{display:flex;gap:6px;margin-left:auto}
+.fsubs .ffrow{cursor:pointer}
+.fsubs .ffrow small{flex:none;margin:0}
 .howto{font-size:.9rem;color:var(--muted);gap:8px}
 .howto p{margin:0}
 .howto b{color:var(--ink)}
@@ -579,11 +587,8 @@ textarea.aboutok{animation:aboutglow 1s ease}
 
 
   <section class="card" id="pathCard">
-    <div class="reading-head">
-      <h2>Тропинка</h2>
-      <span class="daynum" id="pathSub">Вперёд — вверх</span>
-    </div>
     <div class="pzoom">
+      <h2 class="pathtitle">Тропинка</h2><span id="pathSub" hidden></span>
       <button class="btn pzbtn" id="pzOut" type="button" aria-label="Отдалить">−</button>
       <button class="btn pzlevel" id="pzLevel" type="button" title="Сбросить масштаб">100%</button>
       <button class="btn pzbtn" id="pzIn" type="button" aria-label="Приблизить">+</button>
@@ -1196,7 +1201,7 @@ function renderPath(){
   svg.setAttribute("width",Math.round(W*pathZoom));svg.setAttribute("height",Math.round(H*pathZoom));
   box.textContent="";box.append(svg);
   const lead=people.slice().sort((a,b)=>b.pos-a.pos)[0];
-  $("pathSub").textContent=pathPeople.length?(lead.me?"Вы впереди всех!":"Впереди: "+(lead.name||"").split(" ")[0]):"Вперёд — вверх";
+  $("pathSub").textContent="";
   const pb=$("pathBox");
   if(pb&&pathKeep){pb.scrollLeft=pathKeep.x*pb.scrollWidth-pb.clientWidth/2;pb.scrollTop=pathKeep.y*pb.scrollHeight-pb.clientHeight/2;pathKeep=null}
   else if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY*pathZoom-pb.clientHeight/2);pb.scrollLeft=(pb.scrollWidth-pb.clientWidth)/2}
@@ -1707,7 +1712,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041344"></script>
+<script type="module" src="auth.js?v=202610041459"></script>
 
 </body>
 </html>
