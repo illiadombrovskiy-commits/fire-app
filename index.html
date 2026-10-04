@@ -803,6 +803,8 @@ function streakOf(set){let cur=today();if(!set.has(cur))cur=add(cur,-1);let n=0;
 const streak=k=>streakOf(withFrozen(k?datesOf(k):bothSet()));
 /* заморозки = на сколько дней вы впереди плана (по обоим заветам).
    Пропущенный день сохраняет серию, если к концу этого дня оба завета были прочитаны по плану включительно. */
+/* заморозки = на сколько дней вы впереди плана (по обоим заветам).
+   Пропущенный день сохраняет серию, если к концу этого дня оба завета были прочитаны по плану включительно. */
 const planIdx=d=>dayNo(d)-dayNo(PLAN_START);
 function readBy(k,d){return state[k].log.filter(x=>x.d<=d).length}
 function freezesNow(){const t=today(),tp=Math.max(0,todayP());
@@ -882,7 +884,7 @@ function render(){
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
   $("heroFlame").classList.toggle("off",!both);
   const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
-  $("heroSub").textContent=both?"Оба завета прочитаны. Возвращайтесь завтра!":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
+  $("heroSub").textContent=both?"Оба завета прочитаны.":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию."; $("bestChip").textContent="Рекорд: "+state.best;
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
@@ -1652,7 +1654,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041048"></script>
+<script type="module" src="auth.js?v=202610041100"></script>
 
 </body>
 </html>
