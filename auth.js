@@ -527,12 +527,32 @@ async function main() {
 
   $("addFriend").addEventListener("click", () => addFriendByCode($("friendCode").value));
   $("friendCode").addEventListener("keydown", (e) => { if (e.key === "Enter") addFriendByCode($("friendCode").value); });
-  $("copyInvite").addEventListener("click", () => {
+  // копирование без всплывающих окон: сначала Clipboard API, иначе скрытое поле + execCommand (работает и на http)
+  function copyText(text) {
+    const legacy = () => {
+      const ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0"; document.body.append(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove(); return ok;
+    };
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(() => true, () => legacy());
+    return Promise.resolve(legacy());
+  }
+  $("copyInvite").addEventListener("click", async () => {
+    const btn = $("copyInvite");
     const link = location.origin + location.pathname + "?add=" + myCode;
     const text = "Читаем Библию вместе в «Огоньке»! Мой код: " + myCode + "\n" + link;
-    const done = () => O().toast("Приглашение скопировано. Отправьте его другу.");
-    try { navigator.clipboard.writeText(text).then(done, () => window.prompt("Скопируйте приглашение:", text)); }
-    catch (e) { window.prompt("Скопируйте приглашение:", text); }
+    const ok = await copyText(text);
+    if (ok) {
+      btn.classList.remove("copied"); void btn.offsetWidth; btn.classList.add("copied"); btn.textContent = "Скопировано ✓";
+      const r = btn.getBoundingClientRect(); if (O().burst) O().burst(r.left + r.width / 2, r.top + r.height / 2, 24);
+      if (O().vibrate) O().vibrate([30, 40, 30]);
+      O().toast("Приглашение скопировано. Отправьте его другу.");
+      clearTimeout(btn._t); btn._t = setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Скопировать приглашение"; }, 2500);
+    } else {
+      O().toast("Не удалось скопировать. Ваш код: " + myCode);
+    }
   });
 
   /* ---------- меню пользователя в шапке: «О себе» и «Выйти» ---------- */

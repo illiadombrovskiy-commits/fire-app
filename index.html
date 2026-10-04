@@ -425,6 +425,8 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+#copyInvite{transition:background .2s,border-color .2s,color .2s}
+#copyInvite.copied{background:var(--ok);border-color:var(--ok);color:#fff;animation:savedpop .35s ease}
 @media (max-width:380px){.loginTop{padding:6px 10px}}
 @media (max-width:350px){.top .lvl{display:none}}
 .aboutrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1257,8 +1259,33 @@ function burst(x,y,n){
   })(last);
 }
 // level 1 = one testament lit, 2 = common flame lit
+/* звук огонька: синтез без файлов — «вспышка» (шум) и мягкий аккорд; общий огонёк звучит ярче */
+let audioCtx=null;
+function fireSound(level){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    audioCtx=audioCtx||new AC(); if(audioCtx.state==="suspended")audioCtx.resume();
+    const ac=audioCtx, t=ac.currentTime, out=ac.createGain(); out.gain.value=level===2?0.32:0.22; out.connect(ac.destination);
+    // вспышка пламени: короткий шум через полосовой фильтр, частота поднимается
+    const len=Math.floor(ac.sampleRate*0.5), buf=ac.createBuffer(1,len,ac.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);
+    const ns=ac.createBufferSource(); ns.buffer=buf;
+    const bp=ac.createBiquadFilter(); bp.type="bandpass"; bp.Q.value=0.8; bp.frequency.setValueAtTime(400,t); bp.frequency.exponentialRampToValueAtTime(2600,t+0.35);
+    const ng=ac.createGain(); ng.gain.setValueAtTime(0.0001,t); ng.gain.exponentialRampToValueAtTime(0.9,t+0.04); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+    ns.connect(bp).connect(ng).connect(out); ns.start(t); ns.stop(t+0.55);
+    // тёплый звон: для одного завета две ноты, для общего огонька — три
+    const notes=level===2?[523.25,659.25,783.99,1046.5]:[587.33,880];
+    notes.forEach((f,i)=>{
+      const o=ac.createOscillator(), g=ac.createGain(), st=t+0.08+i*0.09;
+      o.type="triangle"; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,st); g.gain.exponentialRampToValueAtTime(0.35,st+0.02); g.gain.exponentialRampToValueAtTime(0.0001,st+(level===2?1.1:0.7));
+      o.connect(g).connect(out); o.start(st); o.stop(st+1.2);
+    });
+  }catch(e){}
+}
 function ignite(svgEl,level){
   if(level)vibrate(level===2?[90,60,90,60,220]:[60,40,60]);
+  if(level)fireSound(level);
   if(!svgEl)return;
   svgEl.classList.remove("ignite");void svgEl.getBoundingClientRect();svgEl.classList.add("ignite");
   if(level===1){const r=svgEl.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,28)}
@@ -1540,7 +1567,7 @@ function summary(){
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
 window.Ogonek={
-  summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst,
+  summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   onSave:null,
   setPathPeople(list){pathPeople=list||[];renderPath()},
@@ -1557,7 +1584,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040941"></script>
+<script type="module" src="auth.js?v=202610040946"></script>
 
 </body>
 </html>
