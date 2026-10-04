@@ -546,7 +546,6 @@ textarea.aboutok{animation:aboutglow 1s ease}
       <span class="daynum">Нажмите на отрывок, чтобы открыть</span>
     </div>
     <div class="tgrid" id="testaments"></div>
-    <p class="hint">Прочитайте оба завета, чтобы зажечь общий огонёк и получить +10 XP бонуса.</p>
   </section>
 
   <section class="card" id="quizCard">
@@ -649,7 +648,6 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
     <span id="account" hidden><span id="accountPhone"></span> · <button class="linkbtn" id="logoutBtn" type="button">Выйти</button></span>
-    <span id="resetWrap"><button class="linkbtn" id="resetBtn" type="button">Начать план заново</button></span>
   </footer>
 </div>
 <div class="auth" id="auth" hidden>
@@ -862,7 +860,7 @@ function render(){
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
   $("heroFlame").classList.toggle("off",!both);
   const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
-  $("heroSub").textContent=both?"Оба завета прочитаны. Возвращайтесь завтра!":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":(st>0?"Прочитайте оба завета сегодня, чтобы не потерять серию.":"Прочитайте Новый и Ветхий Завет, чтобы зажечь огонёк.");
+  $("heroSub").textContent=both?"Оба завета прочитаны. Возвращайтесь завтра!":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
   $("freezeText").textContent="Заморозки: "+state.frz+" из 2"; $("bestChip").textContent="Рекорд: "+state.best;
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
@@ -1425,19 +1423,6 @@ $("celebClose").addEventListener("click",()=>{$("celebrate").hidden=true;setTime
 
 
 
-function showResetLink(){
-  const w=$("resetWrap");w.textContent="";
-  const b=el("button","linkbtn","Начать план заново");b.type="button";b.addEventListener("click",askReset);w.append(b);
-}
-function askReset(){
-  const w=$("resetWrap");w.textContent="";
-  const yes=el("button","danger","Да, начать заново");yes.type="button";
-  const no=el("button","linkbtn","Отмена");no.type="button";
-  yes.addEventListener("click",()=>{state=fresh();save();render();showResetLink();toast("План начат заново")});
-  no.addEventListener("click",showResetLink);
-  w.append(el("span",null,"Удалить весь прогресс? "),yes,no);
-}
-$("resetBtn").addEventListener("click",askReset);
 
 /* ---------- Алмазы: тест из 10 вопросов, вопросы не повторяются ---------- */
 const GEM_LADDER=[1,5,10,20], GEM_UNLOCK=10, GEM_N=10;
@@ -1594,7 +1579,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041004"></script>
+<script type="module" src="auth.js?v=202610041009"></script>
 
 </body>
 </html>
