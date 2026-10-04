@@ -500,11 +500,6 @@ textarea.aboutok{animation:aboutglow 1s ease}
 <div class="app" id="app">
   <header class="top">
     <div class="brand"><h1>Огонёк</h1></div>
-    <div class="lvl" title="Уровень и опыт">
-      <span class="lvl-badge" id="lvl">Ур. 1</span>
-      <span class="xpbar"><i id="xpbar" style="width:0%"></i></span>
-      <span class="xptext" id="xptext">0 XP</span>
-    </div>
     <a class="gemtop" id="gemTop" href="#gemsCard" title="Алмазы"><span class="gemicon" aria-hidden="true"></span><b id="gemTopN">0</b></a>
     <button class="loginTop" id="loginTop" type="button" hidden>Войти</button>
   </header>
@@ -516,7 +511,6 @@ textarea.aboutok{animation:aboutglow 1s ease}
         <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
       </svg>
       <div>
-        <span class="label">Общий огонёк</span>
         <div class="streakline"><span class="streak-num" id="streak">0</span><span class="streak-word" id="streakWord">дней подряд</span></div>
       </div>
       <details class="pacebar inhero" id="paceCard">
@@ -538,7 +532,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
     <div class="chips">
       <span class="chip ice">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v14M2 4.5l12 7M2 11.5l12-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
-        <span id="freezeText">Заморозки: 0 из 2</span>
+        <span id="freezeText">Заморозки: 0</span>
       </span>
       <span class="chip fire" id="bestChip">Рекорд: 0</span>
     </div>
@@ -630,7 +624,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
 
   <details class="card fold" id="howCard">
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
-    <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. За каждые 7 дней общего огонька вы получаете заморозку (до 2): если пропустите день, она сохранит серию. Опыт: 10 XP за каждый завет, 10 XP бонуса за оба, 5 XP за верный ответ на вопрос по тексту с первого раза.</p></div>
+    <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. Каждый день, прочитанный заранее (по обоим заветам), — это заморозка: если пропустите день, она сохранит серию. Прочитали на 1 день вперёд — 1 заморозка, на 3 дня — 3.</p></div>
   </details>
   </div>
 
@@ -791,12 +785,20 @@ function bothSet(){const a=datesOf("nt"),b=datesOf("ot");return new Set([...a].f
 function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));return s}
 function streakOf(set){let cur=today();if(!set.has(cur))cur=add(cur,-1);let n=0;while(set.has(cur)){n++;cur=add(cur,-1)}return n}
 const streak=k=>streakOf(withFrozen(k?datesOf(k):bothSet()));
+/* заморозки = на сколько дней вы впереди плана (по обоим заветам).
+   Пропущенный день сохраняет серию, если к концу этого дня оба завета были прочитаны по плану включительно. */
+const planIdx=d=>dayNo(d)-dayNo(PLAN_START);
+function readBy(k,d){return state[k].log.filter(x=>x.d<=d).length}
+function freezesNow(){const t=today(),tp=Math.max(0,todayP());
+  // сегодняшний отрывок считается «должным», только когда вы уже читали сегодня — так число не прыгает в течение дня
+  return Math.max(0,Math.min(...KEYS.map(k=>state[k].log.length-Math.min(DAYS,tp+(datesOf(k).has(t)?1:0)))))}
+function coveredDay(d){const due=Math.min(DAYS,planIdx(d)+1);return due>0&&KEYS.every(k=>readBy(k,d)>=due)}
 function applyFreezes(){
   const s=withFrozen(bothSet());if(!s.size)return 0;
   const last=[...s].sort().pop(), y=add(today(),-1);
   if(last>=y)return 0;
   const gap=[];let d=add(last,1);while(d<=y){gap.push(d);d=add(d,1)}
-  if(gap.length<=state.frz){state.frz-=gap.length;state.frzDays.push(...gap);save();return gap.length}
+  if(gap.every(coveredDay)){state.frzDays.push(...gap);save();return gap.length}
   return 0;
 }
 function level(xp){let k=1;while(xp>=50*k*(k+1))k++;const lo=50*(k-1)*k,hi=50*k*(k+1);return {k,pct:(xp-lo)/(hi-lo)*100}}
@@ -837,7 +839,7 @@ function renderTestament(k){
   const btn=el("button","tbtn");btn.type="button";
   if(np>=DAYS&&!doneToday){btn.textContent="Завет пройден!";btn.classList.add("done");btn.disabled=true}
   else if(doneToday&&!isAhead){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
-  else{btn.textContent="Прочитал(а)";btn.title="+"+XP_PART+" XP";confirmTap(btn,"Нажмите ещё раз",()=>complete(k))}
+  else{btn.textContent="Прочитал(а)";confirmTap(btn,"Нажмите ещё раз",()=>complete(k))}
   left.append(a,btn);
   if(lit){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>undoMark(k,viewP));left.append(u)}
   if(lit&&np<DAYS){
@@ -846,7 +848,7 @@ function renderTestament(k){
     a2.append(el("span","label","Следующий"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np)));
     const b2=el("button","tbtn nextmark");b2.type="button";
     b2.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true">'+FLAME+'</svg>';
-    b2.append(document.createTextNode("Прочитал(а)"));b2.title="+"+XP_PART+" XP";
+    b2.append(document.createTextNode("Прочитал(а)"));
     confirmTap(b2,"Нажмите ещё раз",()=>{ahead[k]=true;complete(k,np)});
     box.append(a2,b2);right.append(box);
   }else if(!lit&&np+1<DAYS){
@@ -860,12 +862,11 @@ function renderTestament(k){
 
 function render(){
   const t=today(), st=streak(), both=bothSet().has(t), lv=level(state.xp);
-  $("lvl").textContent="Ур. "+lv.k; $("xpbar").style.width=lv.pct.toFixed(1)+"%"; $("xptext").textContent=state.xp+" XP";
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
   $("heroFlame").classList.toggle("off",!both);
   const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
   $("heroSub").textContent=both?"Оба завета прочитаны. Возвращайтесь завтра!":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
-  $("freezeText").textContent="Заморозки: "+state.frz+" из 2"; $("bestChip").textContent="Рекорд: "+state.best;
+  const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию."; $("bestChip").textContent="Рекорд: "+state.best;
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
 
@@ -1136,19 +1137,21 @@ function renderPath(){
     gr.sort((a,b)=>(b.me?1:0)-(a.me?1:0)); // «Вы» first
     const [nx,by]=posXY(gr[0].pos), dir=nx>cx?-1:1; // stand next to the day node, toward the middle
     const space=dir>0?W-nx-34:nx-34, perRow=Math.max(1,Math.floor(space/36));
-    const open=pathOpen.has(key), maxShow=open?gr.length:Math.min(gr.length,perRow*2);
+    const open=pathOpen.has(key), maxShow=open?gr.length:Math.min(gr.length,perRow*2+1);
     const shown=gr.length>maxShow?maxShow-1:maxShow;
     const crowd=gr.length>1, rowH=crowd&&pathZoom<1.5?38:46;
-    for(let j=0;j<shown;j++){const r=Math.floor(j/perRow),c=j%perRow;drawPerson(gr[j],nx+dir*(34+c*36),by+r*rowH,j,crowd)}
+    // первый человек стоит прямо в кружке дня, остальные — рядом
+    drawPerson(gr[0],nx,by,0,crowd);
+    for(let j=1;j<shown;j++){const q=j-1,r=Math.floor(q/perRow),c=q%perRow;drawPerson(gr[j],nx+dir*(34+c*36),by+r*rowH,j,crowd)}
     if(shown<gr.length){ // too many on one day: a "+N" bubble opens the whole group
-      const j=shown,r=Math.floor(j/perRow),c=j%perRow,x=nx+dir*(34+c*36),y=by+r*rowH;
+      const q=shown-1,r=Math.floor(q/perRow),c=q%perRow,x=nx+dir*(34+c*36),y=by+r*rowH;
       const g=sv("g",{class:"pmore",tabindex:0,role:"button"});
       g.append(sv("circle",{cx:x,cy:y,r:16}));g.append(sv("text",{x,y:y+5,"text-anchor":"middle"},"+"+(gr.length-shown)));
       g.append(sv("title",{},gr.slice(shown).map(pp=>pp.name).join(", ")));
       const openIt=()=>{pathOpen.add(key);renderPath()};g.addEventListener("click",openIt);g.addEventListener("keydown",e=>{if(e.key==="Enter")openIt()});
       svg.append(g);
-    }else if(open&&gr.length>perRow*2){
-      const r=Math.ceil(gr.length/perRow),x=nx+dir*34,y=by+r*rowH-8;
+    }else if(open&&gr.length>perRow*2+1){
+      const r=Math.ceil((gr.length-1)/perRow),x=nx+dir*34,y=by+r*rowH-8;
       const t=sv("text",{x,y,"text-anchor":dir>0?"start":"end",class:"pless"},"свернуть");
       t.addEventListener("click",()=>{pathOpen.delete(key);renderPath()});svg.append(t);
     }
@@ -1386,12 +1389,11 @@ function complete(k,pp){
   const wasAhead=ahead[k]; ahead[k]=false;
   const t=today(), firstK=!datesOf(k).has(t), bothBefore=bothSet().has(t), awBefore=awards().filter(a=>a.ok).length;
   st.log.push({d:t,p}); st.read.push(p);
-  let gain=XP_PART, gotFreeze=false;
+  let gain=XP_PART; const frzBefore=freezesNow();
   const bothNow=!bothBefore&&bothSet().has(t);
   const common=streak();
   if(bothNow){
     gain+=XP_BOTH;
-    if(common>0&&common%7===0&&state.frz<2){state.frz++;gotFreeze=true}
     state.best=Math.max(state.best,common);
   }
   state.xp+=gain;
@@ -1403,16 +1405,16 @@ function complete(k,pp){
     ignite($("heroFlame"),2);
     $("celebNum").textContent=common;
     $("celebText").textContent="Общий огонёк: "+plural(common,"день","дня","дней")+" подряд!";
-    const lines=["Оба завета прочитаны","+"+gain+" XP"];if(gotFreeze)lines.push("Вы получили заморозку");if(newAw>0)lines.push("Новая награда!");
+    const lines=["Оба завета прочитаны"];if(freezesNow()>frzBefore)lines.push("Заморозок: "+freezesNow());if(newAw>0)lines.push("Новая награда!");
     $("celebSub").textContent=lines.join(" · ");
     $("toast").hidden=true;$("celebrate").hidden=false;$("celebClose").focus();
     const cf=document.querySelector("#celebrate .flame");cf.classList.remove("ignite");void cf.getBoundingClientRect();cf.classList.add("ignite");
     burst(window.innerWidth/2,window.innerHeight/2-60,90);
   }else if(firstK){
     const s=streak(k);
-    toast("+"+gain+" XP · "+T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
+    toast(T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }else{
-    toast("Огонёк зажжён: "+refStr(part(k,p))+" · +"+gain+" XP"+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
+    toast("Огонёк зажжён: "+refStr(part(k,p))+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }
   checkAwards();
 }
@@ -1598,7 +1600,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041021"></script>
+<script type="module" src="auth.js?v=202610041031"></script>
 
 </body>
 </html>

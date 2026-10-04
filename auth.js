@@ -405,7 +405,7 @@ async function main() {
     document.addEventListener("keydown", escClose);
 
     const head = el("div", "fhead"), ht = el("div");
-    ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", "Уровень " + (d.level || 1) + " · " + (d.xp || 0) + " XP"));
+    ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", (d.streak || 0) + " " + O().plural(d.streak || 0, "день подряд", "дня подряд", "дней подряд")));
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64), ht, x);
 
