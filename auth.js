@@ -678,7 +678,7 @@ async function main() {
     if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
     const who = el("div", "umwho", me ? myName() : "");
-    const about = el("button", "umitem", "Имя и о себе"); about.type = "button"; about.setAttribute("role", "menuitem");
+    const about = el("button", "umitem", "Профиль"); about.type = "button"; about.setAttribute("role", "menuitem");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
     const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
     out.addEventListener("click", () => {
