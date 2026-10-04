@@ -193,8 +193,9 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacebar>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;cursor:pointer;list-style:none}
 .pacebar>summary::-webkit-details-marker{display:none}
 .pacetitle{white-space:nowrap;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.pacetitle::after{content:" ▾";font-size:.7rem}
-.pacebar[open] .pacetitle::after{content:" ▴"}
+.pacetitle{display:inline-flex;align-items:center}
+.pacetitle::after{content:"";width:8px;height:8px;margin-left:9px;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:translateY(-3px) rotate(45deg);transition:transform .2s}
+.pacebar[open] .pacetitle::after{transform:translateY(2px) rotate(-135deg)}
 .pacepills{display:flex;gap:8px;flex-wrap:wrap}
 .pacepill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:.88rem;white-space:nowrap}
 .pacepill .pk{color:var(--muted);font-weight:600}
@@ -424,6 +425,8 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+@media (max-width:380px){.loginTop{padding:6px 10px}}
+@media (max-width:350px){.top .lvl{display:none}}
 .aboutrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .aboutsave{transition:background .2s,border-color .2s}
 .aboutsave.saved{background:var(--ok);border-color:var(--ok);color:#fff;animation:savedpop .35s ease}
@@ -1554,7 +1557,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040925"></script>
+<script type="module" src="auth.js?v=202610040941"></script>
 
 </body>
 </html>
