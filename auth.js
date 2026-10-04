@@ -63,15 +63,8 @@ async function main() {
     } finally { b.disabled = false; }
   });
   $("skipLogin").addEventListener("click", () => { lsSet(SKIP_KEY, "1"); $("auth").hidden = true; showLoginLink(); });
-  $("logoutBtn").addEventListener("click", async () => { O().setRemote(null); O().onSave = null; await A.signOut(auth); });
-
-  function showLoginLink() {
-    $("account").hidden = false; $("logoutBtn").hidden = true;
-    const t = $("accountPhone"); t.textContent = "";
-    const b = el("button", "linkbtn", "Войти через Google, чтобы видеть друзей"); b.type = "button";
-    b.addEventListener("click", () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; });
-    t.append(b);
-  }
+  // вход и выход — только кнопкой вверху (внизу страницы ничего не показываем)
+  function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
   let me = null, myRef = null, myCode = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [];
@@ -587,7 +580,7 @@ async function main() {
     if (!user) {
       closeUserMenu(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
-      $("friendsCard").hidden = true; $("inviteCard").hidden = true; $("logoutBtn").hidden = false;
+      $("friendsCard").hidden = true; $("inviteCard").hidden = true;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
       top.textContent = "Войти"; top.classList.remove("user"); topAction = () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; };
       if (lsGet(SKIP_KEY)) { $("auth").hidden = true; showLoginLink(); }
@@ -599,8 +592,7 @@ async function main() {
     top.title = "Вы вошли как " + (user.displayName || user.email || "");
     top.setAttribute("aria-haspopup", "menu"); top.setAttribute("aria-expanded", "false");
     topAction = () => toggleUserMenu();
-    $("auth").hidden = true; $("account").hidden = false; $("logoutBtn").hidden = false;
-    $("accountPhone").textContent = "Вы вошли: " + (user.displayName || user.email || "");
+    $("auth").hidden = true; $("account").hidden = true;
     $("storage").textContent = "Прогресс сохраняется в вашем аккаунте";
 
     // progress left on this device by another account is not mixed in
