@@ -216,6 +216,20 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacebar.inhero[open]{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px}
 .pacebar.inhero[open]>summary{flex-direction:row;align-items:center;justify-content:space-between}
 .pacebar.inhero[open] .pacepills{flex-direction:row}
+.pacechev{display:none}
+.pacebar.inhero[open] .pacetitle::after{display:none}
+.pacebar.inhero[open]>summary{flex-wrap:nowrap}
+.pacebar.inhero[open]>summary{gap:6px}
+.pacebar.inhero[open] .pacepills{margin-left:auto;flex-wrap:nowrap;gap:5px}
+.pacebar.inhero[open] .pacepill{font-size:.74rem;padding:3px 7px;gap:4px}
+.pacebar.inhero[open] .pacepill .pacekey{display:none}
+.pacebar.inhero[open] .pacepill:nth-child(1) .pk{color:var(--s-nt)}
+.pacebar.inhero[open] .pacepill:nth-child(2) .pk{color:var(--s-ot)}
+.pacebar.inhero[open] .pacetitle{font-size:.62rem;letter-spacing:.03em}
+.pacebar.inhero[open]>summary{flex-wrap:nowrap;min-width:0}
+@media (max-width:370px){.pacebar.inhero[open] .pacepill .pk{display:none}.pacebar.inhero[open] .pacepill:nth-child(1){border-color:var(--s-nt);border-width:1.5px}.pacebar.inhero[open] .pacepill:nth-child(2){border-color:var(--s-ot);border-width:1.5px}}
+.pacebar.inhero[open] .pacechev{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.pacebar.inhero[open] .pacechev::before{content:"";width:8px;height:8px;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:translateY(2px) rotate(-135deg)}
 .startlbl{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
 .startlbl input{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .pacetiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -521,6 +535,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
         <summary>
           <span class="pacetitle">Опережение</span>
           <span class="pacepills" id="paceTiles"></span>
+          <span class="pacechev" aria-hidden="true"></span>
         </summary>
         <div class="pacebody">
           <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
@@ -1584,7 +1599,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040946"></script>
+<script type="module" src="auth.js?v=202610040952"></script>
 
 </body>
 </html>
