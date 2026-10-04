@@ -482,6 +482,7 @@ async function main() {
       sheet.append(rm);
     }
     modal.append(sheet); document.body.append(modal); x.focus();
+    if (isMe) { const ta = sheet.querySelector("textarea"); if (ta) { ta.scrollIntoView({ block: "center" }); if (!ta.value) ta.focus(); } }
   }
 
   let friendsOpen = false;
@@ -506,6 +507,11 @@ async function main() {
     }
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
+    const mp = el("button", "btn myprof"); mp.type = "button";
+    mp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+    mp.append(document.createTextNode(myProfile && myProfile.about ? "Изменить «О себе»" : "Написать о себе"));
+    mp.addEventListener("click", () => openProfile("me"));
+    box.append(mp);
     const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
   }
 
@@ -519,12 +525,37 @@ async function main() {
     catch (e) { window.prompt("Скопируйте приглашение:", text); }
   });
 
+  /* ---------- меню пользователя в шапке: «О себе» и «Выйти» ---------- */
+  function closeUserMenu() { const m = document.querySelector(".usermenu"); if (m) m.remove(); top.setAttribute("aria-expanded", "false"); document.removeEventListener("click", outsideMenu, true); document.removeEventListener("keydown", escMenu); }
+  function outsideMenu(e) { const m = document.querySelector(".usermenu"); if (m && !m.contains(e.target) && e.target !== top) closeUserMenu(); }
+  function escMenu(e) { if (e.key === "Escape") { closeUserMenu(); top.focus(); } }
+  function toggleUserMenu() {
+    if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
+    const m = el("div", "usermenu"); m.setAttribute("role", "menu");
+    const who = el("div", "umwho", (me && (me.displayName || me.email)) || "");
+    const about = el("button", "umitem", "О себе"); about.type = "button"; about.setAttribute("role", "menuitem");
+    about.addEventListener("click", () => { closeUserMenu(); openProfile("me"); });
+    const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
+    out.addEventListener("click", () => {
+      if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
+      out.dataset.armed = "1"; out.textContent = "Нажмите ещё раз, чтобы выйти";
+      setTimeout(() => { delete out.dataset.armed; out.textContent = "Выйти"; }, 3000);
+    });
+    m.append(who, about, out);
+    const r = top.getBoundingClientRect();
+    m.style.top = (r.bottom + window.scrollY + 6) + "px";
+    m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + "px";
+    document.body.append(m); top.setAttribute("aria-expanded", "true"); about.focus();
+    setTimeout(() => { document.addEventListener("click", outsideMenu, true); document.addEventListener("keydown", escMenu); }, 0);
+  }
+
   /* ---------- session ---------- */
   A.onAuthStateChanged(auth, async (user) => {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {};
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (!user) {
+      closeUserMenu(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true; $("logoutBtn").hidden = false;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
@@ -535,12 +566,9 @@ async function main() {
     }
     me = user; lsSet(SKIP_KEY, null); O().setMyPhoto(user.photoURL);
     top.textContent = (user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
-    top.title = "Вы вошли как " + (user.displayName || user.email || "") + ". Нажмите, чтобы выйти.";
-    topAction = () => {
-      if (top.dataset.armed) { O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
-      top.dataset.armed = "1"; const t = top.textContent; top.textContent = "Выйти?";
-      setTimeout(() => { delete top.dataset.armed; if (me) top.textContent = t; }, 3000);
-    };
+    top.title = "Вы вошли как " + (user.displayName || user.email || "");
+    top.setAttribute("aria-haspopup", "menu"); top.setAttribute("aria-expanded", "false");
+    topAction = () => toggleUserMenu();
     $("auth").hidden = true; $("account").hidden = false; $("logoutBtn").hidden = false;
     $("accountPhone").textContent = "Вы вошли: " + (user.displayName || user.email || "");
     $("storage").textContent = "Прогресс сохраняется в вашем аккаунте";

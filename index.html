@@ -409,6 +409,15 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.loginTop.user::after{content:"";display:inline-block;width:6px;height:6px;margin-left:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-3px) rotate(45deg)}
+.usermenu{position:absolute;z-index:40;min-width:210px;max-width:calc(100vw - 16px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px color-mix(in srgb,var(--ink) 18%,transparent);padding:6px;display:flex;flex-direction:column;animation:qin .15s ease}
+.umwho{padding:8px 10px 6px;font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--line);margin-bottom:4px}
+.umitem{text-align:left;padding:11px 12px;border-radius:10px;background:transparent;color:var(--ink);font-weight:700;font-size:.95rem}
+.umitem:hover,.umitem:focus-visible{background:var(--bg)}
+.umitem.danger{color:#d64545}
+.myprof{width:100%;font-weight:700;gap:8px}
+.myprof svg{width:18px;height:18px}
+.fabouthint{font-size:.78rem;color:var(--link);font-weight:600}
 .bellbtn{align-self:flex-start;font-size:.85rem}
 @media (prefers-reduced-motion:reduce){.cheerin .flame{animation:none}}
 .gemicon{display:inline-block;width:18px;height:18px;flex:none;vertical-align:-3px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M8 4h16l6 8-14 17L2 12z' fill='%2337b6e8'/%3E%3Cpath d='M2 12h28L16 29z' fill='%231d8cc4'/%3E%3Cpath d='M8 4l3 8h10l3-8z' fill='%2387dcff'/%3E%3Cpath d='M11 12l5 17 5-17z' fill='%2359c8f2'/%3E%3C/svg%3E")}
@@ -525,13 +534,6 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <div class="quizgrid" id="quiz"></div>
   </section>
 
-  <section class="card gems" id="gemsCard">
-    <div class="reading-head">
-      <h2><span class="gemicon big" aria-hidden="true"></span>Алмазы</h2>
-      <span class="gemcount" id="gemCount">0</span>
-    </div>
-    <div id="gemsBody"></div>
-  </section>
 
 
   <section class="card" id="pathCard">
@@ -553,6 +555,14 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <span class="daynum">Кто где читает</span>
     </div>
     <div class="friends" id="friendsList"></div>
+  </section>
+
+  <section class="card gems" id="gemsCard">
+    <div class="reading-head">
+      <h2><span class="gemicon big" aria-hidden="true"></span>Алмазы</h2>
+      <span class="gemcount" id="gemCount">0</span>
+    </div>
+    <div id="gemsBody"></div>
   </section>
 
   <details class="card fold" id="schedule">
@@ -1524,7 +1534,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040852"></script>
+<script type="module" src="auth.js?v=202610040904"></script>
 
 </body>
 </html>
