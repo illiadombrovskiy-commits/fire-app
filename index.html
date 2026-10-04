@@ -34,6 +34,9 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--ink)}
+/* без увеличения экрана двойным нажатием (масштаб двумя пальцами работает) */
+html{touch-action:manipulation}
+button,a,summary,input,select,textarea,[role=button]{touch-action:manipulation}
 body{font-family:var(--body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:16px 48px}
 .app{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
@@ -224,6 +227,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacesub{font-size:.8rem;color:var(--muted)}
 .chartbox{position:relative;width:100%;min-width:0}
 .pacesvg{display:block;max-width:100%;touch-action:pan-y}
+#testaments,#testaments *{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .pacesvg .grid{stroke:var(--line);stroke-width:1}
 .pacesvg .zero{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
 .pacesvg .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
@@ -1539,6 +1543,21 @@ function finishGem(aborted){
 // тест, брошенный при закрытии страницы, считается прерванным
 if(state.gems.open){delete state.gems.open;state.gems.step=0;save()}
 
+/* в карточках заветов двойное нажатие не увеличивает экран:
+   нажатие на кнопку обрабатываем сами и отменяем стандартный жест браузера */
+(function(){
+  const box=$("testaments"); let sx=0, sy=0, moved=false, last=0;
+  box.addEventListener("touchstart",e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;moved=false},{passive:true});
+  box.addEventListener("touchmove",e=>{const t=e.touches[0];if(Math.abs(t.clientX-sx)>10||Math.abs(t.clientY-sy)>10)moved=true},{passive:true});
+  box.addEventListener("touchend",e=>{
+    const now=Date.now(), quick=now-last<400; last=now;
+    if(moved)return;
+    const b=e.target.closest("button");
+    if(b&&!b.disabled){e.preventDefault();b.click();return}   // кнопка: сразу нажимаем, без зума
+    if(quick&&!e.target.closest("a"))e.preventDefault();       // двойной тап по пустому месту — без зума
+  },{passive:false});
+  box.addEventListener("dblclick",e=>e.preventDefault());
+})();
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -1579,7 +1598,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041009"></script>
+<script type="module" src="auth.js?v=202610041017"></script>
 
 </body>
 </html>
