@@ -182,87 +182,113 @@ async function main() {
     const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
   }
-  /* ---------- воодушевление ---------- */
+  /* ---------- воодушевление и приглашение почитать вместе ---------- */
   const CHEERS = [
-    "Брат, зажги огонь!",
-    "Сестра, не хватает твоего огня!",
+    "Зажги свой огонёк — мы ждём тебя!",
+    "Не хватает твоего огня сегодня!",
     "Мой огонёк уже горит — зажги и свой!",
     "Духом пламенейте! Ждём тебя сегодня на чтении"
   ];
-  const SENT_KEY = "ogonek-cheers-sent";
-  const sentMap = () => { try { return JSON.parse(lsGet(SENT_KEY) || "{}"); } catch (e) { return {}; } };
-  const CHEER_LIMIT = 2; // в день можно воодушевить только двух друзей
-  // кого я воодушевил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
-  function cheeredToday() {
-    const t = O().today(), m = sentMap(), set = new Set(Object.keys(m).filter((k) => m[k] === t));
-    const c = myProfile && myProfile.cheer; if (c && c.d === t) (c.u || []).forEach((u) => set.add(u));
+  const INVITES = [
+    "Давай почитаем вместе — зажжём огонь сегодня!",
+    "Я начинаю читать. Присоединяйся!",
+    "Почитаем Библию вместе? Сегодняшний отрывок ждёт нас",
+    "15 минут со Словом — давай прямо сейчас, вместе"
+  ];
+  const KIND = {
+    cheer: { list: CHEERS, limit: 2, key: "ogonek-cheers-sent", field: "cheer", title: "Воодушевить", verb: "воодушевляет вас",
+      done: "Вы воодушевили сегодня ✓", full: "Сегодня вы уже воодушевили двух друзей", btn: "Воодушевить",
+      rule: (left) => "Воодушевить можно только двух друзей в день. " + (left === 2 ? "Сегодня осталось: 2." : "Сегодня остался ещё один."),
+      sent: "Отправлено! Пусть огонёк разгорится", again: "Сегодня вы уже воодушевляли этого друга" },
+    invite: { list: INVITES, limit: 1, key: "ogonek-invite-sent", field: "invite", title: "Почитать вместе", verb: "зовёт почитать вместе",
+      done: "Приглашение отправлено ✓", full: "Сегодня вы уже позвали друга", btn: "Позвать читать вместе",
+      rule: () => "Позвать почитать вместе можно только одного друга в день — до того, как вы начнёте читать.",
+      sent: "Приглашение отправлено! Начинайте читать", again: "Сегодня вы уже звали этого друга" }
+  };
+  const kindOf = (c) => (c && c.kind === "invite" ? "invite" : "cheer");
+  const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
+  // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
+  function sentTodaySet(kind) {
+    const t = O().today(), m = sentMap(kind), set = new Set(Object.keys(m).filter((k) => m[k] === t));
+    const c = myProfile && myProfile[KIND[kind].field]; if (c && c.d === t) (c.u || []).forEach((u) => set.add(u));
     return set;
   }
-  const sentToday = (uid) => cheeredToday().has(uid);
-  const cheersLeft = () => Math.max(0, CHEER_LIMIT - cheeredToday().size);
-  function markSent(uid) {
-    const m = sentMap(), t = O().today(); Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(SENT_KEY, JSON.stringify(m));
-    const u = [...cheeredToday()];
-    myProfile = Object.assign({}, myProfile, { cheer: { d: t, u } });
-    F.setDoc(myRef, { cheer: { d: t, u } }, { merge: true }).catch((e) => console.warn(e));
+  const sentToday = (uid, kind) => sentTodaySet(kind).has(uid);
+  const left = (kind) => Math.max(0, KIND[kind].limit - sentTodaySet(kind).size);
+  function markSent(uid, kind) {
+    const K = KIND[kind], m = sentMap(kind), t = O().today();
+    Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(K.key, JSON.stringify(m));
+    const u = [...sentTodaySet(kind)], patch = {}; patch[K.field] = { d: t, u };
+    myProfile = Object.assign({}, myProfile, patch);
+    F.setDoc(myRef, patch, { merge: true }).catch((e) => console.warn(e));
   }
   const litToday = (d) => d && d.ntLast === O().today() && d.otLast === O().today();
-  // воодушевлять можно, когда мой огонёк сегодня горит, а у друга ещё нет
+  const readAnyToday = (d) => d && (d.ntLast === O().today() || d.otLast === O().today());
+  // воодушевлять: мой огонёк сегодня горит, а у друга ещё нет
   const canCheer = (d) => litToday(O().summary()) && !litToday(d);
+  // звать почитать вместе: я сегодня ещё не начинал читать, и друг тоже
+  const canInvite = (d) => !readAnyToday(O().summary()) && !readAnyToday(d);
 
-  function cheerButton(uid, d) {
-    const b = el("button", "cheerbtn"); b.type = "button";
-    const sent = sentToday(uid), full = !sent && cheersLeft() === 0;
-    b.append(flameSvg(true), document.createTextNode(sent ? "Вы воодушевили сегодня ✓" : full ? "Сегодня вы уже воодушевили двух друзей" : "Воодушевить"));
+  function actionButton(uid, d, kind) {
+    const K = KIND[kind], b = el("button", "cheerbtn" + (kind === "invite" ? " invitebtn" : "")); b.type = "button";
+    const sent = sentToday(uid, kind), full = !sent && left(kind) === 0;
+    b.append(kind === "invite" ? bookSvg() : flameSvg(true), document.createTextNode(sent ? K.done : full ? K.full : K.btn));
     b.disabled = sent || full;
-    b.addEventListener("click", (e) => { e.stopPropagation(); openCheerPicker(uid, d); });
+    b.addEventListener("click", (e) => { e.stopPropagation(); openPicker(uid, d, kind); });
     b.addEventListener("keydown", (e) => e.stopPropagation());
     return b;
   }
+  function friendAction(uid, d) {
+    if (canCheer(d)) return actionButton(uid, d, "cheer");
+    if (canInvite(d)) return actionButton(uid, d, "invite");
+    return null;
+  }
+  function bookSvg() {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+    s.innerHTML = '<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
+    return s;
+  }
 
-  function openCheerPicker(uid, d) {
+  function openPicker(uid, d, kind) {
+    const K = KIND[kind];
+    if (!sentToday(uid, kind) && left(kind) === 0) { O().toast(K.full); return; }
     closeProfile();
     const modal = el("div", "fmodal"), sheet = el("div", "fsheet");
     sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
     modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
     document.addEventListener("keydown", escClose);
     const head = el("div", "fhead"), ht = el("div");
-    if (!sentToday(uid) && cheersLeft() === 0) { O().toast("Воодушевить можно только двух друзей в день"); return; }
-    const left = cheersLeft();
-    ht.append(el("h2", null, "Воодушевить"), el("div", "hint", (d.name || "Друг") + " получит уведомление"));
+    ht.append(el("h2", null, K.title), el("div", "hint", (d.name || "Друг") + " получит уведомление"));
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64), ht, x);
     const list = el("div", "cheerlist");
-    CHEERS.forEach((txt, i) => {
+    K.list.forEach((txt, i) => {
       const o = el("button", "cheeropt", txt); o.type = "button";
       o.addEventListener("click", async () => {
         list.querySelectorAll("button").forEach((b) => { b.disabled = true; });
-        const ok = await sendCheer(uid, i);
+        const ok = await sendMsg(uid, i, kind);
         closeProfile();
         if (ok) { renderFriends(); try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {} }
       });
       list.append(o);
     });
-    const note = el("p", "hint", "Воодушевить можно только двух друзей в день. " + (left === 2 ? "Сегодня осталось: 2." : "Сегодня остался ещё один."));
-    note.style.margin = "0";
+    const note = el("p", "hint", K.rule(left(kind))); note.style.margin = "0";
     sheet.append(head, note, el("span", "label", "Выберите слова"), list);
     modal.append(sheet); document.body.append(modal); list.querySelector("button").focus();
   }
 
-  async function sendCheer(uid, i) {
-    const day = O().today();
+  async function sendMsg(uid, i, kind) {
+    const K = KIND[kind], day = O().today();
+    const data = { from: me.uid, name: String(me.displayName || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp() };
+    if (kind === "invite") data.kind = "invite";
     try {
-      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day), {
-        from: me.uid, name: String(me.displayName || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp()
-      });
-      markSent(uid);
-      O().toast("Отправлено! Пусть огонёк разгорится");
-      return true;
+      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + (kind === "invite" ? "_inv" : "")), data);
+      markSent(uid, kind); O().toast(K.sent); return true;
     } catch (e) {
       console.warn(e);
-      if (e && e.code === "permission-denied") { markSent(uid); O().toast("Сегодня вы уже воодушевляли этого друга"); return true; }
-      O().toast("Не удалось отправить. Проверьте интернет.");
-      return false;
+      if (e && e.code === "permission-denied") { markSent(uid, kind); O().toast(K.again); return true; }
+      O().toast("Не удалось отправить. Проверьте интернет."); return false;
     }
   }
 
@@ -284,11 +310,12 @@ async function main() {
       showNextCheer();
     }, (e) => console.warn(e));
   }
+  const msgText = (c) => { const L = KIND[kindOf(c)].list; return L[c.msg] || L[0]; };
 
   function systemNotify(c) {
     if (!("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
-    const title = (c.name || "Друг") + " воодушевляет вас";
-    const opts = { body: CHEERS[c.msg] || CHEERS[0], icon: "icon-192.png", tag: "cheer-" + c.id, lang: "ru" };
+    const title = (c.name || "Друг") + " " + KIND[kindOf(c)].verb;
+    const opts = { body: msgText(c), icon: "icon-192.png", tag: "cheer-" + c.id, lang: "ru" };
     if (navigator.serviceWorker && navigator.serviceWorker.ready) {
       navigator.serviceWorker.ready.then((r) => r.showNotification(title, opts)).catch(() => { try { new Notification(title, opts); } catch (e) {} });
     } else { try { new Notification(title, opts); } catch (e) {} }
@@ -298,14 +325,15 @@ async function main() {
     if (cheerShown || !cheerQueue.length) return;
     if (document.querySelector(".fmodal")) { setTimeout(showNextCheer, 1500); return; }
     const c = cheerQueue.shift(); cheerShown = c;
+    const inv = kindOf(c) === "invite";
     const modal = el("div", "fmodal"), sheet = el("div", "fsheet cheerin");
     sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
-    const from = el("div", "from"); from.append(avatarEl(c.name, c.photo, 36), el("span", null, (c.name || "Друг") + " воодушевляет вас"));
+    const from = el("div", "from"); from.append(avatarEl(c.name, c.photo, 36), el("span", null, (c.name || "Друг") + " " + KIND[kindOf(c)].verb));
     const fl = flameSvg(true);
-    const q = el("blockquote", null, "«" + (CHEERS[c.msg] || CHEERS[0]) + "»");
+    const q = el("blockquote", null, "«" + msgText(c) + "»");
     const acts = el("div", "acts");
     const lit = litToday(O().summary());
-    const go = el("button", "btn-main", lit ? "Спасибо!" : "Зажечь огонёк"); go.type = "button";
+    const go = el("button", "btn-main", lit ? "Спасибо!" : inv ? "Читать вместе" : "Зажечь огонёк"); go.type = "button";
     acts.append(go);
     const done = () => {
       modal.remove(); document.removeEventListener("keydown", esc);
@@ -323,7 +351,7 @@ async function main() {
 
   function bellButton() {
     if (!("Notification" in window) || Notification.permission !== "default") return null;
-    const b = el("button", "linkbtn bellbtn", "Включить уведомления, чтобы видеть, когда вас воодушевляют");
+    const b = el("button", "linkbtn bellbtn", "Включить уведомления, чтобы видеть, когда вас воодушевляют или зовут читать");
     b.type = "button";
     b.addEventListener("click", async () => {
       try { await Notification.requestPermission(); } catch (e) {}
@@ -353,7 +381,7 @@ async function main() {
     const lit = d.ntLast === t && d.otLast === t;
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
     row.append(av, mid, right);
-    if (!isMe && canCheer(d)) row.append(cheerButton(uid, d));
+    const act = !isMe && friendAction(uid, d); if (act) row.append(act);
     row.tabIndex = 0; row.setAttribute("role", "button");
     row.title = isMe ? "Мой профиль" : "Открыть профиль";
     row.addEventListener("click", () => openProfile(isMe ? "me" : uid));
@@ -420,7 +448,8 @@ async function main() {
     badges.append(bw);
 
     sheet.append(head, stats, reading);
-    if (!isMe && canCheer(d)) sheet.append(cheerButton(id, d));
+    const act = !isMe && friendAction(id, d);
+    if (act) sheet.append(act);
     else if (!isMe && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
     sheet.append(aboutBox, badges);
 

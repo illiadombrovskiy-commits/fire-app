@@ -395,6 +395,8 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .btn-xp{background:var(--xp);color:#fff;border-color:var(--xp)}
 .cheerbtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:12px;font-weight:700;font-size:.9rem;background:var(--flame-soft);color:var(--ink);border:1.5px solid var(--flame)}
 .cheerbtn svg{width:16px;height:20px}
+.invitebtn{background:var(--xp-soft);border-color:var(--xp);color:var(--ink)}
+.invitebtn svg{width:18px;height:18px;color:var(--xp)}
 .cheerbtn:disabled{opacity:.65;cursor:default;background:transparent;border-style:dashed}
 .cheerlist{display:flex;flex-direction:column;gap:8px}
 .cheeropt{text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:1rem;line-height:1.3}
@@ -531,13 +533,6 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <div id="gemsBody"></div>
   </section>
 
-  <section class="card" id="friendsCard" hidden>
-    <div class="reading-head">
-      <h2>Друзья</h2>
-      <span class="daynum">Кто где читает</span>
-    </div>
-    <div class="friends" id="friendsList"></div>
-  </section>
 
   <section class="card" id="pathCard">
     <div class="reading-head">
@@ -550,6 +545,14 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
       <button class="btn pzbtn" id="pzIn" type="button" aria-label="Приблизить">+</button>
     </div>
     <div class="pathbox" id="pathBox"><div id="path"></div></div>
+  </section>
+
+  <section class="card" id="friendsCard" hidden>
+    <div class="reading-head">
+      <h2>Друзья</h2>
+      <span class="daynum">Кто где читает</span>
+    </div>
+    <div class="friends" id="friendsList"></div>
   </section>
 
   <details class="card fold" id="schedule">
@@ -1521,7 +1524,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610032340"></script>
+<script type="module" src="auth.js?v=202610040852"></script>
 
 </body>
 </html>
