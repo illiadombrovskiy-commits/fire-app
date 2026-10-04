@@ -70,6 +70,7 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid va
 .chip.ice{background:var(--ice-soft);color:var(--ice)}
 .chip.fire{background:var(--flame-soft);color:var(--flame)}
 .chip svg{width:14px;height:14px}
+.chip svg.snow{width:16px;height:16px}
 
 /* reading */
 .reading-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -427,6 +428,9 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.frzhint{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;font-size:.74rem;font-weight:600;color:var(--ice);text-align:center;line-height:1.25}
+.frzhint svg{width:15px;height:15px;flex:none}
+#freezeChip{border:0;cursor:pointer;font:inherit;font-size:.82rem;font-weight:600}
 #copyInvite{transition:background .2s,border-color .2s,color .2s}
 #copyInvite.copied{background:var(--ok);border-color:var(--ok);color:#fff;animation:savedpop .35s ease}
 @media (max-width:380px){.loginTop{padding:6px 10px}}
@@ -530,10 +534,10 @@ textarea.aboutok{animation:aboutglow 1s ease}
     </div>
     <div class="hero-sub" id="heroSub"></div>
     <div class="chips">
-      <span class="chip ice">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v14M2 4.5l12 7M2 11.5l12-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+      <button class="chip ice" id="freezeChip" type="button">
+        <svg class="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></g></svg>
         <span id="freezeText">Заморозки: 0</span>
-      </span>
+      </button>
       <span class="chip fire" id="bestChip">Рекорд: 0</span>
     </div>
   </section>
@@ -850,7 +854,8 @@ function renderTestament(k){
     b2.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true">'+FLAME+'</svg>';
     b2.append(document.createTextNode("Прочитал(а)"));
     confirmTap(b2,"Нажмите ещё раз",()=>{ahead[k]=true;complete(k,np)});
-    box.append(a2,b2);right.append(box);
+    const fh=el("span","frzhint");fh.innerHTML='<svg class="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></g></svg>';fh.append(document.createTextNode("+1 заморозка"));fh.title="Прочитайте отрывки следующего дня в обоих заветах — получите заморозку";
+    box.append(a2,b2,fh);right.append(box);
   }else if(!lit&&np+1<DAYS){
     const nx=part(k,np+1), a3=el("a","nextlink later");a3.href=chapterUrl(nx);a3.target="_blank";a3.rel="noopener";
     a3.append(el("span","label","Потом"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np+1)));
@@ -1219,7 +1224,7 @@ let toastT;
 function toast(msg,action){
   const t=$("toast");t.textContent="";t.append(el("span",null,msg));
   if(action){const b=el("button","toastbtn",action.label);b.type="button";b.addEventListener("click",()=>{t.hidden=true;action.fn()});t.append(b)}
-  t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,action?6000:3500);
+  t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,Math.max(action?6000:3500,msg.length*55));
 }
 /* two taps to confirm: first tap arms the button, second tap within 4 s confirms */
 function confirmTap(btn,armedText,fn){
@@ -1560,6 +1565,7 @@ if(state.gems.open){delete state.gems.open;state.gems.step=0;save()}
   },{passive:false});
   box.addEventListener("dblclick",e=>e.preventDefault());
 })();
+$("freezeChip").addEventListener("click",()=>toast("Заморозка — это день, прочитанный заранее. Прочитайте отрывки следующего дня в обоих заветах — и получите заморозку. Если пропустите день, она сохранит серию."));
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -1600,7 +1606,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041031"></script>
+<script type="module" src="auth.js?v=202610041038"></script>
 
 </body>
 </html>
