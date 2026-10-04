@@ -200,6 +200,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacepill .pk{color:var(--muted);font-weight:600}
 .pacepill b{font-variant-numeric:tabular-nums;color:var(--ink)}
 .pacebody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.pacebar.inhero{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 12px;margin-bottom:2px}
 .startlbl{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
 .startlbl input{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .pacetiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -480,22 +481,21 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
     <button class="loginTop" id="loginTop" type="button" hidden>Войти</button>
   </header>
 
-  <details class="pacebar" id="paceCard">
-    <summary>
-      <span class="pacetitle">Опережение</span>
-      <span class="pacepills" id="paceTiles"></span>
-    </summary>
-    <div class="pacebody">
-      <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
-      <div class="legend" id="paceLegend"></div>
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <span class="startlbl">План начался 27 сентября</span>
-      </div>
-      <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
-    </div>
-  </details>
-
   <section class="card">
+    <details class="pacebar inhero" id="paceCard">
+      <summary>
+        <span class="pacetitle">Опережение</span>
+        <span class="pacepills" id="paceTiles"></span>
+      </summary>
+      <div class="pacebody">
+        <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
+        <div class="legend" id="paceLegend"></div>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <span class="startlbl">План начался 27 сентября</span>
+        </div>
+        <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
+      </div>
+    </details>
     <div class="hero">
       <svg class="flame" id="heroFlame" viewBox="0 0 64 80" aria-hidden="true">
         <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
@@ -1534,7 +1534,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040904"></script>
+<script type="module" src="auth.js?v=202610040907"></script>
 
 </body>
 </html>
