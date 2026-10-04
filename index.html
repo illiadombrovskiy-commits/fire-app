@@ -435,6 +435,13 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.howto{font-size:.9rem;color:var(--muted);gap:8px}
+.howto p{margin:0}
+.howto b{color:var(--ink)}
+.howto .howhead{font-weight:800;color:var(--ink);margin-top:2px}
+.howto .hownote{padding:8px 10px;border-radius:10px;background:var(--ice-soft);color:var(--ink)}
+.howto ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+#heroSub:empty{display:none}
 .frzfly{position:fixed;z-index:60;width:44px;height:44px;pointer-events:none;color:var(--ice);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--ice) 70%,transparent))}
 .frzfly svg{width:44px;height:44px}
 #freezeChip.frzpop{animation:frzpop .6s ease}
@@ -550,7 +557,6 @@ textarea.aboutok{animation:aboutglow 1s ease}
         <svg class="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></g></svg>
         <span id="freezeText">Заморозки: 0</span>
       </button>
-      <span class="chip fire" id="bestChip">Рекорд: 0</span>
     </div>
   </section>
 
@@ -640,7 +646,17 @@ textarea.aboutok{animation:aboutglow 1s ease}
 
   <details class="card fold" id="howCard">
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
-    <div class="foldbody"><p class="muted" style="margin:0;font-size:.92rem">План «15 минут в день» по Восстановительному переводу с примечаниями: 52 недели, каждый день отрывок из Нового и из Ветхого Завета. У каждого завета свой огонёк, а когда прочитаны оба, загорается общий. Каждый день, прочитанный заранее (по обоим заветам), — это заморозка: если пропустите день, она сохранит серию. Прочитали на 1 день вперёд — 1 заморозка, на 3 дня — 3.</p></div>
+    <div class="foldbody howto">
+      <p>Каждый день — отрывок из Нового и из Ветхого Завета. Прочитали оба — загорается огонёк, и серия дней растёт.</p>
+      <p class="howhead">Как получить заморозку</p>
+      <ol>
+        <li>Прочитайте сегодняшние отрывки.</li>
+        <li>Прочитайте заранее и <b>следующий день</b> — в Новом <b>и</b> в Ветхом Завете (кнопка «Прочитал(а)» под «Следующий»).</li>
+        <li>Готово: <b>+1 заморозка</b>. На сколько дней вперёд прочитали — столько и заморозок.</li>
+      </ol>
+      <p class="hownote">Заморозки бывают, только когда вы <b>впереди графика</b>. Если отстаёте — сначала догоните план, и только после этого чтение заранее даст заморозку.</p>
+      <p>Пропустили день — заморозка сохранит серию.</p>
+    </div>
   </details>
   </div>
 
@@ -884,8 +900,8 @@ function render(){
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
   $("heroFlame").classList.toggle("off",!both);
   const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
-  $("heroSub").textContent=both?"Оба завета прочитаны.":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
-  const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию."; $("bestChip").textContent="Рекорд: "+state.best;
+  $("heroSub").textContent=both?"":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
+  const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
 
@@ -1639,7 +1655,7 @@ if(state.gems.open){delete state.gems.open;state.gems.step=0;save()}
   },{passive:false});
   box.addEventListener("dblclick",e=>e.preventDefault());
 })();
-$("freezeChip").addEventListener("click",()=>toast("Заморозка — это день, прочитанный заранее. Прочитайте отрывки следующего дня в обоих заветах — и получите заморозку. Если пропустите день, она сохранит серию."));
+$("freezeChip").addEventListener("click",()=>toast("Заморозка — это день, прочитанный заранее, впереди графика. Прочитайте следующий день в обоих заветах — получите заморозку. Если отстаёте от плана, сначала догоните его. Пропустите день — заморозка сохранит серию."));
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -1680,7 +1696,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041109"></script>
+<script type="module" src="auth.js?v=202610041217"></script>
 
 </body>
 </html>
