@@ -49,12 +49,11 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
     }
 
-    // профиль: читают сам человек, его друзья и подписчики
+    // профиль: любой вошедший пользователь может посмотреть (чтобы решить, добавлять ли в друзья)
     match /profiles/{uid} {
-      allow read: if request.auth != null
-        && (request.auth.uid == uid
-            || request.auth.uid in resource.data.get('friends', [])
-            || request.auth.uid in resource.data.get('followers', []));
+      allow get: if request.auth != null;
+      // список всех профилей получить нельзя — только конкретный по ID
+      allow list: if false;
       // владелец меняет свой профиль как угодно
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.get('about', '').size() <= 300;

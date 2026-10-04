@@ -141,7 +141,9 @@ async function main() {
       const fuid = await findFriendUid(raw);
       if (fuid === undefined) { O().toast("Введите код из 6 знаков, почту Google или ID друга"); return; }
       if (!fuid) { O().toast(raw.includes("@") ? "Человек с такой почтой ещё не входил в Огонёк" : "Код не найден. Проверьте его ещё раз."); return; }
-      if (await addFriendUid(fuid)) $("friendCode").value = "";
+      if (fuid === me.uid) { O().toast("Это вы сами"); return; }
+      $("friendCode").value = "";
+      openProfile(fuid); // сначала профиль — решите, добавлять ли
     } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
   }
 
@@ -439,8 +441,11 @@ async function main() {
   async function openProfile(id, edit) {
     if (!me) return;
     const isMe = id === "me" || id === me.uid;
-    const d = isMe ? Object.assign(O().summary(), { name: myName(), photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
-    if (!d) { O().toast("Профиль друга ещё загружается"); return; }
+    let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
+    if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
+      try { const sn = await F.getDoc(F.doc(db, "profiles", id)); d = sn.exists() ? sn.data() : null; } catch (e) { console.warn(e); }
+      if (!d) { O().toast("Не удалось открыть профиль. Возможно, человек ещё не обновил Огонёк."); return; }
+    }
     closeProfile();
     const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
     sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
@@ -512,7 +517,7 @@ async function main() {
     sheet.append(head, stats, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
-    else if (!isMe && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
+    else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
     sheet.append(aboutBox, badges);
 
     if (!isMe) {
@@ -528,6 +533,8 @@ async function main() {
         const known = (d.fof && d.fof[u]) || {}, mine = friendData[u] || {};
         const nm = c.name || known.n || mine.name || "", ph = c.photo || known.p || mine.photo || "";
         row.append(avatarEl(nm, ph, 34), el("span", null, nm || "Читатель"));
+        row.style.cursor = "pointer"; row.title = "Открыть профиль";
+        row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
         if (!nm) { const h = el("small", "hint", "имя появится, когда он откроет Огонёк"); h.style.margin = "0"; row.querySelector("span").append(document.createElement("br"), h); }
         if (myFriends.includes(u) || myFollowing.includes(u)) { const b = el("span", "hint", myFriends.includes(u) ? "Уже друзья" : "Заявка отправлена"); b.style.flex = "none"; row.append(b); }
         else {
@@ -536,7 +543,17 @@ async function main() {
           row.append(b);
         }
       });
-      const isFriend = myFriends.includes(id), lbl = isFriend ? "Удалить из друзей" : "Отменить заявку и отписаться";
+      const isFriend = myFriends.includes(id), isFollowing = myFollowing.includes(id), asksMe = myFollowers.includes(id);
+      if (!isFriend && !isFollowing) {
+        // ещё не подписан: можно отправить заявку или принять входящую
+        const box = el("div", "frel");
+        box.append(el("p", "hint", asksMe ? "Этот человек хочет стать вашим другом." : "Хотите читать вместе? Отправьте заявку — когда её примут, вы станете друзьями."));
+        const go = el("button", "btn-main", asksMe ? "Принять заявку" : "Добавить в друзья"); go.type = "button";
+        go.addEventListener("click", async () => { go.disabled = true; if (asksMe) await acceptRequest(id); else await addFriendUid(id); closeProfile(); });
+        box.append(go); sheet.insertBefore(box, sheet.children[1]);
+        modal.append(sheet); document.body.append(modal); x.focus(); return;
+      }
+      const lbl = isFriend ? "Удалить из друзей" : "Отменить заявку и отписаться";
       if (!isFriend) { const h = el("p", "hint", "Заявка в друзья отправлена. Пока друг её не примет, вы подписаны на него."); h.style.margin = "0"; sheet.insertBefore(h, sheet.children[1]); }
       const rm = el("button", "linkbtn", lbl); rm.type = "button"; rm.style.alignSelf = "center";
       rm.addEventListener("click", () => {
@@ -561,6 +578,8 @@ async function main() {
       reqs.forEach((u) => {
         const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
         row.append(av, nm);
+        row.style.cursor = "pointer"; row.title = "Открыть профиль";
+        row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
         cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
         const ok = el("button", "btn btn-xp", "Принять"); ok.type = "button";
         ok.addEventListener("click", () => { ok.disabled = true; acceptRequest(u); });
@@ -607,6 +626,8 @@ async function main() {
     fols.forEach((u) => {
       const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
       row.append(av, nm);
+      row.style.cursor = "pointer"; row.title = "Открыть профиль";
+      row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
       cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
       const ok = el("button", "btn btn-xp", "Добавить в друзья"); ok.type = "button";
       ok.addEventListener("click", () => { ok.disabled = true; ok.textContent = "…"; acceptRequest(u); });
