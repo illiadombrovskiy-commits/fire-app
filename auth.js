@@ -534,7 +534,7 @@ async function main() {
     if (isMe && edit) { const ta = sheet.querySelector("textarea"); if (ta) { ta.scrollIntoView({ block: "center" }); if (!ta.value) ta.focus(); } }
   }
 
-  let friendsOpen = false;
+  let friendsOpen = false, followersOpen = false;
   function renderFriends() {
     if (!me) return;
     $("myCode").textContent = myCode || "…";
@@ -581,8 +581,23 @@ async function main() {
       });
       box.append(sb);
     }
-    const nf = myFollowers.filter((u) => !myFriends.includes(u)).length;
-    if (nf && !reqs.length) box.append(el("p", "hint", "Подписчиков (не друзей): " + nf));
+    // вкладка «Подписчики»: кто подписан на меня, но не друг — можно передумать и добавить в друзья
+    const fols = myFollowers.filter((u) => !myFriends.includes(u) && !reqs.includes(u)); // новые заявки показаны выше
+    const fd = document.createElement("details"); fd.className = "fold folsbox"; fd.open = followersOpen;
+    fd.addEventListener("toggle", () => { followersOpen = fd.open; });
+    const sm = document.createElement("summary"); sm.className = "foldhead";
+    sm.append(el("span", "label", "Подписчики · " + fols.length), el("span", "chev")); sm.querySelector(".chev").setAttribute("aria-hidden", "true");
+    const fb = el("div", "fsubs");
+    if (!fols.length) fb.append(el("p", "hint", "Пока нет подписчиков. Подписчик — тот, кто отправил вам заявку, а вы её не приняли."));
+    fols.forEach((u) => {
+      const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
+      row.append(av, nm);
+      cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
+      const ok = el("button", "btn btn-xp", "Добавить в друзья"); ok.type = "button";
+      ok.addEventListener("click", () => { ok.disabled = true; ok.textContent = "…"; acceptRequest(u); });
+      const bt = el("div", "fbtns"); bt.append(ok); row.append(bt); fb.append(row);
+    });
+    fd.append(sm, fb); box.append(fd);
     // на тропинке — только друзья
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
