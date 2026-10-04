@@ -200,7 +200,21 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacepill .pk{color:var(--muted);font-weight:600}
 .pacepill b{font-variant-numeric:tabular-nums;color:var(--ink)}
 .pacebody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-.pacebar.inhero{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 12px;margin-bottom:2px}
+.hero.withpace{grid-template-columns:auto 1fr auto;gap:12px}
+.hero.withpace .flame{width:56px;height:70px}
+.hero.withpace .streak-num{font-size:2.2rem}
+.hero.withpace .label{white-space:nowrap;font-size:.68rem}
+.hero.withpace .streak-word{font-size:.88rem;white-space:nowrap}
+.streakline{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.hero.withpace + .hero-sub{font-size:.85rem;margin-top:-4px}
+.pacebar.inhero{background:none;border:0;border-radius:0;padding:0;align-self:center;min-width:0}
+.pacebar.inhero>summary{flex-direction:column;align-items:stretch;gap:6px;flex-wrap:nowrap}
+.pacebar.inhero .pacetitle{font-size:.68rem;text-align:right}
+.pacebar.inhero .pacepills{flex-direction:column;gap:6px;flex-wrap:nowrap}
+.pacebar.inhero .pacepill{font-size:.82rem;padding:3px 8px}
+.pacebar.inhero[open]{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px}
+.pacebar.inhero[open]>summary{flex-direction:row;align-items:center;justify-content:space-between}
+.pacebar.inhero[open] .pacepills{flex-direction:row}
 .startlbl{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
 .startlbl input{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .pacetiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -410,6 +424,13 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.aboutrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.aboutsave{transition:background .2s,border-color .2s}
+.aboutsave.saved{background:var(--ok);border-color:var(--ok);color:#fff;animation:savedpop .35s ease}
+@keyframes savedpop{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+textarea.aboutok{animation:aboutglow 1s ease}
+@keyframes aboutglow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
+@media (prefers-reduced-motion:reduce){.aboutsave.saved,textarea.aboutok{animation:none}}
 .loginTop.user::after{content:"";display:inline-block;width:6px;height:6px;margin-left:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-3px) rotate(45deg)}
 .usermenu{position:absolute;z-index:40;min-width:210px;max-width:calc(100vw - 16px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px color-mix(in srgb,var(--ink) 18%,transparent);padding:6px;display:flex;flex-direction:column;animation:qin .15s ease}
 .umwho{padding:8px 10px 6px;font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--line);margin-bottom:4px}
@@ -482,32 +503,31 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
   </header>
 
   <section class="card">
-    <details class="pacebar inhero" id="paceCard">
-      <summary>
-        <span class="pacetitle">Опережение</span>
-        <span class="pacepills" id="paceTiles"></span>
-      </summary>
-      <div class="pacebody">
-        <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
-        <div class="legend" id="paceLegend"></div>
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <span class="startlbl">План начался 27 сентября</span>
-        </div>
-        <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
-      </div>
-    </details>
-    <div class="hero">
+    <div class="hero withpace">
       <svg class="flame" id="heroFlame" viewBox="0 0 64 80" aria-hidden="true">
         <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
         <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
       </svg>
       <div>
         <span class="label">Общий огонёк</span>
-        <div class="streak-num" id="streak">0</div>
-        <div class="streak-word" id="streakWord">дней подряд</div>
-        <div class="hero-sub" id="heroSub"></div>
+        <div class="streakline"><span class="streak-num" id="streak">0</span><span class="streak-word" id="streakWord">дней подряд</span></div>
       </div>
+      <details class="pacebar inhero" id="paceCard">
+        <summary>
+          <span class="pacetitle">Опережение</span>
+          <span class="pacepills" id="paceTiles"></span>
+        </summary>
+        <div class="pacebody">
+          <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
+          <div class="legend" id="paceLegend"></div>
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <span class="startlbl">План начался 27 сентября</span>
+          </div>
+          <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
+        </div>
+      </details>
     </div>
+    <div class="hero-sub" id="heroSub"></div>
     <div class="chips">
       <span class="chip ice">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v14M2 4.5l12 7M2 11.5l12-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
@@ -1076,10 +1096,10 @@ function renderPath(){
     const both=rn.has(i)&&ro.has(i), one=rn.has(i)||ro.has(i);
     const g=sv("g",{class:"pnode"+(both?" both":one?" one":"")});
     g.append(sv("circle",{cx:X(i),cy:Y(i),r:15}));
-    g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate())));
+    if(i!==tp)g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate()))); // у дня «по плану» дата подписана справа
     const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
-    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-26:X(i)+26,y:Y(i)+4,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
+    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-17,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)))}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
   // где по плану нужно быть сегодня: пунктир через всю тропинку и флажок
@@ -1517,7 +1537,7 @@ function summary(){
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
 window.Ogonek={
-  summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME,
+  summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   onSave:null,
   setPathPeople(list){pathPeople=list||[];renderPath()},
@@ -1534,7 +1554,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040907"></script>
+<script type="module" src="auth.js?v=202610040925"></script>
 
 </body>
 </html>

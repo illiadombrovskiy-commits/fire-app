@@ -400,7 +400,7 @@ async function main() {
   function closeProfile() { const m = document.querySelector(".fmodal"); if (m) m.remove(); document.removeEventListener("keydown", escClose); }
   function escClose(e) { if (e.key === "Escape") closeProfile(); }
 
-  async function openProfile(id) {
+  async function openProfile(id, edit) {
     if (!me) return;
     const isMe = id === "me" || id === me.uid;
     const d = isMe ? Object.assign(O().summary(), { name: me.displayName, photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
@@ -431,14 +431,29 @@ async function main() {
     });
 
     const aboutBox = el("div", "freading"); aboutBox.append(el("span", "label", "О себе"));
-    if (isMe) {
+    if (isMe && edit) {
       const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "70px";
-      const save = el("button", "btn btn-xp", "Сохранить"); save.type = "button";
+      const save = el("button", "btn btn-xp aboutsave", "Сохранить"); save.type = "button";
+      const count = el("small", "hint", ta.value.length + " / 300"); count.style.margin = "0";
+      ta.addEventListener("input", () => { count.textContent = ta.value.length + " / 300"; save.classList.remove("saved"); save.textContent = "Сохранить"; });
       save.addEventListener("click", async () => {
-        try { await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300) }, { merge: true }); O().toast("Сохранено"); }
-        catch (e) { console.warn(e); O().toast("Не удалось сохранить. Попробуйте позже."); }
+        save.disabled = true; save.textContent = "Сохраняю…";
+        try {
+          await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300) }, { merge: true });
+          myProfile = Object.assign({}, myProfile, { about: ta.value.trim().slice(0, 300) });
+          save.classList.add("saved"); save.textContent = "Сохранено ✓";
+          ta.classList.remove("aboutok"); void ta.offsetWidth; ta.classList.add("aboutok");
+          const r = save.getBoundingClientRect(); if (O().burst) O().burst(r.left + r.width / 2, r.top + r.height / 2, 30);
+          try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {}
+          O().toast("Информация о себе сохранена — друзья её увидят");
+        } catch (e) { console.warn(e); save.textContent = "Сохранить"; O().toast("Не удалось сохранить. Попробуйте позже."); }
+        finally { save.disabled = false; }
       });
-      aboutBox.append(ta, save);
+      const row = el("div", "aboutrow"); row.append(count, save);
+      aboutBox.append(ta, row);
+    } else if (isMe) {
+      aboutBox.append(el("p", "fabout" + (d.about ? "" : " empty"), d.about || "Вы пока ничего не написали."));
+      aboutBox.append(el("small", "hint", "Изменить можно вверху: нажмите на своё имя → «О себе»."));
     } else aboutBox.append(el("p", "fabout" + (d.about ? "" : " empty"), d.about || "Пока ничего не написал(а)."));
 
     const badges = el("div", "freading"); badges.append(el("span", "label", "Награды: " + ((d.awards || []).length)));
@@ -482,7 +497,7 @@ async function main() {
       sheet.append(rm);
     }
     modal.append(sheet); document.body.append(modal); x.focus();
-    if (isMe) { const ta = sheet.querySelector("textarea"); if (ta) { ta.scrollIntoView({ block: "center" }); if (!ta.value) ta.focus(); } }
+    if (isMe && edit) { const ta = sheet.querySelector("textarea"); if (ta) { ta.scrollIntoView({ block: "center" }); if (!ta.value) ta.focus(); } }
   }
 
   let friendsOpen = false;
@@ -507,11 +522,6 @@ async function main() {
     }
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код."));
-    const mp = el("button", "btn myprof"); mp.type = "button";
-    mp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
-    mp.append(document.createTextNode(myProfile && myProfile.about ? "Изменить «О себе»" : "Написать о себе"));
-    mp.addEventListener("click", () => openProfile("me"));
-    box.append(mp);
     const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
   }
 
@@ -534,7 +544,7 @@ async function main() {
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
     const who = el("div", "umwho", (me && (me.displayName || me.email)) || "");
     const about = el("button", "umitem", "О себе"); about.type = "button"; about.setAttribute("role", "menuitem");
-    about.addEventListener("click", () => { closeUserMenu(); openProfile("me"); });
+    about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
     const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
     out.addEventListener("click", () => {
       if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
