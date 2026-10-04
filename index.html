@@ -207,29 +207,13 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .hero.withpace .label{white-space:nowrap;font-size:.68rem}
 .hero.withpace .streak-word{font-size:.88rem;white-space:nowrap}
 .streakline{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.hero.withpace + .hero-sub{font-size:.85rem;margin-top:-4px}
+.hero.withpace ~ .hero-sub{font-size:.85rem;margin-top:-4px}
 .pacebar.inhero{background:none;border:0;border-radius:0;padding:0;align-self:center;min-width:0}
 .pacebar.inhero>summary{flex-direction:column;align-items:stretch;gap:6px;flex-wrap:nowrap}
 .pacebar.inhero .pacetitle{font-size:.68rem;text-align:right}
 .pacebar.inhero .pacepills{flex-direction:column;gap:6px;flex-wrap:nowrap}
 .pacebar.inhero .pacepill{font-size:.82rem;padding:3px 8px}
-.pacebar.inhero[open]{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px}
-.pacebar.inhero[open]>summary{flex-direction:row;align-items:center;justify-content:space-between}
-.pacebar.inhero[open] .pacepills{flex-direction:row}
-.pacechev{display:none}
-.pacebar.inhero[open] .pacetitle::after{display:none}
-.pacebar.inhero[open]>summary{flex-wrap:nowrap}
-.pacebar.inhero[open]>summary{gap:6px}
-.pacebar.inhero[open] .pacepills{margin-left:auto;flex-wrap:nowrap;gap:5px}
-.pacebar.inhero[open] .pacepill{font-size:.74rem;padding:3px 7px;gap:4px}
-.pacebar.inhero[open] .pacepill .pacekey{display:none}
-.pacebar.inhero[open] .pacepill:nth-child(1) .pk{color:var(--s-nt)}
-.pacebar.inhero[open] .pacepill:nth-child(2) .pk{color:var(--s-ot)}
-.pacebar.inhero[open] .pacetitle{font-size:.62rem;letter-spacing:.03em}
-.pacebar.inhero[open]>summary{flex-wrap:nowrap;min-width:0}
-@media (max-width:370px){.pacebar.inhero[open] .pacepill .pk{display:none}.pacebar.inhero[open] .pacepill:nth-child(1){border-color:var(--s-nt);border-width:1.5px}.pacebar.inhero[open] .pacepill:nth-child(2){border-color:var(--s-ot);border-width:1.5px}}
-.pacebar.inhero[open] .pacechev{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
-.pacebar.inhero[open] .pacechev::before{content:"";width:8px;height:8px;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:translateY(2px) rotate(-135deg)}
+.inherobody{border-top:1px solid var(--line);padding-top:10px;margin-top:0}
 .startlbl{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
 .startlbl input{font:inherit;font-size:.85rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .pacetiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -535,17 +519,16 @@ textarea.aboutok{animation:aboutglow 1s ease}
         <summary>
           <span class="pacetitle">Опережение</span>
           <span class="pacepills" id="paceTiles"></span>
-          <span class="pacechev" aria-hidden="true"></span>
         </summary>
-        <div class="pacebody">
-          <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
-          <div class="legend" id="paceLegend"></div>
-          <div class="row" style="justify-content:space-between;align-items:center">
-            <span class="startlbl">План начался 27 сентября</span>
-          </div>
-          <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
-        </div>
       </details>
+    </div>
+    <div class="pacebody inherobody" id="paceBody" hidden>
+      <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
+      <div class="legend" id="paceLegend"></div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <span class="startlbl">План начался 27 сентября</span>
+      </div>
+      <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
     </div>
     <div class="hero-sub" id="heroSub"></div>
     <div class="chips">
@@ -1006,7 +989,7 @@ function drawPace(S){
   box.append(svg,tip);
   if(n===1)box.append(el("p","hint","Линии появятся, когда пройдёт хотя бы один день плана. Дату начала можно изменить выше."));
 }
-$("paceCard").addEventListener("toggle",()=>{if($("paceCard").open)drawPace(paceSeries())});
+$("paceCard").addEventListener("toggle",()=>{const o=$("paceCard").open;$("paceBody").hidden=!o;if(o)drawPace(paceSeries())});
 let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{drawPace(paceSeries());renderPath()},150)});
 
 
@@ -1274,30 +1257,42 @@ function burst(x,y,n){
   })(last);
 }
 // level 1 = one testament lit, 2 = common flame lit
-/* звук огонька: синтез без файлов — «вспышка» (шум) и мягкий аккорд; общий огонёк звучит ярче */
-let audioCtx=null;
+/* звук огонька: синтезируем WAV прямо в браузере и играем через <audio>.
+   Так звук слышен и на iPhone с выключенным звонком (Web Audio там молчит). */
+const fireWav={};
+function makeFireWav(level){
+  const sr=22050, dur=level===2?1.4:0.9, n=Math.floor(sr*dur), pcm=new Float32Array(n);
+  let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647*2-1};
+  // вспышка: шум, «раскрывающийся» вверх (простой фильтр с растущей частотой)
+  let lp=0, prev=0;
+  for(let i=0;i<Math.floor(sr*0.5);i++){const t=i/sr, env=Math.min(1,t/0.03)*Math.pow(Math.max(0,1-t/0.5),2);
+    const a=Math.min(0.9,0.05+t*1.6); lp+=a*(rnd()-lp); const hp=lp-prev; prev=lp; pcm[i]+=hp*env*0.9}
+  // тёплый звон
+  const notes=level===2?[523.25,659.25,783.99,1046.5]:[587.33,880];
+  notes.forEach((f,k)=>{const st=Math.floor(sr*(0.08+k*0.09)), len=Math.floor(sr*(level===2?1.1:0.7));
+    for(let i=0;i<len&&st+i<n;i++){const t=i/sr, env=Math.min(1,t/0.02)*Math.exp(-t*(level===2?3.2:4.5));
+      const ph=2*Math.PI*f*t, tri=(2/Math.PI)*Math.asin(Math.sin(ph)); pcm[st+i]+=tri*env*0.28}});
+  let peak=0;for(let i=0;i<n;i++)peak=Math.max(peak,Math.abs(pcm[i]));
+  const gain=(level===2?0.9:0.75)/(peak||1), buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,str)=>{for(let i=0;i<str.length;i++)v.setUint8(o+i,str.charCodeAt(i))};
+  w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,pcm[i]*gain))*32767,true);
+  return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+}
 function fireSound(level){
   try{
-    const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
-    audioCtx=audioCtx||new AC(); if(audioCtx.state==="suspended")audioCtx.resume();
-    const ac=audioCtx, t=ac.currentTime, out=ac.createGain(); out.gain.value=level===2?0.32:0.22; out.connect(ac.destination);
-    // вспышка пламени: короткий шум через полосовой фильтр, частота поднимается
-    const len=Math.floor(ac.sampleRate*0.5), buf=ac.createBuffer(1,len,ac.sampleRate), d=buf.getChannelData(0);
-    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);
-    const ns=ac.createBufferSource(); ns.buffer=buf;
-    const bp=ac.createBiquadFilter(); bp.type="bandpass"; bp.Q.value=0.8; bp.frequency.setValueAtTime(400,t); bp.frequency.exponentialRampToValueAtTime(2600,t+0.35);
-    const ng=ac.createGain(); ng.gain.setValueAtTime(0.0001,t); ng.gain.exponentialRampToValueAtTime(0.9,t+0.04); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
-    ns.connect(bp).connect(ng).connect(out); ns.start(t); ns.stop(t+0.55);
-    // тёплый звон: для одного завета две ноты, для общего огонька — три
-    const notes=level===2?[523.25,659.25,783.99,1046.5]:[587.33,880];
-    notes.forEach((f,i)=>{
-      const o=ac.createOscillator(), g=ac.createGain(), st=t+0.08+i*0.09;
-      o.type="triangle"; o.frequency.value=f;
-      g.gain.setValueAtTime(0.0001,st); g.gain.exponentialRampToValueAtTime(0.35,st+0.02); g.gain.exponentialRampToValueAtTime(0.0001,st+(level===2?1.1:0.7));
-      o.connect(g).connect(out); o.start(st); o.stop(st+1.2);
-    });
+    try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+    if(!fireWav[level])fireWav[level]=makeFireWav(level);
+    const a=new Audio(fireWav[level]); a.volume=1; const pr=a.play(); if(pr&&pr.catch)pr.catch(()=>{});
   }catch(e){}
 }
+// первое касание «разблокирует» звук на телефонах и заранее готовит оба звука
+document.addEventListener("pointerdown",function unlockSnd(){
+  document.removeEventListener("pointerdown",unlockSnd,true);
+  try{fireWav[1]=fireWav[1]||makeFireWav(1);fireWav[2]=fireWav[2]||makeFireWav(2);
+    const a=new Audio(fireWav[1]);a.muted=true;const pr=a.play();if(pr&&pr.then)pr.then(()=>{a.pause()}).catch(()=>{})}catch(e){}
+},true);
 function ignite(svgEl,level){
   if(level)vibrate(level===2?[90,60,90,60,220]:[60,40,60]);
   if(level)fireSound(level);
@@ -1599,7 +1594,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610040952"></script>
+<script type="module" src="auth.js?v=202610041004"></script>
 
 </body>
 </html>
