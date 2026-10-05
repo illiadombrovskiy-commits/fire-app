@@ -7,7 +7,23 @@
   "background_color": "#f5f6fa",
   "theme_color": "#ff7a1a",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://bible-fire.ru/manifest.webmanifest"
+    }
   ]
 }

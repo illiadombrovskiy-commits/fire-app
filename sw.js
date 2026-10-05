@@ -8,3 +8,5 @@ self.addEventListener("notificationclick", (e) => {
     return self.clients.openWindow("./");
   }));
 });
+// пустой обработчик запросов — нужен некоторым браузерам, чтобы предложить «Установить приложение»
+self.addEventListener("fetch", () => {});

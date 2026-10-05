@@ -67,14 +67,14 @@ async function main() {
   function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
-  let me = null, myRef = null, myCode = "", myNick = "", friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
+  let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
   async function ensureProfile(user) {
     const snap = await F.getDoc(myRef);
     const data = snap.exists() ? snap.data() : null;
-    myNick = (data && data.nick) || "";
+    myNick = (data && data.nick) || ""; myNameSet = !!(data && (data.nameSet || data.nick));
     if (data && data.code) { myCode = data.code; return; }
     for (let i = 0; i < 6; i++) {
       const code = randomCode(), cref = F.doc(db, "codes", code);
@@ -487,6 +487,7 @@ async function main() {
         save.disabled = true; save.textContent = "Сохраняю…";
         try {
           const nick = nameIn.value.replace(/\s+/g, " ").trim().slice(0, 40);
+          if (nick.length < 2) { O().toast("Введите имя — его видят друзья"); nameIn.focus(); save.textContent = "Сохранить"; return; }
           myNick = nick && nick !== me.displayName ? nick : "";
           await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300), nick: myNick, name: myName() }, { merge: true });
           await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
@@ -566,7 +567,64 @@ async function main() {
     if (isMe && edit) { const ta = sheet.querySelector("textarea"); if (ta) { ta.scrollIntoView({ block: "center" }); if (!ta.value) ta.focus(); } }
   }
 
-  let friendsOpen = false, followersOpen = false;
+  let allOpen = false, allTab = "friends";
+  function sortedRows() {
+    const mine = Object.assign(O().summary(), { name: myName(), photo: me.photoURL });
+    const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
+    return rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0));
+  }
+  const followersOnly = () => myFollowers.filter((u) => !myFriends.includes(u) && !pendingRequests().includes(u));
+  const subsOnly = () => myFollowing.filter((u) => !myFriends.includes(u));
+  function personRow(u, btnText, onBtn, note) {
+    const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
+    row.append(av, nm); row.style.cursor = "pointer"; row.title = "Открыть профиль";
+    row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
+    const d = friendData[u];
+    if (d && d.name) { nm.textContent = d.name; av.replaceWith(avatarEl(d.name, d.photo, 34)); }
+    else cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
+    if (note) { const h = el("small", "hint", note); h.style.margin = "0"; row.append(h); }
+    if (btnText) { const b = el("button", "btn btn-xp", btnText); b.type = "button"; b.addEventListener("click", () => { b.disabled = true; b.textContent = "…"; onBtn(u); }); const bt = el("div", "fbtns"); bt.append(b); row.append(bt); }
+    return row;
+  }
+  // отдельный экран: все друзья, подписчики и подписки (удобно, когда друзей много)
+  function openAll(tab) {
+    closeProfile(); allTab = tab || allTab; allOpen = true;
+    const modal = el("div", "fmodal fall"), sheet = el("div", "fsheet");
+    sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeAll(); });
+    document.addEventListener("keydown", escAll);
+    modal.append(sheet); document.body.append(modal); drawAll();
+  }
+  function closeAll() { allOpen = false; const m = document.querySelector(".fall"); if (m) m.remove(); document.removeEventListener("keydown", escAll); }
+  function escAll(e) { if (e.key === "Escape") closeAll(); }
+  function drawAll() {
+    const sheet = document.querySelector(".fall .fsheet"); if (!sheet) { allOpen = false; return; }
+    sheet.textContent = "";
+    const head = el("div", "fhead"), h = el("h2", null, "Друзья и подписчики");
+    const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeAll);
+    head.append(h, x);
+    const rows = sortedRows(), reqs = pendingRequests(), fols = followersOnly(), subs = subsOnly();
+    const tabs = el("div", "ftabs");
+    [["friends", "Друзья", rows.length - 1], ["followers", "Подписчики", fols.length + reqs.length], ["subs", "Подписки", subs.length]].forEach(([k, t, n]) => {
+      const b = el("button", "ftab" + (allTab === k ? " on" : ""), t + " · " + n); b.type = "button";
+      b.addEventListener("click", () => { allTab = k; drawAll(); }); tabs.append(b);
+    });
+    const list = el("div", "friends");
+    if (allTab === "friends") {
+      rows.forEach((r) => list.append(friendRow(r.d, r.me, r.uid)));
+      if (rows.length < 2) list.append(el("p", "hint", "Пока нет друзей."));
+    } else if (allTab === "followers") {
+      reqs.forEach((u) => list.append(personRow(u, "Принять", acceptRequest, "новая заявка")));
+      fols.forEach((u) => list.append(personRow(u, "Добавить в друзья", acceptRequest)));
+      if (!reqs.length && !fols.length) list.append(el("p", "hint", "Пока нет подписчиков. Подписчик — тот, кто отправил вам заявку, а вы её не приняли."));
+    } else {
+      subs.forEach((u) => list.append(personRow(u, null, null, "заявка отправлена")));
+      if (!subs.length) list.append(el("p", "hint", "Вы ни на кого не подписаны. Подписка — это ваша заявка, которую ещё не приняли."));
+    }
+    sheet.append(head, tabs, list);
+  }
+  $("friendsAll").addEventListener("click", () => openAll("friends"));
+
   function renderFriends() {
     if (!me) return;
     $("myCode").textContent = myCode || "…";
@@ -589,51 +647,19 @@ async function main() {
       });
       box.append(rq);
     }
-    const mine = Object.assign(O().summary(), { name: myName(), photo: me.photoURL });
-    const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
-    rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0) || (b.d.xp || 0) - (a.d.xp || 0));
-    // видно: я и два друга; остальные — в свёрнутом списке
-    let shown = 0; const extra = [];
-    rows.forEach((r) => { if (r.me || shown < 2) { if (!r.me) shown++; box.append(friendRow(r.d, r.me, r.uid)); } else extra.push(r); });
-    if (extra.length) {
-      const more = el("div", "friends"); more.hidden = !friendsOpen;
-      extra.forEach((r) => more.append(friendRow(r.d, r.me, r.uid)));
-      const tg = el("button", "btn fmore"); tg.type = "button"; tg.setAttribute("aria-expanded", String(friendsOpen));
-      const label = () => { tg.textContent = friendsOpen ? "Свернуть" : "Показать остальных (" + extra.length + ")"; };
-      label();
-      tg.addEventListener("click", () => { friendsOpen = !friendsOpen; more.hidden = !friendsOpen; tg.setAttribute("aria-expanded", String(friendsOpen)); label(); });
-      box.append(more, tg);
+    const rows = sortedRows();
+    // на главной: я и два друга; все остальные — на отдельном экране «Все друзья и подписчики»
+    let shown = 0;
+    rows.forEach((r) => { if (r.me || shown < 2) { if (!r.me) shown++; box.append(friendRow(r.d, r.me, r.uid)); } });
+    const more = rows.length - 1 - shown, fols = followersOnly(), subs = subsOnly();
+    if (more > 0 || fols.length || subs.length) {
+      const tg = el("button", "btn fmore"); tg.type = "button";
+      tg.textContent = more > 0 ? "Показать всех друзей (" + (rows.length - 1) + ")" : "Подписчики и подписки";
+      tg.addEventListener("click", () => openAll(more > 0 ? "friends" : fols.length ? "followers" : "subs"));
+      box.append(tg);
     }
-    // подписки: заявка отправлена, но ещё не принята — видны в списке, но не на тропинке
-    const subs = myFollowing.filter((u) => !myFriends.includes(u));
-    if (subs.length) {
-      const sb = el("div", "fsubs"); sb.append(el("span", "label", "Вы подписаны · ждут подтверждения"));
-      subs.forEach((u) => {
-        const d = friendData[u] || {}, row = el("div", "ffrow"); row.tabIndex = 0; row.setAttribute("role", "button");
-        row.append(avatarEl(d.name, d.photo, 34), el("span", null, d.name || "Читатель"), el("small", "hint", "заявка отправлена"));
-        row.addEventListener("click", () => openProfile(u)); sb.append(row);
-      });
-      box.append(sb);
-    }
-    // вкладка «Подписчики»: кто подписан на меня, но не друг — можно передумать и добавить в друзья
-    const fols = myFollowers.filter((u) => !myFriends.includes(u) && !reqs.includes(u)); // новые заявки показаны выше
-    const fd = document.createElement("details"); fd.className = "fold folsbox"; fd.open = followersOpen;
-    fd.addEventListener("toggle", () => { followersOpen = fd.open; });
-    const sm = document.createElement("summary"); sm.className = "foldhead";
-    sm.append(el("span", "label", "Подписчики · " + fols.length), el("span", "chev")); sm.querySelector(".chev").setAttribute("aria-hidden", "true");
-    const fb = el("div", "fsubs");
-    if (!fols.length) fb.append(el("p", "hint", "Пока нет подписчиков. Подписчик — тот, кто отправил вам заявку, а вы её не приняли."));
-    fols.forEach((u) => {
-      const row = el("div", "ffrow freq"), nm = el("span", null, "…"), av = el("div", "favatar", "?");
-      row.append(av, nm);
-      row.style.cursor = "pointer"; row.title = "Открыть профиль";
-      row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
-      cardOf(u).then((c) => { nm.textContent = c.name || "Читатель"; av.replaceWith(avatarEl(c.name, c.photo, 34)); });
-      const ok = el("button", "btn btn-xp", "Добавить в друзья"); ok.type = "button";
-      ok.addEventListener("click", () => { ok.disabled = true; ok.textContent = "…"; acceptRequest(u); });
-      const bt = el("div", "fbtns"); bt.append(ok); row.append(bt); fb.append(row);
-    });
-    fd.append(sm, fb); box.append(fd);
+    $("friendsAll").hidden = false;
+    if (allOpen) drawAll();
     // на тропинке — только друзья
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
@@ -657,7 +683,7 @@ async function main() {
   $("copyInvite").addEventListener("click", async () => {
     const btn = $("copyInvite");
     const link = location.origin + location.pathname + "?add=" + myCode;
-    const text = "Читаем Библию вместе в «Огоньке»! Мой код: " + myCode + "\n" + link;
+    const text = "Мой код в «Огоньке»: " + myCode + "\n" + link;
     const ok = await copyText(text);
     if (ok) {
       btn.classList.remove("copied"); void btn.offsetWidth; btn.classList.add("copied"); btn.textContent = "Скопировано ✓";
@@ -669,6 +695,36 @@ async function main() {
       O().toast("Не удалось скопировать. Ваш код: " + myCode);
     }
   });
+
+  /* ---------- обязательное имя при первом входе ---------- */
+  function askName(user) {
+    return new Promise((resolve) => {
+      const modal = el("div", "fmodal namegate"), sheet = el("div", "fsheet");
+      sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+      const h = el("h2", null, "Как вас зовут?");
+      const p = el("p", "hint", "Это имя увидят ваши друзья. Без имени продолжить нельзя."); p.style.margin = "0";
+      const inp = document.createElement("input"); inp.type = "text"; inp.maxLength = 40; inp.className = "nickin";
+      inp.placeholder = "Например: " + ((user.displayName || "Илья").split(" ")[0]); inp.setAttribute("aria-label", "Имя"); inp.autocomplete = "given-name";
+      const go = el("button", "btn-main", "Продолжить"); go.type = "button"; go.disabled = true;
+      const ok = () => inp.value.replace(/\s+/g, " ").trim().length >= 2;
+      inp.addEventListener("input", () => { go.disabled = !ok(); });
+      const save = async () => {
+        if (!ok()) { inp.focus(); return; }
+        go.disabled = true; go.textContent = "Сохраняю…";
+        const nick = inp.value.replace(/\s+/g, " ").trim().slice(0, 40);
+        myNick = nick; myNameSet = true;
+        try {
+          await F.setDoc(myRef, { nick, name: nick, nameSet: true }, { merge: true });
+          await F.setDoc(F.doc(db, "cards", user.uid), { name: nick, photo: user.photoURL || "" }).catch(() => {});
+        } catch (e) { console.warn(e); }
+        setTopName(); modal.remove(); resolve();
+      };
+      go.addEventListener("click", save);
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
+      sheet.append(h, p, inp, go); modal.append(sheet); document.body.append(modal);
+      setTimeout(() => inp.focus(), 50);
+    });
+  }
 
   /* ---------- меню пользователя в шапке: «О себе» и «Выйти» ---------- */
   function closeUserMenu() { const m = document.querySelector(".usermenu"); if (m) m.remove(); top.setAttribute("aria-expanded", "false"); document.removeEventListener("click", outsideMenu, true); document.removeEventListener("keydown", escMenu); }
@@ -700,7 +756,7 @@ async function main() {
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (!user) {
-      closeUserMenu(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
+      closeUserMenu(); closeAll(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
@@ -735,6 +791,7 @@ async function main() {
 
     try {
       await ensureProfile(user);
+      if (!myNameSet) await askName(user);
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;

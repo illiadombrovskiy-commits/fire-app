@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff7a1a">
-<meta name="description" content="Огонёк — ежедневное чтение Библии (Восстановительный перевод).">
+<meta name="description" content="Огонёк — ежедневное чтение Библии вместе с друзьями.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -204,9 +204,13 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pacepill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:.88rem;white-space:nowrap}
 .pacepill .pk{color:var(--muted);font-weight:600}
 .pacepill b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.pacepill.ahead b{color:var(--ok)}
+.pacepill.behind b{color:#e5484d}
 .pacebody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .hero.withpace{grid-template-columns:auto 1fr auto;gap:12px}
-.hero.withpace .flame{width:56px;height:70px}
+.hero.withpace .flame{width:80px;height:100px}
+.flame.half .f1{fill:var(--off)}
+.flame.half .f2{fill:var(--flame);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--flame) 70%,transparent))}
 .hero.withpace .streak-num{font-size:2.2rem}
 .hero.withpace .label{white-space:nowrap;font-size:.68rem}
 .hero.withpace .streak-word{font-size:.88rem;white-space:nowrap}
@@ -362,6 +366,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pplanflag text{font-size:11px;font-weight:800;fill:var(--link);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .pplanflag .pplansub{font-weight:600;font-size:10.5px}
 .pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
+.pweekd{font-weight:600;opacity:.85}
 .pstart line{stroke:var(--ok);stroke-width:2.5;stroke-linecap:round}
 .pstart path{fill:var(--ok)}
 .pstart text{font-size:12px;font-weight:800;fill:var(--ok);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -440,6 +445,47 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .cheerin blockquote{margin:0;font-family:var(--display);font-size:1.45rem;line-height:1.25;color:var(--ink)}
 .cheerin .acts{display:flex;flex-direction:column;gap:8px;width:100%}
 .fmore{width:100%;font-weight:700;color:var(--link)}
+.installcard{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,#ff7a1a,#ff4d6d);color:#fff;box-shadow:0 6px 18px color-mix(in srgb,#ff7a1a 40%,transparent);position:relative}
+.instico{width:52px;height:52px;border-radius:13px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.insttext{display:flex;flex-direction:column;gap:2px;min-width:0;padding-right:18px}
+.insttext b{font-size:1.02rem;line-height:1.25}
+.insttext span{font-size:.82rem;opacity:.92}
+.instgo{grid-column:1/-1;padding:12px;border-radius:12px;background:#fff;color:#e8550c;font-weight:800;font-size:1.02rem;box-shadow:0 3px 0 rgba(0,0,0,.15);animation:instpulse 2s ease-in-out infinite}
+@keyframes instpulse{0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.15),0 0 0 0 rgba(255,255,255,.6)}50%{box-shadow:0 3px 0 rgba(0,0,0,.15),0 0 0 6px rgba(255,255,255,0)}}
+.instx{position:absolute;top:6px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:1.2rem;line-height:1}
+.iguide .itabs{display:flex;gap:6px}
+.iguide .itab{flex:1;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700}
+.iguide .itab.on{border-color:var(--flame);background:var(--flame-soft)}
+.isteps{display:flex;flex-direction:column;gap:14px;margin:0;padding:0;list-style:none;counter-reset:st}
+.isteps li{display:flex;flex-direction:column;gap:8px;counter-increment:st}
+.isteps li>p{margin:0;font-size:1.05rem;line-height:1.4;display:flex;gap:10px;align-items:flex-start}
+.isteps li>p::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;background:var(--flame);color:#fff;font-weight:800;display:grid;place-items:center;font-size:.95rem}
+.mock{border-radius:16px;border:2px solid var(--line);background:var(--surface);padding:10px;font-size:.9rem;color:var(--ink);position:relative;overflow:hidden}
+.mock .bar{display:flex;justify-content:space-around;align-items:center;padding:8px 4px;border-radius:12px;background:var(--bg);color:var(--muted)}
+.mock .bar{min-height:54px}
+.mock .bar span{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:50%;font-size:1.1rem}
+.mock svg{width:22px;height:22px}
+.hl{background:color-mix(in srgb,var(--flame) 22%,transparent)!important;color:var(--flame)!important;box-shadow:0 0 0 3px var(--flame);animation:hlp 1.4s ease-in-out infinite}
+@keyframes hlp{0%,100%{box-shadow:0 0 0 3px var(--flame)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--flame) 40%,transparent)}}
+.mock .menu{display:flex;flex-direction:column;border-radius:12px;background:var(--bg)}
+.mock .menu div{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--muted)}
+.mock .menu div:last-child{border-bottom:0}
+.mock .menu div.hl{border-radius:10px;font-weight:800}
+.mock .url{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--bg);color:var(--muted)}
+.mock .url b{flex:1;color:var(--ink);font-weight:600}
+.mock .home{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;justify-items:center;padding:6px}
+.mock .home i{width:44px;height:44px;border-radius:11px;background:var(--line)}
+.mock .home img{width:44px;height:44px;border-radius:11px}
+.mock .home em{font-style:normal;font-size:.7rem;text-align:center}
+.mock .addhdr{display:flex;justify-content:space-between;align-items:center;font-weight:700;padding:4px 6px}
+.mock .addhdr span:last-child{padding:4px 10px;border-radius:999px}
+@media (prefers-reduced-motion:reduce){.instgo,.hl{animation:none}}
+.fallbtn{font-size:.85rem;font-weight:700;color:var(--link)}
+.ftabs{display:flex;gap:6px}
+.ftab{flex:1;padding:9px 6px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:.85rem}
+.ftab.on{border-color:var(--xp);background:var(--xp-soft)}
+.fall .fsheet{min-height:70vh}
+.namegate .fsheet{gap:12px}
 .nickin{font:inherit;font-size:1rem;font-weight:600;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
 .nickin:focus{outline:2px solid var(--xp);outline-offset:1px}
 .freqs,.fsubs{display:flex;flex-direction:column;gap:6px}
@@ -543,9 +589,15 @@ textarea.aboutok{animation:aboutglow 1s ease}
 <div class="app" id="app">
   <header class="top">
     <div class="brand"><h1>Огонёк</h1></div>
-    <a class="gemtop" id="gemTop" href="#gemsCard" title="Алмазы"><span class="gemicon" aria-hidden="true"></span><b id="gemTopN">0</b></a>
     <button class="loginTop" id="loginTop" type="button" hidden>Войти</button>
   </header>
+
+  <section class="installcard" id="installCard" hidden>
+    <img class="instico" src="icon-192.png" alt="" width="52" height="52">
+    <div class="insttext"><b>Поставьте Огонёк на экран телефона</b><span>Будет открываться одним касанием, как приложение</span></div>
+    <button class="instgo" id="installGo" type="button">Установить</button>
+    <button class="instx" id="installHide" type="button" aria-label="Скрыть">×</button>
+  </section>
 
   <section class="card">
     <div class="hero withpace">
@@ -611,7 +663,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <section class="card" id="friendsCard" hidden>
     <div class="reading-head">
       <h2>Друзья</h2>
-      <span class="daynum">Кто где читает</span>
+      <button class="linkbtn fallbtn" id="friendsAll" type="button" hidden>Все друзья и подписчики</button>
     </div>
     <div class="friends" id="friendsList"></div>
   </section>
@@ -695,6 +747,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
     <span id="account" hidden></span>
+    <button class="linkbtn" id="installLink" type="button" hidden>Как добавить Огонёк на экран телефона</button>
   </footer>
 </div>
 <div class="auth" id="auth" hidden>
@@ -916,9 +969,10 @@ function renderTestament(k){
 function render(){
   const t=today(), st=streak(), both=bothSet().has(t), lv=level(state.xp);
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
-  $("heroFlame").classList.toggle("off",!both);
   const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
-  $("heroSub").textContent=both?"":nDone===1?"Остался ещё один завет, чтобы зажечь общий огонёк.":"Прочитайте оба завета, чтобы зажечь огонь.";
+  // 0 заветов — огонёк погас; 1 — внутри загорается маленький огонёк; 2 — горит полностью
+  $("heroFlame").classList.toggle("off",nDone===0);$("heroFlame").classList.toggle("half",nDone===1);
+  $("heroSub").textContent="";
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
@@ -1158,7 +1212,7 @@ function renderPath(){
     if(i!==tp)g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate()))); // у дня «по плану» дата подписана справа
     const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
-    if(i%7===0){const left=X(i)<=cx;svg.append(sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-17,"text-anchor":left?"end":"start",class:"pweek"},"Неделя "+(i/7+1)+" · "+shortDay(i)))}
+    if(i%7===0){const left=X(i)<=cx;{const wt=sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-28,"text-anchor":left?"end":"start",class:"pweek"});wt.append(sv("tspan",{x:left?X(i)-22:X(i)+22},"Неделя "+(i/7+1)),sv("tspan",{x:left?X(i)-22:X(i)+22,dy:13,class:"pweekd"},shortDay(i)));svg.append(wt)}}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
   // старт: все начинают читать в один день
@@ -1488,6 +1542,7 @@ function complete(k,pp){
   save(); render();
   const newAw=awards().filter(a=>a.ok).length-awBefore;
   if(firstK)ignite($("flame-"+k),bothNow?0:1);
+  if(firstK&&!bothNow)ignite($("heroFlame"),0); // в большом огне загорается маленький огонёк
   else{const ms=document.querySelectorAll("#minis-"+k+" .mini");ignite(ms[ms.length-1],1)}
   if(bothNow){
     ignite($("heroFlame"),2);
@@ -1580,7 +1635,7 @@ const BOOKCH={"Мф.":28,"Мк.":16,"Лк.":24,"Ин.":21,"Деян.":28,"Рим
 const gemNext=()=>GEM_LADDER[Math.min(state.gems.step,GEM_LADDER.length-1)];
 function renderGems(){
   const g=state.gems, box=$("gemsBody"); if(!box)return; box.textContent=""; box.className="gemsbody";
-  $("gemCount").textContent=g.n; $("gemTopN").textContent=g.n;
+  $("gemCount").textContent=g.n;
   const ch=chaptersDone();
   if(ch<GEM_UNLOCK){
     box.append(el("p","muted","Тест откроется, когда вы прочитаете "+GEM_UNLOCK+" глав. Прочитано полностью: "+ch+" из "+GEM_UNLOCK+"."));
@@ -1691,6 +1746,69 @@ if(state.gems.open){delete state.gems.open;state.gems.step=0;save()}
   box.addEventListener("dblclick",e=>e.preventDefault());
 })();
 $("freezeChip").addEventListener("click",()=>toast("Заморозка — это день, прочитанный заранее, впереди графика. Прочитайте следующий день в обоих заветах — получите заморозку. Если отстаёте от плана, сначала догоните его. Пропустите день — заморозка сохранит серию."));
+/* ---------- установка на экран телефона ---------- */
+(function(){
+  if(window.self!==window.top)return; // внутри Claude не показываем
+  const standalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const INST="ogonek-installed", lsg=k=>{try{return localStorage.getItem(k)}catch(e){return null}}, lss=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  // открыто как приложение (со значка) — запоминаем, что Огонёк установлен, и больше не предлагаем
+  if(standalone()){lss(INST,"1");return}
+  if(lsg(INST))return;
+  const ua=navigator.userAgent, isIOS=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&"ontouchend" in document), isAndroid=/Android/.test(ua);
+  let deferred=null; const HIDE="ogonek-install-hide";
+  // предложение показывается раз в день: после показа (или «×») — снова только завтра, пока Огонёк не установлен
+  const hidden=()=>lsg(HIDE)===today();
+  const card=$("installCard"), link=$("installLink");
+  link.hidden=false; link.addEventListener("click",()=>openGuide());
+  const show=()=>{if(hidden())return;card.hidden=false;lss(HIDE,today())};
+  if(isIOS||isAndroid)show();
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;show()});
+  const installed=()=>{lss(INST,"1");card.hidden=true;link.hidden=true};
+  window.addEventListener("appinstalled",()=>{installed();toast("Огонёк добавлен на экран!")});
+  // Android/Chrome умеет сказать, что приложение уже установлено
+  if(navigator.getInstalledRelatedApps)navigator.getInstalledRelatedApps().then(a=>{if(a&&a.length)installed()}).catch(()=>{});
+  $("installHide").addEventListener("click",()=>{card.hidden=true;lss(HIDE,today())});
+  $("installGo").addEventListener("click",async()=>{
+    if(deferred){deferred.prompt();try{const r=await deferred.userChoice;if(r.outcome==="accepted")card.hidden=true}catch(e){}deferred=null;return}
+    openGuide();
+  });
+  const SHARE='<svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const PLUS='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const DOTS='<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>';
+  const ico='<img src="icon-192.png" alt="">';
+  const host=location.host||"bible-fire.ru";
+  const STEPS={
+    ios:[
+      ["Откройте Огонёк в браузере <b>Safari</b> (синий компас). В других браузерах на iPhone так не получится.",'<div class="url">'+'<span>🔒</span><b>'+host+'</b></div>'],
+      ["Внизу экрана нажмите кнопку <b>«Поделиться»</b> — квадрат со стрелкой вверх.",'<div class="bar"><span>‹</span><span>›</span><span class="hl">'+SHARE+'</span><span>📖</span><span>⧉</span></div>'],
+      ["В появившемся списке пролистайте вниз и нажмите <b>«На экран „Домой“»</b>.",'<div class="menu"><div>Скопировать <span>⧉</span></div><div>Добавить в закладки <span>📖</span></div><div class="hl">На экран «Домой» <span>'+PLUS+'</span></div></div>'],
+      ["Справа вверху нажмите <b>«Добавить»</b>.",'<div class="addhdr"><span>Отменить</span><span class="hl">Добавить</span></div>'],
+      ["Готово! На экране телефона появился значок Огонька — нажимайте на него, как на приложение.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>Огонёк</b></em><em></em></div>']
+    ],
+    android:[
+      ["Откройте Огонёк в браузере <b>Chrome</b> (цветной круг).",'<div class="url"><span>🔒</span><b>'+host+'</b><span>'+DOTS+'</span></div>'],
+      ["Справа вверху нажмите <b>три точки ⋮</b>.",'<div class="url"><span>🔒</span><b>'+host+'</b><span class="hl" style="border-radius:50%;padding:4px">'+DOTS+'</span></div>'],
+      ["В меню нажмите <b>«Добавить на главный экран»</b> (или <b>«Установить приложение»</b>).",'<div class="menu"><div>Новая вкладка</div><div>История</div><div class="hl">Добавить на главный экран <span>'+PLUS+'</span></div></div>'],
+      ["Нажмите <b>«Установить»</b> или <b>«Добавить»</b>.",'<div class="addhdr"><span>Отмена</span><span class="hl">Установить</span></div>'],
+      ["Готово! Значок Огонька появится на экране телефона.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>Огонёк</b></em><em></em></div>']
+    ]
+  };
+  function openGuide(){
+    let tab=isIOS?"ios":"android";
+    const modal=el("div","fmodal"),sheet=el("div","fsheet iguide");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");
+    const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
+    modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+    const draw=()=>{
+      sheet.textContent="";
+      const head=el("div","fhead"),h=el("h2",null,"Огонёк на экран телефона");const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);head.append(h,x);
+      const tabs=el("div","itabs");[["ios","iPhone"],["android","Android"]].forEach(([k,t])=>{const b=el("button","itab"+(tab===k?" on":""),t);b.type="button";b.addEventListener("click",()=>{tab=k;draw()});tabs.append(b)});
+      const ol=el("ol","isteps");STEPS[tab].forEach(([txt,mock])=>{const li=el("li"),p=el("p");p.innerHTML="<span>"+txt+"</span>";const m=el("div","mock");m.innerHTML=mock;li.append(p,m);ol.append(li)});
+      const ok=el("button","btn-main","Понятно");ok.type="button";ok.addEventListener("click",close);
+      sheet.append(head,tabs,ol,ok);
+    };
+    draw();modal.append(sheet);document.body.append(modal);
+  }
+})();
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -1731,7 +1849,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610041848"></script>
+<script type="module" src="auth.js?v=202610051943"></script>
 
 </body>
 </html>
