@@ -716,7 +716,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <details class="card fold" id="howCard">
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody howto">
-      <p>Каждый день — отрывок из Нового и из Ветхого Завета. Прочитали оба — загорается огонёк, и серия дней растёт.</p>
+      <p>Каждый день — отрывок из Нового и из Ветхого Завета. Прочитали хотя бы один — загорается маленький огонёк, и серия дней растёт. Прочитали оба — огонь горит в полную силу.</p>
       <p class="howhead">Как получить заморозку</p>
       <ol>
         <li>Прочитайте сегодняшние отрывки.</li>
@@ -887,7 +887,9 @@ const datesOf=k=>new Set(state[k].log.map(x=>x.d));
 function bothSet(){const a=datesOf("nt"),b=datesOf("ot");return new Set([...a].filter(d=>b.has(d)))}
 function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));return s}
 function streakOf(set){let cur=today();if(!set.has(cur))cur=add(cur,-1);let n=0;while(set.has(cur)){n++;cur=add(cur,-1)}return n}
-const streak=k=>streakOf(withFrozen(k?datesOf(k):bothSet()));
+// серия дней растёт, если в день прочитан хотя бы один завет (горит хотя бы маленький огонёк)
+function anySet(){return new Set([...datesOf("nt"),...datesOf("ot")])}
+const streak=k=>streakOf(withFrozen(k?datesOf(k):anySet()));
 /* заморозки = на сколько дней вы впереди плана (по обоим заветам).
    Пропущенный день сохраняет серию, если к концу этого дня оба завета были прочитаны по плану включительно. */
 /* заморозки = на сколько дней вы впереди плана (по обоим заветам).
@@ -899,7 +901,7 @@ function freezesNow(){const t=today(),tp=Math.max(0,todayP());
   return Math.max(0,Math.min(...KEYS.map(k=>state[k].log.length-Math.min(DAYS,tp+(datesOf(k).has(t)?1:0)))))}
 function coveredDay(d){const due=Math.min(DAYS,planIdx(d)+1);return due>0&&KEYS.every(k=>readBy(k,d)>=due)}
 function applyFreezes(){
-  const s=withFrozen(bothSet());if(!s.size)return 0;
+  const s=withFrozen(anySet());if(!s.size)return 0;
   const last=[...s].sort().pop(), y=add(today(),-1);
   if(last>=y)return 0;
   const gap=[];let d=add(last,1);while(d<=y){gap.push(d);d=add(d,1)}
@@ -1534,15 +1536,12 @@ function complete(k,pp){
   let gain=XP_PART;
   const bothNow=!bothBefore&&bothSet().has(t);
   const common=streak();
-  if(bothNow){
-    gain+=XP_BOTH;
-    state.best=Math.max(state.best,common);
-  }
+  state.best=Math.max(state.best,common);
+  if(bothNow)gain+=XP_BOTH;
   state.xp+=gain;
   save(); render();
   const newAw=awards().filter(a=>a.ok).length-awBefore;
-  if(firstK)ignite($("flame-"+k),bothNow?0:1);
-  if(firstK&&!bothNow)ignite($("heroFlame"),0); // в большом огне загорается маленький огонёк
+  if(firstK){ignite($("flame-"+k),bothNow?0:1); if(!bothNow)ignite($("heroFlame"),0);} // в большом огне загорается маленький огонёк
   else{const ms=document.querySelectorAll("#minis-"+k+" .mini");ignite(ms[ms.length-1],1)}
   if(bothNow){
     ignite($("heroFlame"),2);
@@ -1849,7 +1848,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610051943"></script>
+<script type="module" src="auth.js?v=202610052018"></script>
 
 </body>
 </html>
