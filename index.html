@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff7a1a">
-<meta name="description" content="Огонёк — ежедневное чтение Библии вместе с друзьями.">
+<meta name="description" content="Огонёк — вся Библия за 2 года, 10 минут в день вместе с друзьями.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Огонёк — Библия за год</title>
+<title>Огонёк — вся Библия за 2 года</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
@@ -367,6 +367,79 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pplanflag .pplansub{font-weight:600;font-size:10.5px}
 .pperson.me circle{filter:drop-shadow(0 0 6px var(--flame))}
 .pweekd{font-weight:600;opacity:.85}
+.pbook rect{fill:var(--surface);stroke:var(--s-ot);stroke-width:1.6}
+.pbook.nt rect{stroke:var(--s-nt)}
+.pbook .pbookspine{fill:var(--s-ot);stroke:none}
+.pbook.nt .pbookspine{fill:var(--s-nt)}
+.pbookln{stroke:var(--s-ot);stroke-width:1.4;stroke-dasharray:3 4;opacity:.7}
+.pbook.nt .pbookln{stroke:var(--s-nt)}
+.pbooklab{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;fill:var(--s-ot)}
+.pbook.nt .pbooklab{fill:var(--s-nt)}
+.pbookname{font-family:var(--display);font-weight:800;fill:var(--ink)}
+.pme{padding:5px 10px;font-size:.8rem;white-space:nowrap}
+/* ---------- путеводитель для новичков ---------- */
+.guidebanner{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line);background:linear-gradient(135deg,var(--link-soft),var(--xp-soft));color:var(--ink);cursor:pointer;font:inherit}
+.guidebanner:hover{border-color:var(--link)}
+.guidebanner .gbshelf{display:flex;align-items:flex-end;gap:2px;height:40px;flex:none}
+.guidebanner .gbshelf i{display:block;width:6px;border-radius:2px}
+.guidebanner b{display:block;font-family:var(--display);font-size:1.12rem;line-height:1.2}
+.guidebanner span.gbt{font-size:.86rem;color:var(--muted);line-height:1.3}
+.guidebanner .gbgo{margin-left:auto;font-size:1.4rem;color:var(--link);flex:none}
+.bguide{max-width:640px;gap:18px}
+.bguide h3{font-family:var(--display);font-size:1.25rem;margin:0 0 6px}
+.bguide p{margin:0;line-height:1.5}
+.bguide .gsec{display:flex;flex-direction:column;gap:10px}
+.bguide .glead{font-size:1.02rem}
+.gnum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gnum div{background:var(--bg);border-radius:12px;padding:10px 6px;text-align:center;line-height:1.15}
+.gnum b{display:block;font-family:var(--display);font-size:1.7rem;color:var(--link)}
+.gnum span{font-size:.78rem;color:var(--muted)}
+.shelf{display:flex;flex-direction:column;gap:4px}
+.shelfhead{display:flex;justify-content:space-between;align-items:baseline;font-size:.82rem;font-weight:700}
+.shelfrow{display:flex;align-items:flex-end;gap:2px;height:78px;padding:0 2px 4px;border-bottom:5px solid #b98a5a;border-radius:0 0 3px 3px}
+.spine{flex:1 1 0;min-width:0;border-radius:2px 2px 0 0;position:relative;cursor:pointer;transition:transform .15s}
+.spine:hover,.spine.on{transform:translateY(-5px)}
+.spine.plan::after{content:"";position:absolute;left:50%;top:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff}
+.shelfinfo{min-height:1.4em;font-size:.88rem;color:var(--muted)}
+.shelfinfo b{color:var(--ink)}
+.glegend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.78rem;color:var(--muted)}
+.glegend span{display:inline-flex;align-items:center;gap:5px}
+.glegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.gtwo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.gtwo{grid-template-columns:1fr}}
+.gtest{border-radius:14px;padding:12px;border:1.5px solid var(--s-ot);background:var(--flame-soft)}
+.gtest.nt{border-color:var(--s-nt);background:var(--xp-soft)}
+.gtest h4{margin:0 0 4px;font-size:1rem;color:var(--s-ot)}
+.gtest.nt h4{color:var(--s-nt)}
+.gtest p{font-size:.88rem}
+.gtest ul{margin:6px 0 0;padding-left:18px;font-size:.84rem;line-height:1.45}
+.gref{display:flex;justify-content:center;align-items:flex-start;gap:6px;padding:14px 4px 4px;flex-wrap:wrap}
+.gref>div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.gref .rbig{font-family:var(--display);font-size:2.1rem;font-weight:800;line-height:1;padding:4px 8px;border-radius:10px}
+.gref .rlab{font-size:.74rem;font-weight:700;text-align:center;line-height:1.2;max-width:92px}
+.gref .r1 .rbig{background:var(--xp-soft);color:var(--s-nt)} .gref .r1 .rlab{color:var(--s-nt)}
+.gref .r2 .rbig{background:var(--flame-soft);color:var(--s-ot)} .gref .r2 .rlab{color:var(--s-ot)}
+.gref .r3 .rbig{background:var(--link-soft);color:var(--link)} .gref .r3 .rlab{color:var(--link)}
+.gref .rsep{font-family:var(--display);font-size:2.1rem;font-weight:800;color:var(--muted);line-height:1.6}
+.gnote{font-size:.86rem;color:var(--muted);background:var(--bg);border-radius:12px;padding:10px 12px}
+.groute{display:flex;flex-direction:column;gap:8px}
+.groute .rl{font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.rbar{display:flex;height:34px;border-radius:10px;overflow:hidden;gap:2px}
+.rbar div{display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;min-width:3px}
+.rlist{font-size:.74rem;color:var(--muted);line-height:1.45}
+.rlist b{color:var(--ink);font-weight:600}
+.rmonths{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.gday{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gday div{border-radius:12px;padding:10px;background:var(--bg);font-size:.86rem;line-height:1.35}
+.gday b{display:block;font-size:1rem}
+.gday span{display:block;font-size:.78rem}
+.gkeys{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.gkeys li{display:grid;grid-template-columns:58px 1fr;gap:12px;align-items:center}
+.gkeys .gk{height:48px;border-radius:12px;background:var(--bg);display:grid;place-items:center;font-weight:800;font-variant-numeric:tabular-nums}
+.gkeys .gk svg{width:30px;height:30px}
+.gkeys p{font-size:.9rem;line-height:1.4}
+.gkeys p b{color:var(--ink)}
+.gtips{margin:0;padding-left:20px;line-height:1.5;font-size:.92rem}
 .pstart line{stroke:var(--ok);stroke-width:2.5;stroke-linecap:round}
 .pstart path{fill:var(--ok)}
 .pstart text{font-size:12px;font-weight:800;fill:var(--ok);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -640,6 +713,12 @@ textarea.aboutok{animation:aboutglow 1s ease}
     <div class="tgrid" id="testaments"></div>
   </section>
 
+  <button class="guidebanner" id="guideOpen" type="button">
+    <span class="gbshelf" aria-hidden="true"><i style="height:28px;background:#e8650a"></i><i style="height:36px;background:#d4a017"></i><i style="height:24px;background:#2f9e6b"></i><i style="height:40px;background:#c2410c"></i><i style="height:30px;background:#6b4fd8"></i><i style="height:22px;background:#1d6fd6"></i><i style="height:34px;background:#0e9aa7"></i></span>
+    <span><b>Впервые читаете Библию?</b><span class="gbt">Вся Библия за 2 года. Что это за книга, как читать ссылки вроде «Мф. 3:7–17» и что значат цифры в Огоньке</span></span>
+    <span class="gbgo" aria-hidden="true">›</span>
+  </button>
+
   <section class="card" id="quizCard">
     <div class="reading-head">
       <h2>Вопросы по тексту</h2>
@@ -653,6 +732,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <section class="card" id="pathCard">
     <div class="pzoom">
       <h2 class="pathtitle">Тропинка</h2><span id="pathSub" hidden></span>
+      <button class="btn pme" id="pzMe" type="button" title="Прокрутить к себе">К себе</button>
       <button class="btn pzbtn" id="pzOut" type="button" aria-label="Отдалить">−</button>
       <button class="btn pzlevel" id="pzLevel" type="button" title="Сбросить масштаб">100%</button>
       <button class="btn pzbtn" id="pzIn" type="button" aria-label="Приблизить">+</button>
@@ -747,6 +827,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <footer class="foot">
     <span id="storage">Прогресс сохраняется в этом браузере</span>
     <span id="account" hidden></span>
+    <button class="linkbtn" id="guideLink" type="button">Путеводитель: что такое Библия и как читать</button>
     <button class="linkbtn" id="installLink" type="button" hidden>Как добавить Огонёк на экран телефона</button>
   </footer>
 </div>
@@ -845,6 +926,7 @@ const todayP=()=>dayNo(today())-dayNo(PLAN_START);
 function shortDay(p){return parse(planDate(p)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}
 function dayLabel(p){const s=parse(planDate(p)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});return s.charAt(0).toUpperCase()+s.slice(1)}
 function startDay(k,book){return PLAN.findIndex(d=>d[T[k].bi]===book)}
+const BOOKSTARTS=[];KEYS.forEach(k=>PLAN.forEach((d,i)=>{if(!i||PLAN[i-1][T[k].bi]!==d[T[k].bi])BOOKSTARTS.push({i,k,book:d[T[k].bi]})}));
 
 const QUESTIONS=["Что в сегодняшнем чтении больше всего коснулось вас?","Что этот отрывок открывает о Боге?","Какой стих вы хотели бы запомнить сегодня? Почему?","Есть ли здесь обещание, которое можно взять для себя?","Что вы узнали о человеке и его отношениях с Богом?","За что из прочитанного можно поблагодарить Господа?","Какой вопрос возник у вас при чтении?","Есть ли в отрывке пример, которому стоит последовать?","Как прочитанное связано с вашим сегодняшним днём?","Как связаны сегодняшние отрывки из Нового и Ветхого Завета?","О чём вы хотите помолиться после этого чтения?","Что в тексте показывает Христа?","Чему этот отрывок учит о жизни церкви?","Какую одну мысль вы расскажете сегодня другому человеку?"];
 
@@ -1197,8 +1279,8 @@ function renderPath(){
   const mePos=Math.floor((nextP("nt")+nextP("ot"))/2);
   const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>({id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)})));
   const tp=Math.min(DAYS-1,Math.max(0,todayP()));
-  const ps=people.map(x=>x.pos).concat([tp]), lo=Math.max(0,Math.floor(Math.min(...ps))-3), hi=Math.min(DAYS-1,Math.ceil(Math.max(...ps))+5);
-  const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=lo===0?104:40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
+  const lo=0, hi=DAYS-1; // вся тропинка года — можно пролистать и увидеть, где начинается каждая книга
+  const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=lo===0?160:40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
   const X=i=>cx+A*Math.sin((i-lo)*Math.PI/3.5), Y=i=>padT+(hi-i)*gap;
   const posXY=pos=>{const a=Math.floor(pos),b=Math.min(hi,a+1),t=pos-a;return [X(a)+(X(b)-X(a))*t,Y(a)+(Y(b)-Y(a))*t]};
   const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка чтения: где вы и ваши друзья по плану"});
@@ -1216,7 +1298,29 @@ function renderPath(){
     svg.append(g);
     if(i%7===0){const left=X(i)<=cx;{const wt=sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-28,"text-anchor":left?"end":"start",class:"pweek"});wt.append(sv("tspan",{x:left?X(i)-22:X(i)+22},"Неделя "+(i/7+1)),sv("tspan",{x:left?X(i)-22:X(i)+22,dy:13,class:"pweekd"},shortDay(i)));svg.append(wt)}}
   }
-  if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Финиш года"));
+  if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Конец 1-го года · дальше 2-й год"));
+  // книги Библии: табличка там, где начинается новая книга
+  {const byDay={};BOOKSTARTS.forEach(b=>{(byDay[b.i]=byDay[b.i]||[]).push(b)});
+   Object.entries(byDay).forEach(([di,list])=>{
+     const i=+di, nx=X(i), right=nx<=cx, fs=W<360?11.5:12.5;
+     const bwOf=b=>{const name=FULL[b.book]||b.book,lab=b.k==="nt"?"Новый Завет":"Ветхий Завет";return Math.ceil(Math.max(name.length*fs*0.56,lab.length*5.6)+40)};
+     const tot=list.reduce((a,b)=>a+bwOf(b),0)+8*(list.length-1); let x0=(W-tot)/2;
+     list.forEach((b,j)=>{
+       const name=FULL[b.book]||b.book, lab=b.k==="nt"?"Новый Завет":"Ветхий Завет";
+       const bw=Math.ceil(Math.max(name.length*fs*0.56,lab.length*5.6)+40), bh=36;
+       const first=i===0; // первые книги — под флажком «Старт», рядом друг с другом
+       const by=first?Y(0)+102:Y(i)-bh/2+(i===tp?-40:0);
+       const bx=first?x0:(right?W-8-bw:8); if(first)x0+=bw+8;
+       const g=sv("g",{class:"pbook "+b.k});
+       if(!first)g.append(sv("line",{x1:right?bx:bx+bw,y1:by+bh/2,x2:nx+(right?17:-17),y2:Y(i),class:"pbookln"}));
+       g.append(sv("rect",{x:bx,y:by,width:bw,height:bh,rx:10}));
+       g.append(sv("rect",{x:bx+8,y:by+8,width:6,height:bh-16,rx:2,class:"pbookspine"}));
+       g.append(sv("text",{x:bx+22,y:by+14,class:"pbooklab"},lab));
+       g.append(sv("text",{x:bx+22,y:by+29,class:"pbookname","font-size":fs},name));
+       g.append(sv("title",{},"С "+shortDay(i)+" — "+name+" ("+lab+")"));
+       svg.append(g);
+     });
+   });}
   // старт: все начинают читать в один день
   if(lo===0){const sx=X(0), sy=Y(0), g=sv("g",{class:"pstart"}), tx=Math.min(W-95,Math.max(95,sx));
     g.append(sv("line",{x1:sx,y1:sy+36,x2:sx,y2:sy+60}));
@@ -1286,6 +1390,9 @@ function renderPath(){
 $("pzIn").addEventListener("click",()=>setPathZoom(pathZoom*1.25));
 $("pzOut").addEventListener("click",()=>setPathZoom(pathZoom/1.25));
 $("pzLevel").addEventListener("click",()=>setPathZoom(1));
+$("pzMe").addEventListener("click",()=>{const pb=$("pathBox"),me=document.querySelector("#path .pperson.me circle");if(!pb||!me)return;
+  const y=Number(me.getAttribute("cy"))*pathZoom, x=Number(me.getAttribute("cx"))*pathZoom;
+  pb.scrollTo({top:Math.max(0,y-pb.clientHeight/2),left:Math.max(0,x-pb.clientWidth/2),behavior:"smooth"})});
 $("pzLevel").textContent=Math.round(pathZoom*100)+"%";
 (function(){ // Ctrl+колесо и щипок двумя пальцами
   const pb=$("pathBox"), pts=new Map(); let d0=0,z0=1;
@@ -1483,7 +1590,7 @@ const AWARDS=[
   {id:"pent",name:"Пятикнижие",desc:"Прочитаны пять книг Моисея",tier:"silver",icon:IC.tablets(),ok:()=>bookDone("ot","Иис. Н.")},
   {id:"ruth",name:"Судьи и Руфь",desc:"Прочитаны книги Судей и Руфь",tier:"green",icon:IC.wheat(),ok:()=>bookDone("ot","1 Цар.")},
   {id:"quiz10",name:"Знаток текста",desc:"10 верных ответов с первого раза",tier:"blue",icon:IC.quiz(),ok:()=>quizRight()>=10},
-  {id:"year",name:"Первый год плана",desc:"Прочитаны все 364 дня плана",tier:"gold",icon:IC.crown(),ok:()=>state.nt.read.length>=DAYS&&state.ot.read.length>=DAYS}
+  {id:"year",name:"Первый год плана",desc:"Прочитаны все 364 дня первого года — половина Библии позади",tier:"gold",icon:IC.crown(),ok:()=>state.nt.read.length>=DAYS&&state.ot.read.length>=DAYS}
 ];
 function awards(){return AWARDS.map(a=>Object.assign({},a,{ok:a.ok()}))}
 
@@ -1808,6 +1915,93 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     draw();modal.append(sheet);document.body.append(modal);
   }
 })();
+/* ---------- путеводитель: что такое Библия и как устроено приложение ---------- */
+(function(){
+  const G={law:["Закон (Пятикнижие)","#c2410c"],hist:["Исторические книги","#e8650a"],poet:["Поэтические книги","#d4a017"],proph:["Пророки","#9a6b3f"],
+    gosp:["Евангелия","#6b4fd8"],acts:["Деяния","#1d6fd6"],ep:["Послания","#0e9aa7"],rev:["Откровение","#c7559c"]};
+  const OT=[["Бытие",50,"law"],["Исход",40,"law"],["Левит",27,"law"],["Числа",36,"law"],["Второзаконие",34,"law"],["Иисус Навин",24,"hist"],["Судьи",21,"hist"],["Руфь",4,"hist"],["1 Царств",31,"hist"],["2 Царств",24,"hist"],["3 Царств",22,"hist"],["4 Царств",25,"hist"],["1 Паралипоменон",29,"hist"],["2 Паралипоменон",36,"hist"],["Эздра",10,"hist"],["Неемия",13,"hist"],["Есфирь",10,"hist"],["Иов",42,"poet"],["Псалмы",150,"poet"],["Притчи",31,"poet"],["Екклесиаст",12,"poet"],["Песнь Песней",8,"poet"],["Исаия",66,"proph"],["Иеремия",52,"proph"],["Плач Иеремии",5,"proph"],["Иезекииль",48,"proph"],["Даниил",12,"proph"],["Осия",14,"proph"],["Иоиль",3,"proph"],["Амос",9,"proph"],["Авдий",1,"proph"],["Иона",4,"proph"],["Михей",7,"proph"],["Наум",3,"proph"],["Аввакум",3,"proph"],["Софония",3,"proph"],["Аггей",2,"proph"],["Захария",14,"proph"],["Малахия",4,"proph"]];
+  const NT=[["Евангелие от Матфея",28,"gosp"],["Евангелие от Марка",16,"gosp"],["Евангелие от Луки",24,"gosp"],["Евангелие от Иоанна",21,"gosp"],["Деяния",28,"acts"],["Римлянам",16,"ep"],["1 Коринфянам",16,"ep"],["2 Коринфянам",13,"ep"],["Галатам",6,"ep"],["Ефесянам",6,"ep"],["Филиппийцам",4,"ep"],["Колоссянам",4,"ep"],["1 Фессалоникийцам",5,"ep"],["2 Фессалоникийцам",3,"ep"],["1 Тимофею",6,"ep"],["2 Тимофею",4,"ep"],["Титу",3,"ep"],["Филимону",1,"ep"],["Евреям",13,"ep"],["Иакова",5,"ep"],["1 Петра",5,"ep"],["2 Петра",3,"ep"],["1 Иоанна",5,"ep"],["2 Иоанна",1,"ep"],["3 Иоанна",1,"ep"],["Иуды",1,"ep"],["Откровение",22,"rev"]];
+  const inPlan=new Set(Object.values(FULL));
+  const SNOW='<svg viewBox="0 0 24 24"><g fill="none" stroke="var(--ice)" stroke-width="1.9" stroke-linecap="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g></g></svg>';
+  const fl=(o)=>'<svg viewBox="0 0 64 80"><path d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z" fill="'+(o?"var(--off)":"var(--flame)")+'"/><path d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z" fill="'+(o?"var(--flame)":"var(--flame2)")+'"/></svg>';
+  const GEM='<span class="gemicon" style="width:28px;height:28px"></span>';
+  function shelf(list,title,info){
+    const w=el("div","shelf"),h=el("div","shelfhead");h.append(el("span",null,title),el("span",null,list.length+" "+plural(list.length,"книга","книги","книг")));
+    const row=el("div","shelfrow");
+    list.forEach(([n,c,g])=>{const sp=el("span","spine"+(inPlan.has(n)?" plan":""));sp.style.height=Math.round(26+Math.sqrt(c)*4.2)+"px";sp.style.background=G[g][1];
+      sp.title=n+" — "+c+" "+plural(c,"глава","главы","глав");
+      const show=()=>{row.querySelectorAll(".on").forEach(x=>x.classList.remove("on"));sp.classList.add("on");info.innerHTML="<b>"+n+"</b> · "+G[g][0].toLowerCase()+" · "+c+" "+plural(c,"глава","главы","глав")+(inPlan.has(n)?" · <b>читаем в 1-й год</b>":" · читаем во 2-й год")};
+      sp.addEventListener("mouseenter",show);sp.addEventListener("click",show);row.append(sp)});
+    w.append(h,row);return w;
+  }
+  function route(k){
+    const segs=[];BOOKSTARTS.filter(b=>b.k===k).forEach((b,j,a)=>{const end=j+1<a.length?a[j+1].i:DAYS;segs.push([b.book,end-b.i])});
+    const pal=k==="nt"?["#6b4fd8","#8a6cf2","#5b3fc0","#7c5ce6","#1d6fd6","#0e9aa7","#0b7f8a"]:["#c2410c","#e8650a","#d4570b","#b45309","#a8541f","#e07b39","#c96a2b","#9a4a16"];
+    const bar=el("div","rbar");segs.forEach(([b,n],j)=>{const d=el("div",null,n>=32?b:"");d.style.flex=n+" 0 0";d.style.background=pal[j%pal.length];d.title=(FULL[b]||b)+" — "+n+" "+daysWord(n);bar.append(d)});
+    const wrap=el("div","groute");const l=el("div","rl",k==="nt"?"Новый Завет":"Ветхий Завет");l.style.color="var(--s-"+k+")";
+    const ls=el("div","rlist");ls.innerHTML=segs.map(([b,n])=>'<span style="white-space:nowrap"><b>'+(FULL[b]||b)+"</b> "+n+"&nbsp;"+daysWord(n)+"</span>").join(" · ");
+    wrap.append(l,bar,ls);return wrap;
+  }
+  function open(){
+    const modal=el("div","fmodal"),sheet=el("div","fsheet bguide");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Путеводитель");
+    const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
+    modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+    const head=el("div","fhead"),h=el("h2",null,"Путеводитель по Библии");const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);head.append(h,x);
+    const sec=(t)=>{const d=el("section","gsec");if(t)d.append(el("h3",null,t));sheet.append(d);return d};
+    sheet.append(head);
+    // 1. что такое Библия
+    let d=sec("Что такое Библия");
+    const p1=el("p","glead");p1.innerHTML="Библия — это не одна книга, а <b>целая библиотека</b>. В ней 66 книг, которые писали около 40 человек на протяжении примерно 1500 лет: цари и пастухи, рыбаки и врачи. Но у всех этих книг одна главная тема — <b>личная история любви Бога к человеку</b> и Его желание войти в жизнь каждого из нас.";
+    const nums=el("div","gnum");nums.innerHTML="<div><b>66</b><span>книг</span></div><div><b>1189</b><span>глав</span></div><div><b>2</b><span>года на всю Библию</span></div>";
+    d.append(p1,nums);
+    // 2. полка
+    d=sec("Книжная полка");
+    const info=el("div","shelfinfo");info.textContent="Нажмите на корешок, чтобы узнать, что это за книга. Высота — сколько в книге глав.";
+    d.append(shelf(OT,"Ветхий Завет",info),shelf(NT,"Новый Завет",info),info);
+    const lg=el("div","glegend");Object.values(G).forEach(([n,c])=>{const s=el("span");const i=el("i");i.style.background=c;s.append(i,document.createTextNode(n));lg.append(s)});
+    const s0=el("span");s0.innerHTML='<i style="background:#555;position:relative"></i>';s0.firstChild.innerHTML='<b style="position:absolute;left:3px;top:3px;width:4px;height:4px;border-radius:50%;background:#fff"></b>';s0.append(document.createTextNode("точка — читаем в 1-й год, остальное — во 2-й"));lg.append(s0);
+    d.append(lg);
+    // 3. два завета
+    d=sec("Два Завета");
+    const two=el("div","gtwo");
+    two.innerHTML='<div class="gtest"><h4>Ветхий Завет · 39 книг</h4><p>Написан до прихода Иисуса Христа.</p><ul><li>сотворение мира и первые люди</li><li>история народа Израиля</li><li>закон, который Бог дал через Моисея</li><li>псалмы и мудрые изречения</li><li>пророчества о грядущем Христе</li></ul></div>'+
+      '<div class="gtest nt"><h4>Новый Завет · 27 книг</h4><p>Написан после жизни Иисуса на земле.</p><ul><li>четыре Евангелия — жизнь, смерть и воскресение Иисуса</li><li>Деяния — как появилась церковь</li><li>послания (письма) апостолов</li><li>Откровение — о том, чем всё завершится</li></ul></div>';
+    d.append(two);
+    // 4. как читать ссылку
+    d=sec("Как читать «Мф. 3:7–17»");
+    const r=el("div","gref");r.innerHTML='<div class="r1"><span class="rbig">Мф.</span><span class="rlab">книга<br>(Евангелие от Матфея)</span></div><div class="r2"><span class="rbig">3</span><span class="rlab">глава</span></div><span class="rsep">:</span><div class="r3"><span class="rbig">7–17</span><span class="rlab">стихи<br>с 7-го по 17-й</span></div>';
+    const n1=el("p","gnote");n1.innerHTML="Каждая книга разделена на <b>главы</b>, а глава — на короткие пронумерованные <b>стихи</b>. Так любое место легко найти. Если отрывок переходит в следующую главу, пишут так: <b>Быт. 2:19–3:6</b> — с 19-го стиха 2-й главы по 6-й стих 3-й главы. В Огоньке на номер отрывка можно просто нажать — текст откроется сам.";
+    d.append(r,n1);
+    // 5. как читает Огонёк
+    d=sec("Как читаем в Огоньке");
+    const p5=el("p");p5.innerHTML="Читаем по Восстановительному переводу: <b>вся Библия за 2 года</b>, примерно <b>10 минут в день</b>. Каждый день — <b>два коротких отрывка</b> (в среднем около 40 стихов): один из Нового Завета и один из Ветхого. Читаем книги по порядку, без пропусков. Все начали 28 сентября и идут по одной тропинке.";
+    const day=el("div","gday");const pt=Math.min(DAYS-1,Math.max(0,todayP()));
+    day.innerHTML='<div style="border-left:4px solid var(--s-nt)"><span class="muted">Сегодня, Новый Завет</span><b>'+refStr(part("nt",pt))+'</b></div><div style="border-left:4px solid var(--s-ot)"><span class="muted">Сегодня, Ветхий Завет</span><b>'+refStr(part("ot",pt))+'</b></div>';
+    const p6=el("p",null,"Сейчас идёт <b>1-й год</b> из двух. Маршрут первого года — какие книги и сколько дней на каждую:");
+    const mo=el("div","rmonths");[0,91,182,273,DAYS-1].forEach(i=>mo.append(el("span",null,shortDay(i))));
+    d.append(p5,day,p6,route("nt"),route("ot"),mo);
+    // 6. что значат цифры
+    d=sec("Что значат цифры и значки");
+    const ul=el("ul","gkeys");
+    [[fl(false)+"","<b>Серия — дней подряд.</b> Каждый день, когда вы прочитали хотя бы один отрывок, огонёк горит и серия растёт. Прочитали оба завета — огонь горит в полную силу."],
+     [fl(true),"<b>Маленький огонёк</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
+     ['<span style="color:var(--ok)">+2</span>',"<b>Опережение.</b> НЗ и ВЗ — на сколько дней вы впереди плана (зелёным) или позади (красным). «По плану» — вы идёте точно в график."],
+     [SNOW,"<b>Заморозки.</b> Если читаете вперёд графика по обоим заветам, копятся заморозки. Пропустили день — заморозка сохранит серию."],
+     ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',"<b>Кружки на тропинке</b> — дни плана, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня."],
+     ['<svg viewBox="0 0 30 30"><rect x="3" y="7" width="24" height="16" rx="4" fill="var(--surface)" stroke="var(--s-ot)" stroke-width="1.6"/><rect x="7" y="11" width="3" height="8" rx="1" fill="var(--s-ot)"/></svg>',"<b>Таблички с книгами</b> на тропинке показывают, где начинается новая книга: Исход, Левит, Числа… Пролистайте тропинку вверх — увидите весь первый год."],
+     [GEM,"<b>Алмазы</b> — за тесты по прочитанным главам. Даются только за 10 правильных ответов из 10."]
+    ].forEach(([ic,t])=>{const li=el("li"),k=el("span","gk");k.innerHTML=ic;const p=el("p");p.innerHTML=t;li.append(k,p);ul.append(li)});
+    d.append(ul);
+    // 7. советы
+    d=sec("Несколько советов");
+    const tips=el("ol","gtips");["Читайте в одно и то же время — утром или перед сном.","Не страшно, если что-то непонятно. Читайте дальше: многое проясняется по ходу.","Перед чтением можно коротко помолиться и попросить Бога открыть смысл.","Отмечайте стих, который тронул, и поделитесь им с другом.","Читайте вместе с друзьями — так легче не бросить."].forEach(t=>tips.append(el("li",null,t)));
+    d.append(tips);
+    const ok=el("button","btn-main","Понятно, начнём!");ok.type="button";ok.addEventListener("click",close);sheet.append(ok);
+    modal.append(sheet);document.body.append(modal);sheet.scrollTop=0;
+  }
+  $("guideOpen").addEventListener("click",open);$("guideLink").addEventListener("click",open);
+  window.__openGuide=open;
+})();
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -1848,7 +2042,7 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610052018"></script>
+<script type="module" src="auth.js?v=202610061200"></script>
 
 </body>
 </html>
