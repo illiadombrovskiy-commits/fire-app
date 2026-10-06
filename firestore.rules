@@ -49,6 +49,11 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
     }
 
+    // напоминания: токен уведомлений и часовой пояс — видит и меняет только сам пользователь (рассылку делает сервер)
+    match /push/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // профиль: любой вошедший пользователь может посмотреть (чтобы решить, добавлять ли в друзья)
     match /profiles/{uid} {
       allow get: if request.auth != null;

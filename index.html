@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff7a1a">
@@ -440,6 +441,28 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .gkeys p{font-size:.9rem;line-height:1.4}
 .gkeys p b{color:var(--ink)}
 .gtips{margin:0;padding-left:20px;line-height:1.5;font-size:.92rem}
+/* компактная главная: оба отрывка помещаются на экран телефона */
+.herort{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:0}
+.herochips{justify-content:flex-end}
+.herochips #freezeChip{font-size:.78rem;padding:4px 9px}
+.thead .tht{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;min-width:0}
+.thead .tht b{display:inline;font-size:.95rem}
+.thead .flame{width:26px;height:32px}
+@media (max-width:480px){.app>.card,.app>section.card{padding:14px}.tcard{padding:11px;gap:8px}.hero.withpace .flame{width:70px;height:88px}}
+.gems .foldhead h2{flex:none}
+.gemsum{flex:1;text-align:right;font-size:.82rem;color:var(--muted);font-weight:600;white-space:nowrap}
+.gems .gemsbody{gap:8px}
+.gems .gemsbody p{margin:0}
+.gems .ladder{gap:6px}
+.remind{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface)}
+.remind .rbell{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--flame-soft);flex:none}
+.remind .rbell svg{width:20px;height:20px}
+.remind .rtxt{flex:1;min-width:0;font-size:.88rem;line-height:1.3}
+.remind .rtxt b{display:block;font-size:.95rem}
+.remind .rtxt span{color:var(--muted)}
+.remind .rgo{flex:none;padding:8px 14px;border-radius:999px;background:var(--flame);color:#fff;font-weight:700;font-size:.85rem;white-space:nowrap}
+.remind .rx{flex:none;width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--muted);font-size:1.1rem;line-height:1}
+.umitem.on::after{content:" ✓";color:var(--ok)}
 .pstart line{stroke:var(--ok);stroke-width:2.5;stroke-linecap:round}
 .pstart path{fill:var(--ok)}
 .pstart text{font-size:12px;font-weight:800;fill:var(--ok);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -558,6 +581,9 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .ftab{flex:1;padding:9px 6px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:.85rem}
 .ftab.on{border-color:var(--xp);background:var(--xp-soft)}
 .fall .fsheet{min-height:70vh}
+.fallTop{position:sticky;top:-18px;z-index:2;margin:-18px -18px 0;padding:18px 18px 12px;background:var(--surface);display:flex;flex-direction:column;gap:14px;border-bottom:1px solid var(--line)}
+.ftab{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.ftab{font-size:.8rem;padding:9px 4px}}
 .namegate .fsheet{gap:12px}
 .nickin{font:inherit;font-size:1rem;font-weight:600;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
 .nickin:focus{outline:2px solid var(--xp);outline-offset:1px}
@@ -681,12 +707,20 @@ textarea.aboutok{animation:aboutglow 1s ease}
       <div>
         <div class="streakline"><span class="streak-num" id="streak">0</span><span class="streak-word" id="streakWord">дней подряд</span></div>
       </div>
+      <div class="herort">
       <details class="pacebar inhero" id="paceCard">
         <summary>
           <span class="pacetitle">Опережение</span>
           <span class="pacepills" id="paceTiles"></span>
         </summary>
       </details>
+      <div class="chips herochips">
+      <button class="chip ice" id="freezeChip" type="button">
+        <svg class="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></g></svg>
+        <span id="freezeText">Заморозки: 0</span>
+      </button>
+      </div>
+      </div>
     </div>
     <div class="pacebody inherobody" id="paceBody" hidden>
       <div class="chartbox" id="paceChart" role="img" aria-label="График: на сколько дней вы впереди или позади плана"></div>
@@ -697,18 +731,11 @@ textarea.aboutok{animation:aboutglow 1s ease}
       <details class="pacetable"><summary>Показать таблицей</summary><div id="paceTable"></div></details>
     </div>
     <div class="hero-sub" id="heroSub"></div>
-    <div class="chips">
-      <button class="chip ice" id="freezeChip" type="button">
-        <svg class="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/><g transform="rotate(60 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><g transform="rotate(120 12 12)"><path d="M12 2.5v19M8.8 4.6L12 7.2l3.2-2.6M8.8 19.4l3.2-2.6 3.2 2.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></g></svg>
-        <span id="freezeText">Заморозки: 0</span>
-      </button>
-    </div>
   </section>
 
   <section class="card">
     <div class="reading-head">
       <h2>Чтение на сегодня</h2>
-      <span class="daynum">Нажмите на отрывок, чтобы открыть</span>
     </div>
     <div class="tgrid" id="testaments"></div>
   </section>
@@ -748,13 +775,10 @@ textarea.aboutok{animation:aboutglow 1s ease}
     <div class="friends" id="friendsList"></div>
   </section>
 
-  <section class="card gems" id="gemsCard">
-    <div class="reading-head">
-      <h2><span class="gemicon big" aria-hidden="true"></span>Алмазы</h2>
-      <span class="gemcount" id="gemCount">0</span>
-    </div>
-    <div id="gemsBody"></div>
-  </section>
+  <details class="card fold gems" id="gemsCard">
+    <summary class="foldhead"><h2><span class="gemicon big" aria-hidden="true"></span>Алмазы</h2><span class="gemsum" id="gemSum"></span><span class="gemcount" id="gemCount">0</span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="foldbody"><div id="gemsBody"></div></div>
+  </details>
 
   <details class="card fold" id="schedule">
     <summary class="foldhead"><h2>Расписание</h2><span class="chev" aria-hidden="true"></span></summary>
@@ -1011,7 +1035,7 @@ function renderTestament(k){
   const card=el("div","tcard");
   const head=el("div","thead");
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 64 80");svg.setAttribute("class","flame"+(lit?"":" off"));svg.id="flame-"+k;svg.innerHTML=FLAME;
-  const hb=el("div");hb.append(el("b",null,T[k].label),el("span",null,s+" "+plural(s,"день подряд","дня подряд","дней подряд")));
+  const hb=el("div");hb.className="tht";hb.append(el("b",null,T[k].label),el("span",null,"· "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")));
   // огонёк за каждый прочитанный сегодня отрывок
   if(todays.length){
     const mm=el("div","minis");mm.id="minis-"+k;mm.title="Отрывков прочитано сегодня: "+todays.length;
@@ -1742,11 +1766,12 @@ const gemNext=()=>GEM_LADDER[Math.min(state.gems.step,GEM_LADDER.length-1)];
 function renderGems(){
   const g=state.gems, box=$("gemsBody"); if(!box)return; box.textContent=""; box.className="gemsbody";
   $("gemCount").textContent=g.n;
-  const ch=chaptersDone();
+  const ch=chaptersDone(), sum=$("gemSum");
+  if(sum)sum.textContent=ch<GEM_UNLOCK?ch+" из "+GEM_UNLOCK+" глав":(gemPool().length>=GEM_N?"тест готов":"");
   if(ch<GEM_UNLOCK){
     box.append(el("p","muted","Тест откроется, когда вы прочитаете "+GEM_UNLOCK+" глав. Прочитано полностью: "+ch+" из "+GEM_UNLOCK+"."));
     const bar=el("div","gbar"),i=el("i");i.style.width=(ch/GEM_UNLOCK*100)+"%";bar.append(i);box.append(bar);
-    box.append(el("p","hint","10 вопросов по прочитанному. Ответьте на все 10 без ошибок — и получите алмазы: 1, потом 5, 10 и 20 за каждый следующий идеальный тест подряд."));
+    box.append(el("p","hint","Тест — 10 вопросов. 10 из 10 подряд дают 1, 5, 10, 20 алмазов."));
     return;
   }
   const lad=el("div","ladder");
@@ -1758,11 +1783,10 @@ function renderGems(){
   box.append(el("p","muted",g.step?"Идеальных тестов подряд: "+g.step+". Следующий 10 из 10 даст "+gemNext()+" "+plural(gemNext(),"алмаз","алмаза","алмазов")+". Одна ошибка — и лестница начнётся сначала.":"Ответьте на 10 из 10 — получите "+gemNext()+" "+plural(gemNext(),"алмаз","алмаза","алмазов")+". Каждый следующий идеальный тест подряд даёт больше."));
   if(pool.length>=GEM_N){
     const b=el("button","btn-gem","Начать тест · 10 вопросов");b.type="button";b.addEventListener("click",startGemTest);box.append(b);
-    box.append(el("p","hint","Новых вопросов в запасе: "+pool.length+". Вопросы в тестах не повторяются."));
   }else{
     box.append(el("p","hint","Все вопросы по прочитанному уже были в тестах. Прочитайте новые отрывки — накопится "+GEM_N+" новых вопросов (сейчас "+pool.length+")."));
   }
-  if(g.tests)box.append(el("p","hint","Тестов пройдено: "+g.tests+", из них 10 из 10: "+g.perfect+"."));
+  if(g.tests)box.append(el("p","hint","Тестов: "+g.tests+", из них 10 из 10: "+g.perfect+". Вопросов в запасе: "+pool.length+"."));
 }
 let gemRun=null;
 function closeGem(){const m=document.querySelector(".gmodal");if(m)m.remove();document.removeEventListener("keydown",gemEsc)}
@@ -1977,7 +2001,7 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     const p5=el("p");p5.innerHTML="Читаем по Восстановительному переводу: <b>вся Библия за 2 года</b>, примерно <b>10 минут в день</b>. Каждый день — <b>два коротких отрывка</b> (в среднем около 40 стихов): один из Нового Завета и один из Ветхого. Читаем книги по порядку, без пропусков. Все начали 28 сентября и идут по одной тропинке.";
     const day=el("div","gday");const pt=Math.min(DAYS-1,Math.max(0,todayP()));
     day.innerHTML='<div style="border-left:4px solid var(--s-nt)"><span class="muted">Сегодня, Новый Завет</span><b>'+refStr(part("nt",pt))+'</b></div><div style="border-left:4px solid var(--s-ot)"><span class="muted">Сегодня, Ветхий Завет</span><b>'+refStr(part("ot",pt))+'</b></div>';
-    const p6=el("p",null,"Сейчас идёт <b>1-й год</b> из двух. Маршрут первого года — какие книги и сколько дней на каждую:");
+    const p6=el("p");p6.innerHTML="Сейчас идёт <b>1-й год</b> из двух. Маршрут первого года — какие книги и сколько дней на каждую:";
     const mo=el("div","rmonths");[0,91,182,273,DAYS-1].forEach(i=>mo.append(el("span",null,shortDay(i))));
     d.append(p5,day,p6,route("nt"),route("ot"),mo);
     // 6. что значат цифры
@@ -2042,7 +2066,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610061200"></script>
+<script type="module" src="auth.js?v=202610061845"></script>
 
+<script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
+(function(){var B="20261006184529";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

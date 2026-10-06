@@ -387,13 +387,17 @@ async function main() {
     try { navigator.vibrate && navigator.vibrate([60, 40, 60, 40, 140]); } catch (e) {}
   }
 
+  // одно согласие на всё: воодушевления и приглашения от друзей + напоминание в 22:00
   function bellButton() {
     if (!("Notification" in window) || Notification.permission !== "default") return null;
-    const b = el("button", "linkbtn bellbtn", "Включить уведомления, чтобы видеть, когда вас воодушевляют или зовут читать");
+    const b = el("button", "linkbtn bellbtn", "🔔 Включить уведомления: напоминания и воодушевления от друзей");
     b.type = "button";
     b.addEventListener("click", async () => {
-      try { await Notification.requestPermission(); } catch (e) {}
-      if (Notification.permission === "granted") O().toast("Уведомления включены");
+      let perm = "default"; try { perm = await Notification.requestPermission(); } catch (e) {}
+      if (perm === "granted") {
+        lsSet(REMIND_KEY, "1"); await refreshPush();
+        O().toast("Уведомления включены");
+      }
       renderFriends();
     });
     return b;
@@ -621,7 +625,8 @@ async function main() {
       subs.forEach((u) => list.append(personRow(u, null, null, "заявка отправлена")));
       if (!subs.length) list.append(el("p", "hint", "Вы ни на кого не подписаны. Подписка — это ваша заявка, которую ещё не приняли."));
     }
-    sheet.append(head, tabs, list);
+    const top = el("div", "fallTop"); top.append(head, tabs); // шапка с крестиком и вкладками не уезжает при прокрутке
+    sheet.append(top, list);
   }
   $("friendsAll").addEventListener("click", () => openAll("friends"));
 
@@ -663,7 +668,7 @@ async function main() {
     // на тропинке — только друзья
     O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
-    const bell = bellButton(); if (bell && myFriends.length) box.append(bell);
+    const bell = bellButton(); if (bell) box.append(bell);
   }
 
   $("addFriend").addEventListener("click", () => addFriendByCode($("friendCode").value));
@@ -726,6 +731,50 @@ async function main() {
     });
   }
 
+  /* ---------- напоминание в 22:00: пуш через Firebase Cloud Messaging, рассылает GitHub Actions (.github/scripts/remind.py) ---------- */
+  const REMIND_KEY = "ogonek-remind", REMIND_HIDE = "ogonek-remind-hide";
+  const pushCapable = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && "ontouchend" in document);
+  const remindOn = () => lsGet(REMIND_KEY) !== "0" && "Notification" in window && Notification.permission === "granted"; // включено по умолчанию
+  let MSG = null;
+  async function pushToken() {
+    const reg = await navigator.serviceWorker.register("sw.js"); await navigator.serviceWorker.ready;
+    if (!MSG) { const Msg = await import(SDK + "firebase-messaging.js"); if (!(await Msg.isSupported())) throw new Error("unsupported"); MSG = { Msg, m: Msg.getMessaging(app) }; }
+    return MSG.Msg.getToken(MSG.m, { serviceWorkerRegistration: reg });
+  }
+  async function savePush(token, on) {
+    const patch = { on, hour: 22, tz: -new Date().getTimezoneOffset(), updated: F.serverTimestamp() };
+    if (token) patch.tokens = F.arrayUnion(token);
+    await F.setDoc(F.doc(db, "push", me.uid), patch, { merge: true });
+  }
+  async function enableReminder() {
+    if (!me) return;
+    if (!pushCapable()) {
+      if (isIOS()) { O().toast("На iPhone напоминания работают, когда Огонёк добавлен на экран «Домой». Откройте его оттуда и включите снова."); const l = $("installLink"); if (l && !l.hidden) l.click(); }
+      else O().toast("Этот браузер не умеет присылать уведомления. Попробуйте Chrome.");
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm === "default") { try { perm = await Notification.requestPermission(); } catch (e) {} }
+    if (perm !== "granted") { O().toast("Уведомления запрещены. Разрешите их для Огонька в настройках браузера или телефона."); return; }
+    try {
+      const t = await pushToken(); await savePush(t, true);
+      lsSet(REMIND_KEY, "1"); lsSet(REMIND_HIDE, null);
+      O().toast("Готово! Если до 22:00 не прочитаете, Огонёк напомнит");
+    } catch (e) { console.warn(e); O().toast("Не получилось включить напоминание. Проверьте интернет и попробуйте ещё раз."); }
+  }
+  async function disableReminder() {
+    lsSet(REMIND_KEY, "0");
+    try { await savePush(null, false); } catch (e) { console.warn(e); }
+    O().toast("Напоминание выключено");
+  }
+  async function refreshPush() { // токен иногда меняется — обновляем его и часовой пояс при каждом входе
+    if (!remindOn() || !pushCapable()) return;
+    try { await savePush(await pushToken(), true); lsSet(REMIND_KEY, "1"); } catch (e) { console.warn(e); }
+  }
+  // кто уже разрешил уведомления — напоминание подключается само при входе
+  function autoReminder() { if (me && remindOn() && pushCapable()) refreshPush(); }
+
   /* ---------- меню пользователя в шапке: «О себе» и «Выйти» ---------- */
   function closeUserMenu() { const m = document.querySelector(".usermenu"); if (m) m.remove(); top.setAttribute("aria-expanded", "false"); document.removeEventListener("click", outsideMenu, true); document.removeEventListener("keydown", escMenu); }
   function outsideMenu(e) { const m = document.querySelector(".usermenu"); if (m && !m.contains(e.target) && e.target !== top) closeUserMenu(); }
@@ -772,6 +821,7 @@ async function main() {
     topAction = () => toggleUserMenu();
     $("auth").hidden = true; $("account").hidden = true;
     $("storage").textContent = "Прогресс сохраняется в вашем аккаунте";
+    autoReminder();
 
     // progress left on this device by another account is not mixed in
     const owner = lsGet(OWNER_KEY);
