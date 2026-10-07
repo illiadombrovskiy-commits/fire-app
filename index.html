@@ -1503,9 +1503,18 @@ function spbDayOfRef(s){const m=/^(.*\S)\s+(\d[\d:–—\-]*)$/.exec(s||"");if(!
   return null}
 function renderDayPath(){
   const box=$("path"); if(!box)return;
-  const mePos=Math.floor((nextP("nt")+nextP("ot"))/2);
+  // тропинка всегда идёт по общему расписанию церкви (как раньше), даже если вы сейчас читаете по своему
+  const P=PLAN_SPB, DAYS=P.length, PLAN_START=SPB_START;
+  const planDate=i=>add(SPB_START,i), todayP=()=>dayNo(today())-dayNo(SPB_START);
+  const shortDay=i=>parse(planDate(i)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"});
+  const dayLabel=i=>{const t=parse(planDate(i)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});return t.charAt(0).toUpperCase()+t.slice(1)};
+  const part=(k,i)=>{const d=P[Math.max(0,Math.min(i,DAYS-1))],bi=k==="nt"?0:2;return {book:d[bi],ref:d[bi+1]}};
+  const BOOKSTARTS=[];["nt","ot"].forEach(k=>{const bi=k==="nt"?0:2;P.forEach((d,i)=>{if(!i||P[i-1][bi]!==d[bi])BOOKSTARTS.push({i,k,book:d[bi]})})});
+  const readSet=k=>SCHED.spb?new Set(state[k].read):new Set();
+  let myRef="";
+  const mePos=SCHED.spb?Math.floor((nextP("nt")+nextP("ot"))/2):(()=>{const ps=[];KEYS.forEach(k=>{const np=nextP(k);if(np>=SCHED.plan.length)return;const r=refStr({book:PLAN[np][T[k].bi],ref:PLAN[np][T[k].ri]});myRef+=(myRef?" и ":"")+r;const x=spbDayOfRef(r);if(x!=null)ps.push(x)});return ps.length?Math.floor(ps.reduce((a,b)=>a+b,0)/ps.length):0})();
   // друзья на церковном расписании — по дню плана; на своём расписании — по книге и главе, которые они сейчас читают
-  const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>{
+  const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true,ref:myRef}].concat(pathPeople.map(f=>{
     if((f.plan||"spb")==="spb")return {id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)};
     const ks=Array.isArray(f.keys)&&f.keys.length?f.keys:["nt","ot"], ps=[], refs=[];
     ks.forEach((k,j)=>{const r=f.refs&&f.refs[j];if(!r)return;refs.push(r);const p=spbDayOfRef(r);if(p!=null)ps.push(p)});
@@ -1583,7 +1592,7 @@ function renderDayPath(){
     else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
     // в толпе имена показываются при приближении (от 150%), иначе только по наведению
     if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
-    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+(pp.ref?"своё расписание, читает "+pp.ref:dayLabel(Math.min(DAYS-1,Math.floor(pp.pos))))));
+    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+(pp.ref?(pp.me?"ваше расписание, читаете ":"своё расписание, читает ")+pp.ref:dayLabel(Math.min(DAYS-1,Math.floor(pp.pos))))));
     if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
     svg.append(g); if(pp.me)meY=y;
   };
@@ -1620,7 +1629,7 @@ function renderDayPath(){
   else if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY*pathZoom-pb.clientHeight/2);pb.scrollLeft=(pb.scrollWidth-pb.clientWidth)/2}
   if(pb&&!pb.dataset.bound){pb.dataset.bound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{pb.dataset.touched="1"},{passive:true}))}
 }
-function renderPath(){if(SCHED.spb)return renderDayPath();renderBiblePath()}
+function renderPath(){return renderDayPath()}
 function renderBiblePath(){
   const box=$("path"); if(!box)return;
   // тропинка — вся Библия от Бытия до Откровения; каждый стоит там, где сейчас читает (по любому расписанию)
@@ -2326,7 +2335,7 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
      [fl(true),"<b>Маленький огонёк</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
      ['<span style="color:var(--ok)">+2</span>',"<b>Опережение.</b> НЗ и ВЗ — на сколько дней вы впереди плана (зелёным) или позади (красным). «По плану» — вы идёте точно в график."],
      [SNOW,"<b>Заморозки.</b> Если читаете вперёд графика по обоим заветам, копятся заморозки. Пропустили день — заморозка сохранит серию."],
-     ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',(SCHED.spb?"<b>Кружки на тропинке</b> — дни плана, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня. Друзья со своим расписанием стоят в тот день плана, где читается их книга и глава.":"<b>Тропинка — вся Библия</b>, от Бытия внизу до Откровения наверху. Кружок с номером — начало книги, оранжевый — книга прочитана. Вы и друзья стоите там, где сейчас читаете, по какому бы расписанию ни шли. Синий круг «по плану» — где по вашему расписанию нужно быть сегодня.")],
+     ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',"<b>Кружки на тропинке</b> — дни расписания церкви, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня. Кто читает по своему расписанию, стоит в тот день, где читается его книга и глава."],
      ['<svg viewBox="0 0 30 30"><rect x="3" y="7" width="24" height="16" rx="4" fill="var(--surface)" stroke="var(--s-ot)" stroke-width="1.6"/><rect x="7" y="11" width="3" height="8" rx="1" fill="var(--s-ot)"/></svg>',"<b>Таблички с книгами</b> на тропинке показывают, где начинается новая книга: Исход, Левит, Числа… Пролистайте тропинку вверх — увидите весь путь."],
      [GEM,"<b>Алмазы</b> — за тесты по прочитанным главам. Даются только за 10 правильных ответов из 10."]
     ].forEach(([ic,t])=>{const li=el("li"),k=el("span","gk");k.innerHTML=ic;const p=el("p");p.innerHTML=t;li.append(k,p);ul.append(li)});
@@ -2634,10 +2643,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071612"></script>
+<script type="module" src="auth.js?v=202610071628"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007161230";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007162838";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
