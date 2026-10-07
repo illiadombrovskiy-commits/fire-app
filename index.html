@@ -2244,6 +2244,7 @@ function openPlans(){
   function list(){
     sheet.textContent="";sheet.append(head("Расписание чтения"));
     const cur=el("div","pcur");cur.append(el("span","label","Сейчас вы читаете"),el("b",null,SCHED.name),el("span",null,schedSummary(SCHED)));sheet.append(cur);
+    sheet.scrollTop=0;
     const items=[];
     let lastG="";
     TEMPLATES.forEach(t=>{if(t.group!==lastG){items.push(el("div","pgroup",t.group));lastG=t.group}items.push(card(t.name,t.desc,t.id,()=>pickTemplate(t)))});
@@ -2251,7 +2252,7 @@ function openPlans(){
     if(mine.length){items.push(el("div","pgroup","Мои расписания"));mine.forEach(d=>{let S=null;try{S=buildSched(d)}catch(e){}if(S)items.push(card(d.name||"Своё расписание",schedSummary(S),d.id,()=>pickTemplate(Object.assign({custom:true},d))))})}
     const add=el("button","pnew","＋ Создать своё расписание");add.type="button";add.addEventListener("click",()=>custom());
     const note=el("p","hint","Прогресс каждого расписания сохраняется — к нему можно вернуться. Серия дней не прерывается. На тропинке вы видите друзей, которые читают по тому же расписанию.");
-    sheet.append(...items,add,note);
+    sheet.append(add,...items,note);
   }
   function card(name,desc,id,go){
     const b=el("button","pitem"+(id===SCHED.id?" on":""));b.type="button";
@@ -2260,7 +2261,7 @@ function openPlans(){
     b.append(t);if(id===SCHED.id)b.append(el("span","pmark","✓"));b.addEventListener("click",go);return b;
   }
   function pickTemplate(t){
-    sheet.textContent="";sheet.append(head(t.name,list));
+    sheet.textContent="";sheet.append(head(t.name,list));sheet.scrollTop=0;
     const saved=t.id!==SCHED.id&&(state.plans||{})[t.id];
     if(t.desc&&!t.custom)sheet.append(el("p","pdesc",t.desc));
     if(t.id==="spb"){
@@ -2282,14 +2283,14 @@ function openPlans(){
     sheet.append(el("p","hint","Ваш прогресс по текущему расписанию сохранится — к нему можно будет вернуться."));
   }
   function custom(){
-    sheet.textContent="";sheet.append(head("Своё расписание",list));
+    sheet.textContent="";sheet.append(head("Своё расписание",list));sheet.scrollTop=0;
     const f={name:"Моё расписание",start:today(),sec:ALLSEC.slice(),mode:"par",by:"end",end:add(today(),364),amount:3};
     const field=(label,input)=>{const l=el("label","pfield");l.append(el("span",null,label),input);return l};
     const nm=el("input");nm.value=f.name;nm.maxLength=40;nm.addEventListener("input",()=>{f.name=nm.value.trim()||"Моё расписание"});
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
     sheet.append(field("Название",nm),field("Дата начала",st));
     // что читать: включите Ветхий и/или Новый Завет, затем отметьте нужные книги (название раздела — выбрать весь раздел)
-    f.books=new Set(); f.tOn={ot:false,nt:false}; // по умолчанию ничего не выбрано
+    f.books=new Set(); f.tOn={ot:true,nt:true}; // видны все книги Библии, ни одна не выбрана
     const secBox=el("div","psecs");const cnt=el("span","pcnt");const lab=el("span","plab","Что читать ");lab.append(cnt);secBox.append(lab);
     // два завета; включены оба — кнопки сливаются в одну «Вся Библия» (половинки по-прежнему выключают свой завет)
     const quick=el("div","ptest"), qOt=el("button","pchip pt-ot"), qNt=el("button","pchip pt-nt");
@@ -2297,12 +2298,13 @@ function openPlans(){
     [qOt,qNt].forEach(b=>{b.type="button";quick.append(b)});quick.append(el("span","ptall","Вся Библия"));
     // завет включён — видны его книги (выбираете сами); выключен — книги скрыты и сняты
     const setT=(t,on)=>{f.tOn[t]=on;if(!on)BOOKS.filter(b=>b.t===t).forEach(b=>f.books.delete(b.a))};
-    [[qOt,"ot"],[qNt,"nt"]].forEach(([b,t])=>b.addEventListener("click",()=>{setT(t,!f.tOn[t]);drawSecs();upd()}));
+    // «Вся Библия»: нажатие на половину оставляет только этот завет (другой сворачивается); нажатие на выключенный — снова вся Библия
+    [[qOt,"ot","nt"],[qNt,"nt","ot"]].forEach(([b,t,o])=>b.addEventListener("click",()=>{if(f.tOn[t]&&f.tOn[o])setT(o,false);else if(!f.tOn[t])setT(t,true);else return;drawSecs();upd()}));
     const secs=el("div","pbooks");
     function drawSecs(){secs.textContent="";
       qOt.classList.toggle("on",f.tOn.ot);qNt.classList.toggle("on",f.tOn.nt);quick.classList.toggle("both",f.tOn.ot&&f.tOn.nt);
       [qOt,qNt].forEach(b=>b.setAttribute("aria-pressed",b.classList.contains("on")?"true":"false"));
-      qOt.title=f.tOn.ot&&f.tOn.nt?"Вся Библия · нажмите слева, чтобы убрать Ветхий Завет":"";qNt.title=f.tOn.ot&&f.tOn.nt?"Вся Библия · нажмите справа, чтобы убрать Новый Завет":"";
+      qOt.title=f.tOn.ot&&f.tOn.nt?"Нажмите слева — только Ветхий Завет":f.tOn.ot?"":"Показать всю Библию";qNt.title=f.tOn.ot&&f.tOn.nt?"Нажмите справа — только Новый Завет":f.tOn.nt?"":"Показать всю Библию";
       SECTIONS.forEach(([id,name,t])=>{if(!f.tOn[t])return;
         const list=BOOKS.filter(b=>b.s===id), all=list.every(b=>f.books.has(b.a)), some=list.some(b=>f.books.has(b.a));
         const grp=el("div","pbgrp "+t);grp.style.setProperty("--c",SECCOL[id]);
@@ -2311,7 +2313,6 @@ function openPlans(){
         const chips=el("div","pbchips");list.forEach(b=>{const c=el("button","pbook-c"+(f.books.has(b.a)?" on":""),b.n.replace(/^Евангелие от /,""));c.type="button";c.title=b.n;c.style.setProperty("--c",SECCOL[b.s]);c.setAttribute("aria-pressed",f.books.has(b.a)?"true":"false");
           c.addEventListener("click",()=>{f.books.has(b.a)?f.books.delete(b.a):f.books.add(b.a);drawSecs();upd()});chips.append(c)});
         grp.append(h,chips);secs.append(grp)});
-      if(!f.tOn.ot&&!f.tOn.nt)secs.append(el("p","hint","Включите Ветхий или Новый Завет и отметьте книги, которые хотите читать."));
       cnt.textContent="· выбрано книг: "+f.books.size+" из 66"}
     drawSecs();secBox.append(quick,secs);sheet.append(secBox);
     // как читать
@@ -2443,10 +2444,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071102"></script>
+<script type="module" src="auth.js?v=202610071111"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007110231";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007111149";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
