@@ -533,7 +533,14 @@ async function main() {
     const bn = isMe ? O().booksCount() : bl.length;
     const shelfBtn = el("button", "bsbtn", "📚 " + (isMe ? "Моя книжная полка" : "Книжная полка") + " · " + bn + " из 66"); shelfBtn.type = "button";
     shelfBtn.addEventListener("click", () => O().openBooks(isMe ? null : bl, isMe ? null : (d.name || "").split(" ")[0]));
-    sheet.append(head, stats, shelfBtn, reading);
+    // пройденные расписания (и для друзей), а у себя — ещё и управление своими расписаниями
+    const pd = isMe ? null : (Array.isArray(d.plansDone) ? d.plansDone : []);
+    const pathBtn = el("button", "bsbtn", "🏁 Пройденный путь · " + (isMe ? O().finishedCount() : pd.length)); pathBtn.type = "button";
+    pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
+    const prow = el("div", "fprow"); prow.append(pathBtn);
+    if (isMe) { const ed = el("button", "bsbtn", "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
+    else prow.style.gridTemplateColumns = "1fr";
+    sheet.append(head, stats, shelfBtn, prow, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
     else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
