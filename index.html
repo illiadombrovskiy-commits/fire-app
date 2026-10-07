@@ -481,15 +481,15 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .bsnext{margin:0;padding:10px 12px;border-radius:12px;background:var(--flame-soft);font-size:.9rem}
 /* выбор расписания */
 .pcnt{font-weight:600}
-.pbooks{display:flex;flex-direction:column;gap:10px}
-.pbgrp{display:flex;flex-direction:column;gap:6px}
-.pbsec{align-self:flex-start;padding:4px 10px;border-radius:8px;border:0;background:none;color:var(--ink);font:inherit;font-weight:800;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
-.pbsec::before{content:"";width:14px;height:14px;border-radius:4px;border:2px solid var(--line);box-sizing:border-box}
-.pbsec.on::before{background:var(--flame);border-color:var(--flame)}
-.pbsec.some::before{background:linear-gradient(var(--flame),var(--flame)) center/8px 2px no-repeat;border-color:var(--flame)}
-.pbchips{display:flex;flex-wrap:wrap;gap:5px}
-.pbook-c{padding:5px 9px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
-.pbook-c.on{background:color-mix(in srgb,var(--c) 18%,var(--surface));border-color:var(--c);color:var(--ink)}
+.pbooks{display:flex;flex-direction:column;gap:8px}
+.pbgrp{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:stretch}
+.pbsec{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;border:1.5px solid var(--c);background:transparent;color:var(--c);font:inherit;font-weight:800;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:64px}
+.pbsec.on{background:var(--c);color:#fff}
+.pbsec.some{background:color-mix(in srgb,var(--c) 25%,transparent)}
+.pbchips{display:flex;flex-wrap:wrap;gap:5px;align-content:center}
+.pchip.on{background:var(--flame);border-color:var(--flame);color:#fff}
+.pbook-c{padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
+.pbook-c.on{background:var(--c);border-color:var(--c);color:#fff}
 
 .pnow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--bg)}
 .pnow span{font-weight:700}
@@ -2279,14 +2279,22 @@ function openPlans(){
     const nm=el("input");nm.value=f.name;nm.maxLength=40;nm.addEventListener("input",()=>{f.name=nm.value.trim()||"Моё расписание"});
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
     sheet.append(field("Название",nm),field("Дата начала",st));
-    // что читать: любые книги Библии; раздел целиком — нажатием на его название
-    f.books=new Set(BOOKS.map(b=>b.a));
+    // что читать: включите Ветхий и/или Новый Завет, затем отметьте нужные книги (название раздела — выбрать весь раздел)
+    f.books=new Set(BOOKS.map(b=>b.a)); f.tOn={ot:true,nt:true};
     const secBox=el("div","psecs");const cnt=el("span","pcnt");const lab=el("span","plab","Что читать ");lab.append(cnt);secBox.append(lab);
-    const quick=el("div","pchips");[["Вся Библия",()=>BOOKS],["Ветхий Завет",()=>BOOKS.filter(b=>b.t==="ot")],["Новый Завет",()=>BOOKS.filter(b=>b.t==="nt")],["Очистить",()=>[]]].forEach(([t,fn])=>{const b=el("button","pchip",t);b.type="button";b.addEventListener("click",()=>{f.books=new Set(fn().map(x=>x.a));drawSecs();upd()});quick.append(b)});
+    const quick=el("div","pchips"), qAll=el("button","pchip","Вся Библия"), qOt=el("button","pchip","Ветхий Завет"), qNt=el("button","pchip","Новый Завет");
+    [qAll,qOt,qNt].forEach(b=>{b.type="button";quick.append(b)});
+    const setT=(t,on)=>{f.tOn[t]=on;BOOKS.filter(b=>b.t===t).forEach(b=>on?f.books.add(b.a):f.books.delete(b.a))};
+    qAll.addEventListener("click",()=>{setT("ot",true);setT("nt",true);drawSecs();upd()});
+    [[qOt,"ot","nt"],[qNt,"nt","ot"]].forEach(([b,t,o])=>b.addEventListener("click",()=>{if(f.tOn[t]&&!f.tOn[o])return;setT(t,!f.tOn[t]);drawSecs();upd()}));
     const secs=el("div","pbooks");
     function drawSecs(){secs.textContent="";
-      SECTIONS.forEach(([id,name,t])=>{const list=BOOKS.filter(b=>b.s===id), all=list.every(b=>f.books.has(b.a)), some=list.some(b=>f.books.has(b.a));
-        const grp=el("div","pbgrp "+t);const h=el("button","pbsec"+(all?" on":some?" some":""),name);h.type="button";h.setAttribute("aria-pressed",all?"true":"false");
+      const both=f.tOn.ot&&f.tOn.nt;qAll.classList.toggle("on",both);qOt.classList.toggle("on",f.tOn.ot);qNt.classList.toggle("on",f.tOn.nt);
+      [qAll,qOt,qNt].forEach(b=>b.setAttribute("aria-pressed",b.classList.contains("on")?"true":"false"));
+      SECTIONS.forEach(([id,name,t])=>{if(!f.tOn[t])return;
+        const list=BOOKS.filter(b=>b.s===id), all=list.every(b=>f.books.has(b.a)), some=list.some(b=>f.books.has(b.a));
+        const grp=el("div","pbgrp "+t);grp.style.setProperty("--c",SECCOL[id]);
+        const h=el("button","pbsec"+(all?" on":some?" some":""));h.type="button";h.append(el("span",null,name));h.title=(all?"Снять":"Выбрать")+" весь раздел «"+name+"»";h.setAttribute("aria-pressed",all?"true":"false");
         h.addEventListener("click",()=>{list.forEach(b=>all?f.books.delete(b.a):f.books.add(b.a));drawSecs();upd()});
         const chips=el("div","pbchips");list.forEach(b=>{const c=el("button","pbook-c"+(f.books.has(b.a)?" on":""),b.n.replace(/^Евангелие от /,""));c.type="button";c.title=b.n;c.style.setProperty("--c",SECCOL[b.s]);c.setAttribute("aria-pressed",f.books.has(b.a)?"true":"false");
           c.addEventListener("click",()=>{f.books.has(b.a)?f.books.delete(b.a):f.books.add(b.a);drawSecs();upd()});chips.append(c)});
@@ -2422,10 +2430,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071027"></script>
+<script type="module" src="auth.js?v=202610071051"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007102710";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007105104";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
