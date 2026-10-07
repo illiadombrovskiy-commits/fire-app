@@ -535,7 +535,7 @@ async function main() {
     shelfBtn.addEventListener("click", () => O().openBooks(isMe ? null : bl, isMe ? null : (d.name || "").split(" ")[0]));
     // пройденные расписания (и для друзей), а у себя — ещё и управление своими расписаниями
     const pd = isMe ? null : (Array.isArray(d.plansDone) ? d.plansDone : []);
-    const pathBtn = el("button", "bsbtn", "🏁 Пройденный путь · " + (isMe ? O().finishedCount() : pd.length)); pathBtn.type = "button";
+    const pathBtn = el("button", "bsbtn", "🏔️ Пройденный путь · " + (isMe ? O().finishedCount() : pd.length)); pathBtn.type = "button";
     pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
     const prow = el("div", "fprow"); prow.append(pathBtn);
     if (isMe) { const ed = el("button", "bsbtn", "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
@@ -687,7 +687,7 @@ async function main() {
     $("friendsAll").hidden = false;
     if (allOpen) drawAll();
     // на тропинке — только друзья
-    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0, plan: friendData[u].plan || "spb", keys: friendData[u].keys })));
+    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0, plan: friendData[u].plan || "spb", keys: friendData[u].keys, refs: (Array.isArray(friendData[u].keys) && friendData[u].keys.length ? friendData[u].keys : ["nt", "ot"]).map((k) => friendData[u][k + "Ref"] || null) })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
     const bell = bellButton(); if (bell) box.append(bell);
   }

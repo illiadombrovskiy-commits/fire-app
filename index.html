@@ -492,8 +492,7 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pedit.on{border-color:var(--ok)}
 .pdel{flex:none;padding:7px 12px;border-radius:999px;border:1.5px solid #e5484d;background:transparent;color:#e5484d;font:inherit;font-weight:700;font-size:.82rem;cursor:pointer}
 .pdel.armed{background:#e5484d;color:#fff}
-.fprow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fprow .bsbtn{font-size:.88rem;padding:10px 12px}
+.fprow{display:flex;flex-direction:column;gap:8px}
 /* выбор расписания */
 .ptest{position:relative;display:flex;gap:8px;transition:gap .25s ease}
 .ptest .pchip{flex:1;padding:9px 10px;transition:border-radius .25s ease,background .2s,color .2s;text-align:center}
@@ -548,6 +547,14 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .pprev{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:var(--link-soft);font-size:.86rem;line-height:1.35}
 .pprev:empty{display:none}
 .pprev span{color:var(--muted)}
+.pbook rect:first-of-type{stroke:var(--c)}
+.pbook .pbookspine{fill:var(--c)}
+.pbook .pbooklab{fill:var(--c)}
+.pbook .pbookln{stroke:var(--c)}
+.pbook.done rect:first-of-type{fill:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.pplantag{font-size:10px;font-weight:800;fill:var(--link);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.ptestline{stroke:var(--s-nt);stroke-width:1.5;stroke-dasharray:6 5;opacity:.7}
+.ptestlab{font-size:13px;font-weight:800;fill:var(--s-nt);letter-spacing:.06em;text-transform:uppercase;paint-order:stroke;stroke:var(--bg);stroke-width:4px}
 .pstart line{stroke:var(--ok);stroke-width:2.5;stroke-linecap:round}
 .pstart path{fill:var(--ok)}
 .pstart text{font-size:12px;font-weight:800;fill:var(--ok);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -1490,10 +1497,21 @@ function setPathZoom(z){
 }
 const PCOL=["#3d93e2","#34a874","#8a6cf2","#e0475b","#2bb3b1","#c7559c","#5b6bd6"];
 function hashCol(id){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))|0;return PCOL[Math.abs(h)%PCOL.length]}
-function renderPath(){
+// день церковного плана, в который читается эта книга и глава (для друзей со своим расписанием)
+function spbDayOfRef(s){const m=/^(.*\S)\s+(\d[\d:–—\-]*)$/.exec(s||"");if(!m||!BOOK[m[1]])return null;const book=m[1],[c]=chapRange(m[2]),bi=BOOK[book].t==="nt"?0:2;
+  let first=-1;for(let i=0;i<PLAN_SPB.length;i++){const d=PLAN_SPB[i];if(d[bi]!==book)continue;if(first<0)first=i;const [a,z]=chapRange(d[bi+1]);if(c>=a&&c<=z)return i}
+  return null}
+function renderDayPath(){
   const box=$("path"); if(!box)return;
-  const mePos=Math.floor(KEYS.reduce((a,k)=>a+nextP(k),0)/KEYS.length);
-  const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.filter(f=>(f.plan||"spb")===SCHED.id).map(f=>{const ks=f.keys||["nt","ot"];return {id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(ks.reduce((a,k)=>a+(f[k]||0),0)/ks.length)}}));
+  const mePos=Math.floor((nextP("nt")+nextP("ot"))/2);
+  // друзья на церковном расписании — по дню плана; на своём расписании — по книге и главе, которые они сейчас читают
+  const people=[{id:"me",name:"Вы",photo:state.photo||"",pos:mePos,me:true}].concat(pathPeople.map(f=>{
+    if((f.plan||"spb")==="spb")return {id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(((f.nt||0)+(f.ot||0))/2)};
+    const ks=Array.isArray(f.keys)&&f.keys.length?f.keys:["nt","ot"], ps=[], refs=[];
+    ks.forEach((k,j)=>{const r=f.refs&&f.refs[j];if(!r)return;refs.push(r);const p=spbDayOfRef(r);if(p!=null)ps.push(p)});
+    if(!ps.length)return null;
+    return {id:f.id,name:f.name||"Друг",photo:f.photo||"",pos:Math.floor(ps.reduce((a,b)=>a+b,0)/ps.length),ref:refs.join(" и ")};
+  }).filter(Boolean));
   const tp=Math.min(DAYS-1,Math.max(0,todayP()));
   const lo=0, hi=DAYS-1; // вся тропинка года — можно пролистать и увидеть, где начинается каждая книга
   const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=lo===0?160:40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
@@ -1504,30 +1522,30 @@ function renderPath(){
   svg.append(sv("path",{d,fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
   const doneTo=Math.min(hi,mePos);let dd="";for(let i=lo;i<=Math.floor(doneTo);i++)dd+=(i===lo?"M":"L")+X(i).toFixed(1)+" "+Y(i).toFixed(1);
   if(doneTo>lo){const [ex,ey]=posXY(doneTo);dd+="L"+ex.toFixed(1)+" "+ey.toFixed(1);svg.append(sv("path",{d:dd,fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-linejoin":"round","stroke-dasharray":"2 8"}))}
-  const rs=KEYS.map(readSet);
+  const rn=readSet("nt"),ro=readSet("ot");
   for(let i=lo;i<=hi;i++){
-    const both=rs.every(r=>r.has(i)), one=rs.some(r=>r.has(i));
+    const both=rn.has(i)&&ro.has(i), one=rn.has(i)||ro.has(i);
     const g=sv("g",{class:"pnode"+(both?" both":one?" one":"")});
     g.append(sv("circle",{cx:X(i),cy:Y(i),r:15}));
     if(i!==tp)g.append(sv("text",{x:X(i),y:Y(i)+4,"text-anchor":"middle"},String(parse(planDate(i)).getDate()))); // у дня «по плану» дата подписана справа
-    const t=sv("title",{},dayLabel(i)+" · "+KEYS.map(k=>refStr(part(k,i))).join(" · "));g.append(t);
+    const t=sv("title",{},dayLabel(i)+" · "+refStr(part("nt",i))+" · "+refStr(part("ot",i)));g.append(t);
     svg.append(g);
-    if(WD?(i===0||sd.dow(planDate(i))<sd.dow(planDate(i-1))||dayNo(planDate(i))-dayNo(planDate(i-1))>=7):i%7===0){const left=X(i)<=cx;{const wt=sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-28,"text-anchor":left?"end":"start",class:"pweek"});wt.append(sv("tspan",{x:left?X(i)-22:X(i)+22},"Неделя "+(WD?Math.floor((dayNo(planDate(i))-sd.dow(planDate(i))-dayNo(PLAN_START)+sd.dow(PLAN_START))/7)+1:i/7+1)),sv("tspan",{x:left?X(i)-22:X(i)+22,dy:13,class:"pweekd"},shortDay(i)));svg.append(wt)}}
+    if(i%7===0){const left=X(i)<=cx;{const wt=sv("text",{x:left?X(i)-22:X(i)+22,y:Y(i)-28,"text-anchor":left?"end":"start",class:"pweek"});wt.append(sv("tspan",{x:left?X(i)-22:X(i)+22},"Неделя "+(i/7+1)),sv("tspan",{x:left?X(i)-22:X(i)+22,dy:13,class:"pweekd"},shortDay(i)));svg.append(wt)}}
   }
   if(hi>=DAYS-1)svg.append(sv("text",{x:X(DAYS-1),y:Y(DAYS-1)-24,"text-anchor":"middle",class:"pweek"},"Конец 1-го года · дальше 2-й год"));
   // книги Библии: табличка там, где начинается новая книга
   {const byDay={};BOOKSTARTS.forEach(b=>{(byDay[b.i]=byDay[b.i]||[]).push(b)});
    Object.entries(byDay).forEach(([di,list])=>{
      const i=+di, nx=X(i), right=nx<=cx, fs=W<360?11.5:12.5;
-     const bwOf=b=>{const name=FULL[b.book]||b.book,lab=BOOK[b.book].t==="nt"?"Новый Завет":"Ветхий Завет";return Math.ceil(Math.max(name.length*fs*0.56,lab.length*5.6)+40)};
+     const bwOf=b=>{const name=FULL[b.book]||b.book,lab=b.k==="nt"?"Новый Завет":"Ветхий Завет";return Math.ceil(Math.max(name.length*fs*0.56,lab.length*5.6)+40)};
      const tot=list.reduce((a,b)=>a+bwOf(b),0)+8*(list.length-1); let x0=(W-tot)/2;
      list.forEach((b,j)=>{
-       const name=FULL[b.book]||b.book, lab=BOOK[b.book].t==="nt"?"Новый Завет":"Ветхий Завет";
+       const name=FULL[b.book]||b.book, lab=b.k==="nt"?"Новый Завет":"Ветхий Завет";
        const bw=Math.ceil(Math.max(name.length*fs*0.56,lab.length*5.6)+40), bh=36;
        const first=i===0; // первые книги — под флажком «Старт», рядом друг с другом
        const by=first?Y(0)+102:Y(i)-bh/2+(i===tp?-40:0);
        const bx=first?x0:(right?W-8-bw:8); if(first)x0+=bw+8;
-       const g=sv("g",{class:"pbook "+BOOK[b.book].t});
+       const g=sv("g",{class:"pbook "+b.k});g.style.setProperty("--c","var(--s-"+b.k+")");
        if(!first)g.append(sv("line",{x1:right?bx:bx+bw,y1:by+bh/2,x2:nx+(right?17:-17),y2:Y(i),class:"pbookln"}));
        g.append(sv("rect",{x:bx,y:by,width:bw,height:bh,rx:10}));
        g.append(sv("rect",{x:bx+8,y:by+8,width:6,height:bh-16,rx:2,class:"pbookspine"}));
@@ -1542,7 +1560,7 @@ function renderPath(){
     g.append(sv("line",{x1:sx,y1:sy+36,x2:sx,y2:sy+60}));
     g.append(sv("path",{d:"M"+sx+" "+(sy+36)+"h22l-6 6 6 6h-22z"}));
     g.append(sv("text",{x:tx,y:sy+76,"text-anchor":"middle"},"Старт · "+parse(PLAN_START).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})));
-    g.append(sv("text",{x:tx,y:sy+90,"text-anchor":"middle",class:"pstartsub"},SCHED.spb?"все начинают отсюда":"начало вашего расписания"));
+    g.append(sv("text",{x:tx,y:sy+90,"text-anchor":"middle",class:"pstartsub"},"все начинают отсюда"));
     svg.append(g)}
   // где по плану нужно быть сегодня: пунктир через всю тропинку и флажок
   {const ty=Y(tp), tx=X(tp), left=tx>cx;
@@ -1565,7 +1583,7 @@ function renderPath(){
     else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
     // в толпе имена показываются при приближении (от 150%), иначе только по наведению
     if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
-    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+dayLabel(Math.min(DAYS-1,Math.floor(pp.pos)))));
+    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+(pp.ref?"своё расписание, читает "+pp.ref:dayLabel(Math.min(DAYS-1,Math.floor(pp.pos))))));
     if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
     svg.append(g); if(pp.me)meY=y;
   };
@@ -1596,6 +1614,105 @@ function renderPath(){
   svg.setAttribute("width",Math.round(W*pathZoom));svg.setAttribute("height",Math.round(H*pathZoom));
   box.textContent="";box.append(svg);
   const lead=people.slice().sort((a,b)=>b.pos-a.pos)[0];
+  $("pathSub").textContent="";
+  const pb=$("pathBox");
+  if(pb&&pathKeep){pb.scrollLeft=pathKeep.x*pb.scrollWidth-pb.clientWidth/2;pb.scrollTop=pathKeep.y*pb.scrollHeight-pb.clientHeight/2;pathKeep=null}
+  else if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY*pathZoom-pb.clientHeight/2);pb.scrollLeft=(pb.scrollWidth-pb.clientWidth)/2}
+  if(pb&&!pb.dataset.bound){pb.dataset.bound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{pb.dataset.touched="1"},{passive:true}))}
+}
+function renderPath(){if(SCHED.spb)return renderDayPath();renderBiblePath()}
+function renderBiblePath(){
+  const box=$("path"); if(!box)return;
+  // тропинка — вся Библия от Бытия до Откровения; каждый стоит там, где сейчас читает (по любому расписанию)
+  const W=Math.max(280,box.clientWidth||320), cx=W/2, A=Math.min(90,W*0.26), B=72, C=6, padB=120, padT=90, NTGAP=70;
+  const geo=[];let v=padB;
+  BOOKS.forEach((b,i)=>{if(b.a==="Мф.")v+=NTGAP;const h=B+C*b.v.length;geo.push({b,i,v0:v,node:v+20,h});v+=h});
+  const H=v+padT, Y=vv=>H-vv, X=vv=>cx+A*Math.sin(vv/170*Math.PI);
+  const G=Object.fromEntries(geo.map(x=>[x.b.a,x]));
+  // место отрывка на тропинке: книга, глава и (если есть) стих
+  const vOf=(book,ref)=>{const g=G[book];if(!g)return null;const [c]=chapRange(String(ref||"1"));const ch=Math.max(1,Math.min(g.b.v.length,c||1));
+    const m=/^\d+:(\d+)/.exec(String(ref||""));const fr=m?(Math.min(+m[1],g.b.v[ch-1])-1)/g.b.v[ch-1]:0;return g.node+30+(ch-1+fr)*C};
+  const parseRef=s=>{const m=/^(.*\S)\s+(\d[\d:–—\-]*)$/.exec(s||"");return m&&BOOK[m[1]]?{book:m[1],ref:m[2]}:null};
+  const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка: вся Библия от Бытия до Откровения — где вы и ваши друзья"});
+  let d="";for(let vv=padB-40;vv<=H-padT+40;vv+=10)d+=(d?"L":"M")+X(vv).toFixed(1)+" "+Y(vv).toFixed(1);
+  svg.append(sv("path",{d,fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  // книги: кружок в начале книги и табличка с названием
+  const done=new Set(booksSummary().map(x=>x[0]));
+  const people=[];
+  KEYS.forEach(k=>{const np=nextP(k);if(np>=DAYS)return;const x=part(k,np);const vv=vOf(x.book,x.ref);if(vv!=null)people.push({id:"me",key:"me-"+k,name:"Вы",photo:state.photo||"",v:vv,me:true,ref:refStr(x)})});
+  const reading=new Set(people.map(p=>parseRef(p.ref)&&parseRef(p.ref).book));
+  const fs=W<360?11:12;
+  geo.forEach(g=>{
+    const nx=X(g.node), ny=Y(g.node), right=nx<=cx;
+    const n=sv("g",{class:"pnode"+(done.has(g.b.a)?" both":reading.has(g.b.a)?" one":"")});
+    n.append(sv("circle",{cx:nx,cy:ny,r:13}));n.append(sv("text",{x:nx,y:ny+4,"text-anchor":"middle"},String(g.i+1)));
+    n.append(sv("title",{},g.b.n+" · "+g.b.v.length+" "+plural(g.b.v.length,"глава","главы","глав")+(done.has(g.b.a)?" · прочитана":"")));svg.append(n);
+    const name=g.b.n, sec=(SECTIONS.find(s=>s[0]===g.b.s)||[,""])[1];
+    const bw=Math.ceil(Math.max(name.length*fs*0.56,sec.length*6.3)+34), bh=34, bx=right?W-8-bw:8, by=ny-bh/2;
+    const t=sv("g",{class:"pbook "+g.b.t+(done.has(g.b.a)?" done":"")});t.style.setProperty("--c",SECCOL[g.b.s]);
+    t.append(sv("line",{x1:right?bx:bx+bw,y1:ny,x2:nx+(right?15:-15),y2:ny,class:"pbookln"}));
+    t.append(sv("rect",{x:bx,y:by,width:bw,height:bh,rx:10}));
+    t.append(sv("rect",{x:bx+8,y:by+8,width:5,height:bh-16,rx:2,class:"pbookspine"}));
+    t.append(sv("text",{x:bx+20,y:by+13,class:"pbooklab"},sec));
+    t.append(sv("text",{x:bx+20,y:by+27,class:"pbookname","font-size":fs},name+(done.has(g.b.a)?" ✓":"")));
+    t.append(sv("title",{},name+" · "+sec));svg.append(t);
+  });
+  // заветы: начало, граница и конец Библии
+  {const g0=geo[0], s0=Y(g0.node)+48, st=sv("g",{class:"pstart"}), x0=X(g0.node), tx=Math.min(W-95,Math.max(95,x0));
+   st.append(sv("line",{x1:x0,y1:s0-14,x2:x0,y2:s0+10}));st.append(sv("path",{d:"M"+x0+" "+(s0-14)+"h22l-6 6 6 6h-22z"}));
+   st.append(sv("text",{x:tx,y:s0+28,"text-anchor":"middle"},"Начало Библии · Ветхий Завет"));
+   st.append(sv("text",{x:tx,y:s0+44,"text-anchor":"middle",class:"pstartsub"},"«В начале сотворил Бог…»"));svg.append(st);
+   const mt=G["Мф."], yv=Y(mt.v0-NTGAP/2);svg.append(sv("line",{x1:10,x2:W-10,y1:yv,y2:yv,class:"ptestline"}));
+   const lab=sv("text",{x:cx,y:yv-6,"text-anchor":"middle",class:"ptestlab"},"Новый Завет");svg.append(lab);
+   const last=geo[geo.length-1], ye=Y(last.v0+last.h)-18;svg.append(sv("text",{x:cx,y:ye,"text-anchor":"middle",class:"pweek"},"Конец Библии"));}
+  // где по вашему расписанию нужно быть сегодня
+  {const tp=Math.min(DAYS-1,Math.max(0,todayP()));KEYS.forEach(k=>{const x=part(k,tp);const vv=vOf(x.book,x.ref);if(vv==null)return;
+    const px=X(vv), py=Y(vv), dr=px>cx?-1:1;svg.append(sv("circle",{cx:px,cy:py,r:21,class:"pplanring"}));
+    const t=sv("text",{x:px-dr*26,y:py+4,"text-anchor":dr>0?"end":"start",class:"pplantag"},"по плану");t.append(sv("title",{},"По плану сегодня: "+refStr(x)));svg.append(t)})}
+  // друзья — по их собственным отрывкам, какое бы расписание у них ни было
+  pathPeople.forEach(f=>{const ks=Array.isArray(f.keys)&&f.keys.length?f.keys:["nt","ot"];
+    ks.forEach((k,j)=>{let r=f.refs&&f.refs[j]?parseRef(f.refs[j]):null;
+      if(!r&&(f.plan||"spb")==="spb"){const p=Math.min(PLAN_SPB.length-1,f[k]||0),dd=PLAN_SPB[p],bi=k==="nt"?0:2;r={book:dd[bi],ref:dd[bi+1]}}
+      if(!r)return;const vv=vOf(r.book,r.ref);if(vv!=null)people.push({id:f.id,key:f.id+"-"+k,name:f.name||"Друг",photo:f.photo||"",v:vv,ref:r.book+" "+r.ref})})});
+  // люди: кто рядом (в пределах ~2 глав) — стоят рядом
+  const groups={};{let cur=null,start=-1e9;people.slice().sort((a,b)=>a.v-b.v).forEach(pp=>{if(!cur||pp.v-start>34){start=pp.v;cur=String(Math.round(pp.v));groups[cur]=[]}groups[cur].push(pp)})}
+  let meY=0;
+  const drawPerson=(pp,x,y,j,crowd)=>{
+    const col=pp.me?"var(--flame)":hashCol(pp.id), cid="pc"+pp.key.replace(/[^a-zA-Z0-9]/g,"")+j;
+    const g=sv("g",{class:"pperson"+(pp.me?" me":"")});
+    g.append(sv("circle",{cx:x,cy:y,r:16,fill:col,stroke:"var(--surface)","stroke-width":3}));
+    if(pp.photo){const cp=sv("clipPath",{id:cid});cp.append(sv("circle",{cx:x,cy:y,r:13}));g.append(cp);
+      g.append(sv("image",{href:pp.photo,x:x-13,y:y-13,width:26,height:26,"clip-path":"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice",referrerpolicy:"no-referrer"}))}
+    else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"pinit"},(pp.name||"?").trim().charAt(0).toUpperCase()));
+    if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
+    g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · читает "+pp.ref));
+    if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
+    svg.append(g); if(pp.me&&!meY)meY=y;
+  };
+  Object.entries(groups).forEach(([key,gr])=>{
+    gr.sort((a,b)=>(b.me?1:0)-(a.me?1:0)||a.v-b.v);
+    const vv=gr[0].v, nx=X(vv), by=Y(vv), dir=nx>cx?-1:1;
+    const space=dir>0?W-nx-34:nx-34, perRow=Math.max(1,Math.floor(space/36));
+    const open=pathOpen.has(key), maxShow=open?gr.length:Math.min(gr.length,perRow*2+1);
+    const shown=gr.length>maxShow?maxShow-1:maxShow;
+    const crowd=gr.length>1, rowH=crowd&&pathZoom<1.5?38:46;
+    drawPerson(gr[0],nx,by,0,crowd);
+    for(let j=1;j<shown;j++){const q=j-1,r=Math.floor(q/perRow),c=q%perRow;drawPerson(gr[j],nx+dir*(34+c*36),by+r*rowH,j,crowd)}
+    if(shown<gr.length){
+      const q=shown-1,r=Math.floor(q/perRow),c=q%perRow,x=nx+dir*(34+c*36),y=by+r*rowH;
+      const g=sv("g",{class:"pmore",tabindex:0,role:"button"});
+      g.append(sv("circle",{cx:x,cy:y,r:16}));g.append(sv("text",{x,y:y+5,"text-anchor":"middle"},"+"+(gr.length-shown)));
+      g.append(sv("title",{},gr.slice(shown).map(pp=>pp.name).join(", ")));
+      const openIt=()=>{pathOpen.add(key);renderPath()};g.addEventListener("click",openIt);g.addEventListener("keydown",e=>{if(e.key==="Enter")openIt()});
+      svg.append(g);
+    }else if(open&&gr.length>perRow*2+1){
+      const r=Math.ceil((gr.length-1)/perRow),x=nx+dir*34,y=by+r*rowH-8;
+      const t=sv("text",{x,y,"text-anchor":dir>0?"start":"end",class:"pless"},"свернуть");
+      t.addEventListener("click",()=>{pathOpen.delete(key);renderPath()});svg.append(t);
+    }
+  });
+  svg.setAttribute("width",Math.round(W*pathZoom));svg.setAttribute("height",Math.round(H*pathZoom));
+  box.textContent="";box.append(svg);
   $("pathSub").textContent="";
   const pb=$("pathBox");
   if(pb&&pathKeep){pb.scrollLeft=pathKeep.x*pb.scrollWidth-pb.clientWidth/2;pb.scrollTop=pathKeep.y*pb.scrollHeight-pb.clientHeight/2;pathKeep=null}
@@ -2209,8 +2326,8 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
      [fl(true),"<b>Маленький огонёк</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
      ['<span style="color:var(--ok)">+2</span>',"<b>Опережение.</b> НЗ и ВЗ — на сколько дней вы впереди плана (зелёным) или позади (красным). «По плану» — вы идёте точно в график."],
      [SNOW,"<b>Заморозки.</b> Если читаете вперёд графика по обоим заветам, копятся заморозки. Пропустили день — заморозка сохранит серию."],
-     ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',"<b>Кружки на тропинке</b> — дни плана, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня."],
-     ['<svg viewBox="0 0 30 30"><rect x="3" y="7" width="24" height="16" rx="4" fill="var(--surface)" stroke="var(--s-ot)" stroke-width="1.6"/><rect x="7" y="11" width="3" height="8" rx="1" fill="var(--s-ot)"/></svg>',"<b>Таблички с книгами</b> на тропинке показывают, где начинается новая книга: Исход, Левит, Числа… Пролистайте тропинку вверх — увидите весь первый год."],
+     ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',(SCHED.spb?"<b>Кружки на тропинке</b> — дни плана, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня. Друзья со своим расписанием стоят в тот день плана, где читается их книга и глава.":"<b>Тропинка — вся Библия</b>, от Бытия внизу до Откровения наверху. Кружок с номером — начало книги, оранжевый — книга прочитана. Вы и друзья стоите там, где сейчас читаете, по какому бы расписанию ни шли. Синий круг «по плану» — где по вашему расписанию нужно быть сегодня.")],
+     ['<svg viewBox="0 0 30 30"><rect x="3" y="7" width="24" height="16" rx="4" fill="var(--surface)" stroke="var(--s-ot)" stroke-width="1.6"/><rect x="7" y="11" width="3" height="8" rx="1" fill="var(--s-ot)"/></svg>',"<b>Таблички с книгами</b> на тропинке показывают, где начинается новая книга: Исход, Левит, Числа… Пролистайте тропинку вверх — увидите весь путь."],
      [GEM,"<b>Алмазы</b> — за тесты по прочитанным главам. Даются только за 10 правильных ответов из 10."]
     ].forEach(([ic,t])=>{const li=el("li"),k=el("span","gk");k.innerHTML=ic;const p=el("p");p.innerHTML=t;li.append(k,p);ul.append(li)});
     d.append(ul);
@@ -2418,7 +2535,7 @@ function openFinished(list,who){
   sheet.append(head,big);
   if(!list.length)sheet.append(el("p","hint",mine?"Когда вы прочитаете все дни какого-нибудь расписания, оно появится здесь — как пройденная вершина.":"Пока ни одного расписания до конца."));
   const ul=el("ol","fdlist");
-  list.forEach(f=>{const li=el("li");const ic=el("span","fdflag","🏁");const tx=el("div");
+  list.forEach(f=>{const li=el("li");const ic=el("span","fdflag","🏔️");const tx=el("div");
     tx.append(el("b",null,f.name||f.n||"Расписание"),el("span",null,(f.days||f.d||0)+" "+plural(f.days||f.d||0,"день","дня","дней")+" · завершено "+fmtLong(f.end||f.f)));li.append(ic,tx);ul.append(li)});
   if(list.length)sheet.append(ul);
   modal.append(sheet);document.body.append(modal);
@@ -2517,10 +2634,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071402"></script>
+<script type="module" src="auth.js?v=202610071612"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007140258";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007161230";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
