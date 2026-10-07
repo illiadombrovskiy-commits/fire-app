@@ -29,7 +29,7 @@ def plural(n, one, few, many):
 def load_plan():
     try:
         html = open(os.path.join(os.path.dirname(__file__), "..", "..", "index.html"), encoding="utf-8").read()
-        m = re.search(r"const PLAN=(\[.*?\]\]);", html, re.S)
+        m = re.search(r"const PLAN(?:_SPB)?=(\[.*?\]\]);", html, re.S)
         return json.loads(m.group(1)) if m else []
     except Exception:
         return []
@@ -60,7 +60,7 @@ def pick_message(streak_at_risk, streak, refs, friends_read, rnd=random):
             ("Вечер со Словом", "Пара коротких отрывков из Нового и Ветхого Завета — и огонёк загорится."),
         ]
     if refs:
-        opts.append(("Слово на сегодня", f"{refs[0]} и {refs[1]} — 10 минут, и огонёк горит."))
+        opts.append(("Слово на сегодня", f"{' и '.join(refs)} — 10 минут, и огонёк горит."))
     if friends_read:
         names = friends_read[:1]
         more = len(friends_read) - 1
@@ -120,7 +120,11 @@ def main():
                 fd = f.to_dict() if f.exists else {}
                 if day.isoformat() in (fd.get("ntLast"), fd.get("otLast")):
                     friends_read.append((fd.get("name") or "Друг").split(" ")[0])
-            title, body = pick_message(at_risk, streak, todays_refs(plan, day), friends_read)
+            # отрывки, которые человеку читать сейчас (по его расписанию), если приложение их сохранило
+            keys = profile.get("keys") or ["nt", "ot"]
+            own = [profile.get(k + "Ref") for k in keys if profile.get(k + "Ref")]
+            refs = tuple(own) if own else (todays_refs(plan, day) if (profile.get("plan") or "spb") == "spb" else None)
+            title, body = pick_message(at_risk, streak, refs, friends_read)
         dead = []
         for tok in push.get("tokens", []):
             msg = messaging.Message(
