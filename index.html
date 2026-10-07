@@ -463,7 +463,34 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .remind .rgo{flex:none;padding:8px 14px;border-radius:999px;background:var(--flame);color:#fff;font-weight:700;font-size:.85rem;white-space:nowrap}
 .remind .rx{flex:none;width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--muted);font-size:1.1rem;line-height:1}
 .umitem.on::after{content:" ✓";color:var(--ok)}
+/* книжная полка */
+.bsbtn{display:block;width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:700;text-align:left;cursor:pointer}
+.bsbtn:hover{border-color:var(--link)}
+.bshelf{max-width:600px;gap:12px}
+.bsbig{display:flex;align-items:baseline;gap:8px}
+.bsbig b{font-family:var(--display);font-size:2.4rem;color:var(--flame);line-height:1}
+.bsbig span{color:var(--muted);font-weight:600}
+.bsbar{height:8px;border-radius:99px;background:var(--bg);overflow:hidden}
+.bsbar i{display:block;height:100%;background:linear-gradient(90deg,var(--flame2),var(--flame));border-radius:99px}
+.spine.unread{opacity:.55}
+.bslist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.bslist li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.bslist i{width:6px;height:30px;border-radius:2px;flex:none}
+.bslist div{display:flex;flex-direction:column}
+.bslist b{font-size:.95rem}.bslist span{font-size:.8rem;color:var(--muted)}
+.bsnext{margin:0;padding:10px 12px;border-radius:12px;background:var(--flame-soft);font-size:.9rem}
 /* выбор расписания */
+.pcnt{font-weight:600}
+.pbooks{display:flex;flex-direction:column;gap:10px}
+.pbgrp{display:flex;flex-direction:column;gap:6px}
+.pbsec{align-self:flex-start;padding:4px 10px;border-radius:8px;border:0;background:none;color:var(--ink);font:inherit;font-weight:800;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.pbsec::before{content:"";width:14px;height:14px;border-radius:4px;border:2px solid var(--line);box-sizing:border-box}
+.pbsec.on::before{background:var(--flame);border-color:var(--flame)}
+.pbsec.some::before{background:linear-gradient(var(--flame),var(--flame)) center/8px 2px no-repeat;border-color:var(--flame)}
+.pbchips{display:flex;flex-wrap:wrap;gap:5px}
+.pbook-c{padding:5px 9px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
+.pbook-c.on{background:color-mix(in srgb,var(--c) 18%,var(--surface));border-color:var(--c);color:var(--ink)}
+
 .pnow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--bg)}
 .pnow span{font-weight:700}
 .psheet{max-width:560px;gap:12px}
@@ -849,7 +876,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   <div class="fold2">
   <details class="card fold" id="progCard">
     <summary class="foldhead"><h2>Прогресс плана</h2><span class="chev" aria-hidden="true"></span></summary>
-    <div class="foldbody"><div class="prog" id="prog"></div></div>
+    <div class="foldbody"><div class="prog" id="prog"></div><button class="bsbtn" id="booksOpen" type="button"></button></div>
   </details>
 
   <details class="card fold" id="howCard">
@@ -962,6 +989,7 @@ const BOOKS=[{"a":"Быт.","n":"Бытие","t":"ot","s":"law","u":"gen","v":[3
 const BOOK=Object.fromEntries(BOOKS.map(b=>[b.a,b]));
 const STORE_KEY="ogonek-rv-year1";
 const SECTIONS=[["law","Пятикнижие","ot"],["hist","Исторические книги","ot"],["poet","Поэтические книги","ot"],["proph","Пророки","ot"],["gosp","Евангелия","nt"],["ep","Деяния и послания","nt"],["rev","Откровение","nt"]];
+const SECCOL={law:"#c2410c",hist:"#e8650a",poet:"#d4a017",proph:"#9a6b3f",gosp:"#6b4fd8",ep:"#0e9aa7",rev:"#c7559c"};
 const ALLSEC=SECTIONS.map(s=>s[0]), OTSEC=["law","hist","poet","proph"], NTSEC=["gosp","ep","rev"];
 const TEMPLATES=[
   {id:"spb",group:"Церковь",name:"Церковь в Санкт-Петербурге",desc:"Вся Библия за 2 года · каждый день отрывок из Нового и Ветхого Завета · общее расписание, по нему читают друзья"},
@@ -1018,7 +1046,8 @@ function buildSched(def){
   const tpl=TEMPLATES.find(t=>t.id===def.id)||{}, d=Object.assign({},tpl,def);
   const wd=null; // суть Огонька — читать каждый день, поэтому дней «без чтения» нет
   const sec=(d.sec&&d.sec.length?d.sec:ALLSEC);
-  const pick=t=>BOOKS.filter(b=>sec.includes(b.s)&&(!t||b.t===t)).map(b=>Object.assign({total:b.v.reduce((x,y)=>x+y,0)},b));
+  const chosen=Array.isArray(d.books)&&d.books.length?new Set(d.books):null; // отдельные книги или целые разделы
+  const pick=t=>BOOKS.filter(b=>(chosen?chosen.has(b.a):sec.includes(b.s))&&(!t||b.t===t)).map(b=>Object.assign({total:b.v.reduce((x,y)=>x+y,0)},b));
   const otB=pick("ot"), ntB=pick("nt"), allB=pick(), V=allB.reduce((s,b)=>s+b.total,0), C=allB.reduce((s,b)=>s+b.v.length,0);
   let n=d.days||365, snap=0.3;
   if(d.by==="end"&&d.end)n=countDates(d.start,d.end,wd);
@@ -1240,6 +1269,7 @@ function render(){
   }
   $("calMonth").textContent=now.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
 
+  {const n=booksSummary().length;$("booksOpen").textContent="📚 Моя книжная полка · "+n+" из 66"}
   const pr=$("prog");pr.textContent="";
   KEYS.forEach(k=>{
     const a=state[k].read.length, cur=part(k,nextP(k));
@@ -2249,12 +2279,19 @@ function openPlans(){
     const nm=el("input");nm.value=f.name;nm.maxLength=40;nm.addEventListener("input",()=>{f.name=nm.value.trim()||"Моё расписание"});
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
     sheet.append(field("Название",nm),field("Дата начала",st));
-    // что читать
-    const secBox=el("div","psecs");secBox.append(el("span","plab","Что читать"));
-    const quick=el("div","pchips");[["Всю Библию",ALLSEC],["Ветхий Завет",OTSEC],["Новый Завет",NTSEC]].forEach(([t,v])=>{const b=el("button","pchip",t);b.type="button";b.addEventListener("click",()=>{f.sec=v.slice();drawSecs();upd()});quick.append(b)});
-    const secs=el("div","pchecks");
-    function drawSecs(){secs.textContent="";SECTIONS.forEach(([id,name,t])=>{const l=el("label","pcheck "+t);const c=el("input");c.type="checkbox";c.checked=f.sec.includes(id);
-      c.addEventListener("change",()=>{f.sec=c.checked?f.sec.concat(id):f.sec.filter(x=>x!==id);if(!f.sec.length){f.sec=[id];c.checked=true}upd()});l.append(c,el("span",null,name));secs.append(l)})}
+    // что читать: любые книги Библии; раздел целиком — нажатием на его название
+    f.books=new Set(BOOKS.map(b=>b.a));
+    const secBox=el("div","psecs");const cnt=el("span","pcnt");const lab=el("span","plab","Что читать ");lab.append(cnt);secBox.append(lab);
+    const quick=el("div","pchips");[["Вся Библия",()=>BOOKS],["Ветхий Завет",()=>BOOKS.filter(b=>b.t==="ot")],["Новый Завет",()=>BOOKS.filter(b=>b.t==="nt")],["Очистить",()=>[]]].forEach(([t,fn])=>{const b=el("button","pchip",t);b.type="button";b.addEventListener("click",()=>{f.books=new Set(fn().map(x=>x.a));drawSecs();upd()});quick.append(b)});
+    const secs=el("div","pbooks");
+    function drawSecs(){secs.textContent="";
+      SECTIONS.forEach(([id,name,t])=>{const list=BOOKS.filter(b=>b.s===id), all=list.every(b=>f.books.has(b.a)), some=list.some(b=>f.books.has(b.a));
+        const grp=el("div","pbgrp "+t);const h=el("button","pbsec"+(all?" on":some?" some":""),name);h.type="button";h.setAttribute("aria-pressed",all?"true":"false");
+        h.addEventListener("click",()=>{list.forEach(b=>all?f.books.delete(b.a):f.books.add(b.a));drawSecs();upd()});
+        const chips=el("div","pbchips");list.forEach(b=>{const c=el("button","pbook-c"+(f.books.has(b.a)?" on":""),b.n.replace(/^Евангелие от /,""));c.type="button";c.title=b.n;c.style.setProperty("--c",SECCOL[b.s]);c.setAttribute("aria-pressed",f.books.has(b.a)?"true":"false");
+          c.addEventListener("click",()=>{f.books.has(b.a)?f.books.delete(b.a):f.books.add(b.a);drawSecs();upd()});chips.append(c)});
+        grp.append(h,chips);secs.append(grp)});
+      cnt.textContent="· выбрано книг: "+f.books.size+" из 66"}
     drawSecs();secBox.append(quick,secs);sheet.append(secBox);
     // как читать
     const modeBox=el("div","psecs");modeBox.append(el("span","plab","Как читать"));
@@ -2272,8 +2309,9 @@ function openPlans(){
     const prev=el("div","pprev");sheet.append(prev);
     const go=el("button","btn-main","Создать и начать читать");go.type="button";sheet.append(go);
     sheet.append(el("p","hint","Читаем каждый день. Отрывки делятся поровну по числу стихов, по возможности — по целым главам. Один день не захватывает две книги."));
-    const def=()=>({id:"my-"+Date.now().toString(36),custom:true,name:f.name,start:f.start,sec:f.sec.slice(),mode:f.mode,by:f.by,end:f.end,amount:f.amount});
+    const def=()=>({id:"my-"+Date.now().toString(36),custom:true,name:f.name,start:f.start,books:BOOKS.filter(b=>f.books.has(b.a)).map(b=>b.a),mode:f.mode,by:f.by,end:f.end,amount:f.amount});
     function upd(){prev.textContent="";
+      if(!f.books.size){prev.append(el("b",null,"Выберите хотя бы одну книгу"));go.disabled=true;return}
       if(f.by==="end"&&(!f.end||f.end<=f.start)){prev.append(el("b",null,"Дата окончания должна быть позже начала"));go.disabled=true;return}
       try{const S=buildSched(def());prev.append(el("b",null,schedSummary(S)),el("span",null,"В среднем ~"+versesPerDay(S)+" стихов в день · первый день: "+S.keys.map(k=>refStr(part2(S,k,0))).join(" и ")));go.disabled=false}catch(e){console.warn(e);prev.append(el("b",null,"Не получилось составить расписание"));go.disabled=true}}
     upd();
@@ -2284,6 +2322,56 @@ function openPlans(){
 function part2(S,k,p){const d=S.plan[Math.min(p,S.plan.length-1)];return {book:d[T[k].bi],ref:d[T[k].ri]}}
 function SCHED_SPB(){return buildSched({id:"spb"})}
 $("planOpen").addEventListener("click",openPlans);
+$("booksOpen").addEventListener("click",()=>openBooks());
+/* ---------- книжная полка: прочитанные книги и когда они дочитаны ---------- */
+// книга прочитана, когда отмечены все её дни подряд в расписании; дата — день, когда отмечен последний из них
+function booksFinished(){
+  const res=[];
+  const scan=(plan,keys,st,name)=>keys.forEach(k=>{
+    const bi=T[k].bi, when=new Map();((st[k]&&st[k].log)||[]).forEach(x=>{if(!when.has(x.p)||x.d>when.get(x.p))when.set(x.p,x.d)});
+    let i=0;while(i<plan.length){const b=plan[i][bi];if(!b||!BOOK[b]){i++;continue}let j=i;while(j+1<plan.length&&plan[j+1][bi]===b)j++;
+      // книга должна начинаться с 1-й главы (в церковном плане последняя книга года обрывается)
+      let ok=parseInt(plan[i][bi+1],10)===1, last="";
+      if(ok){const lastRef=plan[j][bi+1], [,z]=chapRange(lastRef), m=/^\d+:\d+[–—-](?:\d+:)?(\d+)$/.exec(lastRef)||/^\d+:(\d+)$/.exec(lastRef);ok=z===BOOK[b].v.length&&(!m||+m[1]===BOOK[b].v[z-1])}
+      for(let p=i;ok&&p<=j;p++){const d=when.get(p);if(!d)ok=false;else if(d>last)last=d}
+      if(ok)res.push({a:b,d:last,plan:name});i=j+1}
+  });
+  scan(PLAN,KEYS,state,SCHED.name);
+  Object.entries(state.plans||{}).forEach(([id,x])=>{try{const S=buildSched(x.def||{id});scan(S.plan,S.keys,x,S.name)}catch(e){}});
+  return res.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+}
+// для друзей: [[книга, дата первого прочтения, сколько раз], ...]
+function booksSummary(){const m=new Map();booksFinished().forEach(x=>{const o=m.get(x.a);if(o)o[2]++;else m.set(x.a,[x.a,x.d,1])});return [...m.values()]}
+function nextBookHint(){let best=null;KEYS.forEach(k=>{const np=nextP(k);if(np>=DAYS)return;const b=PLAN[np][T[k].bi];let j=np;while(j+1<DAYS&&PLAN[j+1][T[k].bi]===b)j++;const left=j-np+1;if(!best||left<best.left)best={b,left}});return best}
+function openBooks(list,who){
+  const mine=!list; list=list||booksSummary();
+  const read=new Map(list.map(x=>[x[0],x]));
+  const modal=el("div","fmodal"),sheet=el("div","fsheet bshelf");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Книжная полка");
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+  const head=el("div","fhead"),h=el("h2",null,mine?"Моя книжная полка":"Книжная полка · "+(who||"друг"));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);head.append(h,x);
+  const n=read.size, big=el("div","bsbig");big.innerHTML="<b>"+n+"</b><span>"+plural(n,"книга прочитана","книги прочитаны","книг прочитано")+" из 66</span>";
+  const bar=el("div","bsbar"),bi=el("i");bi.style.width=(n/66*100).toFixed(1)+"%";bar.append(bi);
+  sheet.append(head,big,bar);
+  const info=el("div","shelfinfo");
+  [["ot","Ветхий Завет"],["nt","Новый Завет"]].forEach(([t,title])=>{
+    const list2=BOOKS.filter(b=>b.t===t), w=el("div","shelf"), hd=el("div","shelfhead");
+    hd.append(el("span",null,title),el("span",null,list2.filter(b=>read.has(b.a)).length+" из "+list2.length));
+    const row=el("div","shelfrow");
+    list2.forEach(b=>{const r=read.get(b.a), sp=el("span","spine"+(r?"":" unread"));sp.style.height=Math.round(26+Math.sqrt(b.v.length)*4.2)+"px";sp.style.background=r?SECCOL[b.s]:"var(--off)";
+      sp.title=b.n+(r?" — прочитана "+fmtLong(r[1]):" — ещё не прочитана");
+      const show=()=>{row.parentNode.parentNode.querySelectorAll(".spine.on").forEach(q=>q.classList.remove("on"));sp.classList.add("on");info.innerHTML="<b>"+b.n+"</b> · "+(r?"прочитана "+fmtLong(r[1])+(r[2]>1?" · "+r[2]+" "+plural(r[2],"раз","раза","раз"):""):"ещё не прочитана")};
+      sp.addEventListener("click",show);sp.addEventListener("mouseenter",show);row.append(sp)});
+    w.append(hd,row);sheet.append(w)});
+  info.textContent="Цветные корешки — прочитанные книги. Нажмите на корешок, чтобы узнать подробнее.";sheet.append(info);
+  if(n){const ul=el("ol","bslist");
+    list.slice().sort((a,b)=>a[1]<b[1]?1:a[1]>b[1]?-1:0).forEach(([a,d,c])=>{const b=BOOK[a];if(!b)return;const li=el("li");const dot=el("i");dot.style.background=SECCOL[b.s];
+      const tx=el("div");tx.append(el("b",null,b.n),el("span",null,"прочитана "+fmtLong(d)+(c>1?" · "+c+" "+plural(c,"раз","раза","раз"):"")));li.append(dot,tx);ul.append(li)});
+    const lh=el("div","plab","По порядку прочтения — от последней");sheet.append(lh,ul)}
+  else sheet.append(el("p","hint",mine?"Пока ни одна книга не прочитана целиком.":"Пока ни одной книги целиком."));
+  if(mine){const nb=nextBookHint();if(nb)sheet.append(el("p","bsnext","Ближе всего: «"+(FULL[nb.b]||nb.b)+"» — осталось "+nb.left+" "+plural(nb.left,"день","дня","дней")+" чтения"))}
+  modal.append(sheet);document.body.append(modal);
+}
 /* ---------- start ---------- */
 function initSeen(){if(!Array.isArray(state.seenAwards))state.seenAwards=AWARDS.filter(a=>a.ok()).map(a=>a.id)}
 initSeen();
@@ -2305,6 +2393,7 @@ function summary(){
   out.gems=state.gems.n;
   // расписание: друзья видят, по какому плану вы читаете и какие у вас отрывки
   out.plan=SCHED.id; out.planName=SCHED.name; out.keys=KEYS.slice();
+  try{out.books=booksSummary()}catch(e){out.books=[]}
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   return out;
@@ -2327,16 +2416,16 @@ window.Ogonek={
     if(((state.schedDef&&state.schedDef.id)||"spb")!==SCHED.id){let n=0;try{n=+sessionStorage.getItem("ogonek-sched-reload")||0;sessionStorage.setItem("ogonek-sched-reload",String(n+1))}catch(e){}if(n<2){location.reload();return}}
     const u=applyFreezes();render();if(u)toast("Заморозка сохранила вашу серию");},
   setRemote(fn){remoteSave=fn},
-  openPlans:()=>openPlans(), planId:SCHED.id, planName:SCHED.name, keysAll:["nt","ot"],
+  openPlans:()=>openPlans(), openBooks:(list,who)=>openBooks(list,who), booksCount:()=>booksSummary().length, planId:SCHED.id, planName:SCHED.name, keysAll:["nt","ot"],
   toast
 };
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071004"></script>
+<script type="module" src="auth.js?v=202610071027"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007100406";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007102710";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

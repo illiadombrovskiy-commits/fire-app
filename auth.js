@@ -528,7 +528,12 @@ async function main() {
     if (!(d.awards || []).length) bw.append(el("span", "hint", "Пока нет наград"));
     badges.append(bw);
 
-    sheet.append(head, stats, reading);
+    // книжная полка: какие книги прочитаны и когда
+    const bl = isMe ? null : (Array.isArray(d.books) ? d.books : []);
+    const bn = isMe ? O().booksCount() : bl.length;
+    const shelfBtn = el("button", "bsbtn", "📚 " + (isMe ? "Моя книжная полка" : "Книжная полка") + " · " + bn + " из 66"); shelfBtn.type = "button";
+    shelfBtn.addEventListener("click", () => O().openBooks(isMe ? null : bl, isMe ? null : (d.name || "").split(" ")[0]));
+    sheet.append(head, stats, shelfBtn, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
     else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
