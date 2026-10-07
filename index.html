@@ -480,16 +480,25 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 .bslist b{font-size:.95rem}.bslist span{font-size:.8rem;color:var(--muted)}
 .bsnext{margin:0;padding:10px 12px;border-radius:12px;background:var(--flame-soft);font-size:.9rem}
 /* выбор расписания */
+.ptest{position:relative;display:flex;gap:8px;transition:gap .25s ease}
+.ptest .pchip{flex:1;padding:9px 10px;transition:border-radius .25s ease,background .2s,color .2s;text-align:center}
+.ptest .pchip span{transition:opacity .2s}
+.ptall{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;pointer-events:none;opacity:0;transition:opacity .25s ease}
+.ptest.both{gap:0}
+.ptest.both .pt-ot{border-radius:999px 0 0 999px;border-right-color:transparent}
+.ptest.both .pt-nt{border-radius:0 999px 999px 0;border-left-color:transparent}
+.ptest.both .pchip span{opacity:0}
+.ptest.both .ptall{opacity:1}
 .pcnt{font-weight:600}
 .pbooks{display:flex;flex-direction:column;gap:8px}
 .pbgrp{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:stretch}
-.pbsec{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;border:1.5px solid var(--c);background:transparent;color:var(--c);font:inherit;font-weight:800;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:64px}
-.pbsec.on{background:var(--c);color:#fff}
-.pbsec.some{background:color-mix(in srgb,var(--c) 25%,transparent)}
+.pbsec{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);background:transparent;color:var(--c);font:inherit;font-weight:800;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:64px}
+.pbsec.on{background:color-mix(in srgb,var(--c) 28%,transparent)}
+.pbsec.some{background:color-mix(in srgb,var(--c) 12%,transparent)}
 .pbchips{display:flex;flex-wrap:wrap;gap:5px;align-content:center}
 .pchip.on{background:var(--flame);border-color:var(--flame);color:#fff}
 .pbook-c{padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
-.pbook-c.on{background:var(--c);border-color:var(--c);color:#fff}
+.pbook-c.on{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:color-mix(in srgb,var(--c) 55%,transparent);color:var(--ink)}
 
 .pnow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--bg)}
 .pnow span{font-weight:700}
@@ -2280,17 +2289,20 @@ function openPlans(){
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
     sheet.append(field("Название",nm),field("Дата начала",st));
     // что читать: включите Ветхий и/или Новый Завет, затем отметьте нужные книги (название раздела — выбрать весь раздел)
-    f.books=new Set(BOOKS.map(b=>b.a)); f.tOn={ot:true,nt:true};
+    f.books=new Set(); f.tOn={ot:false,nt:false}; // по умолчанию ничего не выбрано
     const secBox=el("div","psecs");const cnt=el("span","pcnt");const lab=el("span","plab","Что читать ");lab.append(cnt);secBox.append(lab);
-    const quick=el("div","pchips"), qAll=el("button","pchip","Вся Библия"), qOt=el("button","pchip","Ветхий Завет"), qNt=el("button","pchip","Новый Завет");
-    [qAll,qOt,qNt].forEach(b=>{b.type="button";quick.append(b)});
-    const setT=(t,on)=>{f.tOn[t]=on;BOOKS.filter(b=>b.t===t).forEach(b=>on?f.books.add(b.a):f.books.delete(b.a))};
-    qAll.addEventListener("click",()=>{setT("ot",true);setT("nt",true);drawSecs();upd()});
-    [[qOt,"ot","nt"],[qNt,"nt","ot"]].forEach(([b,t,o])=>b.addEventListener("click",()=>{if(f.tOn[t]&&!f.tOn[o])return;setT(t,!f.tOn[t]);drawSecs();upd()}));
+    // два завета; включены оба — кнопки сливаются в одну «Вся Библия» (половинки по-прежнему выключают свой завет)
+    const quick=el("div","ptest"), qOt=el("button","pchip pt-ot"), qNt=el("button","pchip pt-nt");
+    qOt.append(el("span",null,"Ветхий Завет"));qNt.append(el("span",null,"Новый Завет"));
+    [qOt,qNt].forEach(b=>{b.type="button";quick.append(b)});quick.append(el("span","ptall","Вся Библия"));
+    // завет включён — видны его книги (выбираете сами); выключен — книги скрыты и сняты
+    const setT=(t,on)=>{f.tOn[t]=on;if(!on)BOOKS.filter(b=>b.t===t).forEach(b=>f.books.delete(b.a))};
+    [[qOt,"ot"],[qNt,"nt"]].forEach(([b,t])=>b.addEventListener("click",()=>{setT(t,!f.tOn[t]);drawSecs();upd()}));
     const secs=el("div","pbooks");
     function drawSecs(){secs.textContent="";
-      const both=f.tOn.ot&&f.tOn.nt;qAll.classList.toggle("on",both);qOt.classList.toggle("on",f.tOn.ot);qNt.classList.toggle("on",f.tOn.nt);
-      [qAll,qOt,qNt].forEach(b=>b.setAttribute("aria-pressed",b.classList.contains("on")?"true":"false"));
+      qOt.classList.toggle("on",f.tOn.ot);qNt.classList.toggle("on",f.tOn.nt);quick.classList.toggle("both",f.tOn.ot&&f.tOn.nt);
+      [qOt,qNt].forEach(b=>b.setAttribute("aria-pressed",b.classList.contains("on")?"true":"false"));
+      qOt.title=f.tOn.ot&&f.tOn.nt?"Вся Библия · нажмите слева, чтобы убрать Ветхий Завет":"";qNt.title=f.tOn.ot&&f.tOn.nt?"Вся Библия · нажмите справа, чтобы убрать Новый Завет":"";
       SECTIONS.forEach(([id,name,t])=>{if(!f.tOn[t])return;
         const list=BOOKS.filter(b=>b.s===id), all=list.every(b=>f.books.has(b.a)), some=list.some(b=>f.books.has(b.a));
         const grp=el("div","pbgrp "+t);grp.style.setProperty("--c",SECCOL[id]);
@@ -2299,6 +2311,7 @@ function openPlans(){
         const chips=el("div","pbchips");list.forEach(b=>{const c=el("button","pbook-c"+(f.books.has(b.a)?" on":""),b.n.replace(/^Евангелие от /,""));c.type="button";c.title=b.n;c.style.setProperty("--c",SECCOL[b.s]);c.setAttribute("aria-pressed",f.books.has(b.a)?"true":"false");
           c.addEventListener("click",()=>{f.books.has(b.a)?f.books.delete(b.a):f.books.add(b.a);drawSecs();upd()});chips.append(c)});
         grp.append(h,chips);secs.append(grp)});
+      if(!f.tOn.ot&&!f.tOn.nt)secs.append(el("p","hint","Включите Ветхий или Новый Завет и отметьте книги, которые хотите читать."));
       cnt.textContent="· выбрано книг: "+f.books.size+" из 66"}
     drawSecs();secBox.append(quick,secs);sheet.append(secBox);
     // как читать
@@ -2319,7 +2332,7 @@ function openPlans(){
     sheet.append(el("p","hint","Читаем каждый день. Отрывки делятся поровну по числу стихов, по возможности — по целым главам. Один день не захватывает две книги."));
     const def=()=>({id:"my-"+Date.now().toString(36),custom:true,name:f.name,start:f.start,books:BOOKS.filter(b=>f.books.has(b.a)).map(b=>b.a),mode:f.mode,by:f.by,end:f.end,amount:f.amount});
     function upd(){prev.textContent="";
-      if(!f.books.size){prev.append(el("b",null,"Выберите хотя бы одну книгу"));go.disabled=true;return}
+      if(!f.books.size){prev.append(el("b",null,"Выберите книги, которые хотите читать"));go.disabled=true;return}
       if(f.by==="end"&&(!f.end||f.end<=f.start)){prev.append(el("b",null,"Дата окончания должна быть позже начала"));go.disabled=true;return}
       try{const S=buildSched(def());prev.append(el("b",null,schedSummary(S)),el("span",null,"В среднем ~"+versesPerDay(S)+" стихов в день · первый день: "+S.keys.map(k=>refStr(part2(S,k,0))).join(" и ")));go.disabled=false}catch(e){console.warn(e);prev.append(el("b",null,"Не получилось составить расписание"));go.disabled=true}}
     upd();
@@ -2430,10 +2443,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071051"></script>
+<script type="module" src="auth.js?v=202610071102"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007105104";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261007110231";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
