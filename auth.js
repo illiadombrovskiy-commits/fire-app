@@ -405,6 +405,14 @@ async function main() {
 
   function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
 
+  // расписание друга: у каждого может быть своё — показываем его собственные отрывки
+  const fKeys = (d) => (Array.isArray(d.keys) && d.keys.length ? d.keys : ["nt", "ot"]);
+  const fLabel = (d, k) => d[k + "Label"] || (k === "nt" ? "Новый Завет" : "Ветхий Завет");
+  const fShort = (d, k) => ({ "Новый Завет": "НЗ", "Ветхий Завет": "ВЗ" })[fLabel(d, k)] || fLabel(d, k);
+  const fDone = (d, k) => (d[k + "Next"] || 0) >= (d[k + "Days"] || ((d.plan || "spb") === O().planId ? O().DAYS : 364));
+  const fRef = (d, k) => (typeof d[k + "Ref"] === "string" ? d[k + "Ref"] : O().refOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "—");
+  const fUrl = (d, k) => d[k + "Url"] || O().urlOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "#";
+  const fLit = (d, t) => fKeys(d).every((k) => d[k + "Last"] === t);
   function friendRow(d, isMe, uid) {
     const t = O().today(), row = el("div", "friend" + (isMe ? " me" : ""));
     const av = el("div", "favatar");
@@ -412,16 +420,16 @@ async function main() {
     else av.textContent = (d.name || "?").trim().charAt(0).toUpperCase();
     const mid = el("div"); mid.style.minWidth = "0";
     mid.append(el("div", "fname", isMe ? "Вы" : (d.name || "Читатель")));
-    O().KEYS.forEach((k) => {
+    fKeys(d).forEach((k) => {
       const line = el("div", "fline");
-      const p = Math.min(d[k + "Next"] || 0, O().DAYS - 1), readToday = d[k + "Last"] === t;
-      line.append(el("span", null, (k === "nt" ? "НЗ: " : "ВЗ: ") + (d[k + "Next"] >= O().DAYS ? "пройден" : O().refOf(k, p))));
+      const readToday = d[k + "Last"] === t;
+      line.append(el("span", null, fShort(d, k) + ": " + (fDone(d, k) ? "пройден" : fRef(d, k))));
       const st = el("span", readToday ? "ok" : null, readToday ? "✓" : "—"); st.title = readToday ? "Прочитано сегодня" : "Сегодня ещё не читал(а)"; line.append(st);
       mid.append(line);
     });
     const right = el("div", "fstreak");
-    const lit = d.ntLast === t && d.otLast === t;
-    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), el("span", "fahead", "НЗ " + fmtAhead(d.ntAhead)), el("span", "fahead", "ВЗ " + fmtAhead(d.otAhead)));
+    const lit = fLit(d, t);
+    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(d[k + "Ahead"]))));
     row.append(av, mid, right);
     const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
     row.tabIndex = 0; row.setAttribute("role", "button");
@@ -465,12 +473,13 @@ async function main() {
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
-    O().KEYS.forEach((k) => {
-      const p = Math.min(d[k + "Next"] || 0, O().DAYS - 1), done = (d[k + "Next"] || 0) >= O().DAYS, readToday = d[k + "Last"] === t;
+    if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
+    fKeys(d).forEach((k) => {
+      const done = fDone(d, k), readToday = d[k + "Last"] === t;
       const row = el("div", "frow"), left = el("div");
-      left.append(el("small", null, k === "nt" ? "Новый Завет · " + fmtAhead(d[k + "Ahead"]) : "Ветхий Завет · " + fmtAhead(d[k + "Ahead"])));
-      if (done) left.append(el("b", null, "Завет пройден"));
-      else { const a = el("a", null, O().refOf(k, p)); a.href = O().urlOf(k, p); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
+      left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
+      if (done) left.append(el("b", null, "Пройдено"));
+      else { const a = el("a", null, fRef(d, k)); a.href = fUrl(d, k); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
       row.append(left, el("span", readToday ? "ok" : "hint", readToday ? "✓ сегодня" : "сегодня ещё нет"));
       reading.append(row);
     });
@@ -666,7 +675,7 @@ async function main() {
     $("friendsAll").hidden = false;
     if (allOpen) drawAll();
     // на тропинке — только друзья
-    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0 })));
+    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0, plan: friendData[u].plan || "spb", keys: friendData[u].keys })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
     const bell = bellButton(); if (bell) box.append(bell);
   }
@@ -785,13 +794,15 @@ async function main() {
     const who = el("div", "umwho", me ? myName() : "");
     const about = el("button", "umitem", "Профиль"); about.type = "button"; about.setAttribute("role", "menuitem");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
+    const plan = el("button", "umitem", "Расписание"); plan.type = "button"; plan.setAttribute("role", "menuitem");
+    plan.addEventListener("click", () => { closeUserMenu(); O().openPlans(); });
     const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
     out.addEventListener("click", () => {
       if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
       out.dataset.armed = "1"; out.textContent = "Нажмите ещё раз, чтобы выйти";
       setTimeout(() => { delete out.dataset.armed; out.textContent = "Выйти"; }, 3000);
     });
-    m.append(who, about, out);
+    m.append(who, about, plan, out);
     const r = top.getBoundingClientRect();
     m.style.top = (r.bottom + window.scrollY + 6) + "px";
     m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + "px";
@@ -837,7 +848,7 @@ async function main() {
       else await F.setDoc(ref, local);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     let chain = Promise.resolve();
-    O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); });
+    O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
 
     try {
       await ensureProfile(user);
