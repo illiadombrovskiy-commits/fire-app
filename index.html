@@ -1054,6 +1054,7 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
 .chpx{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--muted);font-size:1.05rem;line-height:1}
 .apptab .att b{font-size:.9rem;white-space:normal;line-height:1.1}.apptab .att i{max-width:100%;margin-top:2px}.apptab .ico{width:30px;height:30px}.apptab{padding:8px}
 .apptab .ico{width:36px;height:36px}
+.trkitem .ico{width:36px;height:36px}
 </style>
 
 <div class="app" id="app">
@@ -3673,17 +3674,16 @@ function setTrack(k,on){const t=tracks();t[k]=!!on;if(!t.spb&&!t.conf)t.spb=true
   if(q.get("conf")&&!q.get("team")){try{history.replaceState(null,"",location.pathname)}catch(e){}}
   save();
 })();
-function confTracksBlock(closePlans){return document.createDocumentFragment();
-  const t=tracks(),box=el("div","trk");box.append(el("div","pgroup","Что я читаю"));
-  const row=(k,icon,name,sub,disabled)=>{const b=el("button","trkitem"+(t[k]?" on":""));b.type="button";b.disabled=!!disabled;b.setAttribute("role","switch");b.setAttribute("aria-checked",String(t[k]));
-    b.innerHTML="<span class='trki'>"+icon+"</span>";const tx=el("span","ptxt");tx.append(el("b",null,name),el("span",null,sub));b.append(tx,el("span","trksw"));
-    b.addEventListener("click",()=>{const now=tracks();
-      if(now[k]&&!now[k==="spb"?"conf":"spb"]){toast("Нужно оставить хотя бы одно чтение");return}
-      if(k==="conf"&&!now.conf){confJoin();setTrack("conf",true);closePlans();toast("Вы в челлендже!");return}
-      setTrack(k,!now[k]);closePlans();toast(now[k]?"«"+name+"» выключено":"«"+name+"» включено")});return b};
-  box.append(row("spb","🔥","Церковь в Санкт-Петербурге","Вся Библия за 2 года · общее расписание"),
-    row("conf","⛰️",CONF.name,confClosed()?"Закрыто 28 октября — в архиве":"Исход 19–20 и Псалом 119 · до 28 октября",confClosed()));
-  box.append(el("p","hint",t.spb&&t.conf?"Включено оба — переключайтесь вкладками вверху.":"Включите оба, и вверху появятся вкладки «Церковь» и «Конференция»."));
+function confTracksBlock(closePlans){
+  // переключатель основного расписания (челлендж включается и выключается в «План» → «Челленджи»)
+  const t=tracks(),box=el("div","trk");
+  const b=el("button","trkitem"+(t.spb?" on":""));b.type="button";b.setAttribute("role","switch");b.setAttribute("aria-checked",String(t.spb));
+  b.append(icoEl("book"));const tx=el("span","ptxt");tx.append(el("b",null,"Основное расписание"),el("span",null,t.spb?"Включено · "+SCHED.name:"Выключено — на главной только челлендж"));b.append(tx,el("span","trksw"));
+  b.addEventListener("click",()=>{const now=tracks();
+    if(now.spb&&!now.conf){toast("Нельзя выключить: тогда нечего будет читать. Сначала присоединитесь к челленджу");return}
+    setTrack("spb",!now.spb);closePlans();toast(now.spb?"Основное расписание выключено. Прочитанное сохранено":"Основное расписание включено")});
+  box.append(b);
+  if(t.spb&&!t.conf)box.append(el("p","hint","Выключить основное расписание можно, если вы участвуете в челлендже."));
   return box;
 }
 
