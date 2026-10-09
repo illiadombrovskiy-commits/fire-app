@@ -3683,7 +3683,14 @@ function confTracksBlock(closePlans){
     if(now.spb&&!now.conf){toast("Нельзя выключить: тогда нечего будет читать. Сначала присоединитесь к челленджу");return}
     setTrack("spb",!now.spb);closePlans();toast(now.spb?"Основное расписание выключено. Прочитанное сохранено":"Основное расписание включено")});
   box.append(b);
-  if(t.spb&&!t.conf)box.append(el("p","hint","Выключить основное расписание можно, если вы участвуете в челлендже."));
+  const closed=confClosed(),c2=el("button","trkitem"+(t.conf&&!closed?" on":""));c2.type="button";c2.disabled=closed;c2.setAttribute("role","switch");c2.setAttribute("aria-checked",String(t.conf&&!closed));
+  c2.append(icoEl("peak"));const tx2=el("span","ptxt");tx2.append(el("b",null,"Челлендж «Синай»"),el("span",null,closed?"Завершён 28 октября — в архиве":t.conf?"Вы участвуете · до 28 октября":"Исход 19–20 и Псалом 119 · до 28 октября"));c2.append(tx2,el("span","trksw"));
+  c2.addEventListener("click",()=>{const now=tracks();
+    if(!now.conf){confJoin();setTrack("conf",true);closePlans();toast("Вы в челлендже! Переключайтесь вверху на главной");return}
+    if(!now.spb){toast("Нельзя выключить: тогда нечего будет читать. Сначала включите основное расписание");return}
+    setTrack("conf",false);closePlans();toast("Челлендж выключен. Прочитанное сохранено — можно вернуться")});
+  box.append(c2);
+  box.append(el("p","hint",t.spb&&t.conf&&!closed?"Включено оба — переключайтесь вкладками вверху на главной.":"Включите оба, и на главной вверху появятся вкладки «Основное расписание» и «Челлендж»."));
   return box;
 }
 
