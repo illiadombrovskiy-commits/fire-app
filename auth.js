@@ -539,7 +539,7 @@ async function main() {
     pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
     const prow = el("div", "fprow"); prow.append(pathBtn);
     if (isMe) { const ed = el("button", "bsbtn", "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
-    if (isMe) { const tr = el("button", "bsbtn", "📖 Что я читаю: церковь и конференция"); tr.type = "button"; tr.addEventListener("click", () => { closeProfile(); O().openPlans(); }); prow.append(tr); }
+    if (isMe) { const tr = el("button", "bsbtn", "⛰️ Челленджи"); tr.type = "button"; tr.addEventListener("click", () => { closeProfile(); if (window.confOpenChallenges) window.confOpenChallenges(); }); prow.append(tr); }
     else prow.style.gridTemplateColumns = "1fr";
     sheet.append(head, stats, shelfBtn, prow, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
