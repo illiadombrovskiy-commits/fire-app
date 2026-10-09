@@ -539,6 +539,7 @@ async function main() {
     pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
     const prow = el("div", "fprow"); prow.append(pathBtn);
     if (isMe) { const ed = el("button", "bsbtn", "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
+    if (isMe) { const tr = el("button", "bsbtn", "📖 Что я читаю: церковь и конференция"); tr.type = "button"; tr.addEventListener("click", () => { closeProfile(); O().openPlans(); }); prow.append(tr); }
     else prow.style.gridTemplateColumns = "1fr";
     sheet.append(head, stats, shelfBtn, prow, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
@@ -687,7 +688,7 @@ async function main() {
     $("friendsAll").hidden = false;
     if (allOpen) drawAll();
     // на тропинке — только друзья
-    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0, plan: friendData[u].plan || "spb", keys: friendData[u].keys, refs: (Array.isArray(friendData[u].keys) && friendData[u].keys.length ? friendData[u].keys : ["nt", "ot"]).map((k) => friendData[u][k + "Ref"] || null) })));
+    O().setPathPeople(myFriends.filter((u) => friendData[u]).map((u) => ({ id: u, name: friendData[u].name, photo: friendData[u].photo, nt: friendData[u].ntNext || 0, ot: friendData[u].otNext || 0, conf: friendData[u].conf || null, plan: friendData[u].plan || "spb", keys: friendData[u].keys, refs: (Array.isArray(friendData[u].keys) && friendData[u].keys.length ? friendData[u].keys : ["nt", "ot"]).map((k) => friendData[u][k + "Ref"] || null) })));
     if (!myFriends.length) box.append(el("p", "hint", "Пока нет друзей. Отправьте другу приглашение или введите его код — он получит заявку."));
     const bell = bellButton(); if (bell) box.append(bell);
   }
@@ -822,11 +823,61 @@ async function main() {
     setTimeout(() => { document.addEventListener("click", outsideMenu, true); document.addEventListener("keydown", escMenu); }, 0);
   }
 
+  /* ---------- онлайн-команды конференции «Восхождение на Синай» ---------- */
+  let teamInvUnsub = null;
+  function setupTeams() {
+    if (!window.confNet) return;
+    const tref = (code) => F.doc(db, "teams", code);
+    const net = {
+      uid: me.uid, name: () => myName(), photo: me.photoURL || "",
+      friends: () => myFriends.map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "" })),
+      async create(data) {
+        for (let i = 0; i < 6; i++) {
+          const code = randomCode();
+          const ok = await F.runTransaction(db, async (tx) => {
+            const s = await tx.get(tref(code));
+            if (s.exists()) return false;
+            tx.set(tref(code), Object.assign({}, data, { code, owner: me.uid, members: [me.uid] }));
+            return true;
+          }).catch((e) => { console.warn(e); return false; });
+          if (ok) return code;
+        }
+        throw new Error("Не удалось создать команду");
+      },
+      async get(code) { const s = await F.getDoc(tref(code)); return s.exists() ? s.data() : null; },
+      watch(code, cb, err) { return F.onSnapshot(tref(code), (s) => cb(s.exists() ? s.data() : null), (e) => { console.warn(e); if (e && e.code === "permission-denied") cb(null); if (err) err(e); }); },
+      act(code, fn) {
+        return F.runTransaction(db, async (tx) => {
+          const s = await tx.get(tref(code));
+          if (!s.exists()) return false;
+          const p = fn(s.data());
+          if (!p) return false;
+          tx.update(tref(code), p);
+          return true;
+        });
+      },
+      update(code, patch) { return F.updateDoc(tref(code), patch); },
+      invite(uid, code, tname) {
+        return F.setDoc(F.doc(db, "teaminv", uid, "inbox", code), { from: me.uid, name: String(myName()).slice(0, 60), team: code, tname: String(tname).slice(0, 40), at: Date.now() });
+      },
+      dropInvite(code) { return F.deleteDoc(F.doc(db, "teaminv", me.uid, "inbox", code)).catch(() => {}); }
+    };
+    if (teamInvUnsub) teamInvUnsub();
+    teamInvUnsub = F.onSnapshot(F.collection(db, "teaminv", me.uid, "inbox"), (qs) => {
+      const list = []; qs.forEach((d) => list.push(d.data()));
+      if (window.confNet && window.confNet.invites) window.confNet.invites(list);
+    }, (e) => console.warn(e));
+    const team = new URLSearchParams(location.search).get("team");
+    if (team) history.replaceState(null, "", location.pathname);
+    window.confNet(net, team);
+  }
+
   /* ---------- session ---------- */
   A.onAuthStateChanged(auth, async (user) => {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
+    if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
     if (!user) {
       closeUserMenu(); closeAll(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
@@ -883,6 +934,7 @@ async function main() {
       });
       O().onPersonClick = (id) => openProfile(id);
       listenCheers();
+      try { setupTeams(); } catch (e) { console.warn(e); }
       const add = new URLSearchParams(location.search).get("add");
       if (add) { history.replaceState(null, "", location.pathname); addFriendByCode(add); }
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить друзей. Проверьте настройки Firestore."); }

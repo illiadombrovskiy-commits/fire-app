@@ -777,11 +777,257 @@ textarea.aboutok{animation:aboutglow 1s ease}
 
 </head>
 <body>
+<style>
+/* ---------- Конференция школьников: отдельное расписание до 28 октября ---------- */
+.conf{position:relative;overflow:hidden;border:2px solid #2f8f6b;background:linear-gradient(160deg,color-mix(in srgb,#2f8f6b 12%,var(--surface)),var(--surface) 60%)}
+.chero{display:flex;align-items:center;gap:12px}
+.cmount{width:58px;height:50px;flex:none}
+.csheet .fhead .cmount{width:46px;height:40px}
+.csheet .fhead h2{font-size:1.3rem}
+.chero h2{font-size:1.25rem}
+.chero .csub{font-size:.82rem;color:var(--muted);line-height:1.3}
+.ccount{margin-left:auto;flex:none;display:flex;flex-direction:column;align-items:center;padding:4px 10px;border-radius:12px;background:#2f8f6b;color:#fff;line-height:1.05}
+.ccount b{font-family:var(--display);font-size:1.5rem}
+.ccount span{font-size:.68rem;font-weight:700;white-space:nowrap}
+.cbar{height:10px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.cbar i{display:block;height:100%;background:linear-gradient(90deg,#7fd3a8,#2f8f6b);border-radius:99px;transition:width .5s}
+.cprog{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;color:var(--muted);font-weight:600}
+.cprog b{color:var(--ink)}
+.ctoday{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.ctoday .label{color:#2f8f6b}
+.creflist{display:flex;flex-direction:column;gap:6px}
+.cref{display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none;padding:9px 12px;border-radius:12px;border:2px solid var(--link);color:var(--link);background:var(--surface);font-family:var(--display);font-weight:800;font-size:1.12rem}
+.cref:hover{background:var(--link-soft)}
+.cref small{font-family:var(--body);font-size:.75rem;font-weight:600;color:var(--muted)}
+.cbtn{width:100%;padding:13px;font-weight:800;font-size:1rem;background:#2f8f6b;color:#fff;border-radius:12px;box-shadow:0 3px 0 #1d5e45}
+.cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #1d5e45}
+.cbtn.done{background:var(--bg);color:#2f8f6b;border:2px solid #2f8f6b;box-shadow:none}
+.cbtn:disabled{opacity:.6;cursor:default}
+.crow{display:flex;gap:8px}
+.crow .btn{flex:1;padding:10px 8px;font-size:.9rem}
+.cnew{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--flame);color:#fff;font-size:.72rem;font-weight:800}
+.chide{align-self:center;font-size:.8rem}
+.cdone{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:color-mix(in srgb,#2f8f6b 14%,var(--surface));font-weight:700}
+.cdone span{font-size:1.8rem}
+/* лист */
+.csheet{max-width:560px;gap:12px}
+.ctabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:14px;background:var(--bg);position:sticky;top:-18px;z-index:2}
+.ctab{padding:9px 4px;border-radius:10px;background:transparent;color:var(--muted);font-weight:700;font-size:.9rem}
+.ctab.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.cstars{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;background:#fff4c7;color:#8a6200;font-weight:800;font-size:.9rem;white-space:nowrap}
+:root[data-theme="dark"] .cstars{background:#3a3010;color:#ffd75e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cstars{background:#3a3010;color:#ffd75e}}
+.cinfo{display:flex;flex-wrap:wrap;gap:6px}
+.cinfo span{padding:4px 10px;border-radius:99px;background:var(--bg);font-size:.82rem;font-weight:600}
+.cdays{display:flex;flex-direction:column;gap:6px}
+.cday{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface)}
+.cday.now{border-color:#2f8f6b;background:color-mix(in srgb,#2f8f6b 10%,var(--surface))}
+.cday.past{opacity:.75}
+.cday .cd{font-size:.8rem;font-weight:700;color:var(--muted);line-height:1.2}
+.cday.now .cd{color:#2f8f6b}
+.cday .crefs{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cday .crefs a{color:var(--link);font-weight:700;text-decoration:none;font-size:.93rem}
+.cday .crefs a:hover{text-decoration:underline}
+.cday .crefs em{font-style:normal;font-size:.76rem;color:var(--muted)}
+.cchk{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:transparent;display:grid;place-items:center;padding:0;font-weight:900}
+.cchk.on{background:#2f8f6b;border-color:#2f8f6b;color:#fff}
+.cchk:disabled{cursor:default}
+.cnote{font-size:.84rem;color:var(--muted);margin:0;line-height:1.4}
+.cjoin{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:var(--bg)}
+.cjoin b{font-size:1.05rem}
+.cq{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:var(--bg);position:relative}
+.cq .qtext{font-size:1.15rem}
+.cqlock{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--line);font-size:.86rem;color:var(--muted)}
+.cqmore{font-size:.84rem;text-align:center;color:var(--muted)}
+.cqlist{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.cqlist div{display:flex;gap:8px;align-items:baseline}
+.cqlist i{font-style:normal;flex:none;width:18px;text-align:center;font-weight:800}
+.cqlist .ok{color:var(--ok)} .cqlist .no{color:#d64545}
+.cwhy{font-size:.85rem;color:var(--muted)}
+.cwhy a{color:var(--link);font-weight:700}
+/* игры */
+.cgames{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cgame{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.cgame:hover:not(:disabled){border-color:#2f8f6b}
+.cgame:disabled{opacity:.55;cursor:default}
+.cgame .gi{font-size:2rem;line-height:1}
+.cgame b{font-size:1rem}
+.cgame span{font-size:.78rem;color:var(--muted);line-height:1.3}
+.gstage{display:flex;flex-direction:column;gap:12px}
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;font-size:.9rem;color:var(--muted)}
+.ghead b{color:var(--ink);font-variant-numeric:tabular-nums}
+.tablets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tablet{display:flex;flex-direction:column;gap:4px;padding:12px 8px 10px;border-radius:46% 46% 12px 12px/26% 26% 12px 12px;background:linear-gradient(#cfc7b8,#b3a991);min-height:190px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12)}
+:root[data-theme="dark"] .tablet{background:linear-gradient(#5a5446,#463f33)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tablet{background:linear-gradient(#5a5446,#463f33)}}
+.tslot{min-height:30px;border-radius:8px;border:1.5px dashed rgba(0,0,0,.18);display:flex;align-items:center;gap:6px;padding:3px 6px;font-size:.74rem;font-weight:700;line-height:1.15;color:#3a3020}
+:root[data-theme="dark"] .tslot{color:#f1e8d4;border-color:rgba(255,255,255,.18)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tslot{color:#f1e8d4;border-color:rgba(255,255,255,.18)}}
+.tslot i{font-style:normal;font-family:var(--display);font-weight:800;opacity:.6;flex:none;width:16px}
+.tslot.fill{border-style:solid;background:rgba(255,255,255,.35);animation:qin .3s ease}
+.tiles{display:flex;flex-wrap:wrap;gap:6px}
+.tile{padding:8px 11px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:.86rem;text-align:left}
+.tile:hover{border-color:#2f8f6b}
+.tile.bad{animation:shake .4s ease;border-color:#d64545}
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mcard{aspect-ratio:4/5;border-radius:12px;padding:0;background:none;perspective:600px}
+.mcard .mi{position:relative;display:block;width:100%;height:100%;transition:transform .35s;transform-style:preserve-3d}
+.mcard.open .mi,.mcard.got .mi{transform:rotateY(180deg)}
+.mcard .mf,.mcard .mb{position:absolute;inset:0;border-radius:12px;display:grid;place-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:6px;text-align:center}
+.mcard .mf{background:linear-gradient(150deg,#2f8f6b,#1d5e45);color:#fff;font-size:1.6rem}
+.mcard .mb{transform:rotateY(180deg);background:var(--surface);border:2px solid var(--line);color:var(--ink);font-size:.74rem;font-weight:700;line-height:1.2}
+.mcard .mb.emo{font-size:2.2rem}
+.mcard .mb small{display:block;font-size:.66rem;color:var(--muted);margin-top:3px}
+.mcard.got .mb{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--surface))}
+.gwin{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px;border-radius:14px;background:color-mix(in srgb,#2f8f6b 12%,var(--surface));animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.gwin .gw{font-size:2.6rem;line-height:1}
+.gwin b{font-family:var(--display);font-size:1.4rem}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:cfall 1.8s ease-in forwards}
+@keyframes cfall{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}
+.carch{padding:10px 12px;border-radius:12px;background:var(--bg);font-size:.88rem;color:var(--muted)}
+.carch b{color:var(--ink)}
+.pitem.confitem{border-color:#2f8f6b}
+.pitem .cicon{font-size:1.5rem;flex:none}
+.confread{background:var(--surface)}
+.confread .tlink .name+.name,.confread .nextlink .name+.name{margin-top:2px}
+.confread .cdone{flex-direction:column;text-align:center;font-size:.9rem;height:100%}
+.cgame.cteam{grid-column:1/-1;border-color:#2f8f6b;background:linear-gradient(135deg,color-mix(in srgb,#2f8f6b 14%,var(--surface)),var(--surface))}
+.tintro{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:14px;background:color-mix(in srgb,#2f8f6b 10%,var(--bg));font-size:.9rem;line-height:1.4}
+.tintro>b{font-family:var(--display);font-size:1.3rem}
+.tnames{display:flex;flex-direction:column;gap:8px}
+.tname{display:flex;align-items:center;gap:10px}
+.tname i{width:16px;height:16px;border-radius:50%;flex:none}
+.tname input{flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.tname .fclose{width:32px;height:32px;margin:0}
+.tgame{display:flex;flex-direction:column;gap:10px}
+.thud{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:14px;background:linear-gradient(#cfe9ff,#eaf6ff)}
+:root[data-theme="dark"] .thud{background:linear-gradient(#1b2d4a,#16233a)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .thud{background:linear-gradient(#1b2d4a,#16233a)}}
+.tmount{width:100%;height:auto;display:block}
+.tstat{display:flex;justify-content:space-between;gap:6px;font-size:.84rem;font-weight:600;color:var(--muted);flex-wrap:wrap}
+.tstat b{color:var(--ink)} .tstat i{font-style:normal;opacity:.4;letter-spacing:4px}
+.tturn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--pc) 16%,var(--surface));border-left:6px solid var(--pc);animation:qin .3s ease}
+.tturn b{font-size:1.15rem;color:var(--pc)} .tturn span{font-size:.84rem;color:var(--muted)}
+.ttools{display:flex;gap:8px}.ttools .btn{flex:1;font-size:.84rem;padding:9px 6px}
+.ttask{align-self:flex-start;padding:4px 10px;border-radius:99px;background:#2f8f6b;color:#fff;font-weight:800;font-size:.8rem}
+.tplaced{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9rem}
+.tplaced li{animation:qin .3s ease}
+.twords{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.twords .tile{text-align:center}
+.tile.tok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface));opacity:1}
+.tile.tno{border-color:#d64545;background:color-mix(in srgb,#d64545 12%,var(--surface));text-decoration:line-through;animation:shake .4s ease}
+.tile:disabled{cursor:default}
+.tteam{font-weight:800}
+/* онлайн-команды */
+.tstrip{display:flex;flex-direction:column;gap:6px}
+.tsitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.tsitem span{font-size:1.3rem;flex:none}.tsitem b{flex:1;font-size:.9rem;min-width:0}.tsitem i{font-style:normal;font-size:.8rem;font-weight:700;color:var(--link)}
+.tsitem.turn{border-color:var(--flame);background:var(--flame-soft);animation:nudge 1.6s ease-in-out infinite}
+.tsitem.inv{border-color:var(--xp);background:var(--xp-soft)}
+.tonline{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;border:2px solid #2f8f6b;background:color-mix(in srgb,#2f8f6b 7%,var(--surface))}
+.tinv{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:var(--xp-soft);font-weight:700;font-size:.9rem}
+.tcard2{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.tcard2:hover{border-color:#2f8f6b}
+.tavs{display:flex;flex:none}.tavs i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-weight:800;font-size:.85rem;border:2px solid var(--surface);margin-left:-8px;opacity:.55}
+.tavs i:first-child{margin-left:0}.tavs i.lit{opacity:1;box-shadow:0 0 0 2px var(--flame2)}
+.ttx{display:flex;flex-direction:column;flex:1;min-width:0}.ttx b{font-size:1rem}.ttx span{font-size:.8rem;color:var(--muted)}
+.tjoin{display:flex;flex-direction:column;gap:6px}
+.tjrow{display:flex;gap:6px}.tjrow input{flex:1;min-width:0;font:inherit;font-size:.95rem;padding:9px 11px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.tjrow .btn{flex:none;padding:9px 12px;font-size:.88rem}
+.thead2{display:flex;flex-direction:column;gap:4px}.thead2 b{font-family:var(--display);font-size:1.4rem}
+.tcode{align-self:flex-start;padding:5px 12px;border-radius:99px;background:var(--link-soft);color:var(--link);font-weight:700;font-size:.82rem}
+.tmembers{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.tmem{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:14px;border:2px solid color-mix(in srgb,var(--pc) 40%,var(--line));background:var(--surface);text-align:center}
+.tmem .flame{width:28px;height:35px}.tmem b{font-size:.88rem;color:var(--pc)}.tmem span{font-size:.72rem;color:var(--muted)}
+.tmem.lit{background:color-mix(in srgb,var(--flame) 10%,var(--surface))}
+.tfire{padding:10px 12px;border-radius:12px;background:var(--bg);font-size:.86rem;font-weight:600;color:var(--muted);text-align:center}
+.tfire.on{background:linear-gradient(90deg,var(--flame-soft),color-mix(in srgb,var(--flame2) 30%,var(--surface)));color:var(--ink);font-weight:800}
+.tfr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;font-weight:600}
+.tintro2{padding:12px;border-radius:12px;background:var(--bg);font-size:.88rem;line-height:1.4}
+.tfeed{display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px solid var(--line)}
+.tquick{display:flex;flex-wrap:wrap;gap:6px}.tquick .tile{font-size:.8rem;padding:6px 10px}
+.tfi{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:7px 10px;border-radius:10px;background:var(--surface);border-left:4px solid var(--pc);font-size:.86rem}
+.tfi b{color:var(--pc)}.tfi i{font-style:normal;font-size:.72rem;color:var(--muted);white-space:nowrap}.tfi.sys{background:var(--bg)}
+.tsug{font-size:.75rem;color:var(--xp);font-weight:700}
+.tturn{flex-wrap:wrap}.tnudge{margin-left:auto;padding:6px 10px;font-size:.8rem}
+.tsech{display:flex;gap:12px;align-items:center}.tsech>span{font-size:2.2rem;flex:none}
+.tsech b{display:block;font-family:var(--display);font-size:1.3rem}.tsech i{font-style:normal;font-size:.84rem;color:var(--muted);line-height:1.3;display:block}
+details.tjoin>summary{cursor:pointer;font-size:.86rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.tablets~.tiles .tile.bad,.tile.bad{animation:tbad .8s ease forwards}
+@keyframes tbad{0%{background:#e5484d;color:#fff;border-color:#e5484d;transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(6px)}45%{transform:translateX(-3px)}60%{background:#e5484d;color:#fff;border-color:#e5484d;transform:none}100%{background:var(--surface);color:var(--ink);border-color:var(--line)}}
+.tile.good{background:var(--ok);border-color:var(--ok);color:#fff;transform:scale(1.06);transition:transform .2s,opacity .25s .2s;opacity:.15}
+.msets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mset{display:flex;flex-direction:column;gap:1px;padding:8px 6px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:center}
+.mset b{font-size:.88rem}.mset span{font-size:.7rem;color:var(--muted)}
+.mset:hover:not(:disabled){border-color:#2f8f6b}.mset:disabled{opacity:.45;cursor:default}
+.mset.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.mcard .mb.mref b{font-family:var(--display);font-size:1rem;color:var(--link)}
+.mfound{display:flex;flex-direction:column;gap:6px}
+.mfi{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:9px 11px;border-radius:12px;border:1.5px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface));text-decoration:none;color:var(--ink);font-size:.86rem;animation:qin .3s ease}
+.mfi b{color:var(--link);white-space:nowrap}.mfi i{font-style:normal;font-size:.78rem;font-weight:700;color:var(--link);white-space:nowrap}
+.mem.two{grid-template-columns:1fr 1fr}.mem.two .mcard{aspect-ratio:auto;height:104px}.mem.two .mcard .mb{font-size:.8rem}
+/* тропинка конференции */
+.pmode{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--bg)}
+.pmode button{padding:8px 6px;border-radius:9px;background:transparent;color:var(--muted);font-weight:700;font-size:.88rem}
+.pmode button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.pathbox.cpbox{background:linear-gradient(#e3f2ff,var(--bg) 45%)}
+:root[data-theme="dark"] .pathbox.cpbox{background:linear-gradient(#18263f,var(--bg) 45%)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pathbox.cpbox{background:linear-gradient(#18263f,var(--bg) 45%)}}
+.cpath .cpnode circle{fill:var(--surface);stroke:var(--line);stroke-width:3}
+.cpath .cpnode.done circle{fill:#2f8f6b;stroke:#2f8f6b}
+.cpath .cpnode.cur circle{stroke:var(--flame);stroke-width:4}
+.cpath .cpn{font-size:11px;font-weight:800;fill:var(--muted)}.cpath .cpnode.done .cpn{fill:#fff}
+.cpath .cpl{font-size:9.5px;font-weight:700;fill:var(--muted);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.cpath .cpft{font-size:12px;font-weight:800;fill:#2f8f6b;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.cpath .cpst{font-size:11px;font-weight:800;fill:var(--ok)}
+.cpath .cpi{font-size:11px;font-weight:800;fill:#fff;pointer-events:none}
+.cpath .cpp.me circle{filter:drop-shadow(0 0 5px var(--flame))}
+.cpeople{display:flex;flex-direction:column;gap:6px}
+.cprow{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.cprow:hover{border-color:var(--flame)}.cprow .flame{width:20px;height:25px}.cprow span{font-size:.78rem;color:var(--muted);min-width:0}
+.cprow i{font-style:normal;font-size:.78rem;font-weight:700;color:var(--flame);white-space:nowrap}
+.cpjoin{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#2f8f6b 10%,var(--surface));font-size:.88rem}
+/* вкладки наверху */
+.apptabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:16px;background:var(--surface);border:1px solid var(--line);position:sticky;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:15;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.apptab{position:relative;display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:transparent;color:var(--muted);text-align:left}
+.apptab>span:first-child{font-size:1.35rem;flex:none}
+.apptab .att{display:flex;flex-direction:column;min-width:0;line-height:1.15}.apptab b{font-size:.95rem;color:inherit}.apptab i{font-style:normal;font-size:.72rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.apptab.on{background:var(--flame-soft);color:var(--ink);box-shadow:inset 0 0 0 2px var(--flame)}
+.apptab.on:last-child{background:color-mix(in srgb,#2f8f6b 14%,var(--surface));box-shadow:inset 0 0 0 2px #2f8f6b}
+.atdot{position:absolute;top:7px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--flame);box-shadow:0 0 0 2px var(--surface)}
+/* режим «Конференция»: на главной только конференция, тропинка и подвал */
+body.mode-conf .app>*:not(.top):not(#appTabs):not(#confCard):not(#pathCard):not(.foot):not(.installcard):not(.demo-note):not(#friendsCard):not(#inviteCard):not(#friendsEmpty):not(#guideOpen):not(#pageHead){display:none!important}
+body:not(.mode-conf) #confCard{display:none!important}
+.trk{display:flex;flex-direction:column;gap:6px}
+.trkitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.trkitem.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface))}
+.trkitem:disabled{opacity:.55;cursor:default}
+.trki{font-size:1.5rem;flex:none}
+.trksw{flex:none;width:42px;height:24px;border-radius:99px;background:var(--off);position:relative;transition:background .2s}
+.trksw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.trkitem.on .trksw{background:var(--ok)}.trkitem.on .trksw::after{left:21px}
+/* нижние вкладки */
+.pg-off{display:none!important}
+.pagehead{font-size:1.6rem;margin:-4px 0 -4px}
+body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+.botnav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;justify-content:center;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:2px solid var(--line)}
+.bn{position:relative;flex:1;max-width:96px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;border-radius:14px;background:transparent;border:2px solid transparent;color:var(--muted)}
+.bn .bni{font-size:1.65rem;line-height:1;filter:saturate(.9)}
+.bn .bnl{font-size:.68rem;font-weight:700;letter-spacing:.01em}
+.bn.on{border-color:var(--link);background:var(--link-soft);color:var(--link)}
+.bn.on .bni{filter:none;transform:scale(1.06)}
+.bnb{position:absolute;top:2px;right:14%;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame);color:#fff;font-style:normal;font-size:.68rem;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
+.toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+.fempty p{margin:0}
+</style>
+
 <div class="app" id="app">
   <header class="top">
     <div class="brand"><h1>Огонёк</h1></div>
     <button class="loginTop" id="loginTop" type="button" hidden>Войти</button>
   </header>
+  <nav class="apptabs" id="appTabs" role="tablist" aria-label="Что показывать" hidden></nav>
 
   <section class="installcard" id="installCard" hidden>
     <img class="instico" src="icon-192.png" alt="" width="52" height="52">
@@ -831,6 +1077,8 @@ textarea.aboutok{animation:aboutglow 1s ease}
     </div>
     <div class="tgrid" id="testaments"></div>
   </section>
+
+  <section class="card conf" id="confCard" hidden></section>
 
   <button class="guidebanner" id="guideOpen" type="button">
     <span class="gbshelf" aria-hidden="true"><i style="height:28px;background:#e8650a"></i><i style="height:36px;background:#d4a017"></i><i style="height:24px;background:#2f9e6b"></i><i style="height:40px;background:#c2410c"></i><i style="height:30px;background:#6b4fd8"></i><i style="height:22px;background:#1d6fd6"></i><i style="height:34px;background:#0e9aa7"></i></span>
@@ -965,6 +1213,7 @@ textarea.aboutok{animation:aboutglow 1s ease}
   </div>
 </div>
 
+<nav class="botnav" id="botNav" aria-label="Разделы"></nav>
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-live="polite">
   <div class="box">
     <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
@@ -1169,7 +1418,7 @@ function migrate(s){
   }
   return fresh();
 }
-function score(s){s=migrate(s);return s.nt.read.length+s.ot.read.length+Object.values(s.plans||{}).reduce((a,x)=>a+((x.nt&&x.nt.read)||[]).length+((x.ot&&x.ot.read)||[]).length,0)+Object.keys(s.answers).length+Object.keys(s.quiz||{}).length+((s.gems&&s.gems.used)||[]).length}
+function score(s){s=migrate(s);return confScore(s)+s.nt.read.length+s.ot.read.length+Object.values(s.plans||{}).reduce((a,x)=>a+((x.nt&&x.nt.read)||[]).length+((x.ot&&x.ot.read)||[]).length,0)+Object.keys(s.answers).length+Object.keys(s.quiz||{}).length+((s.gems&&s.gems.used)||[]).length}
 const readSet=k=>new Set(state[k].read);
 function nextP(k){const r=readSet(k);let p=0;while(p<DAYS&&r.has(p))p++;return p}
 let state=fresh();
@@ -1629,7 +1878,7 @@ function renderDayPath(){
   else if(pb&&!pb.dataset.touched){pb.scrollTop=Math.max(0,meY*pathZoom-pb.clientHeight/2);pb.scrollLeft=(pb.scrollWidth-pb.clientWidth)/2}
   if(pb&&!pb.dataset.bound){pb.dataset.bound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{pb.dataset.touched="1"},{passive:true}))}
 }
-function renderPath(){return renderDayPath()}
+function renderPath(){let cm=false;try{cm=pathModeConf()}catch(e){}if(cm)return renderConfPath();try{confPathChrome(false)}catch(e){}return renderDayPath()}
 function renderBiblePath(){
   const box=$("path"); if(!box)return;
   // тропинка — вся Библия от Бытия до Откровения; каждый стоит там, где сейчас читает (по любому расписанию)
@@ -2385,12 +2634,12 @@ function openPlans(){
     h.append(el("h2",null,title));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);h.append(x);return h};
   function list(){
     sheet.textContent="";sheet.append(head("Расписание чтения"));
-    const cur=el("div","pcur");cur.append(el("span","label","Сейчас вы читаете"),el("b",null,SCHED.name),el("span",null,schedSummary(SCHED)));sheet.append(cur);
+    const cur=el("div","pcur");cur.append(el("span","label","Сейчас вы читаете"),el("b",null,SCHED.name),el("span",null,schedSummary(SCHED)));try{sheet.append(confTracksBlock(close))}catch(e){console.warn(e)}if(tracks().spb)sheet.append(cur);
     sheet.scrollTop=0;
     const items=[];
     // общее расписание церкви и свои; при выборе чтение сразу продолжается с того места, где вы остановились
     const go=def=>{if(def.id===SCHED.id){close();return}switchPlan(def)};
-    items.push(el("div","pgroup","Церковь"),card(TEMPLATES[0].name,TEMPLATES[0].desc,"spb",()=>go({id:"spb"})));
+    items.push(el("div","pgroup","Церковь"),card(TEMPLATES[0].name,TEMPLATES[0].desc,"spb",()=>go({id:"spb"})));items.push(...confPlanItems(close));
     const mine=Object.values(state.myScheds||{}).slice();
     if(!SCHED.spb&&!mine.some(d=>d.id===SCHED.id))mine.unshift(SCHED.def); // прежнее готовое расписание тоже остаётся в списке
     Object.entries(state.plans||{}).forEach(([id,x])=>{if(id!=="spb"&&x.def&&!mine.some(d=>d.id===id))mine.push(x.def)});
@@ -2617,9 +2866,844 @@ function summary(){
   try{out.books=booksSummary()}catch(e){out.books=[]}
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
+  try{out.conf=confSummary()}catch(e){}
   return out;
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
+/* ---------- Конференция школьников (онлайн, 29 октября – 1 ноября 2026) ----------
+   Отдельное расписание: Исход 19–20 и Псалом 119. Его нужно прочитать до 28 октября включительно.
+   Объём делится поровну на дни от сегодняшнего до 28 октября; если день пропущен, остаток снова
+   раскладывается поровну на оставшиеся дни. После 28 октября расписание закрыто и лежит в архиве.
+   Данные — в state.conf: {joined, log:[{u,d}], q:{id:0|1}, g:{tab:{w,best,days},mem:{w,best,days}}, hide} */
+const CONF={name:"Конференция школьников",short:"Конференция",dates:"онлайн · 29 октября – 1 ноября",end:"2026-10-28",open:"2026-10-01"};
+const CONF_UNITS=(()=>{const u=[];
+  [[19,1,6],[19,7,13],[19,14,19],[19,20,25],[20,1,7],[20,8,11],[20,12,17],[20,18,21],[20,22,26]].forEach(([c,a,z])=>u.push({b:"Исх.",c,a,z,st:-1}));
+  for(let s=0;s<22;s++){u.push({b:"Пс.",c:119,a:s*8+1,z:s*8+4,st:s});u.push({b:"Пс.",c:119,a:s*8+5,z:s*8+8,st:s})}
+  u.forEach((x,i)=>{x.i=i;x.w=x.z-x.a+1});return u})();
+const CONF_VERSES=CONF_UNITS.reduce((s,x)=>s+x.w,0);
+const HEB=["Алеф","Бет","Гимел","Далет","Хе","Вав","Заин","Хет","Тет","Йод","Каф","Ламед","Мем","Нун","Самех","Аин","Пе","Цади","Коф","Реш","Шин","Тав"];
+// вопрос: [где (глава:стих), вопрос, верный, неверный, неверный]
+const CONF_Q=[
+ ["19:1","В каком месяце после выхода из Египта израильтяне пришли в пустыню Синай?","В третьем","В первом","В седьмом"],
+ ["19:4","Как, по словам Бога, Он нёс Израиль из Египта к Себе?","Как на крыльях орлов","Как пастух на плечах","Как на колеснице"],
+ ["19:6","Кем Бог хотел сделать Израиль?","Царством священников и святым народом","Самым большим народом на земле","Народом непобедимых воинов"],
+ ["19:8","Что ответил весь народ, услышав слова Бога?","«Всё, что сказал Иегова, сделаем»","«Дай нам подумать»","«Пусть Моисей решает за нас»"],
+ ["19:9","В чём Иегова пришёл к Моисею, чтобы народ слышал Его голос?","В густом облаке","В огненном столпе","В тихом ветре"],
+ ["19:10","Что народ должен был сделать, чтобы приготовиться к третьему дню?","Освятиться и выстирать одежды","Построить жертвенник","Собрать манну на три дня"],
+ ["19:12","Что Моисей должен был сделать вокруг горы?","Установить границу, за которую нельзя заходить","Посадить деревья","Выкопать ров с водой"],
+ ["19:13","По какому сигналу народ мог подойти к горе?","Когда протяжно затрубит рог","Когда загорится огонь","Когда утихнет ветер"],
+ ["19:16","Что началось утром на третий день?","Громы, молнии, густое облако и сильный звук трубы","Землетрясение и полная тишина","Тёплый дождь и радуга"],
+ ["19:18","Почему вся гора Синай дымилась?","Иегова сошёл на неё в огне","Моисей разжёг на ней жертвенник","На ней загорелся лес"],
+ ["19:19","Что происходило со звуком трубы?","Он становился всё сильнее","Он постепенно затихал","Его слышал только Моисей"],
+ ["19:20","Куда Иегова позвал Моисея?","На вершину горы","К подножию горы","В стан народа"],
+ ["19:24","Кому Бог велел подняться вместе с Моисеем?","Аарону","Иисусу Навину","Мариам"],
+ ["20:2","Как Бог называет Себя в начале заповедей?","Иегова, твой Бог, который вывел тебя из Египта, из дома рабства","Бог, который даст тебе богатство","Бог только для священников"],
+ ["20:3","О чём первая заповедь?","Да не будет у тебя других богов","Почитай отца и мать","Не кради"],
+ ["20:4","Что запрещает вторая заповедь?","Делать себе идола и поклоняться ему","Работать в субботу","Говорить неправду"],
+ ["20:8","Какой день нужно помнить, чтобы святить его?","День субботний","Первый день месяца","День выхода из Египта"],
+ ["20:9","Сколько дней в неделю можно трудиться и делать свои дела?","Шесть","Пять","Семь"],
+ ["20:11","Почему Иегова благословил седьмой день?","За шесть дней Он создал небо и землю, а в седьмой почил","В этот день Израиль вышел из Египта","В этот день Моисей поднялся на гору"],
+ ["20:12","Какая по счёту заповедь — «Почитай отца и мать»?","Пятая","Первая","Десятая"],
+ ["20:12","Какое обещание дано тем, кто почитает отца и мать?","Продлятся дни на земле, которую даёт Бог","Будет много друзей","Станешь самым богатым"],
+ ["20:17","Что нельзя желать по десятой заповеди?","Ничего, что принадлежит ближнему","Хорошей погоды","Мудрости"],
+ ["20:18","Что сделал народ, увидев громы, молнии и дымящуюся гору?","Отступил и встал вдали","Побежал к горе","Начал петь и танцевать"],
+ ["20:19","О чём народ попросил Моисея?","Говори с нами ты, а Бог пусть не говорит, чтобы нам не умереть","Уведи нас обратно в Египет","Построй нам город у горы"],
+ ["20:20","Зачем, по словам Моисея, пришёл Бог?","Чтобы испытать народ — и чтобы они не грешили","Чтобы наказать народ","Чтобы забрать Моисея на небо"],
+ ["20:21","К чему приблизился Моисей?","К густой мгле, где был Бог","К стану народа","К морю"],
+ ["20:24","Из чего Бог велел сделать жертвенник?","Из земли","Из золота","Из кедрового дерева"],
+ ["20:25","Из каких камней нельзя было строить жертвенник?","Из тёсаных, обработанных орудием","Из неотёсанных","Из речных"],
+ ["119:1","Кто блажен, по первому стиху псалма?","Непорочные в пути, ходящие в законе Иеговы","Богатые и сильные","Те, у кого нет забот"],
+ ["119:1","Что особенного в каждой строфе Псалма 119 из 8 стихов?","Все стихи строфы начинаются с одной буквы еврейского алфавита","Каждая строфа написана другим автором","Каждую строфу пели в другой день недели"],
+ ["119:9","Как юноше сохранить свой путь чистым?","Соблюдая его по слову Божьему","Никогда не ошибаясь","Слушая только себя"],
+ ["119:11","Где псалмопевец сокрыл слово Божье, чтобы не грешить?","В сердце","В книге","В сундуке"],
+ ["119:18","О чём псалмопевец просит в стихе 18?","Открыть ему глаза, чтобы увидеть чудеса закона Божьего","Дать ему много золота","Победить всех его врагов"],
+ ["119:19","Кем называет себя псалмопевец на земле?","Странником","Царём","Пастухом"],
+ ["119:25","К чему прильнула душа псалмопевца?","К праху","К золоту","К морю"],
+ ["119:32","Что Бог делает с сердцем, чтобы псалмопевец бежал путём заповедей?","Расширяет его","Делает каменным","Прячет его"],
+ ["119:37","От чего псалмопевец просит отвратить его глаза?","От суеты, от пустого","От яркого солнца","От книг"],
+ ["119:46","Перед кем псалмопевец будет говорить о свидетельствах Божьих и не устыдится?","Перед царями","Перед детьми","Перед зверями"],
+ ["119:45","Как будет ходить тот, кто ищет повелений Божьих?","Свободно, на просторе","Оглядываясь от страха","Только днём"],
+ ["119:54","Чем стали уставы Божьи для псалмопевца в доме его странствования?","Его песнями","Тяжёлым грузом","Крепкими стенами"],
+ ["119:55","Когда псалмопевец вспоминал имя Иеговы?","Ночью","Только в праздник","Утром на рынке"],
+ ["119:57","Что псалмопевец называет своей долей?","Иегову","Землю отцов","Золото"],
+ ["119:62","В какое время он встаёт благодарить Бога?","В полночь","На рассвете","В полдень"],
+ ["119:67","Что было с псалмопевцем, пока он не пострадал?","Он заблуждался","Он был царём","Он жил в Египте"],
+ ["119:72","Что для псалмопевца лучше тысяч золота и серебра?","Закон из уст Божьих","Дом и сад","Слава у людей"],
+ ["119:73","Что сделали руки Божьи, по стиху 73?","Сотворили и устроили псалмопевца","Построили храм","Посадили сад"],
+ ["119:83","С чем сравнивает себя псалмопевец в стихе 83?","С мехом в дыму","С деревом у воды","С орлом в небе"],
+ ["119:89","Где навеки утверждено слово Иеговы?","На небесах","На каменной скале","В Иерусалиме"],
+ ["119:96","Что, по стиху 96, безмерно широко?","Заповедь Божья","Море","Пустыня"],
+ ["119:97","Сколько времени псалмопевец размышляет о законе Божьем?","Весь день","Час в неделю","Только в субботу"],
+ ["119:99","Кого псалмопевец стал разумнее, размышляя о свидетельствах Божьих?","Всех своих учителей","Только младших братьев","Никого"],
+ ["119:103","Какими кажутся псалмопевцу слова Божьи?","Слаще мёда","Твёрже камня","Горче полыни"],
+ ["119:105","Чем слово Божье является для ноги и для стези?","Светильником и светом","Обувью и посохом","Картой и компасом"],
+ ["119:111","Что псалмопевец взял в наследие навеки?","Свидетельства Божьи","Землю","Дом отца"],
+ ["119:114","Как псалмопевец называет Бога в стихе 114?","Убежищем и щитом","Царём и судьёй","Светом и огнём"],
+ ["119:119","Как Бог устраняет всех нечестивых земли?","Как шлак (изгарь)","Как солому ветром","Как воду в песок"],
+ ["119:127","Что псалмопевец любит больше золота, даже чистого?","Заповеди Божьи","Серебро","Драгоценные камни"],
+ ["119:130","Что даёт свет и вразумляет простых?","Открытие слов Божьих","Солнце","Долгая учёба"],
+ ["119:136","Почему из глаз псалмопевца текут потоки вод?","Потому что люди не соблюдают закон Божий","От дыма","От ветра"],
+ ["119:140","Каким названо слово Божье в стихе 140?","Очень чистым, испытанным","Трудным","Древним"],
+ ["119:141","Каким называет себя псалмопевец в стихе 141?","Малым и презренным","Сильным и смелым","Мудрым и знаменитым"],
+ ["119:145","Как псалмопевец взывал к Иегове?","Всем сердцем","Шёпотом","Только в храме"],
+ ["119:147","Когда псалмопевец вставал и взывал к Богу в стихе 147?","До рассвета","В полдень","Вечером"],
+ ["119:160","Что такое основа (сумма) слова Божьего, по стиху 160?","Истина","Загадка","Предание"],
+ ["119:162","Чему псалмопевец радуется, как нашедший большую добычу?","Слову Божьему","Победе над врагами","Богатому урожаю"],
+ ["119:164","Сколько раз в день псалмопевец хвалит Бога?","Семь раз","Три раза","Один раз"],
+ ["119:165","Что есть у любящих закон Божий?","Великий мир","Много денег","Слава у людей"],
+ ["119:176","С кем сравнивает себя псалмопевец в последнем стихе?","С заблудшей овцой","С сильным львом","С птицей в клетке"],
+ ["119:176","Сколько стихов в Псалме 119 — самой длинной главе Библии?","176","150","119"],
+ ["119:1","Какое из этих слов НЕ встречается в Псалме 119 как название слова Божьего?","Пророчество","Свидетельства","Уставы"],
+ ["119:16","Что псалмопевец обещает не делать со словом Божьим?","Не забывать его","Не читать его по ночам","Не рассказывать о нём другим"],
+ ["119:24","Чем стали для псалмопевца свидетельства Божьи?","Радостью и советниками","Тяжёлым грузом","Тайной для мудрецов"],
+ ["119:25","Что делает слово Божье с душой, прильнувшей к праху?","Оживляет её","Усыпляет её","Наказывает её"],
+ ["119:28","О чём просит псалмопевец, когда его душа тает от скорби?","Укрепить его по слову Божьему","Дать ему отдохнуть от всего","Забрать его скорбь без слова"],
+ ["119:43","Каким псалмопевец называет слово Божье в стихе 43?","Словом истины","Словом тайны","Словом закона для царей"],
+ ["119:50","Что стало утешением псалмопевца в страдании?","Слово Божье, которое оживило его","Помощь друзей","Богатство"],
+ ["119:86","Какие все заповеди Божьи, по стиху 86?","Верны (истинны)","Трудны","Временны"],
+ ["119:92","Что было бы с псалмопевцем, если бы закон Божий не был его радостью?","Он погиб бы в своём страдании","Он стал бы царём","Ничего не изменилось бы"],
+ ["119:93","Почему псалмопевец никогда не забудет повелений Божьих?","Ими Бог оживил его","Их легко выучить","Их написал Моисей"],
+ ["119:98","Кого заповеди Божьи делают псалмопевца мудрее?","Его врагов","Только детей","Животных"],
+ ["119:100","Кого псалмопевец стал разумнее, соблюдая повеления Божьи?","Старцев","Пророков","Ангелов"],
+ ["119:104","Что даёт псалмопевцу понимание?","Повеления Божьи","Долгая жизнь","Путешествия"],
+ ["119:114","На что уповает (надеется) псалмопевец?","На слово Божье","На своё оружие","На своих друзей"],
+ ["119:129","Какими псалмопевец называет свидетельства Божьи в стихе 129?","Дивными (чудесными)","Скучными","Тайными"],
+ ["119:133","О чём просит псалмопевец, чтобы им не овладело беззаконие?","Утвердить его шаги в слове Божьем","Дать ему сильную армию","Спрятать его в пещере"],
+ ["119:137","Каковы суды (законы) Божьи, по стиху 137?","Праведны","Жестоки","Непонятны"],
+ ["119:142","Что такое закон Божий, по стиху 142?","Истина","Совет мудрецов","Древняя традиция"],
+ ["119:144","Что даёт праведность свидетельств Божьих тому, кто их понимает?","Он будет жить","Он станет богатым","Он станет знаменитым"],
+ ["119:152","На сколько времени основаны свидетельства Божьи?","Навеки","На сто лет","До конца жизни Моисея"],
+ ["119:165","Что ещё сказано о любящих закон Божий, кроме великого мира?","Ничто не заставит их споткнуться","Они никогда не будут плакать","Они не будут работать"],
+ ["119:172","О чём будет петь язык псалмопевца?","О слове Божьем","О своих победах","О красоте природы"]
+].map((q,i)=>{const [c,v]=q[0].split(":").map(Number),u=CONF_UNITS.find(x=>x.c===c&&v>=x.a&&v<=x.z);return {id:"q"+i,u:u.i,at:(c===119?"Пс. ":"Исх. ")+c+":"+v,c,v,q:q[1],opts:q.slice(2)}});
+const CONF_PAIRS=[["🦅","Нёс на крыльях орлов","Исх. 19:4"],["⛰️","Гора дымилась, как печь","Исх. 19:18"],["📯","Звук трубы всё сильнее","Исх. 19:19"],["🪨","Жертвенник без тёсаных камней","Исх. 20:25"],
+ ["❤️","Сокрыл слово в сердце","Пс. 119:11"],["👀","Открой мои глаза","Пс. 119:18"],["👑","Не стыжусь перед царями","Пс. 119:46"],["🎵","Уставы — мои песни","Пс. 119:54"],["🌙","Встаю в полночь благодарить","Пс. 119:62"],
+ ["💰","Лучше тысяч золота и серебра","Пс. 119:72"],["💨","Как мех в дыму","Пс. 119:83"],["🧑‍🏫","Разумнее всех учителей","Пс. 119:99"],["🍯","Слаще мёда","Пс. 119:103"],["🪔","Светильник ноге моей","Пс. 119:105"],
+ ["🛡️","Убежище и щит","Пс. 119:114"],["🌱","Слово оживляет меня","Пс. 119:50"],["🧭","Свидетельства — мои советники","Пс. 119:24"],["💪","Укрепи меня по слову","Пс. 119:28"],["🕊️","Великий мир любящим закон","Пс. 119:165"],["☁️","Слово утверждено на небесах","Пс. 119:89"],["💎","Слово истины","Пс. 119:43"],["7️⃣","Хвалю Тебя семь раз в день","Пс. 119:164"],["🐑","Как заблудшая овца","Пс. 119:176"]]
+ .map(([e,t,r])=>{const m=/(\d+):(\d+)$/.exec(r),c=+m[1],v=+m[2];return {e,t,r,u:CONF_UNITS.find(x=>x.c===c&&v>=x.a&&v<=x.z).i}});
+// «Найди пару»: наборы по строфам Псалма 119 (по 8 стихов) и по главам Исхода — стих ↔ о чём он
+const MEM_PS=[
+ [1,"Блаженны непорочные в пути, ходящие в законе Иеговы"],[2,"Блаженны ищущие Его всем сердцем"],[5,"О, если бы мои пути были направлены к Твоим уставам!"],[8,"Буду хранить Твои уставы — не оставляй меня совсем"],
+ [9,"Как юноше сохранить свой путь чистым? — По Твоему слову"],[10,"Всем сердцем ищу Тебя — не дай мне уклониться"],[11,"Сокрыл Твоё слово в сердце, чтобы не грешить"],[14,"Радуюсь пути Твоих свидетельств, как всякому богатству"],
+ [17,"Будь благ к рабу Твоему — буду жить и хранить слово"],[18,"Открой мои глаза, чтобы увидеть чудеса закона"],[19,"Я странник на земле — не скрывай от меня заповедей"],[24,"Твои свидетельства — радость моя и мои советники"],
+ [25,"Душа прильнула к праху — оживи меня по слову"],[28,"Душа тает от скорби — укрепи меня по слову"],[30,"Я избрал путь истины (верности)"],[32,"Побегу путём заповедей, когда расширишь моё сердце"],
+ [33,"Научи меня пути Твоих уставов"],[34,"Вразуми меня — буду хранить закон всем сердцем"],[35,"Веди меня стезёй Твоих заповедей"],[37,"Отврати мои глаза от суеты"],
+ [45,"Буду ходить свободно, на просторе"],[46,"Буду говорить о свидетельствах перед царями и не постыжусь"],[47,"Восхищаюсь заповедями, которые люблю"],[48,"Подниму руки к Твоим заповедям"],
+ [49,"Вспомни слово, на которое Ты дал мне надеяться"],[50,"Утешение в страдании: Твоё слово оживило меня"],[54,"Уставы Твои — мои песни в доме странствования"],[55,"Ночью вспоминал Твоё имя, Иегова"],
+ [57,"Иегова — доля моя"],[62,"В полночь встаю благодарить Тебя"],[63,"Я друг всем, кто боится Тебя"],[64,"Земля полна Твоей милости"],
+ [67,"Прежде страдания я заблуждался, а теперь храню слово"],[68,"Ты благ и творишь благо"],[71,"Благо мне, что я пострадал: научился уставам"],[72,"Закон из Твоих уст лучше тысяч золота и серебра"],
+ [73,"Твои руки сотворили и устроили меня"],[74,"Боящиеся Тебя увидят меня и обрадуются"],[76,"Пусть Твоя милость утешит меня"],[80,"Пусть сердце моё будет непорочно в Твоих уставах"],
+ [81,"Душа изнывает о спасении — надеюсь на слово"],[82,"Глаза истомились по слову: когда Ты утешишь меня?"],[83,"Я стал как мех в дыму, но уставов не забыл"],[88,"Оживи меня по Твоей милости"],
+ [89,"Навеки, Иегова, слово Твоё утверждено на небесах"],[90,"Верность Твоя из рода в род"],[92,"Если бы закон не был моей радостью, я погиб бы"],[96,"Твоя заповедь безмерно широка"],
+ [97,"Как люблю я закон Твой! Весь день размышляю о нём"],[98,"Заповеди делают меня мудрее врагов"],[99,"Я разумнее всех моих учителей"],[103,"Слова Твои слаще мёда"],
+ [105,"Слово Твоё — светильник ноге моей и свет стезе моей"],[106,"Поклялся соблюдать Твои праведные суды"],[111,"Свидетельства — моё наследие навеки, радость сердца"],[112,"Склонил сердце исполнять Твои уставы"],
+ [113,"Двоедушных ненавижу, а закон Твой люблю"],[114,"Ты — моё убежище и щит, надеюсь на слово"],[116,"Поддержи меня по слову — и буду жить"],[119,"Нечестивых земли Ты отбрасываешь, как шлак"],
+ [125,"Я Твой раб — вразуми меня"],[126,"Время Иегове действовать"],[127,"Люблю заповеди больше золота, даже чистого"],[128,"Все Твои повеления признаю правыми"],
+ [129,"Дивны Твои свидетельства"],[130,"Открытие слов Твоих даёт свет и вразумляет простых"],[131,"Открываю уста и вздыхаю — жажду заповедей"],[136,"Из глаз текут потоки вод, ведь закон не соблюдают"],
+ [137,"Праведен Ты, Иегова, и праведны Твои суды"],[140,"Слово Твоё очень чистое, и раб Твой любит его"],[141,"Я мал и презрен, но повелений не забываю"],[142,"Закон Твой — истина"],
+ [145,"Взываю всем сердцем: ответь мне, Иегова"],[147,"Встаю до рассвета и взываю, надеюсь на слово"],[148,"Глаза открыты до ночных страж — размышляю о слове"],[151,"Ты близок, Иегова, и все заповеди — истина"],
+ [153,"Посмотри на моё страдание и избавь меня"],[156,"Велико Твоё милосердие, Иегова"],[159,"Посмотри, как люблю Твои повеления — оживи меня"],[160,"Сумма Твоего слова — истина"],
+ [161,"Сердце моё трепещет перед Твоим словом"],[162,"Радуюсь слову, как нашедший большую добычу"],[164,"Семь раз в день хвалю Тебя"],[165,"Великий мир у любящих закон Твой"],
+ [171,"Уста мои произнесут хвалу"],[172,"Язык мой будет петь о Твоём слове"],[175,"Пусть живёт душа моя и хвалит Тебя"],[176,"Я заблудился, как потерянная овца, — найди Своего раба"]];
+const MEM_SETS=[
+ {id:"x19",title:"Исход 19",sub:"у горы Синай",units:[0,1,2,3],pairs:[[19,4,"Нёс вас на крыльях орлов"],[19,6,"Царство священников и святой народ"],[19,9,"Приду к тебе в густом облаке"],[19,16,"Громы, молнии и сильный звук трубы"],[19,18,"Гора дымилась, как печь"]]},
+ {id:"x20",title:"Исход 20",sub:"Десять заповедей",units:[4,5,6,7,8],pairs:[[20,2,"Вывел тебя из Египта, из дома рабства"],[20,3,"Да не будет у тебя других богов"],[20,12,"Почитай отца и мать"],[20,21,"Моисей приблизился ко мгле, где Бог"],[20,24,"Жертвенник из земли"]]}
+].concat(HEB.map((h,s)=>({id:"p"+s,title:h,sub:"Пс. 119:"+(s*8+1)+"–"+(s*8+8),st:s,pairs:MEM_PS.filter(([v])=>Math.floor((v-1)/8)===s).map(([v,t])=>[119,v,t])})));
+function memSetOpen(m,r){return m.st!=null?CONF_UNITS.filter(u=>u.st===m.st).every(u=>r.has(u.i)):m.units.every(i=>r.has(i))}
+const TEN=["Да не будет у тебя других богов","Не делай себе идола","Не произноси имени Иеговы напрасно","Помни день субботний","Почитай отца и мать","Не убивай","Не прелюбодействуй","Не кради","Не лжесвидетельствуй","Не желай ничего, что у ближнего"];
+const TEN_UNITS=[4,5,6];
+
+function confSt(){if(!state.conf||typeof state.conf!=="object")state.conf={};const c=state.conf;c.log=c.log||[];c.q=c.q||{};c.g=c.g||{};return c}
+function confScore(s){const c=s&&s.conf;return c?((c.log||[]).length+Object.keys(c.q||{}).length+(c.joined?1:0)):0}
+const confClosed=()=>today()>CONF.end;
+const confDaysLeft=()=>Math.max(0,dayNo(CONF.end)-dayNo(today())+1);
+const confRead=()=>new Set(confSt().log.map(x=>x.u));
+const confReadWhen=()=>{const m={};confSt().log.forEach(x=>{m[x.u]=x.d});return m};
+const TAB_LIMIT=2,TAB_STARS=3;
+const tabToday=()=>{const g=confSt().g.tab||{};return ((g.cnt||{})[today()])||0};
+function confStars(){const c=confSt();return Object.values(c.q).filter(x=>x===1).length+Object.entries(c.g).reduce((s,[k,g])=>{if(!g)return s;
+  if(k==="tab"){const cnt=g.cnt||{};return s+Object.values(cnt).reduce((a,n)=>a+Math.min(n,TAB_LIMIT)*TAB_STARS,0)+(g.days||[]).filter(d=>!(d in cnt)).length*2}
+  return s+(g.days||[]).length*2},0)}
+// делим части на n дней как можно ровнее по стихам; разрез внутри строфы псалма — лишь когда без этого никак
+function confSplit(units,n){
+  const L=units.length;n=Math.max(1,Math.min(n,L));if(!L)return [];
+  const pre=[0];units.forEach(u=>pre.push(pre[pre.length-1]+u.w));const ideal=pre[L]/n;
+  const cost=(i,j)=>{const s=pre[j]-pre[i],d=s-ideal;return d*d+(j<L&&units[j-1].st>=0&&units[j-1].st===units[j].st?6:0)};
+  const D=[],P=[];for(let k=0;k<=n;k++){D.push(new Array(L+1).fill(Infinity));P.push(new Array(L+1).fill(0))}
+  D[0][0]=0;
+  for(let k=1;k<=n;k++)for(let j=k;j<=L-(n-k);j++)for(let i=k-1;i<j;i++){const v=D[k-1][i]+cost(i,j);if(v<D[k][j]){D[k][j]=v;P[k][j]=i}}
+  const out=[];let j=L;for(let k=n;k>0;k--){const i=P[k][j];out.unshift(units.slice(i,j));j=i}return out;
+}
+// подписи отрывков: соседние части сливаются («Исх. 19:20–20:7», «Пс. 119:9–20»)
+function confRefs(units){
+  const runs=[];units.forEach(u=>{const r=runs[runs.length-1];
+    if(r&&r.b===u.b&&r.lastI===u.i-1){r.zc=u.c;r.zv=u.z;r.lastI=u.i}else runs.push({b:u.b,ac:u.c,av:u.a,zc:u.c,zv:u.z,lastI:u.i})});
+  return runs.map(r=>{const bk=BOOK[r.b],full=c=>bk.v[c-1];let ref;
+    if(r.ac===r.zc)ref=r.av===1&&r.zv===full(r.ac)?String(r.ac):r.ac+":"+r.av+"–"+r.zv;
+    else ref=r.av===1&&r.zv===full(r.zc)?r.ac+"–"+r.zc:r.ac+":"+r.av+"–"+r.zc+":"+r.zv;
+    const x={book:r.b,ref};let note="";
+    if(r.b==="Пс."){const s1=Math.floor((r.av-1)/8),s2=Math.floor((r.zv-1)/8);note=s1===s2?"строфа «"+HEB[s1]+"»":"строфы «"+HEB[s1]+"» – «"+HEB[s2]+"»"}
+    else if(r.zc===19)note="у горы Синай";else if(r.ac===19)note="у горы Синай · заповеди";else if(r.av>=18)note="народ у горы · жертвенник";else note=r.zv>17?"Десять заповедей · жертвенник":"Десять заповедей";
+    return {text:refStr(x),url:chapterUrl(x),note,verses:units.filter(u=>u.b===r.b).reduce((s,u)=>s+u.w,0)}});
+}
+// план: прошедшие дни — что прочитано в тот день; с сегодняшнего — остаток поровну на оставшиеся дни
+function confPlan(){
+  const c=confSt(),t=today(),when=confReadWhen(),days=[];
+  if(c.joined){let d=c.joined<t?c.joined:t;while(d<t){const us=CONF_UNITS.filter(u=>when[u.i]===d);days.push({d,past:true,units:us});d=add(d,1)}}
+  const left=CONF_UNITS.filter(u=>!(u.i in when)||when[u.i]>=t);
+  const n=confDaysLeft();
+  if(n&&left.length){const parts=confSplit(left,n);parts.forEach((us,k)=>days.push({d:add(t,k),now:k===0,units:us}))}
+  return days;
+}
+function confToday(){const p=confPlan().find(x=>x.now);return p?p.units:[]}
+function confMark(units,on){const c=confSt(),t=today();const ids=new Set(units.map(u=>u.i));
+  c.log=c.log.filter(x=>!ids.has(x.u));if(on)units.forEach(u=>c.log.push({u:u.i,d:t}));save();try{confPublishRead()}catch(e){}}
+function confUnlocked(){const r=confRead();return CONF_Q.filter(q=>r.has(q.u))}
+function confNewQ(){const c=confSt();return confUnlocked().filter(q=>!(q.id in c.q)).length}
+function confConfetti(){const box=el("div","confetti");const cols=["#2f8f6b","#ffc53d","#ff7a1a","#6b4fd8","#3fa7e0"];
+  for(let i=0;i<60;i++){const p=el("i");p.style.left=Math.random()*100+"%";p.style.background=cols[i%cols.length];p.style.animationDelay=Math.random()*.6+"s";p.style.animationDuration=1.4+Math.random()*1.2+"s";box.append(p)}
+  document.body.append(box);setTimeout(()=>box.remove(),3200)}
+const mountSvg='<svg class="cmount" viewBox="0 0 58 50" aria-hidden="true"><path d="M2 48 L22 14 L30 26 L36 18 L56 48Z" fill="#2f8f6b"/><path d="M22 14 L27 22 L24 21 L20 24 L17 22Z" fill="#fff" opacity=".85"/><path d="M8 12c4-6 12-6 15-2 3-3 9-2 10 2" fill="none" stroke="#9aa3b5" stroke-width="3" stroke-linecap="round"/><path d="M29 30l2-6 2 6" stroke="#ffc53d" stroke-width="2" fill="none"/></svg>';
+
+/* карточка на главной */
+function confRenderCard(){
+  const card=$("confCard");if(!card)return;const c=confSt();try{confTabDot()}catch(e){}
+  if(confClosed()||!tracks().conf){card.hidden=true;return}
+  card.hidden=false;card.textContent="";
+  const hero=el("div","chero");hero.insertAdjacentHTML("afterbegin",mountSvg);
+  const tt=el("div");tt.append(el("h2",null,CONF.name),el("div","csub",CONF.dates+" · прочитать до 28 октября"));hero.append(tt);
+  const n=confDaysLeft(),cnt=el("div","ccount");cnt.append(el("b",null,String(n)),el("span",null,plural(n,"день","дня","дней")+" осталось"));hero.append(cnt);
+  card.append(hero);const ts=confTeamStrip();if(ts)card.append(ts);
+  if(!c.joined){
+    const per=Math.round(CONF_VERSES/Math.max(1,Math.min(n,CONF_UNITS.length)));
+    card.append(el("p","cnote","Исход 19–20 и Псалом 119. Начните сегодня — это "+n+" "+plural(n,"день","дня","дней")+" примерно по "+per+" "+plural(per,"стиху","стиха","стихов")+". Чем позже присоединитесь, тем больше чтения в день: расписание подстраивается под вас."));
+    const j=el("button","cbtn","Присоединиться");j.type="button";j.addEventListener("click",()=>{confJoin();openConf("read")});
+    const row=el("div","crow");const more=el("button","btn","Подробнее");more.type="button";more.addEventListener("click",()=>openConf("read"));
+    row.append(more);card.append(j,row);if(!tracks().spb){const lk=el("button","linkbtn chide","＋ Читать ещё и по расписанию церкви в Санкт-Петербурге");lk.type="button";lk.addEventListener("click",()=>openPlans());card.append(lk)}return;
+  }
+  const r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100);
+  const pr=el("div","cprog");pr.innerHTML="<span>Прочитано <b>"+pct+"%</b></span><span class='cstars'>⭐ "+confStars()+"</span>";
+  const bar=el("div","cbar");const bi=el("i");bi.style.width=pct+"%";bar.append(bi);card.append(pr,bar);
+  card.append(confTodayBlock());
+  const row=el("div","crow");const nq=confNewQ();
+  const qb=el("button","btn");qb.type="button";qb.append("Вопросы ");if(nq)qb.append(el("span","cnew",String(nq)));qb.addEventListener("click",()=>openConf("quiz"));
+  const gb=el("button","btn","🎮 Игры");gb.type="button";gb.addEventListener("click",()=>openConf("games"));
+  const sb=el("button","btn","Расписание");sb.type="button";sb.addEventListener("click",()=>openConf("read"));
+  row.append(sb,qb,gb);card.append(row);
+  if(!tracks().spb){const lk=el("button","linkbtn chide","＋ Читать ещё и по расписанию церкви в Санкт-Петербурге");lk.type="button";lk.addEventListener("click",()=>openPlans());card.append(lk)}
+}
+// серия конференции: дни подряд, когда что-то прочитано (сегодня ещё можно успеть)
+function confStreak(){const ds=new Set(confSt().log.map(x=>x.d));let d=today();if(!ds.has(d))d=add(d,-1);let n=0;while(ds.has(d)){n++;d=add(d,-1)}return n}
+function confFlame(cls){const f=document.createElementNS("http://www.w3.org/2000/svg","svg");f.setAttribute("viewBox","0 0 64 80");f.setAttribute("class",cls);f.innerHTML=FLAME;return f}
+// «Чтение на сегодня» — как в основном Огоньке: сегодня | следующий, «Отменить», загорается огонёк
+function confTodayBlock(){
+  const r=confRead(),t=today(),groups=confPlan().filter(d=>!d.past).map(d=>d.units).filter(g=>g.length);
+  const doneG=g=>g.every(u=>r.has(u.i));
+  const todayLog=confSt().log.filter(x=>x.d===t);
+  const g0=groups[0]||[],lit=g0.length?doneG(g0):todayLog.length>0;
+  const nextG=groups.slice(1).find(g=>!doneG(g));
+  const readTodayGroups=groups.filter((g,i)=>i>0&&doneG(g)&&g.every(u=>todayLog.some(x=>x.u===u.i))).length+(lit&&g0.length?1:0);
+  const card=el("div","tcard confread"),head=el("div","thead");
+  const fl=confFlame("flame"+(lit?"":" off"));fl.id="confFlame";
+  const hb=el("div","tht");const sk=confStreak();hb.append(el("b",null,"Чтение на сегодня"),el("span",null,"· "+sk+" "+plural(sk,"день подряд","дня подряд","дней подряд")));
+  if(readTodayGroups>0){const mm=el("div","minis");mm.id="confMinis";for(let i=0;i<Math.min(8,readTodayGroups);i++)mm.append(confFlame("flame mini"));hb.append(mm)}
+  head.append(fl,hb);card.append(head);
+  const link=(cls,label,g,sub)=>{const refs=confRefs(g),a=el("a",cls);a.href=refs[0].url;a.target="_blank";a.rel="noopener";a.append(el("span","label",label));
+    refs.forEach(x=>a.append(el("span","name",x.text)));a.append(el("span","sub",sub||refs.map(x=>x.note).join(" · ")));return a};
+  const cols=el("div","tcols"),left=el("div","tcol"),right=el("div","tcol");
+  const qMsg=g=>{const k=CONF_Q.filter(q=>g.some(u=>u.i===q.u)).length;return k?"Открыто вопросов: "+k:"Отрывок отмечен"};
+  const mark=(g,flameEl,lvl)=>{confMark(g,true);if(flameEl)flameEl.classList.remove("off");ignite(flameEl,lvl);toast(qMsg(g));if(confRead().size===CONF_UNITS.length){confConfetti();toast("Всё прочитано — вы готовы к конференции!")}setTimeout(confRenderCard,850)};
+  if(g0.length){
+    left.append(link("tlink",lit?"Прочитано сегодня":"Сегодня",g0));
+    const btn=el("button","tbtn");btn.type="button";
+    if(lit){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
+    else{btn.textContent="Прочитал(а)";btn.classList.add("nudge");confirmTap(btn,"Нажмите ещё раз",()=>mark(g0,fl,1))}
+    left.append(btn);
+  }else{const d=el("div","tlink");d.append(el("span","label","Сегодня"),el("span","name","Всё прочитано"),el("span","sub","Загляните в вопросы и игры"));left.append(d)}
+  if(lit&&todayLog.length){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>{
+      const c=confSt(),last=c.log.filter(x=>x.d===t).pop(),g=groups.find(g=>g.some(x=>x.i===last.u))||[CONF_UNITS[last.u]];
+      confMark(g,false);toast("Отметка отменена");confRenderCard()});left.append(u)}
+  if(lit&&nextG){
+    const box=el("div","nextbox");box.append(link("nextlink","Следующий",nextG));
+    const b2=el("button","tbtn nextmark");b2.type="button";b2.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true">'+FLAME+'</svg>';b2.append(document.createTextNode("Прочитал(а)"));
+    confirmTap(b2,"Нажмите ещё раз",()=>{const ms=document.querySelectorAll("#confMinis .mini");mark(nextG,ms[ms.length-1]||fl,1)});
+    box.append(b2,el("span","frzhint","можно заранее"));right.append(box);
+  }else if(!lit&&groups[1])right.append(link("nextlink later","Потом",groups[1]));
+  else if(!nextG){const d=el("div","cdone");d.append(el("span",null,"🎉"),el("div",null,"Всё прочитано! Вы готовы к конференции."));right.append(d)}
+  cols.append(left,right);card.append(cols);return card;
+}
+function confTabDot(){const nav=$("appTabs");if(!nav||appMode()==="conf")return;const b=nav.querySelectorAll(".apptab")[1];if(!b)return;const c=confSt(),t=today();
+  const need=!c.joined||!c.log.some(x=>x.d===t)||(NET&&myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid}))||TINV.length>0;
+  const dot=b.querySelector(".atdot");if(need&&!dot)b.append(el("em","atdot"));if(!need&&dot)dot.remove()}
+function confJoin(){const c=confSt();const tt=tracks();if(!tt.conf){state.tracks=Object.assign(tt,{conf:true});try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}}if(!c.joined){c.joined=today();c.hide=false}save();try{applyAppMode()}catch(e){confRenderCard()}}
+
+/* лист конференции: Чтение · Вопросы · Игры */
+function openConf(tab,teamCode){
+  const arch=confClosed();
+  const modal=el("div","fmodal"),sheet=el("div","fsheet csheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label",CONF.name);
+  const close=()=>{teamView=null;modal.remove();document.removeEventListener("keydown",esc);confRenderCard()};const esc=e=>{if(e.key==="Escape")close()};
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+  modal.append(sheet);document.body.append(modal);
+  let cur=tab||"read";
+  function draw(){
+    sheet.textContent="";
+    const h=el("div","fhead");h.insertAdjacentHTML("afterbegin",mountSvg);const ht=el("div");ht.style.minWidth="0";
+    ht.append(el("h2",null,CONF.name),el("div","csub",CONF.dates));h.append(ht);
+    const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);h.append(x);sheet.append(h);
+    const info=el("div","cinfo");
+    if(arch)info.append(el("span",null,"🗄 В архиве · закрыто 28 октября"));
+    else{const n=confDaysLeft();info.append(el("span",null,"⏳ "+n+" "+plural(n,"день","дня","дней")+" до 28 октября"))}
+    info.append(el("span",null,"📖 Исход 19–20 · Псалом 119"));const st=el("span","cstars","⭐ "+confStars());info.append(st);sheet.append(info);
+    const tabs=el("div","ctabs");[["read","Чтение"],["quiz","Вопросы"],["games","Игры"]].forEach(([k,l])=>{const b=el("button","ctab"+(k===cur?" on":""),l);b.type="button";
+      if(k==="quiz"&&!arch){const nq=confNewQ();if(nq){b.append(" ");b.append(el("span","cnew",String(nq)))}}
+      b.addEventListener("click",()=>{cur=k;draw();sheet.scrollTop=0});tabs.append(b)});sheet.append(tabs);
+    const body=el("div","gstage");sheet.append(body);
+    if(cur==="read")drawRead(body);else if(cur==="quiz")drawQuiz(body);else drawGames(body);
+  }
+  function drawRead(body){
+    const c=confSt(),r=confRead();
+    if(arch){
+      const k=CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0);
+      const a=el("div","carch");a.innerHTML="Это расписание было открыто до <b>28 октября</b> — накануне конференции. "+(c.joined?"Вы прочитали <b>"+Math.round(k/CONF_VERSES*100)+"%</b> ("+k+" из "+CONF_VERSES+" стихов) и собрали <b>"+confStars()+" ⭐</b>.":"Вы к нему не присоединялись.");body.append(a);
+      const days=el("div","cdays");CONF_UNITS.forEach(u=>{});
+      confRefs(CONF_UNITS).forEach(x=>{});
+      // в архиве — все части с отметками, без кнопок
+      CONF_UNITS.reduce((g,u)=>{const key=u.b==="Пс."?"s"+u.st:"x"+u.i;const last=g[g.length-1];if(last&&last.key===key)last.us.push(u);else g.push({key,us:[u]});return g},[]).forEach(g=>{
+        const row=el("div","cday"+(g.us.every(u=>r.has(u.i))?"":" past"));const ref=confRefs(g.us)[0];
+        row.append(el("span","cd",g.us.every(u=>r.has(u.i))?"прочитано":"—"));const rs=el("div","crefs");const a2=el("a",null,ref.text);a2.href=ref.url;a2.target="_blank";a2.rel="noopener";rs.append(a2,el("em",null,ref.note));row.append(rs);
+        const ck=el("button","cchk"+(g.us.every(u=>r.has(u.i))?" on":""),"✓");ck.disabled=true;row.append(ck);days.append(row)});
+      body.append(days);return;
+    }
+    if(!c.joined){
+      const n=confDaysLeft(),per=Math.round(CONF_VERSES/Math.max(1,Math.min(n,CONF_UNITS.length)));
+      const j=el("div","cjoin");j.append(el("b",null,"Прочитаем вместе к конференции"),
+        el("p","cnote","Исход 19 и 20 — Бог встречается с народом у горы Синай и даёт Десять заповедей. Псалом 119 — самая длинная глава Библии: 176 стихов о любви к слову Божьему, 22 строфы по буквам еврейского алфавита."),
+        el("p","cnote","Если начать сегодня: "+n+" "+plural(n,"день","дня","дней")+" примерно по "+per+" "+plural(per,"стиху","стиха","стихов")+" в день. Расписание считается от дня, когда вы присоединились, и всегда заканчивается 28 октября."));
+      const b=el("button","cbtn","Присоединиться");b.type="button";b.addEventListener("click",()=>{confJoin();draw()});j.append(b);body.append(j);return;
+    }
+    const days=confPlan(),t=today();
+    body.append(el("p","cnote","Нажмите на отрывок, чтобы открыть его, и на кружок, чтобы отметить. Пропустили день — оставшееся снова поровну разложится на оставшиеся дни до 28 октября."));
+    const list=el("div","cdays");
+    days.forEach(day=>{
+      if(day.past&&!day.units.length)return;
+      const row=el("div","cday"+(day.now?" now":"")+(day.past?" past":""));
+      const dl=parse(day.d).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"short"});
+      row.append(el("span","cd",day.now?"Сегодня\n"+dl:dl));row.lastChild.style.whiteSpace="pre-line";
+      const rs=el("div","crefs");confRefs(day.units).forEach(x=>{const a=el("a",null,x.text);a.href=x.url;a.target="_blank";a.rel="noopener";rs.append(a,el("em",null,x.note+" · "+x.verses+" ст."))});row.append(rs);
+      const on=day.units.every(u=>r.has(u.i));const ck=el("button","cchk"+(on?" on":""),"✓");ck.type="button";ck.setAttribute("aria-label",on?"Снять отметку":"Отметить прочитанным");
+      if(day.past)ck.disabled=true;
+      else ck.addEventListener("click",()=>{confMark(day.units,!on);if(!on){const k=CONF_Q.filter(q=>day.units.some(u=>u.i===q.u)).length;if(k)toast("Открыто вопросов: "+k);if(confRead().size===CONF_UNITS.length){confConfetti();toast("Всё прочитано — вы готовы к конференции!")}}draw()});
+      row.append(ck);list.append(row);
+    });
+    body.append(list);
+  }
+  function drawQuiz(body){
+    const c=confSt(),r=confRead(),open=confUnlocked(),todo=open.filter(q=>!(q.id in c.q));
+    const right=Object.values(c.q).filter(x=>x===1).length,ans=Object.keys(c.q).length;
+    body.append(el("p","cnote","Вопросы открываются, когда вы отмечаете отрывок прочитанным. За каждый верный ответ — ⭐. Отвечено: "+ans+" из "+CONF_Q.length+", верно: "+right+"."));
+    if(!arch&&todo.length){
+      const q=todo[0],box=el("div","cq qin");box.append(el("span","qref",q.at),el("div","qtext",q.q));
+      const opts=el("div","qopts");const order=q.opts.map((t,i)=>({t,i})).sort(()=>Math.random()-.5);
+      order.forEach(o=>{const b=el("button","qopt");b.type="button";b.append(el("span",null,o.t),el("span","qmark"));b.addEventListener("click",()=>{
+        if(q.id in c.q)return;const ok=o.i===0;c.q[q.id]=ok?1:0;save();
+        opts.querySelectorAll("button").forEach((x,k)=>{x.disabled=true;if(order[k].i===0)x.classList.add("right")});if(!ok)b.classList.add("wrong");
+        box.classList.add(ok?"flash-ok":"shake");sheet.querySelectorAll(".cinfo .cstars").forEach(x=>x.textContent="⭐ "+confStars());const v=el("div","qverdict "+(ok?"ok":"no"),ok?"Верно! +1 ⭐":"Не совсем");box.append(v);
+        const why=el("div","cwhy");const u=CONF_UNITS[q.u],a=el("a",null,"Посмотреть "+q.at);a.href=BIBLE+SLUG[u.b]+"/"+q.c+"/"+q.v;a.target="_blank";a.rel="noopener";why.append(a);box.append(why);
+        const nx=el("button","cbtn",todo.length>1?"Следующий вопрос":"Готово");nx.type="button";nx.addEventListener("click",()=>{draw()});box.append(nx);
+        if(ok&&todo.length===1&&ans+1===CONF_Q.length)confConfetti();
+      });opts.append(b)});
+      box.append(opts);body.append(box,el("div","cqmore","Ещё открыто: "+(todo.length-1)));
+    }else if(!arch){
+      const lk=el("div","cqlock");lk.append(el("span",null,"🔒"),el("span",null,r.size===CONF_UNITS.length?"Вы ответили на все вопросы! Попробуйте игры.":"Новые вопросы откроются, когда вы прочитаете следующий отрывок."));body.append(lk);
+    }
+    const done=CONF_Q.filter(q=>q.id in c.q);
+    if(done.length){const l=el("div","cqlist");done.forEach(q=>{const d=el("div");d.append(el("i",c.q[q.id]?"ok":"no",c.q[q.id]?"✓":"✗"),el("span",null,q.at+" — "+q.q+" "),el("b",null,q.opts[0]));l.append(d)});
+      const det=el("details","pacetable");det.append(el("summary",null,"Мои ответы ("+done.length+")"),l);body.append(det)}
+    if(arch&&!done.length)body.append(el("div","carch","Расписание закрыто. Вопросы были доступны до 28 октября."));
+  }
+  function drawGames(body){
+    const r=confRead(),c=confSt();
+    if(arch){body.append(el("div","carch","Игры были доступны до 28 октября. "+(Object.keys(c.g).length?"Ваши результаты: "+Object.entries(c.g).map(([k,g])=>({tab:"«Скрижали»",mem:"«Найди пару»",team:"«Восхождение на Синай»"}[k]||k)+" — побед: "+(g.w||0)).join(", ")+".":"")));return}
+    const tabOpen=TEN_UNITS.every(i=>r.has(i)),memOpen=MEM_SETS.some(m=>memSetOpen(m,r));
+    body.append(el("p","cnote","За первую победу в каждой игре за день — +2 ⭐. «Скрижали» и «Найди пару» открываются по мере чтения."));
+    onlineSection(body);
+    const g=el("div","cgames");
+    const mk=(icon,name,desc,on,go)=>{const b=el("button","cgame");b.type="button";b.disabled=!on;b.append(el("span","gi",icon),el("b",null,name),el("span",null,desc));if(on)b.addEventListener("click",go);return b};
+    const tg=c.g.tab||{},mg=c.g.mem||{};
+    const tl=TAB_LIMIT-tabToday();
+    g.append(mk("🪨","Скрижали",!tabOpen?"Откроется после Исх. 20:1–17":tl>0?"Соберите Десять заповедей по порядку · +"+TAB_STARS+" ⭐ за сборку, сегодня осталось "+tl+(tg.best?" · рекорд "+tg.best+" с":""):"Сегодня скрижали собраны дважды — завтра снова можно",tabOpen&&tl>0,()=>gameTablets(body)),
+      mk("🕊️","Найди пару",memOpen?"Стих ↔ о чём он: по строфам Псалма 119 и по Исходу"+(mg.best?" · рекорд "+mg.best+" ходов":""):"Откроется, когда прочитаете первую строфу или главу",memOpen,()=>gameMemory(body)));
+    body.append(g);
+  }
+  function award(key,val,better){const c=confSt(),g=c.g[key]=c.g[key]||{w:0,days:[]};g.w++;const first=!g.days.includes(today());if(first)g.days.push(today());
+    const rec=!g.best||better(val,g.best);if(rec)g.best=val;save();return {first,rec}}
+  function winBox(body,emoji,title,sub,again){const w=el("div","gwin");w.append(el("span","gw",emoji),el("b",null,title),el("span","cnote",sub));
+    const row=el("div","crow");const a=el("button","btn",again?"Ещё раз":"Завтра снова");a.type="button";if(again)a.addEventListener("click",again);else a.disabled=true;const bk=el("button","btn","К играм");bk.type="button";bk.addEventListener("click",()=>{cur="games";draw()});row.append(a,bk);w.append(row);body.append(w);confConfetti()}
+  /* онлайн-раздел во вкладке «Игры»: приглашения, мои команды, создать / войти по коду */
+  function onlineSection(body){
+    const sec=el("div","tonline");sec.append(el("div","tsech"));sec.lastChild.innerHTML="<span>⛰️</span><div><b>Восхождение на Синай</b><i>Вместе с 1–2 друзьями, каждый со своего телефона. Общая цель — 12 ступеней к вершине, итог общий.</i></div>";
+    if(!NET){
+      const login=$("loginTop"),can=login&&!login.hidden;
+      sec.append(el("p","cnote",can?"Войдите, чтобы пригласить друга и восходить вместе.":"Восхождение с друзьями работает на сайте Огонька после входа через Google."));
+      if(can){const b=el("button","cbtn","Войти и пригласить друга");b.type="button";b.addEventListener("click",()=>{close();login.click()});sec.append(b)}
+      body.append(sec);return;
+    }
+    TINV.forEach(i=>{const row=el("div","tinv");row.append(el("span",null,"✉️ "+i.name.split(" ")[0]+" зовёт вас в команду «"+i.tname+"»"));
+      const y=el("button","btn","Принять");y.type="button";y.addEventListener("click",async()=>{y.disabled=true;if(await confJoinTeam(i.team))openTeam(i.team);else y.disabled=false});
+      const n=el("button","linkbtn","Отклонить");n.type="button";n.addEventListener("click",()=>{NET.dropInvite(i.team);TINV=TINV.filter(x=>x!==i);draw()});
+      const r2=el("div","crow");r2.append(y,n);row.append(r2);sec.append(row)});
+    const L=myTeams();
+    L.forEach(t=>{const d=TEAMS[t.code];const b=el("button","tcard2");b.type="button";
+      const av=el("span","tavs");((d&&d.members)||[]).forEach(u=>{const a=el("i",null,tName(d,u).charAt(0).toUpperCase());a.style.background=tColor(d,u);if(((d.read||{})[u]||{}).d===today())a.classList.add("lit");av.append(a)});
+      const tx=el("span","ttx");tx.append(el("b",null,(d&&d.name)||t.name));
+      const g=(d&&d.g)||{};let st="загрузка…";if(d){st=g.status==="play"?(tCur(g)===NET.uid?"ваш ход!":"ходит "+tName(d,tCur(g))+" · ступень "+g.steps+"/"+T_GOAL):(d.members||[]).length<2?"ждём друзей · код "+t.code:"можно начинать восхождение"}
+      tx.append(el("span",null,st));b.append(av,tx);if(g.status==="play"&&tCur(g)===NET.uid)b.append(el("span","cnew","!"));
+      b.addEventListener("click",()=>openTeam(t.code));sec.append(b)});
+    const nb=el("button","cbtn",L.length?"＋ Новое восхождение с другом":"Пригласить друга");nb.type="button";
+    nb.addEventListener("click",async()=>{nb.disabled=true;const code=await confCreateTeam("");nb.disabled=false;if(code)openTeam(code)});
+    const row=el("details","tjoin");row.append(el("summary",null,"Есть код от друга?"));
+    const ci=el("input");ci.placeholder="Например, K7M2QX";ci.maxLength=8;ci.autocapitalize="characters";ci.spellcheck=false;
+    const jb=el("button","btn","Присоединиться");jb.type="button";jb.addEventListener("click",async()=>{jb.disabled=true;if(await confJoinTeam(ci.value))openTeam(ci.value.toUpperCase().replace(/[^A-Z0-9]/g,""));jb.disabled=false});
+    const r2=el("div","tjrow");r2.append(ci,jb);row.append(r2);
+    if(L.length<3)sec.append(nb);
+    sec.append(row);body.append(sec);
+  }
+  function stopTeamView(){teamView=null}
+  function openTeam(code){
+    cur="games";const box=el("div","gstage");
+    teamView={code,redraw:()=>{if(teamView&&teamView.code===code&&box.isConnected){const y=sheet.scrollTop;box.textContent="";teamScreen(box,code);sheet.scrollTop=y}}};
+    sheet.querySelectorAll(".ctab").forEach(t=>t.classList.toggle("on",t.textContent.startsWith("Игры")));
+    const old=sheet.querySelector(".gstage");old.replaceWith(box);teamSub(code);teamScreen(box,code);
+  }
+  function teamScreen(body,code){
+    const d=TEAMS[code],me=NET&&NET.uid;
+    const back=el("button","linkbtn chide","← К играм");back.type="button";back.addEventListener("click",()=>{stopTeamView();cur="games";draw()});
+    if(!NET){body.append(el("p","cnote","Войдите, чтобы играть онлайн."),back);return}
+    if(!d){body.append(el("p","cnote",TEAMS[code]===null?"Команда не найдена или вы из неё вышли.":"Загружаем команду…"),back);return}
+    const g=d.g||{},mem=d.members||[];
+    // шапка команды
+    const hd=el("div","thead2");hd.append(el("b",null,"«"+d.name+"»"));const cd=el("button","tcode","Код "+code+" · скопировать приглашение");cd.type="button";
+    cd.addEventListener("click",()=>{const url=location.origin+location.pathname+"?team="+code,txt="Играем вместе в «Восхождение на Синай» к конференции! Команда «"+d.name+"», код "+code+": "+url;
+      if(navigator.share){navigator.share({text:txt}).catch(()=>{})}else{try{navigator.clipboard.writeText(txt);toast("Приглашение скопировано")}catch(e){toast("Код команды: "+code)}}});
+    hd.append(cd);body.append(hd);
+    // участники и их чтение сегодня — общий огонёк команды
+    const ms=el("div","tmembers");let lit=0;
+    mem.forEach(u=>{const r=(d.read||{})[u]||{},on=r.d===today();if(on)lit++;const m=el("div","tmem"+(on?" lit":""));m.style.setProperty("--pc",tColor(d,u));
+      const fl=confFlame("flame"+(on?"":" off"));m.append(fl,el("b",null,tName(d,u)+(u===me?" (вы)":"")),el("span",null,(r.pct||0)+"% · "+(r.st||0)+" "+plural(r.st||0,"день","дня","дней")));ms.append(m)});
+    body.append(ms);
+    const fire=el("div","tfire"+(lit===mem.length&&mem.length>1?" on":""));fire.textContent=lit===mem.length&&mem.length>1?"🔥 Сегодня прочитала вся команда — общий огонёк горит!":"Общий огонёк загорится, когда прочитают все: сегодня "+lit+" из "+mem.length;body.append(fire);
+    // позвать друзей
+    if(mem.length<3){const fr=NET.friends().filter(f=>!mem.includes(f.uid));const inv=el("details","pacetable tinvite");inv.open=mem.length<2;
+      inv.append(el("summary",null,mem.length<2?"Пригласить друга":"Пригласить ещё одного друга"));
+      if(!fr.length)inv.append(el("p","cnote","Пока некого позвать из друзей Огонька. Отправьте другу приглашение — кнопка «Код … · скопировать приглашение» выше."));
+      fr.forEach(f=>{const r=el("div","tfr");r.append(el("span",null,f.name));const b=el("button","btn","Позвать");b.type="button";
+        b.addEventListener("click",()=>{b.disabled=true;NET.invite(f.uid,code,d.name).then(()=>{b.textContent="Позвали ✓";teamPost(code,"✉️ Позвал(а) "+f.name.split(" ")[0],1)}).catch(e=>{console.warn(e);b.disabled=false;toast("Не получилось позвать")})});r.append(b);inv.append(r)});
+      body.append(inv)}
+    // игра
+    const game=el("div","tgame");body.append(game);
+    if(g.status!=="play")lobby(game,d,code);else playOnline(game,d,code);
+    // лента команды: ободрения и события
+    const fd=el("div","tfeed");fd.append(el("div","label","Лента команды"));
+    const qb=el("div","tquick");T_CHEERS.forEach(t=>{const b=el("button","tile",t);b.type="button";b.addEventListener("click",()=>{b.disabled=true;teamPost(code,t).then(()=>toast("Отправлено команде"))});qb.append(b)});fd.append(qb);
+    (d.feed||[]).slice(-12).reverse().forEach(f=>{const r=el("div","tfi"+(f.sys?" sys":""));r.style.setProperty("--pc",tColor(d,f.u));r.append(el("b",null,f.n),el("span",null,f.t),el("i",null,tAgo(f.at)));fd.append(r)});
+    body.append(fd);
+    const lv=el("button","linkbtn chide","Выйти из команды");lv.type="button";lv.addEventListener("click",()=>{if(lv.dataset.armed){NET.act(code,x=>({members:(x.members||[]).filter(u=>u!==me),
+      feed:(x.feed||[]).concat([{u:me,n:NET.name().split(" ")[0],t:"👋 Вышел(ла) из команды",at:Date.now(),sys:1}]).slice(-30)})).then(()=>{confTeamDrop(code);stopTeamView();cur="games";draw()}).catch(e=>{console.warn(e);toast("Не получилось выйти")});return}
+      lv.dataset.armed="1";lv.textContent="Точно выйти? Нажмите ещё раз"});
+    body.append(back,lv);
+  }
+  function tAgo(at){if(!at)return "";const m=Math.round((Date.now()-at)/60000);if(m<1)return "сейчас";if(m<60)return m+" мин";const h=Math.round(m/60);if(h<24)return h+" ч";const dd=Math.round(h/24);return dd+" "+plural(dd,"день","дня","дней")}
+  function tHud(d,g){
+    const h=el("div","thud");const ord=g.order||[];
+    h.innerHTML='<svg viewBox="0 0 320 120" class="tmount" aria-hidden="true"><path d="M8 116 L160 10 L312 116Z" fill="color-mix(in srgb,#2f8f6b 75%,var(--surface))"/><path d="M160 10 L182 26 L170 24 L160 32 L150 24 L138 26Z" fill="#fff" opacity=".85"/>'+
+      Array.from({length:T_GOAL+1},(_,i)=>{const x=20+i*(140/T_GOAL),y=112-i*(98/T_GOAL);return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(i===T_GOAL?6:3.5)+'" fill="'+(i<=g.steps?"#ffc53d":"rgba(255,255,255,.55)")+'"/>'}).join("")+
+      ord.map((u,i)=>{const s=Math.min(g.steps||0,T_GOAL),x=20+s*(140/T_GOAL)-8+i*8,y=112-s*(98/T_GOAL)-12;return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="6.5" fill="'+tColor(d,u)+'" stroke="#fff" stroke-width="2"/><text x="'+x.toFixed(1)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="middle" font-size="8" font-weight="800" fill="#fff">'+tName(d,u).charAt(0).toUpperCase().replace(/[<&]/g,"")+'</text>'}).join("")+'</svg>';
+    const st=el("div","tstat");st.innerHTML="<span>Ступени <b>"+Math.min(g.steps||0,T_GOAL)+"/"+T_GOAL+"</b></span><span>"+("🪔".repeat(Math.max(0,g.lamps))||"—")+"<i>"+"·".repeat(3-Math.max(0,g.lamps))+"</i></span><span>Подсказки <b>"+g.hints+"</b></span>";h.append(st);return h}
+  function lobby(game,d,code){
+    const mem=d.members||[],g=d.g||{};
+    if(g.status==="done"){const top=g.steps>=T_GOAL;game.append(tHud(d,g));const w=el("div","gwin");w.append(el("span","gw",top?"⛰️":"☁️"),el("b",null,top?"Команда на вершине!":"Облако закрыло путь"),
+      el("span","cnote","Общий итог: "+Math.min(g.steps,T_GOAL)+" из "+T_GOAL+" ступеней · 🪔 "+Math.max(0,g.lamps)+" из 3"),el("span","tteam",(g.order||[]).map(u=>tName(d,u)).join(" · ")));game.append(w)}
+    else game.append(el("div","tintro2","⛰️ Восхождение на Синай: вместе поднимитесь на 12 ступеней. Ход переходит по кругу — каждый отвечает со своего телефона. Общие 3 светильника и 2 подсказки. В свой ход можно попросить совета у команды."));
+    if(mem.length<2){game.append(el("p","cnote","Пригласите друга — как только он примет приглашение, можно начинать восхождение."));return}
+    const b=el("button","cbtn",g.status==="done"?"Новое восхождение":"Начать восхождение");b.type="button";
+    b.addEventListener("click",()=>{b.disabled=true;NET.act(code,x=>{if((x.g||{}).status==="play")return null;const ord=sshuf(x.members,Math.random);
+      return {g:{status:"play",seed:Math.floor(Math.random()*1e9),order:ord,turn:0,round:0,steps:0,lamps:3,hints:2,k:0,picked:[],removed:[],asked:{},sug:{},ans:null,done:false,t0:Date.now()},
+        feed:(x.feed||[]).concat([{u:NET.uid,n:NET.name().split(" ")[0],t:"⛰️ Начинаем восхождение! Первым ходит "+tName(x,ord[0]),at:Date.now(),sys:1}]).slice(-30)}}).catch(e=>{console.warn(e);toast("Не получилось начать");b.disabled=false})});
+    game.append(b);
+    if(d.hist&&d.hist.length){const h=el("details","pacetable");h.append(el("summary",null,"Прошлые восхождения ("+d.hist.length+")"));const l=el("div","cqlist");
+      d.hist.slice().reverse().forEach(x=>{const r=el("div");r.append(el("i",x.top?"ok":"no",x.top?"⛰":"☁"),el("span",null,x.names+" — "+x.steps+" из "+T_GOAL+", 🪔 "+x.lamps));l.append(r)});h.append(l);game.append(h)}
+  }
+  // действие в свой ход: транзакция проверяет, что раунд и ход не изменились
+  function tAct(code,g0,fn,turnOnly){return NET.act(code,x=>{const g=JSON.parse(JSON.stringify(x.g||{}));if(g.status!=="play"||g.round!==g0.round)return null;if(turnOnly!==false&&tCur(g)!==NET.uid)return null;const ev=fn(g,x);if(ev===false)return null;
+      const patch={g};const feed=(x.feed||[]).slice();if(ev)feed.push({u:NET.uid,n:NET.name().split(" ")[0],t:ev,at:Date.now(),sys:1});
+      if(g.done&&(g.steps>=T_GOAL||g.lamps<=0)){g.status="done";const top=g.steps>=T_GOAL;feed.push({u:NET.uid,n:"Команда",t:top?"🎉 Мы на вершине! "+T_GOAL+" ступеней, 🪔 "+g.lamps:"☁️ Облако закрыло путь на ступени "+g.steps+". Попробуем ещё!",at:Date.now()+1,sys:1});
+        patch.hist=(x.hist||[]).concat([{names:g.order.map(u=>tName(x,u)).join(", "),steps:Math.min(g.steps,T_GOAL),lamps:Math.max(0,g.lamps),top,d:today()}]).slice(-10)}
+      patch.feed=feed.slice(-30);return patch}).catch(e=>{console.warn(e);toast("Не удалось сохранить ход. Проверьте интернет.")})}
+  function nextRound(code,g0){return tAct(code,g0,g=>{if(!g.done)return false;g.round++;g.k=0;g.picked=[];g.removed=[];g.sug={};g.ans=null;g.done=false;return ""},false)}
+  function playOnline(game,d,code){
+    const g=d.g,R=teamRound(g,g.round),cu=tCur(g),mine=cu===NET.uid,me=NET.uid;
+    game.append(tHud(d,g));
+    const tw=el("div","tturn");tw.style.setProperty("--pc",tColor(d,cu));tw.innerHTML="<b>"+(mine?"Ваш ход!":tName(d,cu).replace(/[<&]/g,""))+"</b><span>"+(mine?"":"ходит сейчас")+"</span>";game.append(tw);
+    if(!mine&&!g.done){const nb=el("button","btn tnudge","💪 Подбодрить "+tName(d,cu));nb.type="button";nb.addEventListener("click",()=>{nb.disabled=true;teamPost(code,"💪 "+tName(d,cu)+", твой ход — мы ждём!").then(()=>toast("Отправлено"))});tw.append(nb)}
+    const nextBtn=()=>{const nx=el("button","cbtn",(g.steps>=T_GOAL||g.lamps<=0)?"Итог":"Дальше");nx.type="button";nx.addEventListener("click",()=>{nx.disabled=true;nextRound(code,g)});return nx};
+    if(R.kind==="q"){
+      const q=R.q,box=el("div","cq");box.append(el("span","qref",q.at),el("div","qtext",q.q));const opts=el("div","qopts");
+      R.order.forEach(i=>{const b=el("button","qopt");b.type="button";const lab=el("span",null,q.opts[i]);b.append(lab,el("span","qmark"));
+        const sugs=Object.entries(g.sug||{}).filter(([u,v])=>v===i&&u!==cu).map(([u])=>tName(d,u));if(sugs.length&&!g.ans)lab.append(el("small","tsug"," · советует "+sugs.join(", ")));
+        if((g.removed||[]).includes(i)){b.disabled=true;b.style.opacity=".35"}
+        if(g.ans){b.disabled=true;if(i===0)b.classList.add("right");if(g.ans.i===i&&!g.ans.ok)b.classList.add("wrong")}
+        else if(mine)b.addEventListener("click",()=>{opts.querySelectorAll("button").forEach(x=>x.disabled=true);tAct(code,g,gg=>{const ok=i===0;gg.ans={i,ok};gg.done=true;if(ok)gg.steps++;else gg.lamps--;gg.turn++;
+          return (ok?"✅ ответил(а) верно: +1 ступень":"❌ ошибся(лась): светильник погас")+" — «"+q.q.slice(0,50)+(q.q.length>50?"…":"")+"»"})});
+        else if(g.asked&&g.asked[cu]){b.addEventListener("click",()=>{tAct(code,g,gg=>{gg.sug=gg.sug||{};gg.sug[me]=i;return ""},false).then(()=>toast("Совет отправлен"))})}
+        else b.disabled=true;
+        opts.append(b)});
+      box.append(opts);game.append(box);
+      if(g.ans){box.append(el("div","qverdict "+(g.ans.ok?"ok":"no"),g.ans.ok?"Верно! +1 ступень":"Светильник погас"));game.append(nextBtn())}
+      else if(mine){const tools=el("div","ttools");
+        const hb=el("button","btn","🪔 Подсказка ("+g.hints+")");hb.type="button";hb.disabled=!g.hints;hb.addEventListener("click",()=>{hb.disabled=true;tAct(code,g,gg=>{if(!gg.hints)return false;const w=R.order.find(i=>i!==0&&!(gg.removed||[]).includes(i));if(w==null)return false;gg.removed=(gg.removed||[]).concat([w]);gg.hints--;return "🪔 взял(а) подсказку"})});
+        const ab=el("button","btn",g.asked&&g.asked[me]?"🙋 Ждём советов команды":"🙋 Спросить команду");ab.type="button";ab.disabled=!!(g.asked&&g.asked[me]);
+        ab.addEventListener("click",()=>{ab.disabled=true;tAct(code,g,gg=>{gg.asked=gg.asked||{};if(gg.asked[me])return false;gg.asked[me]=true;return "🙋 просит совета: нажмите ответ, который считаете верным"})});
+        tools.append(hb,ab);game.append(tools)}
+      else if(g.asked&&g.asked[cu])game.append(el("p","cnote","🙋 "+tName(d,cu)+" просит совета — нажмите ответ, который считаете верным."));
+      else game.append(el("p","cnote","Вопрос видят все. Отвечает "+tName(d,cu)+"."));
+    }else if(R.kind==="order"){
+      game.append(el("div","ttask","🤝 Командное задание · +2 ступени"),el("div","qtext",R.t),el("p","cnote","Каждый в свой ход ставит следующий пункт. Ошибка гасит светильник."));
+      const ol=el("ol","tplaced");R.items.slice(0,g.k).forEach(t=>ol.append(el("li",null,t)));game.append(ol);
+      if(g.done){game.append(el("div","gwin"));game.lastChild.append(el("span","gw","🤝"),el("b",null,g.k>=R.items.length?"Вместе справились! +2 ступени":"Светильники погасли"));game.append(nextBtn())}
+      else{const pool=el("div","tiles");R.show.filter(x=>x.i>=g.k).forEach(x=>{const b=el("button","tile",x.t);b.type="button";b.disabled=!mine;
+          if(mine)b.addEventListener("click",()=>{pool.querySelectorAll("button").forEach(z=>z.disabled=true);tAct(code,g,gg=>{if(x.i===gg.k){gg.k++;gg.turn++;if(gg.k>=R.items.length){gg.steps+=2;gg.done=true;return "🤝 поставил(а) последний пункт: +2 ступени"}return "✔️ поставил(а) пункт № "+gg.k}
+            gg.lamps--;if(gg.lamps<=0)gg.done=true;return "❌ ошибся(лась) в порядке: светильник погас"})});pool.append(b)});game.append(pool);
+        game.append(el("p","cnote",mine?"Выберите пункт № "+(g.k+1):"Сейчас выбирает "+tName(d,cu)+" — пункт № "+(g.k+1)))}
+    }else{
+      const found=(g.picked||[]).filter(i=>R.cells[i].ok).length;
+      game.append(el("div","ttask","🤝 Командное задание · +2 ступени"),el("div","qtext","Каким Псалом 119 называет слово Божье и что оно делает?"),el("p","cnote","Найдите все "+R.need+" верных ответов, по одному в свой ход. Неверный гасит светильник. Найдено: "+found+" из "+R.need));
+      const grid=el("div","twords");R.cells.forEach((c,i)=>{const b=el("button","tile",c.t);b.type="button";const was=(g.picked||[]).includes(i);if(was)b.classList.add(c.ok?"tok":"tno");b.disabled=!mine||was||g.done;
+        if(mine&&!was&&!g.done)b.addEventListener("click",()=>{grid.querySelectorAll("button").forEach(z=>z.disabled=true);tAct(code,g,gg=>{if((gg.picked||[]).includes(i))return false;gg.picked=(gg.picked||[]).concat([i]);gg.turn++;
+          if(c.ok){const f=gg.picked.filter(j=>R.cells[j].ok).length;if(f>=R.need){gg.steps+=2;gg.done=true;return "🪔 нашёл(ла) последний ответ: +2 ступени"}return "✔️ «"+c.t+"» — верно"}
+          gg.lamps--;if(gg.lamps<=0)gg.done=true;return "❌ «"+c.t+"» — так Псалом не говорит"})});grid.append(b)});
+      game.append(grid);if(g.done)game.append(nextBtn());else if(!mine)game.append(el("p","cnote","Сейчас выбирает "+tName(d,cu)+"."));
+    }
+  }
+  function gameTablets(body){
+    if(tabToday()>=TAB_LIMIT){cur="games";draw();toast("Сегодня скрижали уже собраны дважды — приходите завтра");return}
+    body.textContent="";const t0=Date.now();let next=0,miss=0;
+    const head=el("div","ghead");const hl=el("span",null,"Найдите заповедь № 1");const hm=el("span");hm.innerHTML="Ошибок: <b>0</b>";head.append(hl,hm);
+    const tabs=el("div","tablets"),slots=[];[0,1].forEach(s=>{const tb=el("div","tablet");for(let i=s*5;i<s*5+5;i++){const sl=el("div","tslot");sl.append(el("i",null,String(i+1)));slots.push(sl);tb.append(sl)}tabs.append(tb)});
+    const tiles=el("div","tiles");TEN.map((t,i)=>({t,i})).sort(()=>Math.random()-.5).forEach(o=>{const b=el("button","tile",o.t);b.type="button";b.addEventListener("click",()=>{
+      if(b.dataset.busy)return;
+      if(o.i===next){const sl=slots[next];next++;b.dataset.busy="1";b.classList.add("good");setTimeout(()=>{sl.append(o.t);sl.classList.add("fill");b.remove()},420);
+        if(next===10)setTimeout(()=>{const sec=Math.round((Date.now()-t0)/1000);const a=award("tab",sec,(v,b2)=>v<b2);const cc=confSt().g.tab;cc.cnt=cc.cnt||{};Object.keys(cc.cnt).forEach(k=>{if(k<add(today(),-60))delete cc.cnt[k]});
+          const n=(cc.cnt[today()]||0)+1;cc.cnt[today()]=n;save();tiles.remove();head.remove();const left=TAB_LIMIT-n;
+          winBox(body,miss?"🪨":"🏆",miss?"Скрижали готовы!":"Без единой ошибки!",sec+" с, ошибок: "+miss+(a.rec?" · новый рекорд!":"")+(n<=TAB_LIMIT?" · +"+TAB_STARS+" ⭐":"")+(left>0?" · сегодня можно ещё "+left+" раз":" · следующая сборка — завтра"),left>0?()=>gameTablets(body):null);
+          sheet.querySelectorAll(".cinfo .cstars").forEach(x=>x.textContent="⭐ "+confStars())},480);
+        else hl.textContent="Найдите заповедь № "+(next+1);
+      }else{miss++;hm.innerHTML="Ошибок: <b>"+miss+"</b>";b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad");clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove("bad"),800)}
+    });tiles.append(b)});
+    const back=el("button","linkbtn chide","← К играм");back.type="button";back.addEventListener("click",()=>{cur="games";draw()});
+    body.append(head,tabs,tiles,back);
+  }
+  function gameMemory(body){
+    body.textContent="";const r=confRead(),c=confSt(),done=new Set(((c.g.mem||{}).sets)||[]);
+    body.append(el("div","ghead"));body.lastChild.append(el("span",null,"Выберите отрывок: в каждом — пары «стих ↔ о чём он»"));
+    const grid=el("div","msets");
+    MEM_SETS.forEach(m=>{const on=memSetOpen(m,r),b=el("button","mset"+(done.has(m.id)?" done":""));b.type="button";b.disabled=!on;
+      b.append(el("b",null,(done.has(m.id)?"✓ ":on?"":"🔒 ")+m.title),el("span",null,m.sub));if(on)b.addEventListener("click",()=>memRound(body,m));grid.append(b)});
+    body.append(grid,el("p","cnote","Строфа откроется, когда вы прочитаете её. В Псалме 119 — 22 строфы по 8 стихов, каждая названа буквой еврейского алфавита."));
+    const back=el("button","linkbtn chide","← К играм");back.type="button";back.addEventListener("click",()=>{cur="games";draw()});body.append(back);
+  }
+  function memRound(body,m){
+    body.textContent="";const set=m.pairs.slice().sort(()=>Math.random()-.5).slice(0,4);let moves=0,got=0,openC=[],lock=false;
+    const refOf=p=>(p[0]===119?"Пс. 119:":"Исх. "+p[0]+":")+p[1],urlOf=p=>BIBLE+(p[0]===119?"psa/119/":"exo/"+p[0]+"/")+p[1];
+    const back=el("button","linkbtn chide","← Другой отрывок");back.type="button";back.addEventListener("click",()=>gameMemory(body));
+    const head=el("div","ghead");const hl=el("span",null,m.title+" · "+m.sub);const hm=el("span");hm.innerHTML="Ходов: <b>0</b>";head.append(hl,hm);
+    const grid=el("div","mem two"),found=el("div","mfound");
+    set.flatMap((p,k)=>[{k,ref:true,p},{k,ref:false,p}]).sort(()=>Math.random()-.5).forEach(o=>{
+      const b=el("button","mcard");b.type="button";b.setAttribute("aria-label","Карточка");const mi=el("span","mi");const f=el("span","mf","📜");
+      const bk=el("span","mb"+(o.ref?" mref":""));if(o.ref){bk.append(el("b",null,refOf(o.p)))}else bk.textContent=o.p[2];
+      mi.append(f,bk);b.append(mi);
+      b.addEventListener("click",()=>{if(lock||b.classList.contains("open")||b.classList.contains("got"))return;b.classList.add("open");openC.push({b,o});
+        if(openC.length===2){moves++;hm.innerHTML="Ходов: <b>"+moves+"</b>";const [x,y]=openC;openC=[];
+          if(x.o.k===y.o.k&&x.o.ref!==y.o.ref){x.b.classList.add("got");y.b.classList.add("got");got++;
+            const a=el("a","mfi");a.href=urlOf(x.o.p);a.target="_blank";a.rel="noopener";a.append(el("b",null,refOf(x.o.p)),el("span",null,x.o.p[2]),el("i",null,"Читать ›"));found.append(a);
+            if(got===set.length){const cc=confSt(),g=cc.g.mem=cc.g.mem||{w:0,days:[]};g.sets=[...new Set((g.sets||[]).concat([m.id]))];
+              const aw=award("mem",moves,(v,b2)=>v<b2);setTimeout(()=>{grid.remove();lab.remove();back.remove();winBox(body,"🕊️","Все пары найдены!","Ходов: "+moves+(aw.rec?" · новый рекорд!":"")+(aw.first?" · +2 ⭐":""),()=>memRound(body,m));body.append(found);
+                const more=el("button","linkbtn chide","Выбрать другой отрывок");more.type="button";more.addEventListener("click",()=>gameMemory(body));body.append(more)},500)}}
+          else{lock=true;setTimeout(()=>{x.b.classList.remove("open");y.b.classList.remove("open");lock=false},1100)}}});
+      grid.append(b)});
+    const lab=el("div","label","Найденные пары");body.append(head,grid,lab,found,back);
+  }
+  draw();
+  if(teamCode&&NET)openTeam(teamCode);
+}
+// пункт в списке расписаний: до 28 октября — «Конференция», потом — «Архив»
+function confPlanItems(closePlans){
+  const c=confSt(),arch=confClosed(),b=el("button","pitem confitem");b.type="button";
+  const ic=el("span","cicon",arch?"🗄":"⛰️");const t=el("div","ptxt");
+  const r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100);
+  t.append(el("b",null,CONF.name+" 2026"),el("span",null,arch?"Закрыто 28 октября · "+(c.joined?"прочитано "+pct+"%":"вы не участвовали"):"Исход 19–20 и Псалом 119 · до 28 октября · "+confDaysLeft()+" "+plural(confDaysLeft(),"день","дня","дней")));
+  if(c.joined&&!arch)t.append(el("span","pdone","Прочитано "+pct+"% · ⭐ "+confStars()));
+  b.append(ic,t);b.addEventListener("click",()=>{closePlans();openConf("read")});
+  return [el("div","pgroup",arch?"Архив":"Особое расписание"),b];
+}
+/* ---------- Онлайн-команды «Восхождение на Синай»: 2–3 друга, каждый со своего телефона ----------
+   Работает на сайте после входа: auth.js передаёт сюда NET (Firestore). Команда — документ teams/<КОД>.
+   Игра пошаговая: ход переходит по кругу, общий итог на всю команду. В ленте команды — ободрения
+   и события игры, у каждого участника видно, прочитал ли он сегодня (общий огонёк команды). */
+let NET=null,TEAMS={},TSUB={},TINV=[],teamView=null,teamSeen={};
+const T_GOAL=12,T_COLS=["#e8650a","#6b4fd8","#0e9aa7"];
+const T_SEQ=["q","q","order","q","q","word","q","q","order","q","word","q","q","order","q","q"];
+const T_TRUE=["Светильник ноге моей","Свет для стези","Слаще мёда","Лучше тысяч золота и серебра","Истина","Утверждено на небесах навеки","Оживляет","Очень чистое","Великий мир любящим его","Советники мои","Даёт понимание простым","Праведно","Мои песни","Укрепляет"];
+const T_FALSE=["Тяжёлое бремя","Устарело","Только для взрослых","Скучное","Горче полыни","Нужно лишь священникам","Забывается со временем","Тайна, которую нельзя понять"];
+const T_ORDERS=[
+  {t:"Расставьте события Исхода 19 по порядку",it:["Израиль приходит в пустыню Синай","Народ: «Всё, что сказал Иегова, сделаем»","Народ освящается и стирает одежды","Громы, молнии и звук трубы на третий день","Моисей поднимается на вершину горы"]},
+  {t:"Расставьте события Исхода 20:18–26 по порядку",it:["Народ видит громы и дымящуюся гору","Народ просит: «Говори с нами ты»","Моисей: «Не бойтесь»","Моисей приближается ко мгле","Бог говорит о жертвеннике из земли"]},
+  {t:"Расставьте заповеди по их номерам",it:null},
+  {t:"Что было на третий день у горы Синай? Расставьте по порядку (Исх. 19:16–20)",it:["Громы, молнии и густое облако на горе","Моисей выводит народ навстречу Богу","Гора дымится: Иегова сошёл на неё в огне","Звук трубы становится всё сильнее","Иегова зовёт Моисея на вершину"]}];
+const T_CHEERS=["💪 Твой ход — мы ждём!","📖 Прочитай сегодняшний отрывок!","🔥 Молодец, так держать!","🙏 Молюсь за тебя","⛰️ Вперёд, к вершине!","🎉 Ура, команда!"];
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function sshuf(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+// содержимое раунда одинаково у всех участников: зависит только от seed и номера раунда
+function teamRound(g,r){
+  const kind=T_SEQ[r%T_SEQ.length],rnd=mulberry(g.seed*31+r*977+1);
+  let c=0;for(let i=0;i<r;i++)if(T_SEQ[i%T_SEQ.length]===kind)c++;
+  if(kind==="q"){const perm=sshuf(CONF_Q.map((_,i)=>i),mulberry(g.seed));const q=CONF_Q[perm[c%perm.length]];return {kind,q,order:sshuf([0,1,2],rnd)}}
+  if(kind==="order"){const o=sshuf(T_ORDERS,mulberry(g.seed+5))[c%T_ORDERS.length];let items=o.it;
+    if(!items){const ids=sshuf([...TEN.keys()],rnd).slice(0,5).sort((a,b)=>a-b);items=ids.map(i=>TEN[i])}
+    return {kind,t:o.t,items,show:sshuf(items.map((t,i)=>({t,i})),rnd)}}
+  const need=Math.max(4,g.order.length*2),tr=sshuf(T_TRUE,rnd).slice(0,need),fa=sshuf(T_FALSE,rnd).slice(0,3);
+  return {kind,need,cells:sshuf(tr.map(t=>({t,ok:true})).concat(fa.map(t=>({t,ok:false}))),rnd)};
+}
+const tCur=g=>g&&g.order&&g.order.length?g.order[g.turn%g.order.length]:null;
+const tName=(d,u)=>((d.names||{})[u]||"Игрок").split(" ")[0];
+const tColor=(d,u)=>T_COLS[Math.max(0,(d.members||[]).indexOf(u))%3];
+function myTeams(){const c=confSt();c.teams=c.teams||[];return c.teams}
+function confTeamSave(code,name){const L=myTeams();const x=L.find(t=>t.code===code);if(x){if(name&&x.name!==name){x.name=name;save()}}else{L.push({code,name:name||code});save()}}
+function confTeamDrop(code){const c=confSt();c.teams=myTeams().filter(t=>t.code!==code);save();if(TSUB[code]){TSUB[code]();delete TSUB[code]}delete TEAMS[code]}
+function myPct(){const r=confRead();return Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100)}
+// моё чтение конференции — в каждую мою команду (видно друзьям)
+function confPublishRead(){if(!NET)return;const t=today(),done=confSt().log.some(x=>x.d===t),mine={d:done?t:"",pct:myPct(),st:confStreak()};
+  Object.entries(TEAMS).forEach(([code,d])=>{if(!d||!(d.members||[]).includes(NET.uid))return;const o=(d.read||{})[NET.uid]||{};
+    if(o.d!==mine.d||o.pct!==mine.pct||o.st!==mine.st)NET.update(code,{["read."+NET.uid]:mine}).catch(e=>console.warn(e))})}
+function teamSub(code){
+  if(!NET||TSUB[code])return;
+  TSUB[code]=NET.watch(code,d=>{
+    const prev=TEAMS[code];TEAMS[code]=d;
+    if(!d||!(d.members||[]).includes(NET.uid)){if(d===null||prev)confTeamDrop(code);confRenderCard();if(teamView&&teamView.code===code)teamView.redraw();return}
+    confTeamSave(code,d.name);
+    // ободрения и события от друзей — коротким сообщением
+    const seen=teamSeen[code]||0,fresh=(d.feed||[]).filter(f=>f.at>seen&&f.u!==NET.uid);
+    if(prev||!seen){const last=fresh[fresh.length-1];if(last&&(!teamView||teamView.code!==code))toast("«"+d.name+"» · "+last.n+": "+last.t)}
+    teamSeen[code]=Math.max(seen,...(d.feed||[]).map(f=>f.at||0),0);try{localStorage.setItem("ogonek-team-seen",JSON.stringify(teamSeen))}catch(e){}
+    const g=d.g||{};if(prev&&g.status==="play"&&tCur(g)===NET.uid&&tCur(prev.g||{})!==NET.uid&&(!teamView||teamView.code!==code))toast("⛰️ «"+d.name+"»: ваш ход!");
+    if(!prev)confPublishRead();
+    confRenderCard();if(teamView&&teamView.code===code)teamView.redraw();
+  },()=>{});
+}
+window.confNet=function(net,joinCode){
+  Object.values(TSUB).forEach(u=>u());TSUB={};TEAMS={};NET=net||null;TINV=[];
+  try{teamSeen=JSON.parse(localStorage.getItem("ogonek-team-seen")||"{}")}catch(e){teamSeen={}}
+  if(NET){myTeams().forEach(t=>teamSub(t.code));if(joinCode)confJoinTeam(joinCode,true)}
+  confRenderCard();
+};
+window.confNet.invites=function(list){TINV=(list||[]).filter(i=>!myTeams().some(t=>t.code===i.team));confRenderCard();if(teamView&&teamView.code==="")teamView.redraw()};
+async function confJoinTeam(code,open){
+  code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(code.length!==6){toast("Код команды — 6 букв и цифр");return false}
+  if(!NET){toast("Войдите, чтобы играть онлайн");return false}
+  try{
+    const d=await NET.get(code);if(!d){toast("Команда с таким кодом не найдена");return false}
+    if(!(d.members||[]).includes(NET.uid)){
+      if((d.members||[]).length>=3){toast("В команде уже трое");return false}
+      await NET.act(code,x=>{if((x.members||[]).includes(NET.uid)||(x.members||[]).length>=3)return null;
+        return {members:(x.members||[]).concat([NET.uid]),names:Object.assign({},x.names,{[NET.uid]:NET.name()}),photos:Object.assign({},x.photos,{[NET.uid]:NET.photo}),
+          feed:(x.feed||[]).concat([{u:NET.uid,n:NET.name().split(" ")[0],t:"👋 Я в команде!",at:Date.now(),sys:1}]).slice(-30)}});
+    }
+    NET.dropInvite(code);confTeamSave(code,d.name);if(!tracks().conf)confJoin();teamSub(code);toast("Вы в команде «"+d.name+"»");
+    if(open)openConf("games",code);return true;
+  }catch(e){console.warn(e);toast("Не получилось войти в команду. Проверьте интернет.");return false}
+}
+async function confCreateTeam(name){
+  name=(name||"").trim().slice(0,30)||"Восхождение "+NET.name().split(" ")[0];
+  try{const code=await NET.create({name,names:{[NET.uid]:NET.name()},photos:{[NET.uid]:NET.photo},created:Date.now(),
+      feed:[{u:NET.uid,n:NET.name().split(" ")[0],t:"⛰️ Создал(а) команду",at:Date.now(),sys:1}],read:{},hist:[],g:{status:"lobby"}});
+    confTeamSave(code,name);teamSub(code);return code}
+  catch(e){console.warn(e);toast("Не получилось создать команду. Проверьте интернет.");return null}
+}
+function teamPost(code,t,sys){if(!NET)return Promise.resolve();return NET.act(code,d=>({feed:(d.feed||[]).concat([{u:NET.uid,n:NET.name().split(" ")[0],t,at:Date.now(),sys:sys?1:0}]).slice(-30)})).catch(e=>{console.warn(e);toast("Не удалось отправить")})}
+// полоска на главной: ваш ход / приглашения
+function confTeamStrip(){
+  if(!NET)return null;const box=el("div","tstrip");
+  TINV.forEach(i=>{const b=el("button","tsitem inv");b.type="button";b.innerHTML="<span>✉️</span>";b.append(el("b",null,i.name.split(" ")[0]+" зовёт в команду «"+i.tname+"»"),el("i",null,"Открыть"));b.addEventListener("click",()=>openConf("games"));box.append(b)});
+  myTeams().forEach(t=>{const d=TEAMS[t.code];if(!d)return;const g=d.g||{};const my=g.status==="play"&&tCur(g)===NET.uid;
+    const all=(d.members||[]).length,rd=(d.members||[]).filter(u=>((d.read||{})[u]||{}).d===today()).length;
+    if(!my&&rd===all)return;
+    const b=el("button","tsitem"+(my?" turn":""));b.type="button";b.innerHTML="<span>"+(my?"⛰️":"📖")+"</span>";
+    b.append(el("b",null,"«"+d.name+"»: "+(my?"ваш ход!":"сегодня прочитали "+rd+" из "+all)),el("i",null,"Открыть"));b.addEventListener("click",()=>openConf("games",t.code));box.append(b)});
+  return box.childNodes.length?box:null;
+}
+
+/* ---------- Тропинка конференции: переключатель «Церковь | Конференция» ----------
+   Узлы — Исход 19, Исход 20 и 22 строфы Псалма 119; на тропинке вы и друзья, которые читают к конференции.
+   Позиция — по числу прочитанных частей (друзья публикуют её в профиле: summary().conf). */
+function confSummary(){const c=confSt();if(!c.joined)return null;const t=today();return {j:1,u:c.log.length,pct:myPct(),st:confStreak(),d:c.log.some(x=>x.d===t)?t:(c.log.length?c.log.map(x=>x.d).sort().pop():"")}}
+const CP_ENDS=(()=>{let n=0;return MEM_SETS.map(m=>{n+=m.st!=null?2:m.units.length;return n})})(); // сколько частей прочитано к концу каждого узла
+const cpNode=u=>{let k=0;while(k<CP_ENDS.length&&u>=CP_ENDS[k])k++;return k}; // 0..24 (24 — всё прочитано)
+// вкладки наверху: «Церковь в Санкт-Петербурге» | «Конференция»
+function appMode(){if(confClosed())return "spb";const t=tracks();if(!t.conf)return "spb";if(!t.spb)return "conf";try{return localStorage.getItem("ogonek-app-mode")==="conf"?"conf":"spb"}catch(e){return "spb"}}
+const pathModeConf=()=>appMode()==="conf";
+function setAppMode(m){try{localStorage.setItem("ogonek-app-mode",m)}catch(e){}applyAppMode();window.scrollTo({top:0,behavior:"smooth"})}
+function applyAppMode(){
+  const conf=appMode()==="conf",nav=$("appTabs");document.body.classList.toggle("mode-conf",conf);
+  if(nav){const tt=tracks();nav.hidden=confClosed()||!(tt.spb&&tt.conf);nav.textContent="";
+    const mk=(m,icon,t,sub)=>{const b=el("button","apptab"+((m==="conf")===conf?" on":""));b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-selected",String((m==="conf")===conf));
+      b.innerHTML="<span>"+icon+"</span>";const tx=el("span","att");tx.append(el("b",null,t),el("i",null,sub));b.append(tx);b.addEventListener("click",()=>{if(appMode()!==m)setAppMode(m)});return b};
+    const c=confSt(),t=today(),need=!c.joined||!c.log.some(x=>x.d===t)||(NET&&myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid}))||TINV.length>0;
+    const cb=mk("conf","⛰️","Конференция","до 28 октября");if(need&&!conf)cb.append(el("em","atdot"));
+    nav.append(mk("spb","🔥","Церковь","Санкт-Петербург"),cb)}
+  try{renderPath()}catch(e){}confRenderCard();try{applyPage()}catch(e){console.warn(e)}
+}
+function confPathSetup(){
+  const card=$("pathCard");if(!card||$("pathMode"))return;
+  const pm=el("div","pmode");pm.id="pathMode";pm.setAttribute("role","tablist");
+  [["spb","Церковь"],["conf","⛰️ Конференция"]].forEach(([m,l])=>{const b=el("button",null,l);b.type="button";b.dataset.m=m;b.addEventListener("click",()=>{try{localStorage.setItem("ogonek-path-mode",m)}catch(e){}renderPath()});pm.append(b)});
+  card.querySelector(".pzoom").after(pm);
+  const list=el("div","cpeople");list.id="confPeople";$("pathBox").after(list);
+}
+function confPathChrome(conf){
+  confPathSetup();const pm=$("pathMode");pm.hidden=true;
+  pm.querySelectorAll("button").forEach(b=>b.classList.toggle("on",(b.dataset.m==="conf")===conf));
+  ["pzMe","pzOut","pzLevel","pzIn"].forEach(id=>{const x=$(id);if(x)x.hidden=conf});
+  $("confPeople").hidden=!conf;$("pathBox").classList.toggle("cpbox",conf);
+}
+function renderConfPath(){
+  confPathChrome(true);
+  const host=$("path");host.textContent="";const NS="http://www.w3.org/2000/svg",sv=(t,a,tx)=>{const e=document.createElementNS(NS,t);Object.entries(a||{}).forEach(([k,v])=>e.setAttribute(k,v));if(tx!=null)e.textContent=tx;return e};
+  const W=Math.max(300,Math.min(480,$("pathBox").clientWidth||340)),N=MEM_SETS.length,GAP=62,TOP=120,H=TOP+N*GAP+40,cx=W/2,A=Math.min(110,W*.28);
+  // как на основной тропинке: плавная волна снизу вверх, один узел на ступень
+  const X=t=>cx+A*Math.sin(t*Math.PI/3.5),Y=t=>H-40-t*GAP,pos=i=>({x:X(i),y:Y(i)});
+  const COLS=1;
+  const svg=sv("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,class:"pathsvg cpath",role:"img","aria-label":"Тропинка конференции"});
+  const curve=(t0,t1)=>{let d="";for(let t=t0;t<=t1+1e-6;t+=.1)d+=(d?"L":"M")+X(t).toFixed(1)+" "+Y(t).toFixed(1);return d};
+  const fp={x:X(N),y:Y(N)-34};
+  svg.append(sv("path",{d:curve(-0.5,N-1)+"L"+fp.x.toFixed(1)+" "+(fp.y+30).toFixed(1),fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  const myN0=confSt().joined?cpNode(confSt().log.length):-1;
+  if(myN0>0)svg.append(sv("path",{d:curve(-0.5,Math.min(myN0,N-1)),fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-dasharray":"2 8"}));
+  // вершина и флаг конференции
+  const g0=sv("g",{class:"cpflag"});g0.append(sv("path",{d:"M"+(fp.x-70)+" "+(fp.y+30)+" L"+fp.x+" "+(fp.y-26)+" L"+(fp.x+70)+" "+(fp.y+30)+"Z",fill:"color-mix(in srgb,#2f8f6b 70%,var(--surface))"}),
+    sv("path",{d:"M"+fp.x+" "+(fp.y-26)+" l12 9 -6 -1 -6 6 -6 -6 -6 1z",fill:"#fff",opacity:".85"}),sv("line",{x1:fp.x,y1:fp.y-26,x2:fp.x,y2:fp.y-48,stroke:"#2f8f6b","stroke-width":2.5}),sv("path",{d:"M"+fp.x+" "+(fp.y-48)+" l18 5 -18 6z",fill:"#ffc53d"}),
+    sv("text",{x:fp.x,y:fp.y+46,"text-anchor":"middle",class:"cpft"},"Конференция · 29 октября"));svg.append(g0);
+  const st=sv("text",{x:X(-0.5),y:H-6,"text-anchor":"middle",class:"cpst"},"Старт · все начинают отсюда");svg.append(st);
+  // узлы
+  const myNode=confSt().joined?cpNode(confSt().log.length):-1,r=confRead();
+  MEM_SETS.forEach((m,i)=>{const p=pos(i),done=m.st!=null?CONF_UNITS.filter(u=>u.st===m.st).every(u=>r.has(u.i)):m.units.every(x=>r.has(x));
+    const g=sv("g",{class:"cpnode"+(done?" done":"")+(i===myNode?" cur":"")});g.append(sv("circle",{cx:p.x,cy:p.y,r:15}),sv("text",{x:p.x,y:p.y+4,"text-anchor":"middle",class:"cpn"},m.st!=null?String(m.st+1):m.title.replace("Исход ","")),
+      sv("text",{x:p.x+(p.x>cx?-24:24),y:p.y+4,"text-anchor":p.x>cx?"end":"start",class:"cpl"},(m.st!=null?m.title+" · "+m.sub.replace("Пс. ",""):m.title)));svg.append(g)});
+  // люди
+  const people=[];if(confSt().joined)people.push({id:"me",name:"Вы",me:true,node:myNode,lit:confSt().log.some(x=>x.d===today()),pct:myPct(),st:confStreak()});
+  (pathPeople||[]).forEach(f=>{const c=f.conf;if(c&&c.j)people.push({id:f.id,name:(f.name||"Друг").split(" ")[0],node:cpNode(c.u||0),lit:c.d===today(),pct:c.pct||0,st:c.st||0})});
+  const at={};people.forEach(pp=>{const k=Math.min(pp.node,MEM_SETS.length);(at[k]=at[k]||[]).push(pp)});
+  const COLR=["#e8650a","#6b4fd8","#0e9aa7","#c7559c","#1d6fd6","#9a6b3f"];
+  Object.entries(at).forEach(([k,list])=>{k=+k;const base=k>=MEM_SETS.length?{x:fp.x,y:fp.y+4}:pos(k);
+    list.slice(0,4).forEach((pp,j)=>{const x=base.x+(j-(Math.min(list.length,4)-1)/2)*22,y=base.y-27;const ci=people.indexOf(pp);
+      const g=sv("g",{class:"cpp"+(pp.me?" me":"")});g.append(sv("circle",{cx:x,cy:y,r:11,fill:pp.me?"var(--flame)":COLR[ci%COLR.length],stroke:pp.lit?"#ffc53d":"var(--surface)","stroke-width":pp.lit?3:2}),
+        sv("text",{x,y:y+4,"text-anchor":"middle",class:"cpi"},pp.name.charAt(0).toUpperCase()));
+      g.append(sv("title",null,pp.name+" · "+pp.pct+"%"));g.style.cursor="pointer";g.addEventListener("click",()=>pp.me?openConf("read"):window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(pp.id));svg.append(g)});
+    if(list.length>4){svg.append(sv("text",{x:base.x+48,y:base.y-22,class:"cpl"},"+"+(list.length-4)))}});
+  host.append(svg);
+  // прокрутить к себе
+  if(myNode>=0){const p=myNode>=MEM_SETS.length?{y:fp.y}:pos(myNode);requestAnimationFrame(()=>{const b=$("pathBox");b.scrollTop=Math.max(0,p.y-b.clientHeight/2)})}
+  else requestAnimationFrame(()=>{const b=$("pathBox");b.scrollTop=b.scrollHeight});
+  // участники и ободрение
+  const L=$("confPeople");L.textContent="";
+  const friends=people.filter(p=>!p.me);
+  if(!confSt().joined){const j=el("div","cpjoin");j.append(el("span",null,"Вы ещё не присоединились к чтению конференции."));const b=el("button","btn","Присоединиться");b.type="button";b.addEventListener("click",()=>{confJoin();openConf("read")});j.append(b);L.append(j)}
+  L.append(el("div","label",friends.length?"Друзья в конференции · нажмите, чтобы воодушевить":"Друзья в конференции"));
+  if(!friends.length)L.append(el("p","hint",window.Ogonek&&window.Ogonek.onPersonClick?"Пока никто из друзей не присоединился. Позовите их в восхождение во вкладке «Игры» конференции.":"Друзей видно на сайте Огонька после входа."));
+  friends.sort((a,b)=>b.pct-a.pct).forEach(pp=>{const row=el("button","cprow");row.type="button";
+    const fl=confFlame("flame"+(pp.lit?"":" off"));row.append(fl,el("b",null,pp.name),el("span",null,pp.pct+"% · "+(pp.node>=MEM_SETS.length?"всё прочитано":MEM_SETS[pp.node].title)+" · "+(pp.lit?"сегодня прочитал(а)":"сегодня ещё нет")),el("i",null,pp.lit?"🔥":"💪 Воодушевить"));
+    row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(pp.id));L.append(row)});
+}
+
+/* ---------- Что я читаю: «Церковь в Санкт-Петербурге» и/или «Конференция» ----------
+   Вкладки наверху видны, только если включено и то и другое. Кто давно читает по церкви — конференция
+   выключена, пока её не включат. Кто пришёл по приглашению конференции (?conf=1 или ?team=КОД) — только
+   конференция, а церковь включается в «Расписании». */
+function tracks(){const t=state.tracks;if(t&&typeof t==="object")return {spb:t.spb!==false,conf:!!t.conf};return {spb:true,conf:!!confSt().joined}}
+function setTrack(k,on){const t=tracks();t[k]=!!on;if(!t.spb&&!t.conf)t.spb=true;state.tracks=t;save();
+  try{localStorage.setItem("ogonek-app-mode",on?k:(k==="conf"?"spb":"conf"))}catch(e){}applyAppMode()}
+(function confEntryLink(){
+  let q=null;try{q=new URLSearchParams(location.search)}catch(e){}if(!q||!(q.get("team")||q.get("conf")))return;
+  if(confClosed())return;
+  const fresh=!state.tracks&&!state.nt.read.length&&!state.ot.read.length;
+  state.tracks=fresh?{spb:false,conf:true}:Object.assign(tracks(),{conf:true});
+  try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}
+  if(q.get("conf")&&!q.get("team")){try{history.replaceState(null,"",location.pathname)}catch(e){}}
+  save();
+})();
+function confTracksBlock(closePlans){
+  const t=tracks(),box=el("div","trk");box.append(el("div","pgroup","Что я читаю"));
+  const row=(k,icon,name,sub,disabled)=>{const b=el("button","trkitem"+(t[k]?" on":""));b.type="button";b.disabled=!!disabled;b.setAttribute("role","switch");b.setAttribute("aria-checked",String(t[k]));
+    b.innerHTML="<span class='trki'>"+icon+"</span>";const tx=el("span","ptxt");tx.append(el("b",null,name),el("span",null,sub));b.append(tx,el("span","trksw"));
+    b.addEventListener("click",()=>{const now=tracks();
+      if(now[k]&&!now[k==="spb"?"conf":"spb"]){toast("Нужно оставить хотя бы одно чтение");return}
+      if(k==="conf"&&!now.conf){confJoin();setTrack("conf",true);closePlans();toast("Конференция включена — вкладка вверху");return}
+      setTrack(k,!now[k]);closePlans();toast(now[k]?"«"+name+"» выключено":"«"+name+"» включено")});return b};
+  box.append(row("spb","🔥","Церковь в Санкт-Петербурге","Вся Библия за 2 года · общее расписание"),
+    row("conf","⛰️",CONF.name,confClosed()?"Закрыто 28 октября — в архиве":"Исход 19–20 и Псалом 119 · до 28 октября",confClosed()));
+  box.append(el("p","hint",t.spb&&t.conf?"Включено оба — переключайтесь вкладками вверху.":"Включите оба, и вверху появятся вкладки «Церковь» и «Конференция»."));
+  return box;
+}
+
+/* ---------- Нижние вкладки, как в Duolingo: главная разгружена, остальное — по разделам ---------- */
+const PAGES_SPB=[["home","🏠","Главная"],["friends","👥","Друзья"],["awards","🏆","Награды"],["plan","📅","План"],["more","📖","Ещё"]];
+const PAGES_CONF=[["home","⛰️","Главная"],["quiz","❓","Вопросы"],["games","🎮","Игры"],["friends","👥","Друзья"],["more","📖","Ещё"]];
+let curPage=(()=>{try{return sessionStorage.getItem("ogonek-page")||"home"}catch(e){return "home"}})();
+function pagesSetup(){
+  if(pagesSetup.done)return;pagesSetup.done=true;
+  const tag=(node,p)=>{if(node)node.dataset.page=p};
+  tag($("heroFlame")&&$("heroFlame").closest(".card"),"home");tag($("testaments")&&$("testaments").closest(".card"),"home");
+  ["quizCard","pathCard","confCard","installCard"].forEach(id=>tag($(id),"home"));
+  ["friendsCard","inviteCard"].forEach(id=>tag($(id),"friends"));
+  ["gemsCard","awardsCard"].forEach(id=>tag($(id),"awards"));
+  ["schedule","calendarCard"].forEach(id=>tag($(id),"plan"));
+  // «Прогресс плана» — в «План», «Как это работает» — в «Ещё»
+  const prog=$("progCard"),how=$("howCard"),f2=prog&&prog.closest(".fold2");
+  if(f2){f2.before(prog);f2.after(how);f2.remove()}tag(prog,"plan");tag(how,"more");
+  if(prog)prog.open=true;if($("schedule"))$("schedule").open=true;
+  tag($("guideOpen"),"more");tag(document.querySelector(".app>.foot"),"more");
+  // друзья без входа — подсказка
+  const fe=el("section","card fempty");fe.id="friendsEmpty";fe.dataset.page="friends";
+  fe.append(el("h2",null,"Друзья"),el("p","muted",""));$("friendsCard").before(fe);
+  // заголовок раздела
+  const ph=el("h2","pagehead");ph.id="pageHead";($("appTabs")||document.querySelector(".app>.top")).after(ph);
+}
+function setPage(p){
+  const conf=appMode()==="conf";
+  if(conf&&(p==="quiz"||p==="games")){openConf(p);return}
+  curPage=p;try{sessionStorage.setItem("ogonek-page",p)}catch(e){}applyPage();window.scrollTo({top:0});
+}
+function applyPage(){
+  pagesSetup();
+  const conf=appMode()==="conf",list=conf?PAGES_CONF:PAGES_SPB;
+  if(!list.some(x=>x[0]===curPage)||curPage==="quiz"||curPage==="games")curPage="home";
+  if(!conf&&curPage==="awards"&&false)curPage="home";
+  document.querySelectorAll(".app>[data-page]").forEach(n=>n.classList.toggle("pg-off",n.dataset.page!==curPage));
+  document.body.dataset.page=curPage;
+  const ph=$("pageHead");const it=list.find(x=>x[0]===curPage);ph.hidden=true;const h1=document.querySelector(".app>.top .brand h1");if(h1)h1.textContent=curPage==="home"?"Огонёк":it[2];
+  // друзья: если вход не выполнен — подсказка вместо пустоты
+  const fe=$("friendsEmpty");if(fe){const has=!$("friendsCard").hidden;fe.hidden=has;const login=$("loginTop"),can=login&&!login.hidden;
+    fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на тропинке и воодушевлять друг друга.":"Друзья доступны на сайте Огонька после входа через Google."}
+  const nav=$("botNav");if(!nav)return;nav.textContent="";
+  list.forEach(([p,icon,label])=>{const b=el("button","bn"+(p===curPage?" on":""));b.type="button";b.setAttribute("aria-label",label);if(p===curPage)b.setAttribute("aria-current","page");
+    b.append(el("span","bni",icon),el("span","bnl",label));
+    if(conf&&p==="quiz"){const n=confNewQ();if(n)b.append(el("em","bnb",String(n)))}
+    if(conf&&p==="games"&&NET&&(TINV.length||myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid})))b.append(el("em","bnb","!"));
+    b.addEventListener("click",()=>setPage(p));nav.append(b)});
+}
+
+render=(f=>function(){const res=f.apply(this,arguments);try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
+try{confRenderCard()}catch(e){console.warn(e)}
+try{applyAppMode()}catch(e){console.warn(e)}
+
 window.Ogonek={
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
