@@ -1020,6 +1020,15 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
 .bnb{position:absolute;top:2px;right:14%;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame);color:#fff;font-style:normal;font-size:.68rem;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
 .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
 .fempty p{margin:0}
+/* иконки в стиле огонька */
+.ico{display:inline-grid;place-items:center;flex:none}
+.ico svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.14))}
+.apptab .ico{width:34px;height:34px}
+.apptab:not(.on) .ico{filter:saturate(.75) opacity(.85)}
+.bn .bni.ico{width:32px;height:32px;transition:transform .15s}
+.bn:not(.on) .bni.ico{filter:saturate(.8)}
+.bn.on .bni.ico{transform:scale(1.1) translateY(-1px)}
+.bn:active .bni.ico{transform:scale(.92)}
 </style>
 
 <div class="app" id="app">
@@ -3555,10 +3564,10 @@ function applyAppMode(){
   const conf=appMode()==="conf",nav=$("appTabs");document.body.classList.toggle("mode-conf",conf);
   if(nav){const tt=tracks();nav.hidden=confClosed()||!(tt.spb&&tt.conf);nav.textContent="";
     const mk=(m,icon,t,sub)=>{const b=el("button","apptab"+((m==="conf")===conf?" on":""));b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-selected",String((m==="conf")===conf));
-      b.innerHTML="<span>"+icon+"</span>";const tx=el("span","att");tx.append(el("b",null,t),el("i",null,sub));b.append(tx);b.addEventListener("click",()=>{if(appMode()!==m)setAppMode(m)});return b};
+      b.append(icoEl(icon));const tx=el("span","att");tx.append(el("b",null,t),el("i",null,sub));b.append(tx);b.addEventListener("click",()=>{if(appMode()!==m)setAppMode(m)});return b};
     const c=confSt(),t=today(),need=!c.joined||!c.log.some(x=>x.d===t)||(NET&&myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid}))||TINV.length>0;
-    const cb=mk("conf","⛰️","Конференция","до 28 октября");if(need&&!conf)cb.append(el("em","atdot"));
-    nav.append(mk("spb","🔥","Церковь","Санкт-Петербург"),cb)}
+    const cb=mk("conf","mount","Конференция","до 28 октября");if(need&&!conf)cb.append(el("em","atdot"));
+    nav.append(mk("spb","flame","Церковь","Санкт-Петербург"),cb)}
   try{renderPath()}catch(e){}confRenderCard();try{applyPage()}catch(e){console.warn(e)}
 }
 function confPathSetup(){
@@ -3653,9 +3662,24 @@ function confTracksBlock(closePlans){
   return box;
 }
 
+/* icons */
+/* ---------- Иконки в стиле огонька: плоские, двухцветные, с мягкой тенью снизу ---------- */
+const ICO={
+ flame:'<svg viewBox="0 0 64 80"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
+ mount:'<svg viewBox="0 0 64 64"><path fill="#9fb3c8" d="M8 23c3-8 13-9 17-3 4-5 13-4 15 2" stroke="#9fb3c8" stroke-width="5" stroke-linecap="round" fill="none"/><path fill="#2f8f6b" d="M2 58 L26 18 L36 32 L42 24 L62 58Z"/><path fill="#1f6e51" d="M26 18 L36 32 L30 58 L2 58Z" opacity=".35"/><path fill="#fff" d="M26 18 L32 28 L28 27 L24 31 L20 27Z"/><path fill="#ffc53d" d="M31 44 l3-9 3 9z"/></svg>',
+ home:'<svg viewBox="0 0 64 64"><path fill="#ff5b3b" d="M6 30 L32 8 L58 30 L53 35 L32 17 L11 35Z"/><path fill="#ffc53d" d="M13 31 L32 15 L51 31 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#e8a520" d="M13 50 H51 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#ff7a1a" d="M26 59 V43 a6 6 0 0 1 12 0 V59Z"/><circle cx="32" cy="29" r="5" fill="#fff"/></svg>',
+ friends:'<svg viewBox="0 0 64 64"><circle cx="22" cy="22" r="10" fill="#8a72f0"/><path fill="#8a72f0" d="M4 54c0-11 8-19 18-19s18 8 18 19z"/><circle cx="43" cy="24" r="9" fill="#3fa7e0"/><path fill="#3fa7e0" d="M28 56c0-10 7-17 15-17s16 7 16 17z"/><path fill="#fff" opacity=".35" d="M17 18a6 6 0 0 1 8-3" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+ awards:'<svg viewBox="0 0 64 64"><path fill="#e8a520" d="M14 10h36v14a18 18 0 0 1-36 0z"/><path fill="#ffc53d" d="M16 10h32v13a16 16 0 0 1-32 0z"/><path fill="none" stroke="#ffc53d" stroke-width="5" d="M14 15H7v5a9 9 0 0 0 9 9M50 15h7v5a9 9 0 0 1-9 9"/><rect x="28" y="40" width="8" height="9" fill="#e8a520"/><rect x="18" y="49" width="28" height="9" rx="3" fill="#ff7a1a"/><path fill="#fff" d="M32 15l2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg>',
+ plan:'<svg viewBox="0 0 64 64"><rect x="7" y="11" width="50" height="46" rx="8" fill="#e8eef6"/><path fill="#ff5b3b" d="M7 19a8 8 0 0 1 8-8h34a8 8 0 0 1 8 8v7H7z"/><rect x="18" y="5" width="6" height="12" rx="3" fill="#6b7a90"/><rect x="40" y="5" width="6" height="12" rx="3" fill="#6b7a90"/><g fill="#9fb3c8"><rect x="15" y="32" width="8" height="7" rx="2"/><rect x="28" y="32" width="8" height="7" rx="2"/><rect x="15" y="44" width="8" height="7" rx="2"/><rect x="28" y="44" width="8" height="7" rx="2"/><rect x="41" y="44" width="8" height="7" rx="2"/></g><rect x="41" y="32" width="8" height="7" rx="2" fill="#2f8f6b"/></svg>',
+ more:'<svg viewBox="0 0 64 64"><path fill="#6b4fd8" d="M32 16c-8-6-18-7-27-4v40c9-3 19-2 27 4z"/><path fill="#8a72f0" d="M32 16c8-6 18-7 27-4v40c-9-3-19-2-27 4z"/><path fill="#fff" opacity=".9" d="M10 17c6-2 13-1 18 2v31c-5-3-12-4-18-2zM54 17c-6-2-13-1-18 2v31c5-3 12-4 18-2z"/><path fill="#ff5b3b" d="M40 8h7v20l-3.5-3-3.5 3z"/></svg>',
+ quiz:'<svg viewBox="0 0 64 64"><path fill="#3fa7e0" d="M10 8h44a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H28l-12 10v-10h-6a6 6 0 0 1-6-6V14a6 6 0 0 1 6-6z"/><path fill="#fff" d="M25 22a7 7 0 1 1 10 6c-2 1-3 2-3 4v1h-5v-2c0-3 2-5 4-6 1-1 2-2 2-3a2 2 0 0 0-4 0z"/><circle cx="29.5" cy="40" r="3" fill="#fff"/></svg>',
+ games:'<svg viewBox="0 0 64 64"><path fill="#b3a991" d="M6 20a12 12 0 0 1 24 0v34H6z"/><path fill="#cfc7b8" d="M34 20a12 12 0 0 1 24 0v34H34z"/><g stroke="#7b725f" stroke-width="2.5" stroke-linecap="round" opacity=".7"><path d="M12 24h12M12 31h12M12 38h12M12 45h9M40 24h12M40 31h12M40 38h12M40 45h9"/></g><path fill="#ffc53d" d="M50 3l2 5 5 .5-4 3.5 1 5-4-2.5-4 2.5 1-5-4-3.5 5-.5z"/></svg>'
+};
+const icoEl=k=>{const s=el("span","ico");s.innerHTML=ICO[k]||"";return s};
+
 /* ---------- Нижние вкладки, как в Duolingo: главная разгружена, остальное — по разделам ---------- */
-const PAGES_SPB=[["home","🏠","Главная"],["friends","👥","Друзья"],["awards","🏆","Награды"],["plan","📅","План"],["more","📖","Ещё"]];
-const PAGES_CONF=[["home","⛰️","Главная"],["quiz","❓","Вопросы"],["games","🎮","Игры"],["friends","👥","Друзья"],["more","📖","Ещё"]];
+const PAGES_SPB=[["home","home","Главная"],["friends","friends","Друзья"],["awards","awards","Награды"],["plan","plan","План"],["more","more","Ещё"]];
+const PAGES_CONF=[["home","mount","Главная"],["quiz","quiz","Вопросы"],["games","games","Игры"],["friends","friends","Друзья"],["more","more","Ещё"]];
 let curPage=(()=>{try{return sessionStorage.getItem("ogonek-page")||"home"}catch(e){return "home"}})();
 function pagesSetup(){
   if(pagesSetup.done)return;pagesSetup.done=true;
@@ -3694,7 +3718,7 @@ function applyPage(){
     fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на тропинке и воодушевлять друг друга.":"Друзья доступны на сайте Огонька после входа через Google."}
   const nav=$("botNav");if(!nav)return;nav.textContent="";
   list.forEach(([p,icon,label])=>{const b=el("button","bn"+(p===curPage?" on":""));b.type="button";b.setAttribute("aria-label",label);if(p===curPage)b.setAttribute("aria-current","page");
-    b.append(el("span","bni",icon),el("span","bnl",label));
+    const ii=icoEl(icon);ii.classList.add("bni");b.append(ii,el("span","bnl",label));
     if(conf&&p==="quiz"){const n=confNewQ();if(n)b.append(el("em","bnb",String(n)))}
     if(conf&&p==="games"&&NET&&(TINV.length||myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid})))b.append(el("em","bnb","!"));
     b.addEventListener("click",()=>setPage(p));nav.append(b)});
