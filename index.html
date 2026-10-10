@@ -1081,6 +1081,7 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .cshare{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:12px;border-radius:14px;background:color-mix(in srgb,#2f8f6b 10%,var(--surface));border:1.5px dashed #2f8f6b}
 .cshare b{font-size:.98rem}.cshare span{font-size:.82rem;color:var(--muted)}
 .cpath .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}.cpath .pname.small{font-size:9.5px}
+#challengesCard .chitem{flex-wrap:wrap}#challengesCard .chtx{flex:1 1 160px}#challengesCard .chtx b{white-space:nowrap}#challengesCard .chitem .cbtn.chgo{flex:1 1 100%}
 </style>
 
 <div class="app" id="app">
@@ -3134,7 +3135,7 @@ function confRenderCard(){
   const hero=el("div","chero");hero.insertAdjacentHTML("afterbegin",mountSvg);
   const tt=el("div");tt.append(el("h2",null,CONF.name),el("div","csub",CONF.dates+" · прочитать до 28 октября"));hero.append(tt);
   const n=confDaysLeft(),cnt=el("div","ccount");cnt.append(el("b",null,String(n)),el("span",null,plural(n,"день","дня","дней")+" осталось"));hero.append(cnt);
-  card.prepend(el("div","chtag","Челлендж «Синай» · временный"));card.append(hero);const ts=confTeamStrip();if(ts)card.append(ts);
+  card.prepend(el("div","chtag","Челлендж «Божья гора» · временный"));card.append(hero);const ts=confTeamStrip();if(ts)card.append(ts);
   if(!c.joined){
     const per=Math.round(CONF_VERSES/Math.max(1,Math.min(n,CONF_UNITS.length)));
     card.append(el("p","cnote","Исход 19–20 и Псалом 119. Начните сегодня — это "+n+" "+plural(n,"день","дня","дней")+" примерно по "+per+" "+plural(per,"стиху","стиха","стихов")+". Чем позже присоединитесь, тем больше чтения в день: расписание подстраивается под вас."));
@@ -3618,7 +3619,7 @@ function applyAppMode(){
     const mk=(m,icon,t,sub)=>{const b=el("button","apptab"+((m==="conf")===conf?" on":""));b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-selected",String((m==="conf")===conf));
       b.append(icoEl(icon));const tx=el("span","att");tx.append(el("b",null,t),el("i",null,sub));b.append(tx);b.addEventListener("click",()=>{if(appMode()!==m)setAppMode(m)});return b};
     const c=confSt(),t=today(),need=!c.joined||!c.log.some(x=>x.d===t)||(NET&&myTeams().some(x=>{const d=TEAMS[x.code];return d&&d.g&&d.g.status==="play"&&tCur(d.g)===NET.uid}))||TINV.length>0;
-    const cb=mk("conf","peak","Челлендж","«Синай»");if(need&&!conf)cb.append(el("em","atdot"));
+    const cb=mk("conf","peak","Челлендж","«Божья гора»");if(need&&!conf)cb.append(el("em","atdot"));
     nav.append(mk("spb","book","Основное расписание",SCHED.name),cb)}
   try{renderPath()}catch(e){}confRenderCard();try{renderChallenges()}catch(e){console.warn(e)}try{renderChPromo()}catch(e){console.warn(e)}try{applyPage()}catch(e){console.warn(e)}
 }
@@ -3641,7 +3642,7 @@ function renderConfPath(){
   const W=Math.max(300,Math.min(480,$("pathBox").clientWidth||340)),N=MEM_SETS.length,GAP=70,TOP=130,H=TOP+N*GAP+50,cx=W/2,A=Math.min(105,W*.27);
   // плавная волна снизу вверх, как на основной тропинке
   const X=t=>cx+A*Math.sin(t*Math.PI/3.5),Y=t=>H-50-t*GAP,pos=i=>({x:X(i),y:Y(i)});
-  const svg=sv("svg",{viewBox:"0 0 "+W+" "+H,width:Math.round(W*pathZoom),height:Math.round(H*pathZoom),class:"pathsvg cpath",role:"img","aria-label":"Тропинка челленджа «Синай»"});
+  const svg=sv("svg",{viewBox:"0 0 "+W+" "+H,width:Math.round(W*pathZoom),height:Math.round(H*pathZoom),class:"pathsvg cpath",role:"img","aria-label":"Тропинка челленджа «Божья гора»"});
   const curve=(t0,t1)=>{let d="";for(let t=t0;t<=t1+1e-6;t+=.1)d+=(d?"L":"M")+X(t).toFixed(1)+" "+Y(t).toFixed(1);return d};
   const fp={x:X(N),y:Y(N)-34};
   svg.append(sv("path",{d:curve(-0.6,N-1)+"L"+fp.x.toFixed(1)+" "+(fp.y+30).toFixed(1),fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
@@ -3686,7 +3687,7 @@ function renderConfPath(){
 
 /* ---------- Воодушевление друзей в челлендже: до 5 друзей в день, можно всех сразу ---------- */
 const CONF_CHEERS=["⛰️ Давай поднимемся на Синай — сегодня вместе!","📖 Твой отрывок ждёт тебя!","🔥 Я уже прочитал(а) — теперь твоя очередь!","🪔 «Слово Твоё — светильник ноге моей». Почитаем?","🍯 Слаще мёда! Загляни в сегодняшний отрывок","🙏 Молюсь за тебя — до конференции совсем немного!"];
-const CONF_JOIN_MSG=6; // «Присоединяйся к челленджу «Синай»!»
+const CONF_JOIN_MSG=6; // «Присоединяйся к челленджу «Божья гора»!»
 const CHEER_LIMIT=5;
 const cheerLeft=()=>NET&&NET.cheerLeft?NET.cheerLeft():0;
 const cheerSent=u=>!!(NET&&NET.cheerSent&&NET.cheerSent(u));
@@ -3726,7 +3727,7 @@ function confFriendsList(L,full){
       const b=el("button","cheerb"+(sent?" sent":""),sent?"Позвали ✓":"⛰️ Позвать");b.type="button";b.disabled=sent;
       if(!sent)b.addEventListener("click",async e=>{e.stopPropagation();b.disabled=true;if(await NET.cheer(f.id,CONF_JOIN_MSG,true)){b.textContent="Позвали ✓";b.classList.add("sent");toast("Приглашение отправлено")}else b.disabled=false});
       row.append(b);row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(f.id));L.append(row)})}
-  const share=el("div","cshare");share.append(el("b",null,"Пригласить в челлендж по ссылке"),el("span",null,"Друг откроет Огонёк сразу с челленджем «Синай» и станет вашим другом."));
+  const share=el("div","cshare");share.append(el("b",null,"Пригласить в челлендж по ссылке"),el("span",null,"Друг откроет Огонёк сразу с челленджем «Божья гора» и станет вашим другом."));
   const sb=el("button","cbtn",NET?"Скопировать приглашение":"Войдите, чтобы пригласить");sb.type="button";sb.disabled=!NET;
   sb.addEventListener("click",async()=>{const txt=confInviteText(NET.code());let ok=false;
     try{if(navigator.share){await navigator.share({text:txt});ok=true}}catch(e){if(e&&e.name==="AbortError")return}
@@ -3736,10 +3737,10 @@ function confFriendsList(L,full){
   share.append(sb);L.append(share);
 }
 function confInviteUrl(code){return location.origin+location.pathname.replace(/[^/]*$/,"")+"sinai.html"+(code?"?add="+code:"")}
-function confInviteText(code){return "Присоединяйся к челленджу «Синай» в Огоньке! ⛰️\nК конференции школьников (29 октября – 1 ноября) читаем Исход 19–20 и Псалом 119 — понемногу каждый день до 28 октября. Вопросы, игры и восхождение на Синай вместе с друзьями."+(code?"\nМой код: "+code:"")+"\n"+confInviteUrl(code)}
+function confInviteText(code){return "Присоединяйся к челленджу «Божья гора» в Огоньке! ⛰️\nК конференции школьников (29 октября – 1 ноября) читаем Исход 19–20 и Псалом 119 — понемногу каждый день до 28 октября. Вопросы, игры и восхождение на Синай вместе с друзьями."+(code?"\nМой код: "+code:"")+"\n"+confInviteUrl(code)}
 window.confInviteText=code=>{const t=tracks();return t.conf&&!t.spb&&!confClosed()?confInviteText(code):null};
 window.confGo=join=>{if(join&&!tracks().conf){confJoin();setTrack("conf",true)}if(tracks().conf){try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}applyAppMode();setPage("home")}};
-window.confCheers={list:CONF_CHEERS.concat(["⛰️ Присоединяйся к челленджу «Синай»! Читаем вместе к конференции"])};
+window.confCheers={list:CONF_CHEERS.concat(["⛰️ Присоединяйся к челленджу «Божья гора»! Читаем вместе к конференции"])};
 /* вкладка «Друзья»: «По расписанию» | «В челлендже» */
 function confSeg(){const t=tracks();if(!t.conf||confClosed())return "spb";if(!t.spb)return "conf";try{return sessionStorage.getItem("ogonek-fseg")||"spb"}catch(e){return "spb"}}
 function confSegSet(v){try{sessionStorage.setItem("ogonek-fseg",v)}catch(e){}renderConfFriendsCard()}
@@ -3751,7 +3752,7 @@ function renderConfFriendsCard(){
   seg.hidden=!both;seg.textContent="";
   [["spb","book","По расписанию"],["conf","peak","В челлендже"]].forEach(([v,ic,l])=>{const b=el("button",v===s?"on":"");b.type="button";b.append(icoEl(ic),el("span",null,l));b.addEventListener("click",()=>confSegSet(v));seg.append(b)});
   const conf=s==="conf";document.body.classList.toggle("fseg-conf",conf);card.hidden=!conf;
-  if(conf){card.textContent="";card.append(el("h2",null,"Друзья в челлендже «Синай»"));confFriendsList(card,true)}
+  if(conf){card.textContent="";card.append(el("h2",null,"Друзья в челлендже «Божья гора»"));confFriendsList(card,true)}
 }
 
 /* ---------- Что я читаю: «Церковь в Санкт-Петербурге» и/или «Конференция» ----------
@@ -3780,7 +3781,7 @@ function confTracksBlock(closePlans){
     setTrack("spb",!now.spb);closePlans();toast(now.spb?"Основное расписание выключено. Прочитанное сохранено":"Основное расписание включено")});
   box.append(b);
   const closed=confClosed(),c2=el("button","trkitem"+(t.conf&&!closed?" on":""));c2.type="button";c2.disabled=closed;c2.setAttribute("role","switch");c2.setAttribute("aria-checked",String(t.conf&&!closed));
-  c2.append(icoEl("peak"));const tx2=el("span","ptxt");tx2.append(el("b",null,"Челлендж «Синай»"),el("span",null,closed?"Завершён 28 октября — в архиве":t.conf?"Вы участвуете · до 28 октября":"Исход 19–20 и Псалом 119 · до 28 октября"));c2.append(tx2,el("span","trksw"));
+  c2.append(icoEl("peak"));const tx2=el("span","ptxt");tx2.append(el("b",null,"Челлендж «Божья гора»"),el("span",null,closed?"Завершён 28 октября — в архиве":t.conf?"Вы участвуете · до 28 октября":"Исход 19–20 и Псалом 119 · до 28 октября"));c2.append(tx2,el("span","trksw"));
   c2.addEventListener("click",()=>{const now=tracks();
     if(!now.conf){confJoin();setTrack("conf",true);closePlans();toast("Вы в челлендже! Переключайтесь вверху на главной");return}
     if(!now.spb){toast("Нельзя выключить: тогда нечего будет читать. Сначала включите основное расписание");return}
@@ -3791,7 +3792,7 @@ function confTracksBlock(closePlans){
 }
 
 /* ---------- «Челленджи» — отдельно от расписаний (вкладка «План») ----------
-   Челлендж — временное событие: сейчас «Синай» к конференции школьников. Присоединился — на главной
+   Челлендж — временное событие: сейчас «Божья гора» к конференции школьников. Присоединился — на главной
    появляется переключатель «Основное расписание | Челлендж». Закончился — уходит в «Завершённые». */
 function renderChallenges(){
   let card=$("challengesCard");
@@ -3805,7 +3806,7 @@ function renderChallenges(){
   card.append(el("div","chh","Челленджи · временные задания"));
   const item=el("div","chitem"+(on?" on":"")+(closed?" past":""));
   const r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100),n=confDaysLeft();
-  const tx=el("div","chtx");tx.append(el("b",null,"«Синай»"),el("span",null,closed?(c.joined?"Завершён · ваш итог "+pct+"%":"Завершён 28 октября"):"Исход 19–20, Псалом 119 · "+(on&&c.joined?pct+"% · ":"")+"ещё "+n+" "+plural(n,"день","дня","дней")));
+  const tx=el("div","chtx");tx.append(el("b",null,"«Божья гора»"),el("span",null,closed?(c.joined?"Завершён · ваш итог "+pct+"%":"Завершён 28 октября"):"Исход 19–20, Псалом 119 · "+(on&&c.joined?pct+"% · ":"")+"ещё "+n+" "+plural(n,"день","дня","дней")));
   const lab=el("span","chlab",closed?"завершён":on?"вы участвуете":"идёт сейчас");
   const btn=el("button",on||closed?"btn":"cbtn chgo",closed?"Архив":on?"Открыть":"Присоединиться");btn.type="button";
   btn.addEventListener("click",()=>{if(closed){openConf("read");return}if(!on){confJoin();setAppMode("conf");setPage("home");toast("Вы в челлендже! Переключайтесь вверху на главной");return}setAppMode("conf");setPage("home")});
@@ -3821,7 +3822,7 @@ function renderChPromo(){
   let p=$("chPromo");const hide=(()=>{try{return localStorage.getItem("ogonek-chpromo-x")==="1"}catch(e){return false}})();
   if(!p){const tc=$("testaments")&&$("testaments").closest(".card");if(!tc)return;p=el("section","chpromo");p.id="chPromo";p.dataset.page="home";p.dataset.ch="1";tc.after(p)}
   const show=!confClosed()&&!tracks().conf&&!hide;p.hidden=!show;if(!show)return;p.textContent="";
-  const go=el("button","chpgo");go.type="button";go.append(icoEl("mount"));const tx=el("span","chptx");tx.append(el("i",null,"Сейчас идёт челлендж"),el("b",null,"«Синай» — к конференции школьников"),el("span",null,"до 28 октября · "+confDaysLeft()+" "+plural(confDaysLeft(),"день","дня","дней")));go.append(tx,el("span","chparr","›"));
+  const go=el("button","chpgo");go.type="button";go.append(icoEl("mount"));const tx=el("span","chptx");tx.append(el("i",null,"Сейчас идёт челлендж"),el("b",null,"«Божья гора» — к конференции школьников"),el("span",null,"до 28 октября · "+confDaysLeft()+" "+plural(confDaysLeft(),"день","дня","дней")));go.append(tx,el("span","chparr","›"));
   go.addEventListener("click",()=>window.confOpenChallenges());
   const x=el("button","chpx","×");x.type="button";x.setAttribute("aria-label","Скрыть");x.addEventListener("click",()=>{try{localStorage.setItem("ogonek-chpromo-x","1")}catch(e){}p.hidden=true});
   p.append(go,x);
