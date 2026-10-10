@@ -3612,7 +3612,7 @@ const cpNode=u=>{let k=0;while(k<CP_ENDS.length&&u>=CP_ENDS[k])k++;return k}; //
 // вкладки наверху: «Церковь в Санкт-Петербурге» | «Конференция»
 function appMode(){if(confClosed())return "spb";const t=tracks();if(!t.conf)return "spb";if(!t.spb)return "conf";try{return localStorage.getItem("ogonek-app-mode")==="conf"?"conf":"spb"}catch(e){return "spb"}}
 const pathModeConf=()=>appMode()==="conf";
-function setAppMode(m){try{localStorage.setItem("ogonek-app-mode",m)}catch(e){}applyAppMode();window.scrollTo({top:0,behavior:"smooth"})}
+function setAppMode(m){try{localStorage.setItem("ogonek-app-mode",m)}catch(e){}applyAppMode();pathFocusSoon();window.scrollTo({top:0,behavior:"smooth"})}
 function applyAppMode(){
   const conf=appMode()==="conf",nav=$("appTabs");document.body.classList.toggle("mode-conf",conf);document.body.classList.toggle("no-spb",!tracks().spb);
   if(nav){const tt=tracks();nav.hidden=confClosed()||!(tt.spb&&tt.conf);nav.textContent="";
@@ -3677,7 +3677,7 @@ function renderConfPath(){
     if(list.length>4)svg.append(sv("text",{x:base.x+n*15+18,y:base.y+4,class:"cpl"},"+"+(list.length-4)))});
   host.append(svg);
   const pb=$("pathBox");
-  if(pb&&!pb.dataset.ctouched){const y=(meXY?meXY.y:H)*pathZoom,x=(meXY?meXY.x:W/2)*pathZoom;requestAnimationFrame(()=>{pb.scrollTop=Math.max(0,y-pb.clientHeight/2);pb.scrollLeft=Math.max(0,x-pb.clientWidth/2)})}
+  if(pb&&!pb.dataset.ctouched)requestAnimationFrame(()=>pathCenterMe(false));
   if(pb&&!pb.dataset.cbound){pb.dataset.cbound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{if(pathModeConf())pb.dataset.ctouched="1"},{passive:true}))}
   // друзья в челлендже — с кнопками «Воодушевить»
   const L=$("confPeople");L.textContent="";
@@ -3870,8 +3870,16 @@ function pagesSetup(){
   // заголовок раздела
   const ph=el("h2","pagehead");ph.id="pageHead";($("appTabs")||document.querySelector(".app>.top")).after(ph);
 }
+// тропинка по умолчанию показывает меня: при открытии главной и смене вкладок
+function pathCenterMe(smooth){const pb=$("pathBox");if(!pb||!pb.offsetParent)return;
+  const me=document.querySelector("#path .pperson.me circle");
+  if(!me){if(pathModeConf())pb.scrollTop=pb.scrollHeight;return}
+  const y=Number(me.getAttribute("cy"))*pathZoom,x=Number(me.getAttribute("cx"))*pathZoom;
+  pb.scrollTo({top:Math.max(0,y-pb.clientHeight/2),left:Math.max(0,x-pb.clientWidth/2),behavior:smooth?"smooth":"auto"})}
+function pathFocusSoon(){const pb=$("pathBox");if(pb){delete pb.dataset.touched;delete pb.dataset.ctouched}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>pathCenterMe(false)));setTimeout(()=>pathCenterMe(false),250)}
 function setPage(p){
-  curPage=p;try{sessionStorage.setItem("ogonek-page",p)}catch(e){}applyPage();window.scrollTo({top:0});
+  curPage=p;try{sessionStorage.setItem("ogonek-page",p)}catch(e){}applyPage();window.scrollTo({top:0});if(p==="home")pathFocusSoon();
 }
 function applyPage(){
   pagesSetup();
@@ -3894,6 +3902,7 @@ function applyPage(){
 render=(f=>function(){const res=f.apply(this,arguments);try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
 try{confRenderCard()}catch(e){console.warn(e)}
 try{applyAppMode()}catch(e){console.warn(e)}
+try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=$('pathBox');if(pb&&!pb.dataset.touched&&!pb.dataset.ctouched)pathCenterMe(false)},300))}catch(e){}
 
 window.Ogonek={
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
