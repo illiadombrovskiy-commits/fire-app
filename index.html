@@ -1055,6 +1055,32 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
 .apptab .att b{font-size:.9rem;white-space:normal;line-height:1.1}.apptab .att i{max-width:100%;margin-top:2px}.apptab .ico{width:30px;height:30px}.apptab{padding:8px}
 .apptab .ico{width:36px;height:36px}
 .trkitem .ico{width:36px;height:36px}
+/* компактная карточка челленджей в «Плане» */
+#challengesCard{padding:12px 14px;gap:8px}
+#challengesCard .chh{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#challengesCard .chitem{flex-direction:row;align-items:center;gap:10px;padding:10px 12px;border-radius:14px}
+#challengesCard .chitem .ico{width:40px;height:40px}
+#challengesCard .chtx{flex:1;min-width:0;gap:1px}#challengesCard .chtx b{font-family:var(--display);font-size:1.15rem}
+#challengesCard .chtx span{font-size:.8rem;color:var(--muted);line-height:1.3}
+#challengesCard .chitem .btn,#challengesCard .chitem .cbtn{flex:none;width:auto;padding:9px 14px;font-size:.88rem}
+.chtop2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem}
+.chtop2 .chlab{font-size:.66rem}.chtop2 .linkbtn{font-size:.8rem;padding:2px 4px}.chtop2 .linkbtn:last-child{margin-left:auto}
+.chfr{color:var(--muted);font-weight:700}
+/* друзья: сегменты и воодушевление */
+.fseg button{display:flex;align-items:center;justify-content:center;gap:6px}.fseg .ico{width:22px;height:22px}
+body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
+#confFriendsCard{gap:8px}
+.cfhead{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.cheerall{font-size:.92rem;padding:11px}
+.cprow{grid-template-columns:auto auto 1fr auto;cursor:pointer}
+.cprow.out .ico{width:22px;height:22px}
+.cheerb{flex:none;padding:7px 11px;border-radius:999px;background:var(--flame);color:#fff;font-weight:800;font-size:.8rem;white-space:nowrap}
+.cheerb:disabled{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.cheerb.sent{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok);border:1px solid var(--ok)}
+.cflab{margin-top:8px}
+.cshare{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:12px;border-radius:14px;background:color-mix(in srgb,#2f8f6b 10%,var(--surface));border:1.5px dashed #2f8f6b}
+.cshare b{font-size:.98rem}.cshare span{font-size:.82rem;color:var(--muted)}
+.cpath .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}.cpath .pname.small{font-size:9.5px}
 </style>
 
 <div class="app" id="app">
@@ -3318,7 +3344,7 @@ function openConf(tab,teamCode){
     const g=d.g||{},mem=d.members||[];
     // шапка команды
     const hd=el("div","thead2");hd.append(el("b",null,"«"+d.name+"»"));const cd=el("button","tcode","Код "+code+" · скопировать приглашение");cd.type="button";
-    cd.addEventListener("click",()=>{const url=location.origin+location.pathname+"?team="+code,txt="Играем вместе в «Восхождение на Синай» к конференции! Команда «"+d.name+"», код "+code+": "+url;
+    cd.addEventListener("click",()=>{const url=location.origin+location.pathname.replace(/[^/]*$/,"")+"sinai.html?team="+code,txt="Играем вместе в «Восхождение на Синай» к конференции! Команда «"+d.name+"», код "+code+": "+url;
       if(navigator.share){navigator.share({text:txt}).catch(()=>{})}else{try{navigator.clipboard.writeText(txt);toast("Приглашение скопировано")}catch(e){toast("Код команды: "+code)}}});
     hd.append(cd);body.append(hd);
     // участники и их чтение сегодня — общий огонёк команды
@@ -3606,56 +3632,126 @@ function confPathSetup(){
 function confPathChrome(conf){
   confPathSetup();const pm=$("pathMode");pm.hidden=true;
   pm.querySelectorAll("button").forEach(b=>b.classList.toggle("on",(b.dataset.m==="conf")===conf));
-  ["pzMe","pzOut","pzLevel","pzIn"].forEach(id=>{const x=$(id);if(x)x.hidden=conf});
+  
   $("confPeople").hidden=!conf;$("pathBox").classList.toggle("cpbox",conf);
 }
 function renderConfPath(){
   confPathChrome(true);
   const host=$("path");host.textContent="";const NS="http://www.w3.org/2000/svg",sv=(t,a,tx)=>{const e=document.createElementNS(NS,t);Object.entries(a||{}).forEach(([k,v])=>e.setAttribute(k,v));if(tx!=null)e.textContent=tx;return e};
-  const W=Math.max(300,Math.min(480,$("pathBox").clientWidth||340)),N=MEM_SETS.length,GAP=62,TOP=120,H=TOP+N*GAP+40,cx=W/2,A=Math.min(110,W*.28);
-  // как на основной тропинке: плавная волна снизу вверх, один узел на ступень
-  const X=t=>cx+A*Math.sin(t*Math.PI/3.5),Y=t=>H-40-t*GAP,pos=i=>({x:X(i),y:Y(i)});
-  const COLS=1;
-  const svg=sv("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,class:"pathsvg cpath",role:"img","aria-label":"Тропинка конференции"});
+  const W=Math.max(300,Math.min(480,$("pathBox").clientWidth||340)),N=MEM_SETS.length,GAP=70,TOP=130,H=TOP+N*GAP+50,cx=W/2,A=Math.min(105,W*.27);
+  // плавная волна снизу вверх, как на основной тропинке
+  const X=t=>cx+A*Math.sin(t*Math.PI/3.5),Y=t=>H-50-t*GAP,pos=i=>({x:X(i),y:Y(i)});
+  const svg=sv("svg",{viewBox:"0 0 "+W+" "+H,width:Math.round(W*pathZoom),height:Math.round(H*pathZoom),class:"pathsvg cpath",role:"img","aria-label":"Тропинка челленджа «Синай»"});
   const curve=(t0,t1)=>{let d="";for(let t=t0;t<=t1+1e-6;t+=.1)d+=(d?"L":"M")+X(t).toFixed(1)+" "+Y(t).toFixed(1);return d};
   const fp={x:X(N),y:Y(N)-34};
-  svg.append(sv("path",{d:curve(-0.5,N-1)+"L"+fp.x.toFixed(1)+" "+(fp.y+30).toFixed(1),fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
-  const myN0=confSt().joined?cpNode(confSt().log.length):-1;
-  if(myN0>0)svg.append(sv("path",{d:curve(-0.5,Math.min(myN0,N-1)),fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-dasharray":"2 8"}));
+  svg.append(sv("path",{d:curve(-0.6,N-1)+"L"+fp.x.toFixed(1)+" "+(fp.y+30).toFixed(1),fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  const c=confSt(),myNode=c.joined?cpNode(c.log.length):-1,r=confRead();
+  if(myNode>0)svg.append(sv("path",{d:curve(-0.6,Math.min(myNode,N-1)),fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-dasharray":"2 8"}));
   // вершина и флаг конференции
   const g0=sv("g",{class:"cpflag"});g0.append(sv("path",{d:"M"+(fp.x-70)+" "+(fp.y+30)+" L"+fp.x+" "+(fp.y-26)+" L"+(fp.x+70)+" "+(fp.y+30)+"Z",fill:"color-mix(in srgb,#2f8f6b 70%,var(--surface))"}),
     sv("path",{d:"M"+fp.x+" "+(fp.y-26)+" l12 9 -6 -1 -6 6 -6 -6 -6 1z",fill:"#fff",opacity:".85"}),sv("line",{x1:fp.x,y1:fp.y-26,x2:fp.x,y2:fp.y-48,stroke:"#2f8f6b","stroke-width":2.5}),sv("path",{d:"M"+fp.x+" "+(fp.y-48)+" l18 5 -18 6z",fill:"#ffc53d"}),
     sv("text",{x:fp.x,y:fp.y+46,"text-anchor":"middle",class:"cpft"},"Конференция · 29 октября"));svg.append(g0);
-  const st=sv("text",{x:X(-0.5),y:H-6,"text-anchor":"middle",class:"cpst"},"Старт · все начинают отсюда");svg.append(st);
-  // узлы
-  const myNode=confSt().joined?cpNode(confSt().log.length):-1,r=confRead();
-  MEM_SETS.forEach((m,i)=>{const p=pos(i),done=m.st!=null?CONF_UNITS.filter(u=>u.st===m.st).every(u=>r.has(u.i)):m.units.every(x=>r.has(x));
-    const g=sv("g",{class:"cpnode"+(done?" done":"")+(i===myNode?" cur":"")});g.append(sv("circle",{cx:p.x,cy:p.y,r:15}),sv("text",{x:p.x,y:p.y+4,"text-anchor":"middle",class:"cpn"},m.st!=null?String(m.st+1):m.title.replace("Исход ","")),
-      sv("text",{x:p.x+(p.x>cx?-24:24),y:p.y+4,"text-anchor":p.x>cx?"end":"start",class:"cpl"},(m.st!=null?m.title+" · "+m.sub.replace("Пс. ",""):m.title)));svg.append(g)});
-  // люди
-  const people=[];if(confSt().joined)people.push({id:"me",name:"Вы",me:true,node:myNode,lit:confSt().log.some(x=>x.d===today()),pct:myPct(),st:confStreak()});
-  (pathPeople||[]).forEach(f=>{const c=f.conf;if(c&&c.j)people.push({id:f.id,name:(f.name||"Друг").split(" ")[0],node:cpNode(c.u||0),lit:c.d===today(),pct:c.pct||0,st:c.st||0})});
-  const at={};people.forEach(pp=>{const k=Math.min(pp.node,MEM_SETS.length);(at[k]=at[k]||[]).push(pp)});
-  const COLR=["#e8650a","#6b4fd8","#0e9aa7","#c7559c","#1d6fd6","#9a6b3f"];
-  Object.entries(at).forEach(([k,list])=>{k=+k;const base=k>=MEM_SETS.length?{x:fp.x,y:fp.y+4}:pos(k);
-    list.slice(0,4).forEach((pp,j)=>{const x=base.x+(j-(Math.min(list.length,4)-1)/2)*22,y=base.y-27;const ci=people.indexOf(pp);
-      const g=sv("g",{class:"cpp"+(pp.me?" me":"")});g.append(sv("circle",{cx:x,cy:y,r:11,fill:pp.me?"var(--flame)":COLR[ci%COLR.length],stroke:pp.lit?"#ffc53d":"var(--surface)","stroke-width":pp.lit?3:2}),
-        sv("text",{x,y:y+4,"text-anchor":"middle",class:"cpi"},pp.name.charAt(0).toUpperCase()));
-      g.append(sv("title",null,pp.name+" · "+pp.pct+"%"));g.style.cursor="pointer";g.addEventListener("click",()=>pp.me?openConf("read"):window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(pp.id));svg.append(g)});
-    if(list.length>4){svg.append(sv("text",{x:base.x+48,y:base.y-22,class:"cpl"},"+"+(list.length-4)))}});
+  svg.append(sv("text",{x:X(-0.6),y:H-8,"text-anchor":"middle",class:"cpst"},"Старт · все начинают отсюда"));
+  // люди: стоят прямо в кружке своей строфы
+  const people=[];if(c.joined)people.push({id:"me",name:"Вы",me:true,photo:state.photo||"",node:myNode,lit:c.log.some(x=>x.d===today()),pct:myPct()});
+  (pathPeople||[]).forEach(f=>{const q=f.conf;if(q&&q.j)people.push({id:f.id,name:(f.name||"Друг").split(" ")[0],photo:f.photo||"",node:cpNode(q.u||0),lit:q.d===today(),pct:q.pct||0})});
+  const at={};people.forEach(pp=>{const k=Math.min(pp.node,N);(at[k]=at[k]||[]).push(pp)});
+  // узлы (без цифр): пройденные — зелёные; подпись — сбоку
+  MEM_SETS.forEach((m,i)=>{const p=pos(i),done=m.st!=null?CONF_UNITS.filter(u=>u.st===m.st).every(u=>r.has(u.i)):m.units.every(x=>r.has(x)),busy=at[i]&&at[i].length;
+    const g=sv("g",{class:"cpnode"+(done?" done":"")});g.append(sv("circle",{cx:p.x,cy:p.y,r:busy?20:15}));
+    if(done&&!busy)g.append(sv("path",{d:"M"+(p.x-5.5)+" "+p.y+" l4 4 7.5-8",fill:"none",stroke:"#fff","stroke-width":3,"stroke-linecap":"round","stroke-linejoin":"round"}));
+    const left=p.x>cx,off=busy?Math.max(30,(Math.min(at[i].length,4)-1)*17+30):26;
+    g.append(sv("text",{x:p.x+(left?-off:off),y:p.y+4,"text-anchor":left?"end":"start",class:"cpl"},m.st!=null?m.title+" · "+m.sub.replace("Пс. ",""):m.title));svg.append(g)});
+  const COLR=["#e8650a","#6b4fd8","#0e9aa7","#c7559c","#1d6fd6","#9a6b3f"];let meXY=null;
+  Object.entries(at).forEach(([k,list])=>{k=+k;const base=k>=N?{x:fp.x,y:fp.y+6}:pos(k),n=Math.min(list.length,4),crowd=list.length>1;
+    list.slice(0,4).forEach((pp,j)=>{const x=base.x+(j-(n-1)/2)*30,y=base.y,ci=people.indexOf(pp),col=pp.me?"var(--flame)":COLR[ci%COLR.length];
+      const g=sv("g",{class:"pperson cpp"+(pp.me?" me":"")});
+      g.append(sv("circle",{cx:x,cy:y,r:15,fill:col,stroke:pp.lit?"#ffc53d":"var(--surface)","stroke-width":3}));
+      if(pp.photo){const cid="cpc"+String(pp.id).replace(/[^a-zA-Z0-9]/g,"")+j,cp=sv("clipPath",{id:cid});cp.append(sv("circle",{cx:x,cy:y,r:12}));g.append(cp);
+        g.append(sv("image",{href:pp.photo,x:x-12,y:y-12,width:24,height:24,"clip-path":"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice",referrerpolicy:"no-referrer"}))}
+      else g.append(sv("text",{x,y:y+5,"text-anchor":"middle",class:"cpi"},pp.name.charAt(0).toUpperCase()));
+      if(!crowd||pathZoom>=1.25)g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},pp.name));
+      g.append(sv("title",null,pp.name+" · "+pp.pct+"%"+(pp.lit?" · сегодня читал(а)":"")));g.style.cursor="pointer";
+      g.addEventListener("click",()=>pp.me?openConf("read"):window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(pp.id));svg.append(g);if(pp.me)meXY={x,y}});
+    if(list.length>4)svg.append(sv("text",{x:base.x+n*15+18,y:base.y+4,class:"cpl"},"+"+(list.length-4)))});
   host.append(svg);
-  // прокрутить к себе
-  if(myNode>=0){const p=myNode>=MEM_SETS.length?{y:fp.y}:pos(myNode);requestAnimationFrame(()=>{const b=$("pathBox");b.scrollTop=Math.max(0,p.y-b.clientHeight/2)})}
-  else requestAnimationFrame(()=>{const b=$("pathBox");b.scrollTop=b.scrollHeight});
-  // участники и ободрение
+  const pb=$("pathBox");
+  if(pb&&!pb.dataset.ctouched){const y=(meXY?meXY.y:H)*pathZoom,x=(meXY?meXY.x:W/2)*pathZoom;requestAnimationFrame(()=>{pb.scrollTop=Math.max(0,y-pb.clientHeight/2);pb.scrollLeft=Math.max(0,x-pb.clientWidth/2)})}
+  if(pb&&!pb.dataset.cbound){pb.dataset.cbound="1";["wheel","touchstart","pointerdown"].forEach(ev=>pb.addEventListener(ev,()=>{if(pathModeConf())pb.dataset.ctouched="1"},{passive:true}))}
+  // друзья в челлендже — с кнопками «Воодушевить»
   const L=$("confPeople");L.textContent="";
-  const friends=people.filter(p=>!p.me);
-  if(!confSt().joined){const j=el("div","cpjoin");j.append(el("span",null,"Вы ещё не присоединились к чтению конференции."));const b=el("button","btn","Присоединиться");b.type="button";b.addEventListener("click",()=>{confJoin();openConf("read")});j.append(b);L.append(j)}
-  L.append(el("div","label",friends.length?"Друзья в конференции · нажмите, чтобы воодушевить":"Друзья в конференции"));
-  if(!friends.length)L.append(el("p","hint",window.Ogonek&&window.Ogonek.onPersonClick?"Пока никто из друзей не присоединился. Позовите их в восхождение во вкладке «Игры» конференции.":"Друзей видно на сайте Огонька после входа."));
-  friends.sort((a,b)=>b.pct-a.pct).forEach(pp=>{const row=el("button","cprow");row.type="button";
-    const fl=confFlame("flame"+(pp.lit?"":" off"));row.append(fl,el("b",null,pp.name),el("span",null,pp.pct+"% · "+(pp.node>=MEM_SETS.length?"всё прочитано":MEM_SETS[pp.node].title)+" · "+(pp.lit?"сегодня прочитал(а)":"сегодня ещё нет")),el("i",null,pp.lit?"🔥":"💪 Воодушевить"));
-    row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(pp.id));L.append(row)});
+  if(!c.joined){const j=el("div","cpjoin");j.append(el("span",null,"Вы ещё не присоединились к челленджу."));const b=el("button","btn","Присоединиться");b.type="button";b.addEventListener("click",()=>{confJoin();openConf("read")});j.append(b);L.append(j)}
+  confFriendsList(L,false);
+}
+
+/* ---------- Воодушевление друзей в челлендже: до 5 друзей в день, можно всех сразу ---------- */
+const CONF_CHEERS=["⛰️ Давай поднимемся на Синай — сегодня вместе!","📖 Твой отрывок ждёт тебя!","🔥 Я уже прочитал(а) — теперь твоя очередь!","🪔 «Слово Твоё — светильник ноге моей». Почитаем?","🍯 Слаще мёда! Загляни в сегодняшний отрывок","🙏 Молюсь за тебя — до конференции совсем немного!"];
+const CONF_JOIN_MSG=6; // «Присоединяйся к челленджу «Синай»!»
+const CHEER_LIMIT=5;
+const cheerLeft=()=>NET&&NET.cheerLeft?NET.cheerLeft():0;
+const cheerSent=u=>!!(NET&&NET.cheerSent&&NET.cheerSent(u));
+function confFriendsAll(){return (pathPeople||[]).map(f=>({id:f.id,name:(f.name||"Друг").split(" ")[0],full:f.name||"Друг",photo:f.photo||"",c:f.conf&&f.conf.j?f.conf:null}))}
+function cheerPicker(targets,onDone){
+  const modal=el("div","fmodal"),sheet=el("div","fsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)},esc=e=>{if(e.key==="Escape")close()};
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+  const h=el("div","fhead"),ht=el("div");ht.append(el("h2",null,targets.length>1?"Воодушевить "+targets.length+" "+plural(targets.length,"друга","друзей","друзей"):"Воодушевить"),el("div","hint",targets.map(t=>t.name).join(", ")+" "+(targets.length>1?"получат":"получит")+" уведомление"));
+  const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);h.append(ht,x);
+  const list=el("div","cheerlist");
+  CONF_CHEERS.forEach((t,i)=>{const o=el("button","cheeropt",t);o.type="button";o.addEventListener("click",async()=>{
+    list.querySelectorAll("button").forEach(b=>b.disabled=true);let ok=0;
+    for(const tg of targets){try{if(await NET.cheer(tg.id,i))ok++}catch(e){console.warn(e)}}
+    close();if(ok){toast(ok>1?"Отправлено "+ok+" друзьям! Пусть все поднимутся на Синай":"Отправлено! Пусть огонёк разгорится");vibrate&&vibrate([30,40,30])}onDone&&onDone()});list.append(o)});
+  sheet.append(h,el("p","hint","Воодушевить можно до "+CHEER_LIMIT+" друзей в день. Сегодня осталось: "+cheerLeft()+"."),el("span","label","Выберите слова"),list);
+  modal.append(sheet);document.body.append(modal);
+}
+// список друзей челленджа; full=true — во вкладке «Друзья» (ещё и кто не участвует + приглашение)
+function confFriendsList(L,full){
+  const all=confFriendsAll(),inC=all.filter(f=>f.c).sort((a,b)=>(b.c.pct||0)-(a.c.pct||0)),outC=all.filter(f=>!f.c),t=today();
+  const redraw=()=>{try{renderConfFriendsCard()}catch(e){}try{if(pathModeConf())renderConfPath()}catch(e){}};
+  const head=el("div","cfhead");head.append(el("div","label",inC.length?"Друзья в челлендже · "+inC.length:"Друзья в челлендже"));
+  const need=inC.filter(f=>f.c.d!==t&&!cheerSent(f.id));
+  if(NET&&need.length){const n=Math.min(need.length,cheerLeft());const ab=el("button","cbtn cheerall",n?"💪 Воодушевить всех, кто ещё не читал ("+n+")":"Лимит на сегодня исчерпан");ab.type="button";ab.disabled=!n;
+    ab.addEventListener("click",()=>cheerPicker(need.slice(0,n),redraw));head.append(ab)}
+  L.append(head);
+  if(!inC.length)L.append(el("p","hint",NET?"Пока никто из друзей не в челлендже. Позовите их!":"Друзей видно на сайте Огонька после входа через Google."));
+  inC.forEach(f=>{const row=el("div","cprow");const read=f.c.d===t,sent=cheerSent(f.id);
+    row.append(confFlame("flame"+(read?"":" off")),el("b",null,f.name),el("span",null,(f.c.pct||0)+"% · "+(cpNode(f.c.u||0)>=MEM_SETS.length?"всё прочитано":MEM_SETS[cpNode(f.c.u||0)].title)+" · "+(read?"сегодня читал(а)":"сегодня ещё нет")));
+    const b=el("button","cheerb"+(sent?" sent":""),read?"🔥":sent?"Воодушевили ✓":"💪 Воодушевить");b.type="button";b.disabled=read||sent||!NET||(!sent&&cheerLeft()===0);
+    if(!read&&!sent&&NET)b.addEventListener("click",e=>{e.stopPropagation();if(!cheerLeft()){toast("Сегодня вы уже воодушевили "+CHEER_LIMIT+" друзей");return}cheerPicker([f],redraw)});
+    row.append(b);row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(f.id));L.append(row)});
+  if(!full){if(NET){const inv=el("button","linkbtn chide","＋ Пригласить в челлендж");inv.type="button";inv.addEventListener("click",()=>{confSegSet("conf");setPage("friends")});L.append(inv)}return}
+  if(outC.length&&NET){L.append(el("div","label cflab","Ещё не в челлендже · "+outC.length));
+    outC.forEach(f=>{const row=el("div","cprow out");const sent=NET.cheerSent(f.id,true);row.append(icoEl("peak"),el("b",null,f.name),el("span",null,"не участвует"));
+      const b=el("button","cheerb"+(sent?" sent":""),sent?"Позвали ✓":"⛰️ Позвать");b.type="button";b.disabled=sent;
+      if(!sent)b.addEventListener("click",async e=>{e.stopPropagation();b.disabled=true;if(await NET.cheer(f.id,CONF_JOIN_MSG,true)){b.textContent="Позвали ✓";b.classList.add("sent");toast("Приглашение отправлено")}else b.disabled=false});
+      row.append(b);row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(f.id));L.append(row)})}
+  const share=el("div","cshare");share.append(el("b",null,"Пригласить в челлендж по ссылке"),el("span",null,"Друг откроет Огонёк сразу с челленджем «Синай» и станет вашим другом."));
+  const sb=el("button","cbtn",NET?"Скопировать приглашение":"Войдите, чтобы пригласить");sb.type="button";sb.disabled=!NET;
+  sb.addEventListener("click",async()=>{const txt=confInviteText(NET.code());let ok=false;
+    try{if(navigator.share){await navigator.share({text:txt});ok=true}}catch(e){if(e&&e.name==="AbortError")return}
+    if(!ok){try{await navigator.clipboard.writeText(txt);ok=true}catch(e){}}
+    if(!ok){const ta=el("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";document.body.append(ta);ta.select();try{ok=document.execCommand("copy")}catch(e){}ta.remove()}
+    toast(ok?"Приглашение скопировано — отправьте его другу":"Не удалось скопировать")});
+  share.append(sb);L.append(share);
+}
+function confInviteUrl(code){return location.origin+location.pathname.replace(/[^/]*$/,"")+"sinai.html"+(code?"?add="+code:"")}
+function confInviteText(code){return "Присоединяйся к челленджу «Синай» в Огоньке! ⛰️\nК конференции школьников (29 октября – 1 ноября) читаем Исход 19–20 и Псалом 119 — понемногу каждый день до 28 октября. Вопросы, игры и восхождение на Синай вместе с друзьями."+(code?"\nМой код: "+code:"")+"\n"+confInviteUrl(code)}
+window.confInviteText=code=>{const t=tracks();return t.conf&&!t.spb&&!confClosed()?confInviteText(code):null};
+window.confGo=join=>{if(join&&!tracks().conf){confJoin();setTrack("conf",true)}if(tracks().conf){try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}applyAppMode();setPage("home")}};
+window.confCheers={list:CONF_CHEERS.concat(["⛰️ Присоединяйся к челленджу «Синай»! Читаем вместе к конференции"])};
+/* вкладка «Друзья»: «По расписанию» | «В челлендже» */
+function confSeg(){const t=tracks();if(!t.conf||confClosed())return "spb";if(!t.spb)return "conf";try{return sessionStorage.getItem("ogonek-fseg")||"spb"}catch(e){return "spb"}}
+function confSegSet(v){try{sessionStorage.setItem("ogonek-fseg",v)}catch(e){}renderConfFriendsCard()}
+function renderConfFriendsCard(){
+  let seg=$("friendsSeg"),card=$("confFriendsCard");
+  if(!seg){seg=el("div","pmode fseg");seg.id="friendsSeg";seg.dataset.page="friends";card=el("section","card");card.id="confFriendsCard";card.dataset.page="friends";
+    const anchor=$("friendsEmpty")||$("friendsCard");anchor.before(seg);anchor.before(card)}
+  const t=tracks(),both=t.spb&&t.conf&&!confClosed(),s=confSeg();
+  seg.hidden=!both;seg.textContent="";
+  [["spb","book","По расписанию"],["conf","peak","В челлендже"]].forEach(([v,ic,l])=>{const b=el("button",v===s?"on":"");b.type="button";b.append(icoEl(ic),el("span",null,l));b.addEventListener("click",()=>confSegSet(v));seg.append(b)});
+  const conf=s==="conf";document.body.classList.toggle("fseg-conf",conf);card.hidden=!conf;
+  if(conf){card.textContent="";card.append(el("h2",null,"Друзья в челлендже «Синай»"));confFriendsList(card,true)}
 }
 
 /* ---------- Что я читаю: «Церковь в Санкт-Петербурге» и/или «Конференция» ----------
@@ -3671,7 +3767,7 @@ function setTrack(k,on){const t=tracks();t[k]=!!on;if(!t.spb&&!t.conf)t.spb=true
   const fresh=!state.tracks&&!state.nt.read.length&&!state.ot.read.length;
   state.tracks=fresh?{spb:false,conf:true}:Object.assign(tracks(),{conf:true});
   try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}
-  if(q.get("conf")&&!q.get("team")){try{history.replaceState(null,"",location.pathname)}catch(e){}}
+  if(q.get("conf")){q.delete("conf");try{history.replaceState(null,"",location.pathname+(q.toString()?"?"+q:""))}catch(e){}}
   save();
 })();
 function confTracksBlock(closePlans){
@@ -3706,25 +3802,19 @@ function renderChallenges(){
     const off2=off.cloneNode(false);off2.id="spbOff2";off2.dataset.page="awards";off2.append(el("h2",null,"Награды"),el("p","muted","Алмазы и награды — за чтение по основному расписанию. В челлендже вы собираете ⭐ за вопросы и игры."));
     const b2=el("button","cbtn","Подключить основное расписание");b2.type="button";b2.addEventListener("click",()=>{setTrack("spb",true);toast("Основное расписание подключено")});off2.append(b2);$("gemsCard").before(off2)}
   card.textContent="";const t=tracks(),c=confSt(),closed=confClosed(),on=t.conf&&!closed;
-  const h=el("div","chhead");h.append(el("h2",null,"Челленджи"),el("span","chsub","Временные задания — отдельно от основного расписания"));card.append(h);
+  card.append(el("div","chh","Челленджи · временные задания"));
   const item=el("div","chitem"+(on?" on":"")+(closed?" past":""));
-  const top=el("div","chtop");top.append(icoEl("mount"));const tx=el("div","chtx");
-  tx.append(el("span","chlab",closed?"Завершён":on?"Вы участвуете":"Сейчас идёт"),el("b",null,"Челлендж «Синай»"),el("span",null,"К конференции школьников (онлайн, 29 октября – 1 ноября): прочитать Исход 19–20 и Псалом 119 до 28 октября. Вопросы, игры и восхождение с друзьями."));
-  top.append(tx);item.append(top);
-  const r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100);
-  const meta=el("div","chmeta");
-  if(closed)meta.append(el("span",null,c.joined?"Ваш итог: "+pct+"% · ⭐ "+confStars():"Вы не участвовали"));
-  else{const n=confDaysLeft();meta.append(el("span",null,"⏳ "+n+" "+plural(n,"день","дня","дней")+" осталось"));if(on&&c.joined)meta.append(el("span",null,"Прочитано "+pct+"% · ⭐ "+confStars()))}
-  const fr=(pathPeople||[]).filter(f=>f.conf&&f.conf.j).length;if(fr)meta.append(el("span",null,"👥 друзей в челлендже: "+fr));
-  item.append(meta);
-  const row=el("div","crow");
-  if(closed){const b=el("button","btn","Открыть архив");b.type="button";b.addEventListener("click",()=>openConf("read"));row.append(b)}
-  else if(!on){const b=el("button","cbtn","Присоединиться к челленджу");b.type="button";b.addEventListener("click",()=>{confJoin();setAppMode("conf");setPage("home");toast("Вы в челлендже! Переключайтесь вверху на главной")});row.append(b);
-    const m=el("button","btn","Подробнее");m.type="button";m.addEventListener("click",()=>openConf("read"));row.append(m)}
-  else{const b=el("button","cbtn","Открыть челлендж");b.type="button";b.addEventListener("click",()=>{setAppMode("conf");setPage("home")});row.append(b);
-    const lv=el("button","btn","Выйти");lv.type="button";lv.addEventListener("click",()=>{if(!lv.dataset.armed){lv.dataset.armed="1";lv.textContent="Точно выйти?";setTimeout(()=>{delete lv.dataset.armed;lv.textContent="Выйти"},4000);return}
-      setTrack("conf",false);toast("Вы вышли из челленджа. Прочитанное сохранено — можно вернуться")});row.append(lv)}
-  item.append(row);card.append(item);
+  const r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100),n=confDaysLeft();
+  const tx=el("div","chtx");tx.append(el("b",null,"«Синай»"),el("span",null,closed?(c.joined?"Завершён · ваш итог "+pct+"%":"Завершён 28 октября"):"Исход 19–20, Псалом 119 · "+(on&&c.joined?pct+"% · ":"")+"ещё "+n+" "+plural(n,"день","дня","дней")));
+  const lab=el("span","chlab",closed?"завершён":on?"вы участвуете":"идёт сейчас");
+  const btn=el("button",on||closed?"btn":"cbtn chgo",closed?"Архив":on?"Открыть":"Присоединиться");btn.type="button";
+  btn.addEventListener("click",()=>{if(closed){openConf("read");return}if(!on){confJoin();setAppMode("conf");setPage("home");toast("Вы в челлендже! Переключайтесь вверху на главной");return}setAppMode("conf");setPage("home")});
+  item.append(icoEl("mount"),tx,btn);const top=el("div","chtop2");top.append(lab);
+  const fr=(pathPeople||[]).filter(f=>f.conf&&f.conf.j).length;if(fr)top.append(el("span","chfr","👥 "+fr));
+  if(!closed&&!on){const m=el("button","linkbtn","Подробнее");m.type="button";m.addEventListener("click",()=>openConf("read"));top.append(m)}
+  if(on){const lv=el("button","linkbtn","Выйти");lv.type="button";lv.addEventListener("click",()=>{if(!t.spb){toast("Сначала включите основное расписание");return}if(!lv.dataset.armed){lv.dataset.armed="1";lv.textContent="Точно выйти?";setTimeout(()=>{delete lv.dataset.armed;lv.textContent="Выйти"},4000);return}
+    setTrack("conf",false);toast("Вы вышли из челленджа. Прочитанное сохранено")});top.append(lv)}
+  card.append(item,top);
 }
 // подсказка на главной основного расписания: «Сейчас идёт челлендж»
 function renderChPromo(){
@@ -3771,7 +3861,7 @@ function pagesSetup(){
   // «Прогресс плана» — в «План», «Как это работает» — в «Ещё»
   const prog=$("progCard"),how=$("howCard"),f2=prog&&prog.closest(".fold2");
   if(f2){f2.before(prog);f2.after(how);f2.remove()}tag(prog,"plan");tag(how,"more");
-  if(prog)prog.open=true;if($("schedule"))$("schedule").open=true;
+  
   tag($("guideOpen"),"more");tag(document.querySelector(".app>.foot"),"more");
   // друзья без входа — подсказка
   const fe=el("section","card fempty");fe.id="friendsEmpty";fe.dataset.page="friends";
@@ -3793,6 +3883,7 @@ function applyPage(){
   // друзья: если вход не выполнен — подсказка вместо пустоты
   const fe=$("friendsEmpty");if(fe){const has=!$("friendsCard").hidden;fe.hidden=has;const login=$("loginTop"),can=login&&!login.hidden;
     fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на тропинке и воодушевлять друг друга.":"Друзья доступны на сайте Огонька после входа через Google."}
+  try{renderConfFriendsCard()}catch(e){console.warn(e)}
   const nav=$("botNav");if(!nav)return;nav.textContent="";
   list.forEach(([p,icon,label])=>{const b=el("button","bn"+(p===curPage?" on":""));b.type="button";b.setAttribute("aria-label",label);if(p===curPage)b.setAttribute("aria-current","page");
     const ii=icoEl(icon);ii.classList.add("bni");b.append(ii,el("span","bnl",label));
@@ -3810,7 +3901,7 @@ window.Ogonek={
   refOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?refStr({book:d[T[k].bi],ref:d[T[k].ri]}):""},
   urlOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?chapterUrl({book:d[T[k].bi],ref:d[T[k].ri]}):""},
   onSave:null,
-  setPathPeople(list){pathPeople=list||[];renderPath()},
+  setPathPeople(list){pathPeople=list||[];renderPath();try{renderConfFriendsCard();renderChallenges()}catch(e){}},
   onPersonClick:null,
   medal(id,size){const a=AWARDS.find(x=>x.id===id);return a?{svg:medalSvg(a,size||40),name:a.name,desc:a.desc}:null},
   setMyPhoto(url){state.photo=url||"";renderPath()},

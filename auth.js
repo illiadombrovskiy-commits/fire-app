@@ -241,9 +241,14 @@ async function main() {
     invite: { list: INVITES, limit: 1, key: "ogonek-invite-sent", field: "invite", title: "Почитать вместе", verb: "зовёт почитать вместе",
       done: "Приглашение отправлено ✓", full: "Сегодня вы уже позвали друга", btn: "Позвать читать вместе",
       rule: () => "Позвать почитать вместе можно только одного друга в день — до того, как вы начнёте читать.",
-      sent: "Приглашение отправлено! Начинайте читать", again: "Сегодня вы уже звали этого друга" }
+      sent: "Приглашение отправлено! Начинайте читать", again: "Сегодня вы уже звали этого друга" },
+    // челлендж «Синай»: воодушевить до 5 друзей в день; последнее сообщение — позвать в челлендж
+    conf: { list: (window.confCheers && window.confCheers.list) || ["Давай поднимемся на Синай!"], limit: 5, key: "ogonek-conf-cheers", field: "confCheer", title: "Челлендж «Синай»", verb: "зовёт на Синай",
+      done: "Воодушевили ✓", full: "Сегодня вы уже воодушевили пятерых", btn: "Воодушевить", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже писали этому другу" },
+    confjoin: { list: (window.confCheers && window.confCheers.list) || [], limit: 99, key: "ogonek-conf-join", field: "confJoin", title: "Челлендж «Синай»", verb: "зовёт в челлендж «Синай»",
+      done: "Позвали ✓", full: "", btn: "Позвать", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже звали этого друга" }
   };
-  const kindOf = (c) => (c && c.kind === "invite" ? "invite" : "cheer");
+  const kindOf = (c) => (c && (c.kind === "invite" || c.kind === "conf" || c.kind === "confjoin") ? c.kind : "cheer");
   const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
   // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
   function sentTodaySet(kind) {
@@ -319,9 +324,10 @@ async function main() {
   async function sendMsg(uid, i, kind) {
     const K = KIND[kind], day = O().today();
     const data = { from: me.uid, name: String(myName() || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp() };
-    if (kind === "invite") data.kind = "invite";
+    if (kind !== "cheer") data.kind = kind;
+    const suffix = { invite: "_inv", conf: "_conf", confjoin: "_cjoin" }[kind] || "";
     try {
-      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + (kind === "invite" ? "_inv" : "")), data);
+      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + suffix), data);
       markSent(uid, kind); O().toast(K.sent); return true;
     } catch (e) {
       console.warn(e);
@@ -370,8 +376,9 @@ async function main() {
     const fl = flameSvg(true);
     const q = el("blockquote", null, "«" + msgText(c) + "»");
     const acts = el("div", "acts");
-    const lit = litToday(O().summary());
-    const go = el("button", "btn-main", lit ? "Спасибо!" : inv ? "Читать вместе" : "Зажечь огонёк"); go.type = "button";
+    const ck = kindOf(c), isConf = ck === "conf" || ck === "confjoin";
+    const lit = isConf ? false : litToday(O().summary());
+    const go = el("button", "btn-main", isConf ? (ck === "confjoin" ? "Присоединиться" : "Открыть челлендж") : lit ? "Спасибо!" : inv ? "Читать вместе" : "Зажечь огонёк"); go.type = "button";
     acts.append(go);
     const done = () => {
       modal.remove(); document.removeEventListener("keydown", esc);
@@ -380,7 +387,7 @@ async function main() {
     };
     const esc = (e) => { if (e.key === "Escape") done(); };
     document.addEventListener("keydown", esc);
-    go.addEventListener("click", () => { done(); if (!lit) window.scrollTo({ top: 0, behavior: "smooth" }); });
+    go.addEventListener("click", () => { done(); if (isConf && window.confGo) { window.confGo(ck === "confjoin"); return; } if (!lit) window.scrollTo({ top: 0, behavior: "smooth" }); });
     if (!lit) { const later = el("button", "linkbtn", "Позже"); later.type = "button"; later.addEventListener("click", done); acts.append(later); }
     sheet.append(fl, from, q, acts);
     modal.append(sheet); document.body.append(modal); go.focus();
@@ -710,7 +717,7 @@ async function main() {
   $("copyInvite").addEventListener("click", async () => {
     const btn = $("copyInvite");
     const link = location.origin + location.pathname + "?add=" + myCode;
-    const text = "Мой код в «Огоньке»: " + myCode + "\n" + link;
+    const text = (window.confInviteText && window.confInviteText(myCode)) || ("Мой код в «Огоньке»: " + myCode + "\n" + link);
     const ok = await copyText(text);
     if (ok) {
       btn.classList.remove("copied"); void btn.offsetWidth; btn.classList.add("copied"); btn.textContent = "Скопировано ✓";
@@ -829,7 +836,10 @@ async function main() {
     if (!window.confNet) return;
     const tref = (code) => F.doc(db, "teams", code);
     const net = {
-      uid: me.uid, name: () => myName(), photo: me.photoURL || "",
+      uid: me.uid, name: () => myName(), photo: me.photoURL || "", code: () => myCode,
+      cheer: (uid, i, join) => sendMsg(uid, i, join ? "confjoin" : "conf"),
+      cheerLeft: () => left("conf"),
+      cheerSent: (uid, join) => sentToday(uid, join ? "confjoin" : "conf"),
       friends: () => myFriends.map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "" })),
       async create(data) {
         for (let i = 0; i < 6; i++) {

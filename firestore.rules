@@ -42,9 +42,11 @@ service cloud.firestore {
         && (
           (id == request.auth.uid + '_' + request.resource.data.day && !('kind' in request.resource.data))
           || (id == request.auth.uid + '_' + request.resource.data.day + '_inv' && request.resource.data.get('kind', '') == 'invite')
+          || (id == request.auth.uid + '_' + request.resource.data.day + '_conf' && request.resource.data.get('kind', '') == 'conf')
+          || (id == request.auth.uid + '_' + request.resource.data.day + '_cjoin' && request.resource.data.get('kind', '') == 'confjoin')
         )
         && request.resource.data.msg is int
-        && request.resource.data.msg >= 0 && request.resource.data.msg < 4
+        && request.resource.data.msg >= 0 && request.resource.data.msg < 8
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
         && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
     }
