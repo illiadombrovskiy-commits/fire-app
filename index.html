@@ -1082,6 +1082,10 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .cshare b{font-size:.98rem}.cshare span{font-size:.82rem;color:var(--muted)}
 .cpath .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}.cpath .pname.small{font-size:9.5px}
 #challengesCard .chitem{flex-wrap:wrap}#challengesCard .chtx{flex:1 1 160px}#challengesCard .chtx b{white-space:nowrap}#challengesCard .chitem .cbtn.chgo{flex:1 1 100%}
+.scheck.past{opacity:.35;cursor:not-allowed}.sdone .scheck.locked{opacity:.75;cursor:default}
+.srepair{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--flame-soft);border:1.5px dashed var(--flame)}
+.srtx{flex:1 1 200px;display:flex;flex-direction:column;gap:2px}.srtx b{font-size:.92rem}.srtx span{font-size:.8rem;color:var(--muted);line-height:1.3}
+.srbtn{flex:none;padding:9px 14px;border-radius:12px;background:var(--flame);color:#fff;font-weight:800;box-shadow:0 3px 0 color-mix(in srgb,var(--flame) 60%,#000)}
 </style>
 
 <div class="app" id="app">
@@ -2079,8 +2083,7 @@ function renderSchedule(){
       c.setAttribute("aria-pressed",done?"true":"false");
       c.setAttribute("aria-label",(done?"Снять отметку: ":"Отметить прочитанным: ")+T[k].label+", "+dayLabel(p));
       c.innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      if(done)c.addEventListener("click",()=>unmark(k,p));
-      else confirmTap(c,null,()=>complete(k,p));
+      schedCheck(c,k,p,done);
       item.append(a,c);row.append(item);
     });
     box.append(row);
@@ -3899,7 +3902,46 @@ function applyPage(){
     b.addEventListener("click",()=>setPage(p));nav.append(b)});
 }
 
-render=(f=>function(){const res=f.apply(this,arguments);try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
+/* ---------- Защита серии ----------
+   1) В «Расписании» прошлые дни нельзя отметить или снять задним числом: снять можно только сегодняшнюю отметку.
+      (Раньше нажатие на зелёный кружок прошлого дня удаляло запись вместе с датой, и при повторной отметке
+      день засчитывался как сегодняшний — из-за этого пропадали дни серии.)
+   2) «Вернуть серию»: если серия прервалась на 1–3 дня, а отрывки этих дней уже прочитаны, можно один раз
+      в 30 дней закрыть пропуск — эти дни станут «заморозкой» (голубые в календаре). */
+function schedCheck(c,k,p,done){
+  const tp=todayP(),t=today(),lg=state[k].log.find(x=>x.p===p);
+  if(done){
+    if(lg&&lg.d===t&&p>=tp){c.addEventListener("click",()=>unmark(k,p));return}
+    c.classList.add("locked");c.title="Прочитано "+(lg?parse(lg.d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"}):"раньше");
+    c.addEventListener("click",()=>toast("Эта отметка уже сохранена"+(lg?" за "+parse(lg.d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"}):"")+" — снять её нельзя"));return}
+  if(p<tp){c.classList.add("past");c.addEventListener("click",()=>toast("Задним числом отметить нельзя. Прочитайте отрывок и нажмите «Прочитал(а)» на главной — он засчитается сегодня"));return}
+  confirmTap(c,null,()=>complete(k,p));
+}
+function repairInfo(){
+  const s=withFrozen(anySet()),t=today();let cur=s.has(t)?t:add(t,-1);
+  while(s.has(cur))cur=add(cur,-1);
+  const gap=[];while(!s.has(cur)&&gap.length<4&&cur>=PLAN_START){gap.push(cur);cur=add(cur,-1)}
+  if(!gap.length||gap.length>3||!s.has(cur))return null;
+  let before=0,c2=cur;while(s.has(c2)){before++;c2=add(c2,-1)}
+  if(before<2)return null;
+  const last=(state.repairs||[]).slice(-1)[0];if(last&&dayNo(t)-dayNo(last)<30)return null;
+  const ok=gap.every(d=>{const i=planIdx(d);return i>=0&&KEYS.every(k=>readSet(k).has(Math.min(i,DAYS-1)))});
+  return {gap:gap.reverse(),before,ok};
+}
+function renderRepair(){
+  let box=$("streakRepair");const hero=$("heroFlame")&&$("heroFlame").closest(".card");if(!hero)return;
+  if(!box){box=el("div","srepair");box.id="streakRepair";hero.append(box)}
+  const r=repairInfo();box.hidden=!r;if(!r)return;box.textContent="";
+  const fmt=d=>parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
+  const days=r.gap.length===1?fmt(r.gap[0]):fmt(r.gap[0])+" – "+fmt(r.gap[r.gap.length-1]);
+  const tx=el("div","srtx");tx.append(el("b",null,"Серия прервалась: "+days),el("span",null,r.ok?"Отрывки этих дней уже прочитаны — можно вернуть серию ("+(r.before+r.gap.length+(withFrozen(anySet()).has(today())?1:0))+" "+plural(r.before+r.gap.length,"день","дня","дней")+"). Раз в 30 дней.":"Прочитайте отрывки пропущенных дней («Догнать» на главной) — и серию можно будет вернуть. Раз в 30 дней."));
+  box.append(tx);
+  if(r.ok){const b=el("button","srbtn","🔥 Вернуть серию");b.type="button";b.addEventListener("click",()=>{
+    state.frzDays=[...new Set(state.frzDays.concat(r.gap))].sort();state.repairs=(state.repairs||[]).concat([today()]).slice(-10);
+    state.best=Math.max(state.best||0,streak());save();render();ignite($("heroFlame"),2);toast("Серия возвращена: "+streak()+" "+plural(streak(),"день","дня","дней")+" подряд!")});box.append(b)}
+}
+
+render=(f=>function(){const res=f.apply(this,arguments);try{renderRepair()}catch(e){console.warn(e)}try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
 try{confRenderCard()}catch(e){console.warn(e)}
 try{applyAppMode()}catch(e){console.warn(e)}
 try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=$('pathBox');if(pb&&!pb.dataset.touched&&!pb.dataset.ctouched)pathCenterMe(false)},300))}catch(e){}
