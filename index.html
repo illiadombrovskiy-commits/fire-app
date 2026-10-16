@@ -1088,6 +1088,52 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .srbtn{flex:none;padding:9px 14px;border-radius:12px;background:var(--flame);color:#fff;font-weight:800;box-shadow:0 3px 0 color-mix(in srgb,var(--flame) 60%,#000)}
 </style>
 
+<style>
+/* --- Вместе со всеми: Дочитать, Что зацепило, Знакомство --- */
+.tintro{margin:0;font-size:.92rem;line-height:1.45;color:var(--ink);background:color-mix(in srgb,var(--flame) 9%,transparent);border-left:3px solid var(--flame);padding:9px 11px;border-radius:10px}
+.missbox{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;font-size:.88rem;color:var(--ink)}
+.missbox .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.missbox .sub{font-size:.8rem;color:var(--muted)}
+.missbox .linkbtn{align-self:flex-start;padding:0}
+#thoughtCard .reading-head,#thoughtCard .trow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#thoughtCard .reading-head{justify-content:space-between}
+#thoughtCard input[type=text],#thoughtCard textarea{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+#thoughtCard textarea{min-height:78px;resize:vertical}
+.tform{display:flex;flex-direction:column;gap:8px}
+.tstep{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:var(--bg)}
+.tstep p{margin:0;font-size:.9rem;line-height:1.45;color:var(--muted)}
+.tstep .btn{align-self:flex-start}
+.btn.ok{color:#1f8a5b;border-color:#1f8a5b}
+.tnote{display:flex;flex-direction:column;gap:4px}
+.tnote .vr{color:var(--flame);font-weight:700;text-decoration:none}
+.tnote p{margin:0;line-height:1.45;white-space:pre-wrap}
+.tshare{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
+.fnotes{display:flex;flex-direction:column;gap:8px}
+.fnote{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:.92rem}
+.fnote .who{font-weight:700;font-size:.85rem;color:var(--muted)}
+.mhead{margin:6px 0 0;font-size:.95rem}
+.mrow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrow a{color:var(--ink);text-decoration:none;display:flex;flex-direction:column;min-width:0}
+.mrow a span{font-size:.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.mrow .btn{flex:none;padding:8px 12px;font-size:.85rem}
+.wopt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:16px;border:2px solid var(--line);border-radius:16px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+.wopt b{font-size:1.05rem}
+.wopt span{color:var(--muted);font-size:.9rem;line-height:1.4}
+.wopt.main{border-color:var(--flame)}
+.gloss{margin:0}
+.gloss dt{font-weight:700;margin-top:10px}
+.gloss dd{margin:2px 0 0;color:var(--muted);font-size:.92rem;line-height:1.45}
+#bridgeCard p{margin:0;line-height:1.45}
+#bridgeCard h2{margin:0}
+body.intro #freezeChip,body.intro #paceCard,body.intro #paceBody,body.intro #gemsCard,body.intro #calendarCard{display:none!important}
+.mstone{display:flex;flex-direction:column;align-items:center;gap:2px;padding:18px;border-radius:16px;background:var(--flame-soft);text-align:center}
+.mstone b{font-family:var(--display);font-size:1.8rem;line-height:1.1}
+.mstone span{color:var(--muted)}
+.vimg{width:100%;border-radius:14px;border:1px solid var(--line)}
+.wkdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wkd{display:flex;flex-direction:column;align-items:center;font-size:.72rem;color:var(--muted)}
+.wkd .flame{width:24px;height:30px}
+</style>
 <div class="app" id="app">
   <header class="top">
     <div class="brand"><h1>Огонёк</h1></div>
@@ -1143,6 +1189,10 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
     </div>
     <div class="tgrid" id="testaments"></div>
   </section>
+
+  <section class="card" id="bridgeCard" data-page="home" hidden></section>
+
+  <section class="card" id="thoughtCard" data-page="home" data-spb="1" data-ch="1"></section>
 
   <section class="card conf" id="confCard" hidden></section>
 
@@ -1227,7 +1277,11 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
   <details class="card fold" id="howCard">
     <summary class="foldhead"><h2>Как это работает</h2><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody howto">
-      <p>Каждый день — отрывок из Нового и из Ветхого Завета. Прочитали хотя бы один — загорается маленький огонёк, и серия дней растёт. Прочитали оба — огонь горит в полную силу.</p>
+      <p>Каждый день — отрывок из Нового и из Ветхого Завета, один и тот же у всех, кто читает по общему расписанию. Прочитали хотя бы один — загорается маленький огонёк, и серия дней растёт. Прочитали оба — огонь горит в полную силу.</p>
+      <p class="howhead">Если отстали</p>
+      <p>На главной всегда сегодняшний отрывок — тот же, что читают все. Пропущенное не висит долгом: оно лежит в списке «Дочитать». Его можно дочитывать понемногу или отпустить и идти дальше со всеми — серия от этого не прервётся.</p>
+      <p class="howhead">Какой стих затронул</p>
+      <p>После чтения выберите стих, побудьте с ним минуту и, если хотите, запишите мысль. Стихи собираются в «Мои стихи», а друзья видят, какой стих затронул вас. По воскресеньям Огонёк предлагает выбрать стих недели, чтобы поделиться им.</p>
       <p class="howhead">Как получить заморозку</p>
       <ol>
         <li>Прочитайте сегодняшние отрывки.</li>
@@ -1349,6 +1403,31 @@ const TEMPLATES=[
   {id:"nt1",group:"Только Новый Завет",name:"Новый Завет за 1 год",desc:"От Матфея до Откровения",mode:"seq",sec:NTSEC,days:365},
   {id:"nt2",group:"Только Новый Завет",name:"Новый Завет за 2 года",desc:"От Матфея до Откровения",mode:"seq",sec:NTSEC,days:730}
 ];
+TEMPLATES.push({id:"intro",group:"Для начала",name:"Знакомство с Библией",desc:"21 день: Евангелие от Иоанна по главе в день, с коротким пояснением. Без тестов и сложных правил"});
+/* «Знакомство с Библией»: 21 день по Евангелию от Иоанна, по главе в день, с коротким пояснением (наши слова, без цитат комментариев) */
+const INTRO_NOTES=[
+ "Иоанн начинает с самого начала: Слово, которое было у Бога, стало человеком — Иисусом. Обратите внимание, какими разными именами Его называют люди в этой главе.",
+ "Первое чудо — вода становится вином на свадьбе. Потом Иисус выгоняет торговцев из храма. Как вы думаете, что эти два события говорят о Нём?",
+ "Ночной разговор с Никодимом о том, что человеку нужно «родиться свыше». Здесь же самый известный стих Библии — 3:16. Попробуйте пересказать его своими словами.",
+ "Иисус заговаривает с женщиной у колодца, с которой другие не стали бы говорить, и обещает «живую воду». Чего на самом деле жаждет человек?",
+ "Человек болел 38 лет, и Иисус спрашивает его: «Хочешь ли быть здоров?» Потом начинается спор о субботе — дне, когда по закону нельзя было работать.",
+ "Пять хлебов и две рыбы — и сыты тысячи людей. Иисус говорит: «Я — хлеб жизни». Многие уходят, а Пётр отвечает: «К кому нам идти?»",
+ "На празднике в Иерусалиме люди спорят, кто такой Иисус. А Он громко приглашает всех, кто жаждет, прийти к Нему.",
+ "Женщину хотят побить камнями, а Иисус говорит обвинителям: кто без греха, пусть бросит первым. Дальше — «Я — свет миру» и слова о свободе, которую даёт истина.",
+ "Слепой от рождения начинает видеть. Его допрашивают снова и снова, а он отвечает просто: был слеп, а теперь вижу.",
+ "«Я — добрый пастух»: Он знает каждую овцу по имени и готов отдать за них жизнь. Что это говорит о том, как Бог относится к человеку?",
+ "Умер Лазарь, друг Иисуса. Иисус плачет вместе с его сёстрами — и возвращает Лазаря к жизни. «Я — воскресение и жизнь».",
+ "Мария выливает на ноги Иисуса дорогое масло. Иисус въезжает в Иерусалим на ослёнке и говорит о зерне, которое должно упасть в землю, чтобы принести плод.",
+ "Последний ужин перед арестом. Иисус, как слуга, моет ученикам ноги и даёт им новую заповедь: любить друг друга.",
+ "Прощальный разговор: «Пусть не тревожится ваше сердце». Иисус говорит, что Он — путь, истина и жизнь, и обещает послать Утешителя — Святого Духа.",
+ "Виноградная лоза и ветви: ветка живёт и приносит плод, пока соединена с лозой. Как вы понимаете слова «оставайтесь во Мне»?",
+ "Иисус готовит учеников к разлуке: их печаль сменится радостью, которую никто не отнимет.",
+ "Иисус молится за учеников — и за всех, кто поверит потом через их слово. Найдите место, где Он молится и о нас с вами.",
+ "Арест ночью в саду. Пётр трижды говорит, что не знает Иисуса. Допрос у римского правителя Пилата: «Что такое истина?»",
+ "Распятие. Даже на кресте Иисус заботится о своей матери. Его последние слова: «Совершилось».",
+ "Пустая гробница. Мария Магдалина встречает воскресшего Иисуса, а Фома не верит, пока не увидит сам. Обратите внимание, как Иисус отвечает его сомнению.",
+ "Завтрак на берегу. Иисус трижды спрашивает Петра, который отрекался от Него: «Любишь ли ты Меня?» — и снова зовёт его за Собой."
+];
 const SPB_START="2026-09-28"; // день 1: Мф. 1:1–2 и Быт. 1:1–5 (4 октября — Мф. 3:7–17 и Быт. 3:14–24)
 const sd={iso:d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"),
   parse:s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)},
@@ -1416,7 +1495,8 @@ function buildSched(def){
     plan=parts.map(x=>k==="nt"?[x[0],x[1],"",""]:["","",x[0],x[1]]);
     if(otB.length&&ntB.length){labels[k]="Библия";short[k]="Чтение"}
   }
-  const dates=readingDates(d.start,plan.length,wd);
+  if(d.id==="intro"){plan=BOOK["Ин."].v.map((x,c)=>["Ин.",String(c+1),"",""]);keys=["nt"];labels={nt:"Евангелие от Иоанна",ot:""};short={nt:"Иоанн",ot:""}}
+  const dates=readingDates(d.start||SPB_START,plan.length,wd);
   const tplName=tpl.name||"Своё расписание";
   return {id:d.id,def,spb:false,name:d.name||tplName,start:dates[0],plan,keys,labels,short,wd,dates};
 }
@@ -1486,7 +1566,11 @@ function migrate(s){
 }
 function score(s){s=migrate(s);return confScore(s)+s.nt.read.length+s.ot.read.length+Object.values(s.plans||{}).reduce((a,x)=>a+((x.nt&&x.nt.read)||[]).length+((x.ot&&x.ot.read)||[]).length,0)+Object.keys(s.answers).length+Object.keys(s.quiz||{}).length+((s.gems&&s.gems.used)||[]).length}
 const readSet=k=>new Set(state[k].read);
-function nextP(k){const r=readSet(k);let p=0;while(p<DAYS&&r.has(p))p++;return p}
+function skipSet(k){return new Set((state[k].skip||[]).map(x=>x.p))}
+function doneLog(k){return state[k].skip&&state[k].skip.length?state[k].log.concat(state[k].skip):state[k].log}
+// пропущенные отрывки до сегодняшнего дня (не прочитаны и не отпущены)
+function missedList(k){const tp=Math.min(Math.max(0,todayP()),DAYS),r=readSet(k),sk=skipSet(k),o=[];for(let p=0;p<tp;p++)if(!r.has(p)&&!sk.has(p))o.push(p);return o}
+function nextP(k){const sk=skipSet(k);if(sk.size){const r=readSet(k);let p=0;while(p<DAYS&&(r.has(p)||sk.has(p)))p++;return p}const r=readSet(k);let p=0;while(p<DAYS&&r.has(p))p++;return p}
 let state=fresh();
 try{state=migrate(JSON.parse(localStorage.getItem(KEY)||"null"))}catch(e){}
 let remoteSave=null;
@@ -1511,10 +1595,10 @@ const streak=k=>streakOf(withFrozen(k?datesOf(k):anySet()));
 /* заморозки = на сколько дней вы впереди плана (по обоим заветам).
    Пропущенный день сохраняет серию, если к концу этого дня оба завета были прочитаны по плану включительно. */
 const planIdx=d=>dueBy(d)-1;
-function readBy(k,d){return state[k].log.filter(x=>x.d<=d).length}
+function readBy(k,d){return doneLog(k).filter(x=>x.d<=d).length}
 function freezesNow(){const t=today(),tp=Math.max(0,todayP());
   // сегодняшний отрывок считается «должным», только когда вы уже читали сегодня — так число не прыгает в течение дня
-  return Math.max(0,Math.min(...KEYS.map(k=>state[k].log.length-Math.min(DAYS,tp+(datesOf(k).has(t)?1:0)))))}
+  return Math.max(0,Math.min(...KEYS.map(k=>doneLog(k).length-Math.min(DAYS,tp+(datesOf(k).has(t)?1:0)))))}
 function coveredDay(d){const due=Math.min(DAYS,planIdx(d)+1);return due>0&&KEYS.every(k=>readBy(k,d)>=due)}
 function applyFreezes(){
   const s=withFrozen(anySet());if(!s.size)return 0;
@@ -1540,9 +1624,10 @@ function renderTestament(k){
   const isAhead=ahead[k], doneToday=datesOf(k).has(t), s=streak(k);
   const todays=st.log.filter(x=>x.d===t);
   const lit=doneToday&&!isAhead;
-  const viewP=(doneToday&&!isAhead)?todays[todays.length-1].p:Math.min(np,DAYS-1);
+  const tpN=Math.max(0,todayP()), missed=missedList(k);
+  const viewP=(doneToday&&!isAhead)?todays[todays.length-1].p:(!isAhead&&tpN<DAYS&&!readSet(k).has(tpN)&&!skipSet(k).has(tpN))?tpN:Math.min(np,DAYS-1);
   const x=part(k,viewP);
-  const card=el("div","tcard");
+  const card=el("div","tcard");card.dataset.p=viewP;
   const head=el("div","thead");
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 64 80");svg.setAttribute("class","flame"+(lit?"":" off"));svg.id="flame-"+k;svg.innerHTML=FLAME;
   const hb=el("div");hb.className="tht";hb.append(el("b",null,T[k].label),el("span",null,"· "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")));
@@ -1562,10 +1647,20 @@ function renderTestament(k){
   const btn=el("button","tbtn");btn.type="button";
   if(np>=DAYS&&!doneToday){btn.textContent="Завет пройден!";btn.classList.add("done");btn.disabled=true}
   else if(doneToday&&!isAhead){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}
-  else{btn.textContent="Прочитал(а)";if(!doneToday)btn.classList.add("nudge");confirmTap(btn,"Нажмите ещё раз",()=>complete(k))} // огонёк ещё не горит — кнопка мигает
+  else{btn.textContent="Прочитал(а)";if(!doneToday)btn.classList.add("nudge");confirmTap(btn,"Нажмите ещё раз",()=>complete(k,viewP))} // огонёк ещё не горит — кнопка мигает
   left.append(a,btn);
   if(lit){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>undoMark(k,viewP));left.append(u)}
-  if(lit&&np<DAYS){
+  if(lit&&missed.length){
+    const m0=missed[0], nx=part(k,m0), box=el("div","nextbox missbox");
+    const a2=el("a","nextlink");a2.href=chapterUrl(nx);a2.target="_blank";a2.rel="noopener";
+    a2.append(el("span","label","Дочитать"+(missed.length>1?" · "+missed.length:"")),el("span","name",refStr(nx)),el("span","sub",dayLabel(m0)));
+    const b2=el("button","tbtn nextmark");b2.type="button";b2.textContent="Прочитал(а)";confirmTap(b2,"Нажмите ещё раз",()=>complete(k,m0));
+    const ml=el("button","linkbtn","Весь список");ml.type="button";ml.addEventListener("click",openMissed);
+    box.append(a2,b2,ml);right.append(box);
+  }else if(!lit&&missed.length){
+    const box=el("div","missbox");box.append(el("span","label","Дочитать потом"),el("b",null,"Пропущено: "+missed.length),el("span","sub","Сначала сегодняшнее — как все"));
+    const ml=el("button","linkbtn","Посмотреть");ml.type="button";ml.addEventListener("click",openMissed);box.append(ml);right.append(box);
+  }else if(lit&&np<DAYS){
     const nx=part(k,np), box=el("div","nextbox");
     const a2=el("a","nextlink");a2.href=chapterUrl(nx);a2.target="_blank";a2.rel="noopener";
     a2.append(el("span","label","Следующий"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np)));
@@ -1580,7 +1675,7 @@ function renderTestament(k){
     a3.append(el("span","label","Потом"),el("span","name",refStr(nx)),el("span","sub",dayLabel(np+1)));
     right.append(a3);
   }
-  cols.append(left,right);card.append(head,cols);
+  cols.append(left,right);card.append(head);if(SCHED.id==="intro"&&INTRO_NOTES[viewP])card.append(el("p","tintro",INTRO_NOTES[viewP]));card.append(cols);
   return card;
 }
 
@@ -1646,8 +1741,8 @@ function paceSeries(){
   const dates=[];for(let i=0;i<n;i++)dates.push(add(start,i));
   const out={dates,nt:[],ot:[]};
   KEYS.forEach(k=>{
-    const counts={};state[k].log.forEach(x=>{counts[x.d]=(counts[x.d]||0)+1});
-    let run=state[k].log.filter(x=>x.d<start).length;
+    const counts={};doneLog(k).forEach(x=>{counts[x.d]=(counts[x.d]||0)+1});
+    let run=doneLog(k).filter(x=>x.d<start).length;
     dates.forEach((d,i)=>{
       run+=counts[d]||0;
       let v=run-dueBy(d);
@@ -2298,7 +2393,7 @@ function complete(k,pp){
   const t=today(), firstK=!datesOf(k).has(t), bothBefore=bothSet().has(t), awBefore=awards().filter(a=>a.ok).length;
   const frzBefore=freezesNow();
   const fromEl=document.querySelectorAll("#testaments .tcard")[KEYS.indexOf(k)], fromBox=fromEl&&(fromEl.querySelector(".nextmark")||fromEl).getBoundingClientRect();
-  st.log.push({d:t,p}); st.read.push(p);
+  st.log.push({d:t,p}); st.read.push(p); if(st.skip&&st.skip.length)st.skip=st.skip.filter(x=>x.p!==p);
   let gain=XP_PART;
   const bothNow=!bothBefore&&bothSet().has(t);
   const common=streak();
@@ -2685,7 +2780,7 @@ function switchPlan(def){
   toast("Переключаем расписание…");
 }
 function fmtLong(d){return parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})}
-function schedSummary(S){if(S.spb)return "Вся Библия за 2 года · с 28 сентября 2026 · сейчас 1-й год";const last=S.dates?S.dates[S.dates.length-1]:add(S.start,S.plan.length-1);
+function schedSummary(S){if(S.id==="intro")return "Евангелие от Иоанна · "+S.plan.length+" дней · с "+fmtLong(S.start);if(S.spb)return "Вся Библия за 2 года · с 28 сентября 2026 · сейчас 1-й год";const last=S.dates?S.dates[S.dates.length-1]:add(S.start,S.plan.length-1);
   return S.plan.length+" "+plural(S.plan.length,"день","дня","дней")+" · с "+fmtLong(S.start)+" по "+fmtLong(last)}
 function versesPerDay(S){let v=0;S.plan.forEach(d=>S.keys.forEach(k=>{const b=BOOK[d[T[k].bi]];if(!b)return;const ref=d[T[k].ri];let m;
   if((m=/^(\d+):(\d+)[–—-](\d+):(\d+)$/.exec(ref))){let n=0;for(let c=+m[1];c<=+m[3];c++)n+=(c===+m[3]?+m[4]:b.v[c-1])-(c===+m[1]?+m[2]-1:0);v+=n}
@@ -2704,7 +2799,7 @@ function openPlans(){
     const items=[];
     // общее расписание церкви и свои; при выборе чтение сразу продолжается с того места, где вы остановились
     const go=def=>{if(def.id===SCHED.id){close();return}switchPlan(def)};
-    items.push(el("div","pgroup","Церковь"),card(TEMPLATES[0].name,TEMPLATES[0].desc,"spb",()=>go({id:"spb"})));items.push(...confPlanItems(close));
+    items.push(el("div","pgroup","Церковь"),card(TEMPLATES[0].name,TEMPLATES[0].desc,"spb",()=>go({id:"spb"})));items.push(el("div","pgroup","Для начала"),card(INTRO_TPL.name,INTRO_TPL.desc,"intro",()=>go(introDef())));items.push(...confPlanItems(close));
     const mine=Object.values(state.myScheds||{}).slice();
     if(!SCHED.spb&&!mine.some(d=>d.id===SCHED.id))mine.unshift(SCHED.def); // прежнее готовое расписание тоже остаётся в списке
     Object.entries(state.plans||{}).forEach(([id,x])=>{if(id!=="spb"&&x.def&&!mine.some(d=>d.id===id))mine.push(x.def)});
@@ -2932,6 +3027,7 @@ function summary(){
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
+  try{out.notes=notesSummary()}catch(e){}
   return out;
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
@@ -3946,6 +4042,286 @@ try{confRenderCard()}catch(e){console.warn(e)}
 try{applyAppMode()}catch(e){console.warn(e)}
 try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=$('pathBox');if(pb&&!pb.dataset.touched&&!pb.dataset.ctouched)pathCenterMe(false)},300))}catch(e){}
 
+/* ---------- Вместе со всеми: «Дочитать», «Что зацепило», «Знакомство с Библией», приветствие, мост из челленджа ----------
+   • На главной всегда сегодняшний отрывок (тот же, что у всех). Пропущенное — в спокойном списке «Дочитать»:
+     его можно читать понемногу или «отпустить» (state[k].skip = [{d,p}] — засчитывается как пройденное в графике).
+   • «Какой стих затронул сегодня?»: минута со стихом, свой стих и мысль (state.notes), друзья видят общие (summary().notes).
+   • «Знакомство с Библией» (id "intro"): Евангелие от Иоанна по главе в день, без тестов и заморозок.
+   • Первый вход: выбор «Я впервые» / «Читаю вместе с церковью» (тогда — с сегодняшнего дня, без долгов). */
+const INTRO_TPL=TEMPLATES.find(t=>t.id==="intro");
+const IS_INTRO=SCHED.id==="intro";
+document.body.classList.toggle("intro",IS_INTRO);
+function introDef(){return {id:"intro",start:today()}}
+function mkSheet(title){
+  const modal=el("div","fmodal"),sheet=el("div","fsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label",title);
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
+  const head=()=>{const h=el("div","fhead");h.append(el("h2",null,title));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);h.append(x);return h};
+  modal.append(sheet);document.body.append(modal);return {modal,sheet,close,head};
+}
+// отпустить пропущенное: всё до сегодняшнего дня считается пройденным, читаем дальше вместе со всеми
+function letGo(onlyFresh){const t=today();let n=0;
+  KEYS.forEach(k=>{const st=state[k];if(onlyFresh&&st.read.length)return;const m=missedList(k);if(!m.length)return;st.skip=(st.skip||[]).concat(m.map(p=>({d:t,p})));n+=m.length});
+  if(n){save();render()}return n}
+function openMissed(){
+  const S=mkSheet("Дочитать");
+  const draw=()=>{
+    S.sheet.textContent="";S.sheet.append(S.head());
+    S.sheet.append(el("p","muted","Ничего страшного, так бывает у всех. Главное — читать сегодняшний отрывок вместе со всеми. Пропущенное можно дочитывать понемногу, например по одному отрывку в день сверх обычного."));
+    let total=0;
+    KEYS.forEach(k=>{const m=missedList(k);total+=m.length;if(!m.length)return;
+      S.sheet.append(el("h3","mhead",T[k].label+" · "+m.length));
+      m.slice(0,40).forEach(p=>{const row=el("div","mrow"),a=el("a");a.href=chapterUrl(part(k,p));a.target="_blank";a.rel="noopener";
+        a.append(el("b",null,refStr(part(k,p))),el("span",null,dayLabel(p)));
+        const b=el("button","btn","Прочитал(а)");b.type="button";b.addEventListener("click",()=>{complete(k,p);draw()});
+        row.append(a,b);S.sheet.append(row)});
+      if(m.length>40)S.sheet.append(el("p","hint","…и ещё "+(m.length-40)));
+    });
+    if(!total){S.sheet.append(el("p",null,"Всё дочитано. Вы идёте вместе со всеми!"));const ok=el("button","btn-main","Хорошо");ok.type="button";ok.addEventListener("click",S.close);S.sheet.append(ok);return}
+    const go=el("button","btn","Отпустить пропущенное и идти дальше со всеми");go.type="button";
+    confirmTap(go,"Нажмите ещё раз — список очистится",()=>{const n=letGo();S.close();toast(n?"Готово. Читаем дальше вместе со всеми":"Нечего отпускать")});
+    S.sheet.append(go,el("p","hint","Серия дней от этого не меняется. Отпущенные отрывки не попадут в «прочитано», но и висеть долгом не будут."));
+  };
+  draw();
+}
+
+/* ---------- Что зацепило сегодня ---------- */
+let noteEdit=false,prayTimer=null;
+const signedIn=()=>!!(window.Ogonek&&window.Ogonek.onSave);
+function todaysParts(){const t=today(),out=[];
+  KEYS.forEach(k=>state[k].log.filter(x=>x.d===t).forEach(x=>out.push({k,p:x.p})));
+  if(!out.length){const tp=Math.max(0,Math.min(todayP(),DAYS-1));KEYS.forEach(k=>out.push({k,p:tp}))}
+  return out}
+function findBook(s){s=(s||"").trim().toLowerCase().replace(/\.$/,"");if(!s)return null;
+  return BOOKS.find(b=>b.a.toLowerCase().replace(/\.$/,"")===s)||BOOKS.find(b=>b.n.toLowerCase()===s)||BOOKS.find(b=>b.n.toLowerCase().replace(/^евангелие от /,"").startsWith(s))||null}
+function verseUrl(r){const m=/^\s*(.*?\S)\.?\s*(\d+)(?::(\d+))?/.exec(r||"");if(!m)return BIBLE;const b=findBook(m[1]);return b?chapterUrl({book:b.a,ref:m[2]+(m[3]?":"+m[3]:"")}):BIBLE}
+function shareText(n){return (n.r||n.pr)+(n.t?" — "+n.t:"")+"\n\nЧитаю Библию в Огоньке: "+location.origin+location.pathname.replace(/[^/]*$/,"")}
+function shareNote(n){const text=shareText(n);
+  if(navigator.share){navigator.share({text}).catch(()=>{});return}
+  try{navigator.clipboard.writeText(text).then(()=>toast("Скопировано — вставьте в сообщение"),()=>toast(text))}catch(e){toast(text)}}
+function noteView(n,mine){const box=el("div","tnote");
+  const v=el("a","vr");v.href=verseUrl(n.r||n.pr);v.target="_blank";v.rel="noopener";v.textContent=n.r||n.pr;box.append(v);
+  if(n.t)box.append(el("p",null,n.t));
+  if(mine){const row=el("div","trow");
+    const e=el("button","linkbtn","Изменить");e.type="button";e.addEventListener("click",()=>{noteEdit=true;renderThought()});
+    const sh=el("button","linkbtn","Поделиться");sh.type="button";sh.addEventListener("click",()=>shareNote(n));
+    row.append(e,sh);if(n.s&&signedIn())row.append(el("span","hint","видят друзья"));box.append(row)}
+  return box}
+function renderThought(){
+  const card=$("thoughtCard");if(!card)return;
+  const t=today(),readToday=KEYS.some(k=>datesOf(k).has(t));
+  state.notes=state.notes||[];
+  const mine=state.notes.filter(n=>n.d===t).slice(-1)[0]||null;
+  const focus=document.activeElement&&card.contains(document.activeElement)&&/INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(focus)return; // не мешаем, пока человек пишет
+  card.textContent="";
+  const head=el("div","reading-head");head.append(el("h2",null,"Какой стих затронул сегодня?"));
+  if(state.notes.length){const mb=el("button","linkbtn","Мои стихи · "+state.notes.length);mb.type="button";mb.addEventListener("click",openMyNotes);head.append(mb)}
+  card.append(head);
+  if(!readToday){card.append(el("p","hint","Прочитайте сегодняшний отрывок — здесь можно отметить стих, который затронул, и увидеть, какие стихи затронули друзей."))}
+  else{
+    // минута со стихом
+    const pr=el("div","tstep"),done=state.pray&&state.pray[t];
+    pr.append(el("b",null,"Минута со стихом"),el("p",null,"Выберите один стих из прочитанного. Перечитайте его медленно два-три раза, а потом скажите Богу своими словами, что почувствовали. Можно прямо словами самого стиха."));
+    const pb=el("button","btn"+(done?" ok":""),done?"Сегодня уже было ✓":"Начать минуту");pb.type="button";
+    pb.addEventListener("click",()=>{if(prayTimer)return;let left=60;pb.textContent="Осталось "+left+" с";
+      prayTimer=setInterval(()=>{left--;if(left>0){pb.textContent="Осталось "+left+" с";return}
+        clearInterval(prayTimer);prayTimer=null;state.pray=state.pray||{};state.pray[t]=1;save();vibrate([40,30,40]);pb.textContent="Сегодня уже было ✓";pb.classList.add("ok");
+        try{const r=pb.getBoundingClientRect();burst(r.left+r.width/2,r.top,30)}catch(e){}},1000)});
+    pr.append(pb);card.append(pr);
+    // мой стих
+    if(mine&&!noteEdit){card.append(noteView(mine,true))}
+    else{
+      const parts=todaysParts(),first=parts[0]?part(parts[0].k,parts[0].p):null;
+      const vi=el("input");vi.type="text";vi.maxLength=40;vi.placeholder="Стих, например "+(first?first.book+" "+(/^\d+/.exec(first.ref)||["1"])[0]+":1":"Ин. 3:16");
+      vi.value=mine?mine.r:(first?first.book+" ":"");vi.setAttribute("aria-label","Стих");
+      const ta=el("textarea");ta.maxLength=280;ta.placeholder="Ваша мысль — одна-две фразы (можно не писать)";ta.value=mine?mine.t:"";ta.setAttribute("aria-label","Ваша мысль");
+      const lab=el("label","tshare"),cb=el("input");cb.type="checkbox";cb.checked=mine?!!mine.s:true;lab.append(cb,document.createTextNode(signedIn()?" Показать друзьям":" Показать друзьям (после входа)"));
+      const sv=el("button","btn-main","Сохранить стих");sv.type="button";
+      sv.addEventListener("click",()=>{const r=vi.value.trim(),tx=ta.value.trim();
+        if(!/\d/.test(r)&&!tx){toast("Укажите стих или напишите мысль");vi.focus();return}
+        const pr0=parts.map(x=>refStr(part(x.k,x.p)))[0]||"";
+        const n=mine||{id:Date.now().toString(36),d:t};Object.assign(n,{pr:pr0,r:r||pr0,t:tx,s:cb.checked});
+        if(!mine)state.notes.push(n);state.notes=state.notes.slice(-400);noteEdit=false;
+        document.activeElement&&document.activeElement.blur();save();renderThought();toast(n.s&&signedIn()?"Сохранено — друзья увидят ваш стих":"Сохранено в «Мои стихи»")});
+      const f=el("div","tform");f.append(vi,ta,lab,sv);
+      if(mine){const c=el("button","linkbtn","Отмена");c.type="button";c.addEventListener("click",()=>{noteEdit=false;renderThought()});f.append(c)}
+      card.append(f);
+    }
+  }
+  // воскресенье: стих недели
+  if(sd.dow(t)===6){const wk=state.notes.filter(n=>n.d>=add(t,-6));
+    if(wk.length){const w=el("div","tstep");state.weekPick=state.weekPick||{};const pick=state.weekPick[t];
+      w.append(el("b",null,"Стихи этой недели"),el("p",null,"Выберите один, чтобы рассказать о нём сегодня на встрече или другу."));
+      wk.forEach(n=>{const row=el("div","mrow"),a=el("a");a.href=verseUrl(n.r);a.target="_blank";a.rel="noopener";a.append(el("b",null,n.r||n.pr),el("span",null,n.t||shortDate(n.d)));
+        const b=el("button","btn"+(pick===n.id?" ok":""),pick===n.id?"★ Мой стих":"☆ Выбрать");b.type="button";b.addEventListener("click",()=>{state.weekPick[t]=n.id;save();renderThought()});
+        row.append(a,b);w.append(row)});
+      const ch=wk.find(n=>n.id===pick);if(ch){const sh=el("button","linkbtn","Поделиться выбранным");sh.type="button";sh.addEventListener("click",()=>shareNote(ch));w.append(sh)}
+      card.append(w)}}
+  // друзья
+  const ppl=(pathPeople||[]).filter(p=>Array.isArray(p.notes)&&p.notes.length);
+  const myRefs=new Set(todaysParts().map(x=>refStr(part(x.k,x.p))));
+  const fn=[];ppl.forEach(p=>p.notes.forEach(n=>{if(n&&n.d>=add(t,-2))fn.push({who:p.name||"Друг",n,same:myRefs.has(n.pr)})}));
+  fn.sort((a,b)=>(b.same-a.same)||(a.n.d<b.n.d?1:-1));
+  const fb=el("div","fnotes");fb.append(el("h3","mhead","Какие стихи затронули друзей"));
+  if(fn.length)fn.slice(0,8).forEach(x=>{const r=el("div","fnote");r.append(el("span","who",x.who.split(" ")[0]+(x.n.d===t?"":" · "+shortDate(x.n.d))),noteView(x.n,false));fb.append(r)});
+  else fb.append(el("p","hint",(pathPeople||[]).length?"Когда друзья отметят стих, он появится здесь.":"Читайте вместе с друзьями — здесь появятся стихи, которые их затронули."));
+  card.append(fb);
+}
+function openMyNotes(){
+  const S=mkSheet("Мои стихи");
+  const draw=()=>{S.sheet.textContent="";S.sheet.append(S.head());
+    const list=(state.notes||[]).slice().reverse();
+    if(!list.length)S.sheet.append(el("p","muted","Пока пусто. После чтения отметьте стих, который затронул, — он сохранится здесь."));
+    list.forEach(n=>{const r=el("div","fnote");r.append(el("span","who",fmtLong(n.d)),noteView(n,false));
+      const row=el("div","trow");const sh=el("button","linkbtn","Поделиться");sh.type="button";sh.addEventListener("click",()=>shareNote(n));
+      const del=el("button","linkbtn","Удалить");del.type="button";confirmTap(del,"Удалить?",()=>{state.notes=state.notes.filter(x=>x.id!==n.id);save();renderThought();draw()});
+      row.append(sh,del);r.append(row);S.sheet.append(r)});
+  };draw();
+}
+function notesSummary(){return (state.notes||[]).filter(n=>n.s&&n.d>=add(today(),-6)).slice(-10).map(n=>({d:n.d,pr:String(n.pr||"").slice(0,40),r:String(n.r||"").slice(0,40),t:String(n.t||"").slice(0,280)}))}
+
+/* ---------- словарик для тех, кто читает впервые ---------- */
+const GLOSSARY=[
+ ["Библия","Сборник из 66 книг, написанных за полторы тысячи лет. Главная её тема — Бог, который любит людей и хочет войти в жизнь каждого человека."],
+ ["Ветхий и Новый Завет","Две части Библии. Ветхий — до рождения Иисуса, Новый — о Его жизни, смерти и воскресении и о первых христианах. «Завет» значит «договор, союз»."],
+ ["Евангелие","«Добрая весть». Так называют четыре книги о жизни Иисуса: от Матфея, Марка, Луки и Иоанна."],
+ ["Христос, Мессия","Одно и то же слово на греческом и еврейском: «Помазанник» — Тот, кого Бог обещал послать."],
+ ["Слово","Так Иоанн в первой главе называет Иисуса: через Него Бог говорит с людьми и открывает Себя."],
+ ["Иегова","Личное имя Бога в Ветхом Завете. В этом переводе оно сохранено, в других обычно пишут «Господь»."],
+ ["Ученики, апостолы","Люди, которые ходили за Иисусом и учились у Него. Двенадцать из них Он потом послал рассказывать о Нём — это апостолы."],
+ ["Фарисеи, книжники","Знатоки и строгие исполнители религиозного закона того времени. Часто спорили с Иисусом."],
+ ["Суббота","Седьмой день недели, день отдыха по закону Моисея. В этот день нельзя было работать."],
+ ["Пасха","Главный праздник в память о том, как Бог вывел народ Израиля из рабства в Египте."],
+ ["Храм","Главное место поклонения Богу в Иерусалиме."],
+ ["Агнец Божий","«Ягнёнок Бога». Так Иоанн Креститель называет Иисуса: как ягнёнка приносили в жертву, так Он отдаст Свою жизнь за людей."],
+ ["Грех","Всё, что отделяет человека от Бога: неправда, зло, жизнь без Него."],
+ ["Благодать","Божья доброта, которую невозможно заслужить, — дар."],
+ ["Вечная жизнь","Не только «жить вечно», но и сама жизнь Бога, которую человек получает, когда верит в Иисуса."],
+ ["Как читать «Ин. 3:16»","Книга (Евангелие от Иоанна), глава 3, стих 16. Огонёк сам открывает нужное место — просто нажмите на ссылку."]
+];
+function openGlossary(){const S=mkSheet("Непонятное слово?");S.sheet.append(S.head());
+  const dl=el("dl","gloss");GLOSSARY.forEach(([a,b])=>{dl.append(el("dt",null,a),el("dd",null,b))});S.sheet.append(dl);
+  const ok=el("button","btn-main","Понятно");ok.type="button";ok.addEventListener("click",S.close);S.sheet.append(ok)}
+
+/* ---------- мост: после знакомства и после челленджа — к общему чтению ---------- */
+function joinChurch(){
+  try{localStorage.setItem("ogonek-join-today","1")}catch(e){}
+  if(typeof tracks==="function"&&!tracks().spb){try{setTrack("spb",true)}catch(e){}}
+  if(SCHED.id!=="spb"){switchPlan({id:"spb"});return}
+  try{localStorage.removeItem("ogonek-join-today")}catch(e){}
+  letGo(true);render();toast("Вы с нами! Сегодняшний отрывок — на главной");window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderBridge(){
+  const card=$("bridgeCard");if(!card)return;card.textContent="";card.hidden=true;
+  let dis={};try{dis=JSON.parse(localStorage.getItem("ogonek-bridge-hide")||"{}")}catch(e){}
+  const btn=(txt,cls,fn)=>{const b=el("button",cls,txt);b.type="button";b.addEventListener("click",fn);return b};
+  const confDone=(()=>{try{return confClosed()&&confSt().joined&&!tracks().spb}catch(e){return false}})();
+  if(IS_INTRO&&nextP("nt")>=DAYS){
+    card.append(el("h2",null,"Евангелие от Иоанна прочитано!"),
+      el("p",null,"Вы прочитали целую книгу Библии. Хотите читать дальше вместе со всеми? Общее чтение — вся Библия за 2 года, 10–15 минут в день. Начнёте с сегодняшнего отрывка, догонять ничего не нужно."),
+      btn("Читать вместе со всеми","btn-main",joinChurch));
+    card.hidden=false;return}
+  if(confDone&&!dis.conf){
+    card.append(el("h2",null,"Челлендж завершён — спасибо, что читали!"),
+      el("p",null,"Огонёк можно не гасить. Читайте дальше вместе со всеми или начните с короткого знакомства с Библией."),
+      btn("Читать вместе со всеми","btn-main",joinChurch),
+      btn("Знакомство с Библией — 21 день","btn",()=>{try{setTrack("spb",true)}catch(e){}switchPlan(introDef())}),
+      btn("Скрыть","linkbtn",()=>{dis.conf=1;try{localStorage.setItem("ogonek-bridge-hide",JSON.stringify(dis))}catch(e){}renderBridge()}));
+    card.hidden=false;return}
+  if(IS_INTRO){
+    const row=el("div","trow");
+    row.append(btn("Непонятное слово? Словарик","btn",openGlossary),btn("Перейти к общему чтению","linkbtn",()=>{
+      const S=mkSheet("Общее чтение");S.sheet.append(S.head(),el("p",null,"Вся Библия за 2 года вместе со всеми: каждый день отрывок из Нового и из Ветхого Завета. Вы начнёте с сегодняшнего отрывка. Прогресс знакомства сохранится — к нему можно вернуться в «Плане»."),
+        btn("Перейти","btn-main",()=>{S.close();joinChurch()}),btn("Остаться в знакомстве","linkbtn",S.close))}));
+    card.append(row);card.hidden=false}
+}
+
+/* ---------- первый вход: кто вы? ---------- */
+function freshVisitor(){
+  if(KEYS.some(k=>state[k].log.length)||Object.keys(state.plans||{}).length||(state.hist||[]).length||(state.notes||[]).length)return false;
+  if(state.schedDef||(state.conf&&state.conf.joined)||state.tracks)return false;
+  let q=null;try{q=new URLSearchParams(location.search)}catch(e){}
+  if(q&&(q.get("conf")||q.get("team")))return false;
+  if(/sinai/.test(location.pathname))return false;
+  try{if(localStorage.getItem("ogonek-welcomed"))return false}catch(e){}
+  return true}
+function showWelcome(){
+  if(!freshVisitor())return;
+  const a=$("auth");if(a&&!a.hidden){setTimeout(showWelcome,700);return} // сначала вход, потом выбор
+  try{localStorage.setItem("ogonek-welcomed","1")}catch(e){}
+  const S=mkSheet("Добро пожаловать");
+  const opt=(cls,title,sub,fn)=>{const b=el("button","wopt "+cls);b.type="button";b.append(el("b",null,title),el("span",null,sub));b.addEventListener("click",()=>{S.close();fn()});return b};
+  S.sheet.append(S.head(),el("p",null,"Огонёк помогает читать Библию каждый день — понемногу и вместе с друзьями. С чего начнём?"),
+    opt("main","Я впервые, хочу познакомиться","21 день по Евангелию от Иоанна: одна глава в день и короткое пояснение к ней. Без тестов и сложных правил.",()=>switchPlan(introDef())),
+    opt("","Читаю вместе с церковью","Общее расписание: вся Библия за 2 года, 10–15 минут в день. Начнёте с сегодняшнего отрывка, без долгов.",joinChurch));
+  const g=el("button","linkbtn","Сначала узнать, что такое Библия");g.type="button";g.addEventListener("click",()=>{S.close();const b=$("guideOpen");if(b)b.click()});
+  S.sheet.append(g,el("p","hint","Выбор можно поменять в любой момент в разделе «План»."));
+}
+
+render=(f=>function(){const res=f.apply(this,arguments);try{renderThought()}catch(e){console.warn(e)}try{renderBridge()}catch(e){console.warn(e)}return res})(render);
+try{if(localStorage.getItem("ogonek-join-today")&&SCHED.spb){localStorage.removeItem("ogonek-join-today");letGo(true)}}catch(e){console.warn(e)}
+try{renderThought();renderBridge()}catch(e){console.warn(e)}
+setTimeout(()=>{try{showWelcome()}catch(e){console.warn(e)}},900);
+
+
+/* ---------- рубежи, картинка стиха, итог недели ---------- */
+/* рубеж: прочитана целая книга */
+function showMilestone(book){const S=mkSheet("Книга прочитана!");
+  const big=el("div","mstone");big.append(el("b",null,FULL[book]||book),el("span",null,"прочитана целиком"));
+  S.sheet.append(S.head(),big);
+  const mine=(state.notes||[]).filter(n=>findBook((/^\s*(.*?\S)\.?\s*\d/.exec(n.r||"")||[])[1])===BOOK[book]);
+  if(mine.length){S.sheet.append(el("h3","mhead","Ваши стихи из этой книги"));mine.slice(-5).forEach(n=>S.sheet.append(noteView(n,false)))}
+  const ok=el("button","btn-main","Дальше");ok.type="button";ok.addEventListener("click",S.close);S.sheet.append(ok);
+  try{const r=window.innerWidth/2;burst(r,window.innerHeight/3,70)}catch(e){}}
+complete=(f=>function(k,pp){let before=null;try{before=new Set(booksFinished().map(x=>x.a+"|"+x.d))}catch(e){}
+  const res=f.apply(this,arguments);
+  try{if(before){const fresh=booksFinished().filter(x=>!before.has(x.a+"|"+x.d)).map(x=>x.a);
+    if(fresh.length){const go=()=>{const c=$("celebrate");if(c&&!c.hidden){setTimeout(go,600);return}showMilestone(fresh[fresh.length-1])};setTimeout(go,900)}}}catch(e){console.warn(e)}
+  return res})(complete);
+
+/* картинка со стихом, чтобы отправить друзьям */
+function wrapLines(ctx,text,maxW){const words=String(text).split(/\s+/),lines=[];let cur="";
+  words.forEach(w=>{const t=cur?cur+" "+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t});if(cur)lines.push(cur);return lines}
+async function verseImage(n){
+  try{await document.fonts.ready}catch(e){}
+  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#fff4e6");g.addColorStop(1,"#ffd9b0");x.fillStyle=g;x.fillRect(0,0,W,H);
+  // огонёк
+  x.save();x.translate(W/2-96,150);x.scale(3,3);x.fillStyle="#ff7a1a";x.fill(new Path2D("M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"));
+  x.fillStyle="#ffc53d";x.fill(new Path2D("M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"));x.restore();
+  x.textAlign="center";x.fillStyle="#1b2340";
+  x.font='800 92px Alegreya, Georgia, serif';x.fillText(n.r||n.pr,W/2,560);
+  const txt=n.t||"";x.font='500 50px "Golos Text", system-ui, sans-serif';
+  let lines=wrapLines(x,txt,W-200);if(lines.length>9){lines=lines.slice(0,9);lines[8]+="…"}
+  let y=680;lines.forEach(l=>{x.fillText(l,W/2,y);y+=70});
+  x.fillStyle="#7a4a1f";x.font='600 38px "Golos Text", system-ui, sans-serif';x.fillText("Читаю Библию в Огоньке",W/2,H-110);
+  x.font='500 30px "Golos Text", system-ui, sans-serif';x.fillStyle="#a0643a";x.fillText(fmtLong(n.d||today()),W/2,H-62);
+  return c}
+async function shareImage(n){
+  let c;try{c=await verseImage(n)}catch(e){toast("Не получилось сделать картинку");return}
+  c.toBlob(async b=>{if(!b)return;const file=new File([b],"stih.png",{type:"image/png"});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:shareText(n)});return}}catch(e){if(e&&e.name==="AbortError")return}
+    const S=mkSheet("Картинка со стихом");const img=el("img","vimg");img.src=c.toDataURL("image/png");img.alt=n.r||"Стих";
+    S.sheet.append(S.head(),img,el("p","hint","Нажмите на картинку и удерживайте, чтобы сохранить или отправить её."))},"image/png")}
+noteView=(f=>function(n,mine){const box=f(n,mine);if(mine){const row=box.querySelector(".trow");if(row){const b=el("button","linkbtn","Картинка");b.type="button";b.addEventListener("click",()=>shareImage(n));row.insertBefore(b,row.children[2]||null)}}return box})(noteView);
+
+/* итог недели (по воскресеньям, в карточке стиха) */
+function weekSummary(){const t=today(),from=add(t,-6),box=el("div","tstep weeksum");
+  const days=[];for(let i=0;i<7;i++)days.push(add(from,i));
+  const any=anySet(),both=bothSet();const nPass=KEYS.reduce((s,k)=>s+state[k].log.filter(x=>x.d>=from).length,0);
+  const books=new Set();KEYS.forEach(k=>state[k].log.filter(x=>x.d>=from).forEach(x=>books.add(FULL[part(k,x.p).book]||part(k,x.p).book)));
+  box.append(el("b",null,"Итог недели"));
+  const row=el("div","wkdays");days.forEach(d=>{const f=document.createElementNS("http://www.w3.org/2000/svg","svg");f.setAttribute("viewBox","0 0 64 80");f.setAttribute("class","flame"+(both.has(d)?"":any.has(d)?" half":" off"));f.innerHTML=FLAME;
+    const c=el("div","wkd");c.append(f,el("span",null,["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][sd.dow(d)]));row.append(c)});box.append(row);
+  const lit=days.filter(d=>any.has(d)).length;
+  box.append(el("p",null,"Огонёк горел "+lit+" "+plural(lit,"день","дня","дней")+" из 7 · прочитано отрывков: "+nPass+(books.size?" · "+[...books].join(", "):"")));
+  return box}
+renderThought=(f=>function(){const r=f.apply(this,arguments);try{const card=$("thoughtCard");
+  if(card&&sd.dow(today())===6&&!card.querySelector(".weeksum")){const h=card.querySelector(".reading-head");h.after(weekSummary())}}catch(e){console.warn(e)}return r})(renderThought);
+
+try{render()}catch(e){console.warn(e)}
+
 window.Ogonek={
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
@@ -3953,7 +4329,7 @@ window.Ogonek={
   refOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?refStr({book:d[T[k].bi],ref:d[T[k].ri]}):""},
   urlOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?chapterUrl({book:d[T[k].bi],ref:d[T[k].ri]}):""},
   onSave:null,
-  setPathPeople(list){pathPeople=list||[];renderPath();try{renderConfFriendsCard();renderChallenges()}catch(e){}},
+  setPathPeople(list){pathPeople=list||[];renderPath();try{renderThought()}catch(e){}try{renderConfFriendsCard();renderChallenges()}catch(e){}},
   onPersonClick:null,
   medal(id,size){const a=AWARDS.find(x=>x.id===id);return a?{svg:medalSvg(a,size||40),name:a.name,desc:a.desc}:null},
   setMyPhoto(url){state.photo=url||"";renderPath()},
@@ -3969,10 +4345,10 @@ window.Ogonek={
 
 })();
 </script>
-<script type="module" src="auth.js?v=202610071628"></script>
+<script type="module" src="auth.js?v=202610161900"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261007162838";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261016190000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
