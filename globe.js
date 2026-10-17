@@ -101,9 +101,7 @@
   const CSS = `
 .globebtn{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(120deg,#0b1030,#1a2a6a);color:#eef0fa;text-align:left;cursor:pointer}
 .globebtn b{display:block;font-size:.98rem}.globebtn small{display:block;font-size:.8rem;color:#b9c2ee;margin-top:2px}
-.gbplanet{flex:none;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fc1ff,#2f6fd6 45%,#0b2563 75%);box-shadow:0 0 12px rgba(110,170,255,.55);position:relative;overflow:hidden}
-.gbplanet::before{content:"";position:absolute;left:7px;top:9px;width:13px;height:10px;border-radius:50% 40% 55% 45%;background:#cdb174}
-.gbplanet::after{content:"";position:absolute;right:6px;bottom:8px;width:12px;height:12px;border-radius:45% 55% 40% 60%;background:#5db078}
+.gbplanet{flex:none;width:52px;height:52px;background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGNsaXBQYXRoIGlkPSJjIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjM0IiByPSIyMiIvPjwvY2xpcFBhdGg+PC9kZWZzPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzQiIHI9IjIyIiBmaWxsPSIjMmY2ZmQ2Ii8+PGcgY2xpcC1wYXRoPSJ1cmwoI2MpIj48cGF0aCBmaWxsPSIjY2RiMTc0IiBkPSJNMTAgMjJjNi01IDE0LTQgMTYgMSAxIDQtMyA2LTEgMTAgMiAzIDYgNCA1IDktMSA0LTYgNC04IDktMy01LTktNi0xMS0xMi0yLTYgMy04IDEtMTJ6Ii8+PHBhdGggZmlsbD0iIzVkYjA3OCIgZD0iTTM2IDE2YzctMSAxNCAzIDE4IDktMyAyLTYgMC04IDItMiAzIDEgNy0yIDktMyAyLTYtMS04IDEtMiAzIDAgNy0zIDgtMi00LTUtNi00LTExIDAtNSA1LTYgNC0xMC0xLTMtMy01IDMtOHoiLz48cGF0aCBmaWxsPSIjNWRiMDc4IiBkPSJNNDIgNDRjNC0yIDggMCA5IDMtMiA0LTYgNi0xMCA2IDAtMy0yLTYgMS05eiIvPjwvZz48cGF0aCBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuMTgiIGQ9Ik0zMiAxMmEyMiAyMiAwIDAgMC0xOSAxMWM2LTUgMTUtNyAyNC01IDQgMSA4IDMgMTEgNkEyMiAyMiAwIDAgMCAzMiAxMnoiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNiAzMCkgc2NhbGUoLjE2KSI+PHBhdGggZmlsbD0iI2ZmN2ExYSIgZD0iTTMzIDJjMyAxNSAxOSAyNCAxOSA0NmEyMCAyMCAwIDAgMS00MCAwYzAtMTEgNi0xNyAxMC0yMSAwIDggNCAxMyA5IDEzLTMtMTMtMS0yNiAyLTM4eiIvPjxwYXRoIGZpbGw9IiNmZmM1M2QiIGQ9Ik0zMiA0MGM0IDggMTAgMTEgMTAgMjFhMTAgMTAgMCAwIDEtMjAgMGMwLTYgMy05IDYtMTIgMCA0IDIgNyA1IDctMi01LTItMTEtMS0xNnoiLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDAgMTgpIHNjYWxlKC4xNikiPjxwYXRoIGZpbGw9IiNmZjdhMWEiIGQ9Ik0zMyAyYzMgMTUgMTkgMjQgMTkgNDZhMjAgMjAgMCAwIDEtNDAgMGMwLTExIDYtMTcgMTAtMjEgMCA4IDQgMTMgOSAxMy0zLTEzLTEtMjYgMi0zOHoiLz48cGF0aCBmaWxsPSIjZmZjNTNkIiBkPSJNMzIgNDBjNCA4IDEwIDExIDEwIDIxYTEwIDEwIDAgMCAxLTIwIDBjMC02IDMtOSA2LTEyIDAgNCAyIDcgNSA3LTItNS0yLTExLTEtMTZ6Ii8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM2IDQwKSBzY2FsZSguMTMpIj48cGF0aCBmaWxsPSIjZmY3YTFhIiBkPSJNMzMgMmMzIDE1IDE5IDI0IDE5IDQ2YTIwIDIwIDAgMCAxLTQwIDBjMC0xMSA2LTE3IDEwLTIxIDAgOCA0IDEzIDkgMTMtMy0xMy0xLTI2IDItMzh6Ii8+PHBhdGggZmlsbD0iI2ZmYzUzZCIgZD0iTTMyIDQwYzQgOCAxMCAxMSAxMCAyMWExMCAxMCAwIDAgMS0yMCAwYzAtNiAzLTkgNi0xMiAwIDQgMiA3IDUgNy0yLTUtMi0xMS0xLTE2eiIvPjwvZz48ZWxsaXBzZSBjeD0iMzIiIGN5PSIzNCIgcng9IjI5IiByeT0iOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZjNTNkIiBzdHJva2Utd2lkdGg9IjIuNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTE4IDMyIDM0KSIgb3BhY2l0eT0iLjg1Ii8+PGNpcmNsZSBjeD0iNTUiIGN5PSIxMyIgcj0iNiIgZmlsbD0iI2U2ZTJkNiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMTEuNSIgcj0iMS41IiBmaWxsPSIjYzRiZmFlIi8+PGNpcmNsZSBjeD0iNTciIGN5PSIxNSIgcj0iMSIgZmlsbD0iI2M0YmZhZSIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik04IDhsMSAyLjUgMi41IDEtMi41IDFMOCAxNWwtMS0yLjUtMi41LTEgMi41LTF6Ii8+PGNpcmNsZSBjeD0iNTciIGN5PSI1NiIgcj0iMS41IiBmaWxsPSIjZmZmIi8+PC9zdmc+") center/contain no-repeat;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
 .gmodal{position:fixed;inset:0;z-index:34;display:flex;flex-direction:column;background:#05071a;color:#eef0fa;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px));gap:8px}
 .gmodal,.gmodal *{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .gmodal .gtop{display:flex;align-items:center;gap:10px}
@@ -156,7 +154,7 @@
   let opts = null, people = [], root = null, cv = null, ctx = null, raf = 0, W = 0, H = 0, dpr = 1, ro = null;
   let yaw = 0, pitch = 0, ty = 0, tp = 0, zoom = 1, tz = 1, vx = 0, vy = 0, fly = false, sel = null, selB = null, filt = "all", t = 0, drag = false, lastT = 0, idleT = 0;
   let cyw = 1, syw = 0, cp = 1, sp = 0, newIdx = -1;
-  const L = nrm([-0.55, 0.45, 0.7]);
+  const L = nrm([-0.55, 0.45, 0.7]), ZMAX = 10; // можно приблизить к самой земле
   const sh = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, p: Math.random() * 6 }));
@@ -197,6 +195,13 @@
     ctx.fillStyle = "#6b7cb0"; ctx.beginPath(); ctx.moveTo(0, -h); ctx.bezierCurveTo(w * 0.9, -h * 0.45, w * 1.1, -h * 0.05, 0, 2 * s); ctx.bezierCurveTo(-w * 1.1, -h * 0.05, -w * 0.9, -h * 0.45, 0, -h); ctx.fill();
     ctx.fillStyle = "#9fb0e0"; ctx.beginPath(); ctx.ellipse(0, -h * 0.2, w * 0.4, h * 0.24, 0, 0, TAU); ctx.fill(); ctx.restore();
   }
+  function moon(x, y, r) {
+    if (x + r < 0 || x - r > W || y + r < 0 || y - r > H) return;
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r); g.addColorStop(0, "#f6f2e6"); g.addColorStop(0.7, "#cfc9b8"); g.addColorStop(1, "#7d7868");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(120,112,95,.45)"; [[-0.3, -0.2, 0.22], [0.25, 0.15, 0.18], [-0.05, 0.4, 0.12], [0.35, -0.35, 0.1]].forEach((c) => { ctx.beginPath(); ctx.arc(x + c[0] * r, y + c[1] * r, c[2] * r, 0, TAU); ctx.fill(); });
+    ctx.fillStyle = "rgba(2,4,24,.35)"; ctx.beginPath(); ctx.arc(x, y, r, -1.2, 1.9); ctx.arc(x - r * 0.25, y + r * 0.05, r * 0.95, 1.9, -1.2, true); ctx.fill();
+  }
   function flame(x, y, s, f) {
     const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
     const g = ctx.createLinearGradient(0, -h, 0, 2); g.addColorStop(0, "#fff3a0"); g.addColorStop(0.45, "#ffb020"); g.addColorStop(1, "#ff4a1a");
@@ -222,6 +227,10 @@
     [[0.12, 0.18, 0.55, "rgba(120,70,210,.20)"], [0.92, 0.88, 0.6, "rgba(255,110,60,.10)"]].forEach((n) => { const g = ctx.createRadialGradient(W * n[0], H * n[1], 0, W * n[0], H * n[1], W * n[2]); g.addColorStop(0, n[3]); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
     stars.forEach((s) => { const x = ((s.x * W + yaw * 25) % W + W) % W, y = ((s.y * H + pitch * 25) % H + H) % H; ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.4 * Math.sin(t * 1.5 + s.p) ** 2) + ")"; ctx.fillRect(x, y, s.r, s.r); });
     const R = Math.min(W, H) * 0.42 * zoom, cx = W / 2, cy = H / 2, lx = cx + L[0] * R * 0.55, ly = cy - L[1] * R * 0.55;
+    // луна облетает планету: то за ней, то перед ней
+    const ma = t * 0.22, mz = Math.sin(ma), mo = Math.min(R * 1.6, W / 2 - R * 0.12), mR = R * 0.17 * (1 + 0.15 * mz), mx = cx + Math.cos(ma) * mo, my = cy - R * 0.12 - mz * R * 0.32;
+    ctx.strokeStyle = "rgba(200,210,255,.10)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.12, mo, R * 0.32, 0, 0, TAU); ctx.stroke();
+    if (mz > 0) moon(mx, my, mR);
     let g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.22); g.addColorStop(0, "rgba(90,160,255,.45)"); g.addColorStop(1, "rgba(90,160,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, TAU); ctx.fill();
     g = ctx.createRadialGradient(lx, ly, R * 0.05, cx, cy, R); g.addColorStop(0, "#3b86e8"); g.addColorStop(0.55, "#164a9e"); g.addColorStop(1, "#061433"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
@@ -251,12 +260,13 @@
       if (!p.o) { p.z = -1; return; }
       const v = rot(p.v); p.z = v[2]; p.sx = cx + v[0] * R; p.sy = cy - v[1] * R;
       if (!p.fire || v[2] < 0) return;
-      const fl = 0.85 + 0.15 * Math.sin(t * 7 + p.ph), rr = R * (many ? 0.08 : 0.15) * (0.4 + 0.6 * v[2]) * (match(p) ? 1 : 0.5);
+      const fl = 0.85 + 0.15 * Math.sin(t * 7 + p.ph), rr = Math.min(R * (many ? 0.08 : 0.15), 70) * (0.4 + 0.6 * v[2]) * (match(p) ? 1 : 0.5);
       const q = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, rr); q.addColorStop(0, "rgba(255,160,60," + (0.5 * fl) + ")"); q.addColorStop(0.4, "rgba(255,100,30," + (0.18 * fl) + ")"); q.addColorStop(1, "rgba(255,80,20,0)");
       ctx.fillStyle = q; ctx.beginPath(); ctx.arc(p.sx, p.sy, rr, 0, TAU); ctx.fill();
     });
     ctx.globalCompositeOperation = "source-over"; ctx.restore();
     ctx.strokeStyle = "rgba(140,190,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    if (mz <= 0) moon(mx, my, mR);
     // названия книг
     ctx.textAlign = "center"; const fs = Math.round(11 + 1.2 * Math.min(zoom, 2)); ctx.font = "600 " + fs + "px system-ui,sans-serif";
     // подписи без наложения: сначала выбранная и крупные книги, мелкие — если есть место
@@ -287,11 +297,18 @@
   /* ---------- нажатия ---------- */
   let lx0 = 0, ly0 = 0, moved = 0;
   function bindCanvas() {
-    cv.addEventListener("pointerdown", (e) => { drag = true; fly = false; moved = 0; lx0 = e.clientX; ly0 = e.clientY; vx = vy = 0; ty = yaw; tp = pitch; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cv.style.cursor = "grabbing"; });
-    cv.addEventListener("pointermove", (e) => { if (!drag) return; const dx = e.clientX - lx0, dy = e.clientY - ly0; lx0 = e.clientX; ly0 = e.clientY; moved += Math.abs(dx) + Math.abs(dy); const k = 0.0055 / zoom; ty += dx * k; tp += dy * k; vx = vx * 0.6 + dx * k * 0.4; vy = vy * 0.6 + dy * k * 0.4; lastT = performance.now(); });
-    const end = (e) => { if (!drag) return; drag = false; idleT = performance.now(); cv.style.cursor = "grab"; if (performance.now() - lastT > 90) vx = vy = 0; if (moved < 7) { const r = cv.getBoundingClientRect(); tap(e.clientX - r.left, e.clientY - r.top); } };
+    // щипок двумя пальцами — приблизить / отдалить
+    const pts = new Map(); let pinch = null;
+    const pdist = () => { const a = [...pts.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1; };
+    cv.addEventListener("pointerdown", (e) => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { pinch = { d: pdist(), z: tz }; moved = 99; vx = vy = 0; } });
+    cv.addEventListener("pointermove", (e) => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pinch && pts.size >= 2) tz = Math.max(0.8, Math.min(ZMAX, pinch.z * pdist() / pinch.d)); });
+    const pend = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (pts.size === 1) { const a = [...pts.values()][0]; lx0 = a.x; ly0 = a.y; } };
+    cv.addEventListener("pointerup", pend); cv.addEventListener("pointercancel", pend);
+    cv.addEventListener("pointerdown", (e) => { if (pts.size > 1) return; drag = true; fly = false; moved = 0; lx0 = e.clientX; ly0 = e.clientY; vx = vy = 0; ty = yaw; tp = pitch; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cv.style.cursor = "grabbing"; });
+    cv.addEventListener("pointermove", (e) => { if (!drag || pinch) return; const dx = e.clientX - lx0, dy = e.clientY - ly0; lx0 = e.clientX; ly0 = e.clientY; moved += Math.abs(dx) + Math.abs(dy); const k = 0.0055 / zoom; ty += dx * k; tp += dy * k; vx = vx * 0.6 + dx * k * 0.4; vy = vy * 0.6 + dy * k * 0.4; lastT = performance.now(); });
+    const end = (e) => { if (!drag || pts.size > 0) return; drag = false; idleT = performance.now(); cv.style.cursor = "grab"; if (performance.now() - lastT > 90) vx = vy = 0; if (moved < 7) { const r = cv.getBoundingClientRect(); tap(e.clientX - r.left, e.clientY - r.top); } };
     cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
-    cv.addEventListener("wheel", (e) => { e.preventDefault(); tz = Math.max(0.8, Math.min(4, tz * (e.deltaY < 0 ? 1.1 : 0.9))); }, { passive: false });
+    cv.addEventListener("wheel", (e) => { e.preventDefault(); tz = Math.max(0.8, Math.min(ZMAX, tz * (e.deltaY < 0 ? 1.1 : 0.9))); }, { passive: false });
   }
   function tap(x, y) {
     let best = null, bd = 22;
@@ -302,8 +319,8 @@
     if (bi) return pickB(bi);
     sel = selB = null; card();
   }
-  function pick(p) { sel = p; selB = null; if (p.o) { flyTo(p.lat - 0.1, p.lon); if (tz < 1.8) tz = 1.8; } card(); }
-  function pickB(o) { selB = o; sel = null; flyTo(o.lat - 0.06, o.lon); if (tz < 1.5) tz = 1.5; card(); }
+  function pick(p) { sel = p; selB = null; if (p.o) { if (tz < 1.8) tz = 1.8; flyTo(p.lat - 0.18 / tz, p.lon); } card(); }
+  function pickB(o) { selB = o; sel = null; if (tz < 1.5) tz = 1.5; flyTo(o.lat - 0.1 / tz, o.lon); card(); }
 
   /* ---------- нижняя карточка ---------- */
   function avatar(p) {
@@ -390,7 +407,7 @@
     const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
     const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
     zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");
-    zi.addEventListener("click", () => { tz = Math.min(4, tz * 1.3); }); zo.addEventListener("click", () => { tz = Math.max(0.8, tz / 1.3); });
+    zi.addEventListener("click", () => { tz = Math.min(ZMAX, tz * 1.4); }); zo.addEventListener("click", () => { tz = Math.max(0.8, tz / 1.4); });
     zm.append(zi, zo); stage.append(zm, el("div", "gstat"), el("div", "ghint", "Крутите в любую сторону · нажмите на человека"));
     root.append(topb, chips, stage, el("div", "gcard"));
     document.body.append(root);
