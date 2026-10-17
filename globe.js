@@ -1,0 +1,401 @@
+/* Огонёк: глобус читателей.
+   Планета похожа на Землю: материки разделены на страны-книги Библии по порядку.
+   Северная Америка — Пятикнижие и исторические книги, Южная Америка — поэтические книги и большие пророки,
+   Африка — малые пророки, Европа — Евангелия и Деяния, Азия — послания Павла,
+   Австралия — общие послания и Откровение. Читатель стоит на той книге, которую читает сейчас;
+   у кого сегодня горит огонёк — над ним пламя, и оно подсвечивает землю вокруг.
+   Данные даёт auth.js: OgonekGlobe.open({...}) и OgonekGlobe.setPeople(list). */
+(function () {
+  "use strict";
+  // [сокращение, название, глав]
+  const BOOKS = [["Быт.", "Бытие", 50], ["Исх.", "Исход", 40], ["Лев.", "Левит", 27], ["Числ.", "Числа", 36], ["Втор.", "Второзаконие", 34], ["Иис. Н.", "Иисус Навин", 24], ["Суд.", "Судьи", 21], ["Руф.", "Руфь", 4], ["1 Цар.", "1 Царств", 31], ["2 Цар.", "2 Царств", 24], ["3 Цар.", "3 Царств", 22], ["4 Цар.", "4 Царств", 25], ["1 Пар.", "1 Паралипоменон", 29], ["2 Пар.", "2 Паралипоменон", 36], ["Эздр.", "Эздра", 10], ["Неем.", "Неемия", 13], ["Есф.", "Есфирь", 10], ["Иов", "Иов", 42], ["Пс.", "Псалмы", 150], ["Притч.", "Притчи", 31], ["Еккл.", "Екклесиаст", 12], ["Песн.", "Песнь Песней", 8], ["Ис.", "Исаия", 66], ["Иер.", "Иеремия", 52], ["Плач", "Плач Иеремии", 5], ["Иез.", "Иезекииль", 48], ["Дан.", "Даниил", 12], ["Ос.", "Осия", 14], ["Иоил.", "Иоиль", 3], ["Ам.", "Амос", 9], ["Авд.", "Авдий", 1], ["Ион.", "Иона", 4], ["Мих.", "Михей", 7], ["Наум", "Наум", 3], ["Авв.", "Аввакум", 3], ["Соф.", "Софония", 3], ["Агг.", "Аггей", 2], ["Зах.", "Захария", 14], ["Мал.", "Малахия", 4], ["Мф.", "От Матфея", 28], ["Мк.", "От Марка", 16], ["Лк.", "От Луки", 24], ["Ин.", "От Иоанна", 21], ["Деян.", "Деяния", 28], ["Рим.", "Римлянам", 16], ["1 Кор.", "1 Коринфянам", 16], ["2 Кор.", "2 Коринфянам", 13], ["Гал.", "Галатам", 6], ["Еф.", "Ефесянам", 6], ["Флп.", "Филиппийцам", 4], ["Кол.", "Колоссянам", 4], ["1 Фес.", "1 Фессалоникийцам", 5], ["2 Фес.", "2 Фессалоникийцам", 3], ["1 Тим.", "1 Тимофею", 6], ["2 Тим.", "2 Тимофею", 4], ["Тит.", "Титу", 3], ["Флм.", "Филимону", 1], ["Евр.", "Евреям", 13], ["Иак.", "Иакова", 5], ["1 Пет.", "1 Петра", 5], ["2 Пет.", "2 Петра", 3], ["1 Ин.", "1 Иоанна", 5], ["2 Ин.", "2 Иоанна", 1], ["3 Ин.", "3 Иоанна", 1], ["Иуд.", "Иуды", 1], ["Откр.", "Откровение", 22]];
+
+  const NA = [[-168,66],[-162,70],[-156,71],[-140,70],[-128,70],[-115,68],[-100,68],[-95,72],[-85,70],[-80,63],[-90,57],[-82,52],[-78,58],[-70,60],[-64,60],[-60,55],[-56,51],[-60,47],[-66,45],[-70,42],[-74,40],[-76,35],[-81,31],[-80,25],[-82,27],[-84,30],[-90,30],[-97,27],[-97,22],[-94,18],[-90,21],[-87,21],[-88,16],[-84,15],[-83,10],[-79,9],[-81,8],[-86,12],[-92,15],[-98,16],[-105,20],[-106,23],[-112,29],[-110,23],[-115,30],[-118,34],[-121,36],[-124,40],[-124,46],[-126,50],[-133,56],[-140,59],[-148,60],[-155,58],[-162,55],[-165,60]],
+    GR = [[-73,78],[-60,82],[-35,83],[-20,80],[-20,72],[-30,68],[-42,60],[-50,64],[-55,70],[-60,76]],
+    SA = [[-80,9],[-77,8],[-72,12],[-62,11],[-55,6],[-50,2],[-48,-1],[-40,-3],[-35,-6],[-35,-9],[-39,-14],[-39,-18],[-41,-22],[-48,-26],[-53,-33],[-57,-36],[-58,-39],[-62,-41],[-65,-45],[-68,-51],[-69,-55],[-72,-53],[-75,-47],[-74,-40],[-72,-30],[-71,-20],[-76,-14],[-81,-5],[-80,-1],[-78,2]],
+    AF = [[-17,21],[-16,28],[-10,30],[-6,35],[0,36],[10,37],[11,33],[20,31],[25,32],[32,31],[34,28],[36,22],[38,18],[43,12],[51,12],[48,5],[40,-3],[40,-11],[36,-20],[33,-26],[28,-33],[20,-35],[18,-32],[15,-26],[12,-17],[13,-12],[12,-5],[9,0],[9,4],[5,6],[-2,5],[-8,4],[-13,8],[-17,14]],
+    MG = [[44,-25],[47,-25],[50,-16],[49,-12],[44,-16]],
+    EU = [[-10,36],[-9,43],[-2,44],[-1,46],[-5,48],[2,51],[5,53],[8,54],[8,57],[5,58],[5,62],[12,66],[18,70],[25,71],[32,70],[40,67],[45,68],[55,68],[60,68],[60,50],[50,47],[48,42],[40,41],[29,41],[26,40],[24,37],[22,37],[19,41],[15,45],[13,45],[16,41],[18,40],[16,38],[12,42],[8,44],[3,43],[0,39],[-2,37],[-6,36]],
+    UK = [[-5,50],[1,51],[2,53],[-1,55],[-2,58],[-6,58],[-5,55],[-3,54],[-5,52]],
+    AS = [[60,68],[70,73],[80,73],[90,76],[100,78],[112,74],[130,72],[140,72],[160,70],[170,70],[179,66],[178,62],[165,60],[160,55],[156,51],[162,57],[150,59],[140,54],[142,47],[135,43],[130,42],[127,38],[126,35],[122,37],[121,31],[120,26],[115,22],[108,21],[106,16],[109,12],[105,9],[100,13],[100,7],[103,1],[100,4],[98,9],[97,16],[94,17],[92,22],[88,22],[80,15],[78,8],[73,17],[72,21],[67,25],[58,25],[56,27],[52,24],[56,23],[59,22],[55,17],[44,12],[43,16],[39,22],[35,28],[34,32],[36,36],[30,36],[27,37],[26,40],[29,41],[40,41],[48,42],[50,47],[60,50]],
+    JP = [[130,31],[131,34],[135,34],[140,36],[142,40],[141,45],[144,44],[140,41],[139,38],[136,36],[131,33]],
+    AU = [[114,-22],[114,-26],[115,-34],[118,-35],[123,-34],[129,-31],[135,-34],[138,-35],[141,-38],[147,-39],[150,-37],[153,-31],[153,-25],[150,-22],[146,-19],[145,-15],[142,-11],[141,-17],[136,-12],[132,-11],[129,-15],[125,-14],[122,-18]],
+    NG = [[131,-1],[141,-3],[150,-10],[143,-9],[138,-8],[132,-4]];
+  const CONT = [
+    { n: "Северная Америка", sec: "Пятикнижие и исторические книги", nt: false, a: 0, b: 17, p: [NA, GR] },
+    { n: "Южная Америка", sec: "Поэтические книги и большие пророки", nt: false, a: 17, b: 27, p: [SA] },
+    { n: "Африка", sec: "Малые пророки", nt: false, a: 27, b: 39, p: [AF, MG] },
+    { n: "Европа", sec: "Евангелия и Деяния", nt: true, a: 39, b: 44, p: [EU, UK] },
+    { n: "Азия", sec: "Послания Павла", nt: true, a: 44, b: 58, p: [AS, JP] },
+    { n: "Австралия", sec: "Общие послания и Откровение", nt: true, a: 58, b: 66, p: [AU, NG] }
+  ];
+
+  const D = Math.PI / 180, TAU = Math.PI * 2;
+  const vec = (la, lo) => { const c = Math.cos(la * D); return [c * Math.sin(lo * D), Math.sin(la * D), c * Math.cos(lo * D)]; };
+  const nrm = (v) => { const m = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / m, v[1] / m, v[2] / m]; };
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const sum = (arr) => arr.reduce((s, v) => [s[0] + v[0], s[1] + v[1], s[2] + v[2]], [0, 0, 0]);
+  function pip(x, y, p) { let s = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) s = !s; } return s; }
+  function dens(p) { const o = []; p.forEach((a, i) => { const b = p[(i + 1) % p.length], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2)); for (let k = 0; k < n; k++) { const t = k / n; o.push(vec(a[1] + (b[1] - a[1]) * t, a[0] + (b[0] - a[0]) * t)); } }); return o; }
+  function dens3(p) { const o = []; p.forEach((a, i) => { const b = p[(i + 1) % p.length], ang = Math.acos(Math.max(-1, Math.min(1, dot(a, b)))), n = Math.max(1, Math.ceil(ang / (2 * D))); for (let k = 0; k < n; k++) { const t = k / n; o.push(nrm([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t])); } }); return o; }
+  // отрезаем от многоугольника на сфере всё, что по другую сторону от плоскости n (граница — ровная дуга)
+  function clipPoly(poly, n) { const out = []; for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length], da = dot(a, n), db = dot(b, n); if (da >= 0) out.push(a); if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); out.push(nrm([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t])); } } return out; }
+  // сглаживание берега (Чайкин): острые углы заливов становятся плавными
+  function smooth(p, n) { for (let r = 0; r < n; r++) { const o = []; p.forEach((a, i) => { const b = p[(i + 1) % p.length]; o.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]); }); p = o; } return p; }
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const OTS = ["#cdb174", "#b39554", "#dcc792"], NTS = ["#5db078", "#43945e", "#7cc692"];
+
+  /* ---------- карта: строится один раз ---------- */
+  let books = null, ANT = null;
+  function build() {
+    if (books) return;
+    books = [];
+    const G = 3;
+    CONT.forEach((c) => {
+      c.p = c.p.map((p) => smooth(p, 2));
+      c.vs = c.p.map(dens);
+      const cells = [];
+      for (let la = -58; la <= 84; la += G) {
+        const st = G / Math.max(0.22, Math.cos(la * D));
+        for (let lo = -180 + st / 2; lo < 180; lo += st) if (c.p.some((p) => pip(lo, la, p))) cells.push({ la, lo, v: vec(la, lo) });
+      }
+      // змейкой с севера на юг: соседние книги по порядку оказываются рядом
+      cells.sort((x, y) => { const bx = Math.floor((84 - x.la) / 10), by = Math.floor((84 - y.la) / 10); if (bx !== by) return bx - by; const d = bx % 2 ? -1 : 1; return (x.lo - y.lo) * d || y.la - x.la; });
+      const list = BOOKS.slice(c.a, c.b), ws = list.map((b) => 2 + Math.pow(b[2], 0.6)), tot = ws.reduce((s, x) => s + x, 0);
+      let pos = 0, acc = 0;
+      const bk = list.map((b, i) => {
+        acc += ws[i];
+        const end = Math.max(pos + 1, Math.round(cells.length * acc / tot)), ch = cells.slice(pos, end); pos = end;
+        const o = { i: c.a + i, name: b[1], ch: b[2], cont: c, seed: nrm(sum(ch.map((q) => q.v))), cells: [], people: [], col: hex((c.nt ? NTS : OTS)[i % 3]) };
+        books.push(o); return o;
+      });
+      cells.forEach((q) => { let best = bk[0], bd = -2; bk.forEach((o) => { const d = dot(o.seed, q.v); if (d > bd) { bd = d; best = o; } }); best.cells.push(q); });
+      c.bk = bk;
+      bk.forEach((o) => {
+        // область книги — выпуклая (ровные прямые границы); по берегу её обрезает материк при рисовании
+        const s0 = o.seed, ax = Math.abs(s0[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+        const e1 = nrm([s0[1] * ax[2] - s0[2] * ax[1], s0[2] * ax[0] - s0[0] * ax[2], s0[0] * ax[1] - s0[1] * ax[0]]);
+        const e2 = [s0[1] * e1[2] - s0[2] * e1[1], s0[2] * e1[0] - s0[0] * e1[2], s0[0] * e1[1] - s0[1] * e1[0]];
+        const rr = 70 * D; let poly = [];
+        for (let k = 0; k < 72; k++) { const a = k / 72 * TAU, ca = Math.cos(a), sa = Math.sin(a); poly.push(nrm([0, 1, 2].map((j) => Math.cos(rr) * s0[j] + Math.sin(rr) * (ca * e1[j] + sa * e2[j])))); }
+        bk.forEach((q) => { if (q === o || poly.length < 3) return; poly = clipPoly(poly, [s0[0] - q.seed[0], s0[1] - q.seed[1], s0[2] - q.seed[2]]); });
+        o.poly = poly.length > 2 ? dens3(poly) : [];
+        if (!o.cells.length) o.cells.push({ v: o.seed });
+        o.c = nrm(sum(o.cells.map((q) => q.v)));
+        o.cells.sort((x, y) => dot(y.v, o.c) - dot(x.v, o.c));
+        o.lat = Math.asin(o.c[1]); o.lon = Math.atan2(o.c[0], o.c[2]);
+      });
+    });
+    books.sort((a, b) => a.i - b.i);
+    ANT = []; for (let lo = -180; lo < 180; lo += 3) ANT.push(vec(-70 + 3 * Math.sin(lo * 3 * D) + 2 * Math.sin(lo * 7 * D), lo));
+  }
+
+  // «Мф. 8:23–34» → номер книги (0–65), иначе −1
+  function bookIndex(ref) {
+    ref = String(ref || "").trim(); let best = -1, bl = 0;
+    BOOKS.forEach((b, i) => { if ((ref === b[0] || ref.startsWith(b[0] + " ")) && b[0].length > bl) { bl = b[0].length; best = i; } });
+    return best;
+  }
+
+  /* ---------- стили ---------- */
+  const CSS = `
+.globebtn{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(120deg,#0b1030,#1a2a6a);color:#eef0fa;text-align:left;cursor:pointer}
+.globebtn b{display:block;font-size:.98rem}.globebtn small{display:block;font-size:.8rem;color:#b9c2ee;margin-top:2px}
+.gbplanet{flex:none;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fc1ff,#2f6fd6 45%,#0b2563 75%);box-shadow:0 0 12px rgba(110,170,255,.55);position:relative;overflow:hidden}
+.gbplanet::before{content:"";position:absolute;left:7px;top:9px;width:13px;height:10px;border-radius:50% 40% 55% 45%;background:#cdb174}
+.gbplanet::after{content:"";position:absolute;right:6px;bottom:8px;width:12px;height:12px;border-radius:45% 55% 40% 60%;background:#5db078}
+.gmodal{position:fixed;inset:0;z-index:34;display:flex;flex-direction:column;background:#05071a;color:#eef0fa;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px));gap:8px}
+.gmodal .gtop{display:flex;align-items:center;gap:10px}
+.gmodal .gtop h2{margin:0;font-size:1.15rem;flex:1}
+.gmodal .gx{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#eef0fa;font-size:1.1rem;cursor:pointer}
+.gmodal .gsearch{display:flex;gap:8px}
+.gmodal input{flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#eef0fa;font:inherit}
+.gmodal .gbtn{padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#eef0fa;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.gmodal .gbtn.main{background:#ff8a1f;border-color:#ff8a1f;color:#1c0d00}
+.gmodal .gbtn[disabled]{opacity:.6;cursor:default}
+.gmodal .gres{display:flex;flex-wrap:wrap;gap:6px}.gmodal .gres:empty{display:none}
+.gmodal .gchips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gmodal .gchips::-webkit-scrollbar{display:none}
+.gmodal .gchip{flex:none;white-space:nowrap;font:inherit;font-size:.84rem;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#c9cff0;cursor:pointer}
+.gmodal .gchip.on{background:#ff8a1f;border-color:#ff8a1f;color:#1c0d00}
+.gmodal .gstage{position:relative;flex:1;min-height:220px;border-radius:16px;overflow:hidden}
+.gmodal canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.gmodal .gzoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.gmodal .gzoom button{width:38px;height:38px;border-radius:10px;background:rgba(20,26,58,.8);border:1px solid rgba(255,255,255,.2);color:#eef0fa;font-size:1.2rem;cursor:pointer}
+.gmodal .gstat{position:absolute;left:10px;top:10px;font-size:.78rem;color:#aab2e6;pointer-events:none}
+.gmodal .ghint{position:absolute;left:10px;bottom:8px;font-size:.78rem;color:#7e86b8;pointer-events:none}
+.gmodal .gcard{background:#141a3a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px;max-height:38vh;overflow-y:auto}
+.gmodal .gmuted{font-size:.88rem;color:#a9b0d6;margin:0}
+.gmodal .gperson{display:flex;gap:12px;align-items:center}
+.gmodal .gav{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;overflow:hidden}
+.gmodal .gav img{width:100%;height:100%;object-fit:cover}
+.gmodal .gname{font-weight:700;font-size:1.02rem}
+.gmodal .gline{font-size:.86rem;color:#a9b0d6}
+.gmodal .gfl{margin-left:auto;text-align:center;font-weight:700;color:#7e86b8}.gmodal .gfl.on{color:#ffb020}
+.gmodal .gacts{display:flex;gap:8px;margin-top:10px}.gmodal .gacts .gbtn{flex:1}
+.gmodal .gppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.gmodal .gvis{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
+.gmodal .gvis p{flex:1}`;
+  function addCss() { if (document.getElementById("globeCss")) return; const s = document.createElement("style"); s.id = "globeCss"; s.textContent = CSS; document.head.append(s); }
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function btn(text, cls) { const b = el("button", "gbtn" + (cls ? " " + cls : ""), text); b.type = "button"; return b; }
+
+  /* ---------- состояние окна ---------- */
+  const COL = ["#D85A30", "#534AB7", "#0F6E56", "#993556", "#185FA5", "#854F0B", "#3B6D11"];
+  let opts = null, people = [], root = null, cv = null, ctx = null, raf = 0, W = 0, H = 0, dpr = 1, ro = null;
+  let yaw = 0, pitch = 0, ty = 0, tp = 0, zoom = 1, tz = 1, vx = 0, vy = 0, fly = false, sel = null, selB = null, filt = "all", t = 0, drag = false, lastT = 0, idleT = 0;
+  let cyw = 1, syw = 0, cp = 1, sp = 0, newIdx = -1;
+  const L = nrm([-0.55, 0.45, 0.7]);
+  const sh = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, p: Math.random() * 6 }));
+
+  function rot(v) { const x1 = v[0] * cyw + v[2] * syw, z1 = -v[0] * syw + v[2] * cyw; return [x1, v[1] * cp - z1 * sp, v[1] * sp + z1 * cp]; }
+  function flyTo(lat, lon) { ty = yaw + sh(-lon - yaw); tp = Math.max(-1.45, Math.min(1.45, lat)); vx = vy = 0; fly = true; }
+  const match = (p) => filt === "fire" ? p.fire : filt === "new" ? (p.rel === "" || p.rel === "req") : true;
+  const lit = (c) => 0.55 + 0.45 * Math.max(0, dot(c, L));
+
+  // раскладываем людей по их книгам
+  function placePeople() {
+    books.forEach((o) => { o.people = []; });
+    const t0 = today();
+    people.forEach((p, i) => {
+      const o = books[p.b]; if (!o) { p.o = null; return; }
+      const k = o.people.length; o.people.push(p); p.o = o;
+      const n = o.cells.length, q = o.cells[(k * 2) % n];
+      let v = q.v;
+      if (k * 2 >= n) { const j = Math.floor(k * 2 / n), a = k * 2.4; v = nrm([v[0] + Math.cos(a) * 0.012 * j, v[1] + Math.sin(a) * 0.012 * j, v[2] + Math.sin(a + 1) * 0.012 * j]); }
+      p.v = v; p.lat = Math.asin(v[1]); p.lon = Math.atan2(v[0], v[2]); p.ph = i * 1.3; p.col = COL[i % 7];
+      p.fire = p.lit === t0;
+    });
+  }
+
+  function ring(path, vs, cx, cy, R) {
+    const pr = vs.map(rot); if (!pr.some((p) => p[2] > 0)) return false;
+    pr.forEach((p, i) => { let x = p[0], y = p[1]; if (p[2] < 0) { const m = Math.hypot(x, y) || 1; x /= m; y /= m; } const X = cx + x * R, Y = cy - y * R; i ? path.lineTo(X, Y) : path.moveTo(X, Y); });
+    path.closePath(); return true;
+  }
+  function coast(vs, cx, cy, R) {
+    const pr = vs.map(rot); ctx.beginPath();
+    for (let i = 0; i < pr.length; i++) { const a = pr[i], b = pr[(i + 1) % pr.length]; if (a[2] > 0 && b[2] > 0) { ctx.moveTo(cx + a[0] * R, cy - a[1] * R); ctx.lineTo(cx + b[0] * R, cy - b[1] * R); } }
+    ctx.stroke();
+  }
+  function flame(x, y, s, f) {
+    const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
+    const g = ctx.createLinearGradient(0, -h, 0, 2); g.addColorStop(0, "#fff3a0"); g.addColorStop(0.45, "#ffb020"); g.addColorStop(1, "#ff4a1a");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -h); ctx.bezierCurveTo(w * 0.9, -h * 0.45, w * 1.1, -h * 0.05, 0, 2 * s); ctx.bezierCurveTo(-w * 1.1, -h * 0.05, -w * 0.9, -h * 0.45, 0, -h); ctx.fill();
+    ctx.fillStyle = "rgba(255,250,220,.9)"; ctx.beginPath(); ctx.ellipse(0, -h * 0.2, w * 0.33, h * 0.2, 0, 0, TAU); ctx.fill(); ctx.restore();
+  }
+
+  function size() {
+    if (!cv) return; const st = cv.parentElement;
+    W = st.clientWidth || 360; H = st.clientHeight || 360; dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  }
+
+  function frame(ts) {
+    raf = requestAnimationFrame(frame);
+    t = ts / 1000;
+    if (!drag) { ty += vx; tp += vy; vx *= 0.95; vy *= 0.95; if (!fly && !sel && !selB && ts - idleT > 2500) ty += 0.0011; }
+    tp = Math.max(-1.45, Math.min(1.45, tp));
+    const k = fly ? 0.1 : 0.28; yaw += (ty - yaw) * k; pitch += (tp - pitch) * k; zoom += (tz - zoom) * 0.18;
+    if (fly && Math.abs(ty - yaw) < 0.002 && Math.abs(tp - pitch) < 0.002) fly = false;
+    cyw = Math.cos(yaw); syw = Math.sin(yaw); cp = Math.cos(pitch); sp = Math.sin(pitch);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = "#05071a"; ctx.fillRect(0, 0, W, H);
+    [[0.12, 0.18, 0.55, "rgba(120,70,210,.20)"], [0.92, 0.88, 0.6, "rgba(255,110,60,.10)"]].forEach((n) => { const g = ctx.createRadialGradient(W * n[0], H * n[1], 0, W * n[0], H * n[1], W * n[2]); g.addColorStop(0, n[3]); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
+    stars.forEach((s) => { const x = ((s.x * W + yaw * 25) % W + W) % W, y = ((s.y * H + pitch * 25) % H + H) % H; ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.4 * Math.sin(t * 1.5 + s.p) ** 2) + ")"; ctx.fillRect(x, y, s.r, s.r); });
+    const R = Math.min(W, H) * 0.42 * zoom, cx = W / 2, cy = H / 2, lx = cx + L[0] * R * 0.55, ly = cy - L[1] * R * 0.55;
+    let g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.22); g.addColorStop(0, "rgba(90,160,255,.45)"); g.addColorStop(1, "rgba(90,160,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, TAU); ctx.fill();
+    g = ctx.createRadialGradient(lx, ly, R * 0.05, cx, cy, R); g.addColorStop(0, "#3b86e8"); g.addColorStop(0.55, "#164a9e"); g.addColorStop(1, "#061433"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
+    const ap = new Path2D(); if (ring(ap, ANT, cx, cy, R)) { ctx.fillStyle = "#dde6f0"; ctx.fill(ap); }
+    ctx.lineJoin = "round";
+    books.forEach((o) => { const c = rot(o.c); o.z = c[2]; o.path = null; o.sx = cx + c[0] * R; o.sy = cy - c[1] * R; o.lc = lit(c); });
+    CONT.forEach((c) => {
+      const land = new Path2D(); let vis = false; c.vs.forEach((vs) => { if (ring(land, vs, cx, cy, R)) vis = true; });
+      c.path = vis ? land : null; if (!vis) return;
+      ctx.save(); ctx.clip(land);
+      c.bk.forEach((o) => {
+        const path = new Path2D(); if (!o.poly.length || !ring(path, o.poly, cx, cy, R)) return;
+        const d = o.lc; ctx.fillStyle = "rgb(" + (o.col[0] * d | 0) + "," + (o.col[1] * d | 0) + "," + (o.col[2] * d | 0) + ")"; ctx.fill(path);
+        if (o === selB) { ctx.fillStyle = "rgba(255,255,255,.25)"; ctx.fill(path); }
+        o.path = path;
+      });
+      ctx.strokeStyle = "rgba(60,40,15,.35)"; ctx.lineWidth = 0.9; c.bk.forEach((o) => { if (o.path) ctx.stroke(o.path); });
+      if (selB && selB.cont === c && selB.path) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke(selB.path); }
+      ctx.restore();
+    });
+    ctx.strokeStyle = "rgba(255,245,215,.65)"; ctx.lineWidth = 1.2; CONT.forEach((c) => c.vs.forEach((vs) => coast(vs, cx, cy, R)));
+    g = ctx.createRadialGradient(lx, ly, R * 0.25, lx, ly, R * 1.9); g.addColorStop(0, "rgba(2,4,24,0)"); g.addColorStop(1, "rgba(2,4,24,.62)"); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+    // свет огоньков
+    ctx.globalCompositeOperation = "lighter";
+    const many = people.length > 250;
+    people.forEach((p) => {
+      if (!p.o) { p.z = -1; return; }
+      const v = rot(p.v); p.z = v[2]; p.sx = cx + v[0] * R; p.sy = cy - v[1] * R;
+      if (!p.fire || v[2] < 0) return;
+      const fl = 0.85 + 0.15 * Math.sin(t * 7 + p.ph), rr = R * (many ? 0.08 : 0.15) * (0.4 + 0.6 * v[2]) * (match(p) ? 1 : 0.5);
+      const q = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, rr); q.addColorStop(0, "rgba(255,160,60," + (0.5 * fl) + ")"); q.addColorStop(0.4, "rgba(255,100,30," + (0.18 * fl) + ")"); q.addColorStop(1, "rgba(255,80,20,0)");
+      ctx.fillStyle = q; ctx.beginPath(); ctx.arc(p.sx, p.sy, rr, 0, TAU); ctx.fill();
+    });
+    ctx.globalCompositeOperation = "source-over"; ctx.restore();
+    ctx.strokeStyle = "rgba(140,190,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    // названия книг
+    ctx.textAlign = "center"; const fs = Math.round(11 + 1.2 * Math.min(zoom, 2)); ctx.font = "600 " + fs + "px system-ui,sans-serif";
+    // подписи без наложения: сначала выбранная и крупные книги, мелкие — если есть место
+    ctx.lineJoin = "round"; ctx.miterLimit = 2;
+    const taken = [];
+    books.filter((o) => o.path && o.z > 0.35).sort((a, b) => (b === selB) - (a === selB) || b.cells.length - a.cells.length).forEach((o) => {
+      const w = ctx.measureText(o.name).width + 6, x0 = o.sx - w / 2, y0 = o.sy + 2, r = [x0, y0, x0 + w, y0 + fs + 4];
+      if (taken.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
+      taken.push(r);
+      const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, o.sy + fs + 2); ctx.fillStyle = "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, o.sy + fs + 2);
+    });
+    // люди
+    people.filter((p) => p.z > 0.05).sort((a, b) => a.z - b.z).forEach((p) => {
+      const s = (0.6 + 0.4 * p.z) * Math.min(1.5, 0.8 + 0.25 * zoom);
+      ctx.globalAlpha = (match(p) ? 1 : 0.22) * Math.min(1, p.z * 3);
+      if (p.rel && p.rel !== "req") { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+      if (p.fire) flame(p.sx + Math.sin(t * 5 + p.ph) * 0.6, p.sy, s, 1 + 0.13 * Math.sin(t * 11 + p.ph));
+      else { ctx.fillStyle = "#3b405e"; ctx.strokeStyle = "#8a90b8"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(p.sx, p.sy - 3 * s, 3.6 * s, 0, TAU); ctx.fill(); ctx.stroke(); }
+      if (p === sel) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 14 * s + 3 * Math.sin(t * 4), 0, TAU); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  /* ---------- нажатия ---------- */
+  let lx0 = 0, ly0 = 0, moved = 0;
+  function bindCanvas() {
+    cv.addEventListener("pointerdown", (e) => { drag = true; fly = false; moved = 0; lx0 = e.clientX; ly0 = e.clientY; vx = vy = 0; ty = yaw; tp = pitch; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cv.style.cursor = "grabbing"; });
+    cv.addEventListener("pointermove", (e) => { if (!drag) return; const dx = e.clientX - lx0, dy = e.clientY - ly0; lx0 = e.clientX; ly0 = e.clientY; moved += Math.abs(dx) + Math.abs(dy); const k = 0.0055 / zoom; ty += dx * k; tp += dy * k; vx = vx * 0.6 + dx * k * 0.4; vy = vy * 0.6 + dy * k * 0.4; lastT = performance.now(); });
+    const end = (e) => { if (!drag) return; drag = false; idleT = performance.now(); cv.style.cursor = "grab"; if (performance.now() - lastT > 90) vx = vy = 0; if (moved < 7) { const r = cv.getBoundingClientRect(); tap(e.clientX - r.left, e.clientY - r.top); } };
+    cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+    cv.addEventListener("wheel", (e) => { e.preventDefault(); tz = Math.max(0.8, Math.min(4, tz * (e.deltaY < 0 ? 1.1 : 0.9))); }, { passive: false });
+  }
+  function tap(x, y) {
+    let best = null, bd = 22;
+    people.forEach((p) => { if (!(p.z > 0.05)) return; const d = Math.hypot(p.sx - x, p.sy - 6 - y); if (d < bd) { bd = d; best = p; } });
+    if (best) return pick(best);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let bi = null; books.forEach((o) => { if (o.path && o.cont.path && o.z > -0.1 && ctx.isPointInPath(o.path, x * dpr, y * dpr) && ctx.isPointInPath(o.cont.path, x * dpr, y * dpr) && (!bi || o.z > bi.z)) bi = o; });
+    if (bi) return pickB(bi);
+    sel = selB = null; card();
+  }
+  function pick(p) { sel = p; selB = null; if (p.o) { flyTo(p.lat - 0.1, p.lon); if (tz < 1.8) tz = 1.8; } card(); }
+  function pickB(o) { selB = o; sel = null; flyTo(o.lat - 0.06, o.lon); if (tz < 1.5) tz = 1.5; card(); }
+
+  /* ---------- нижняя карточка ---------- */
+  function avatar(p) {
+    const a = el("div", "gav"); a.style.background = p.col || COL[0];
+    if (p.photo && /^https:\/\//.test(p.photo)) { const img = document.createElement("img"); img.src = p.photo; img.alt = ""; img.referrerPolicy = "no-referrer"; a.append(img); }
+    else a.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
+    return a;
+  }
+  function card() {
+    const cd = root.querySelector(".gcard"); cd.textContent = "";
+    if (sel) {
+      const p = sel, row = el("div", "gperson"), mid = el("div"); mid.style.minWidth = "0";
+      mid.append(el("div", "gname", p.rel === "me" ? (p.name || "Вы") + " (вы)" : (p.name || "Читатель")));
+      (p.refs || []).forEach((r) => mid.append(el("div", "gline", r)));
+      if (p.plan) mid.append(el("div", "gline", p.plan));
+      const fl = el("div", "gfl" + (p.fire ? " on" : "")); fl.append(el("div", null, "🔥"), el("div", null, String(p.streak || 0)));
+      fl.title = p.fire ? "Сегодня уже прочитал(а)" : "Сегодня ещё не читал(а)";
+      row.append(avatar(p), mid, fl); cd.append(row);
+      const acts = el("div", "gacts");
+      if (p.rel === "") { const a = btn("Добавить в друзья", "main"); a.addEventListener("click", () => addFriend(p, a)); acts.append(a); }
+      else if (p.rel === "req") { const a = btn("Принять заявку", "main"); a.addEventListener("click", () => addFriend(p, a)); acts.append(a); }
+      else if (p.rel === "pending") acts.append(Object.assign(btn("Заявка отправлена"), { disabled: true }));
+      else if (p.rel === "friend") acts.append(Object.assign(btn("✓ Вы друзья"), { disabled: true }));
+      const pr = btn(p.rel === "me" ? "Мой профиль" : "Профиль"); pr.addEventListener("click", () => opts && opts.onProfile && opts.onProfile(p.id)); acts.append(pr);
+      cd.append(acts); return;
+    }
+    if (selB) {
+      const o = selB, i = o.i + 1;
+      cd.append(el("div", "gname", i + ". " + o.name));
+      cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase() + (i > 1 ? " · до неё " + BOOKS[i - 2][1] : "") + (i < 66 ? " · после " + BOOKS[i][1] : "")));
+      const box = el("div", "gppl");
+      if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
+      o.people.slice(0, 40).forEach((p) => { const b = btn((p.fire ? "🔥 " : "· ") + (p.name || "Читатель")); b.addEventListener("click", () => pick(p)); box.append(b); });
+      if (o.people.length > 40) box.append(el("span", "gmuted", "и ещё " + (o.people.length - 40)));
+      cd.append(box); return;
+    }
+    cd.append(el("p", "gmuted", "Нажмите на огонёк или на страну-книгу, чтобы увидеть, кто там читает."));
+    const vis = el("div", "gvis"), on = !!(opts && opts.visible);
+    vis.append(el("p", "gmuted", on ? "Вас видно на глобусе другим читателям." : "Вы скрыты: другие читатели вас не видят."));
+    const tb = btn(on ? "Скрыть меня" : "Показать меня");
+    tb.addEventListener("click", async () => { if (!opts || !opts.onToggle) return; tb.disabled = true; try { opts.visible = await opts.onToggle(); } finally { card(); } });
+    vis.append(tb); cd.append(vis);
+  }
+  const chWord = (n) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "глава" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "главы" : "глав"; };
+  async function addFriend(p, b) {
+    if (!opts || !opts.onAdd) return; b.disabled = true;
+    const r = await opts.onAdd(p.id).catch(() => false);
+    if (r) p.rel = r; card();
+  }
+
+  function stat() {
+    const s = root.querySelector(".gstat"), on = people.filter((p) => p.o), f = on.filter((p) => p.fire).length;
+    s.textContent = "В Огоньке: " + on.length + " · горят сегодня: " + f;
+  }
+
+  /* ---------- открыть / закрыть ---------- */
+  function close() {
+    if (!root) return; cancelAnimationFrame(raf); raf = 0; if (ro) { ro.disconnect(); ro = null; }
+    window.removeEventListener("resize", size); document.removeEventListener("keydown", esc);
+    root.remove(); root = cv = ctx = null; sel = selB = null;
+  }
+  function esc(e) { if (e.key === "Escape" && !document.querySelector(".fmodal")) close(); }
+
+  function open(o) {
+    addCss(); build(); close();
+    opts = o || {}; people = (opts.people || []).slice(); filt = "all"; newIdx = -1;
+    root = el("div", "gmodal"); root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "Глобус читателей");
+    const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
+    const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
+    const chips = el("div", "gchips");
+    [["all", "Все"], ["fire", "🔥 Горят"], ["new", "👋 Новые"], ["me", "📍 Я"]].forEach(([f, txt]) => {
+      const c = el("button", "gchip" + (f === "all" ? " on" : ""), txt); c.type = "button";
+      if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
+      c.addEventListener("click", () => {
+        if (f === "me") { const m = people.find((p) => p.rel === "me"); if (m) pick(m); return; }
+        filt = f; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c));
+        if (f === "new") nextNew();
+      });
+      chips.append(c);
+    });
+    const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
+    const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
+    zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");
+    zi.addEventListener("click", () => { tz = Math.min(4, tz * 1.3); }); zo.addEventListener("click", () => { tz = Math.max(0.8, tz / 1.3); });
+    zm.append(zi, zo); stage.append(zm, el("div", "gstat"), el("div", "ghint", "Крутите в любую сторону · нажмите на человека"));
+    root.append(topb, chips, stage, el("div", "gcard"));
+    document.body.append(root);
+    ctx = cv.getContext("2d");
+
+    // «Найти новых»: по очереди те, кто не в друзьях; сначала те, у кого ещё нет друзей
+    function nextNew() {
+      const list = people.filter((p) => p.o && (p.rel === "" || p.rel === "req")).sort((a, b) => ((a.fc || 0) > 0) - ((b.fc || 0) > 0));
+      if (!list.length) { const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.append(el("p", "gmuted", "Сейчас на глобусе нет новых людей. Загляните позже.")); return; }
+      newIdx = (newIdx + 1) % list.length; pick(list[newIdx]);
+    }
+
+    placePeople();
+    const me = people.find((p) => p.rel === "me" && p.o), start = me || { lat: 0.5, lon: books[39].lon };
+    yaw = -start.lon + 0.6; pitch = start.lat - 0.2; ty = -start.lon + 0.3; tp = start.lat - 0.3; zoom = tz = 1; vx = vy = 0; fly = false;
+    bindCanvas(); size();
+    if (window.ResizeObserver) { ro = new ResizeObserver(size); ro.observe(stage); } else window.addEventListener("resize", size);
+    document.addEventListener("keydown", esc);
+    stat(); card();
+    raf = requestAnimationFrame(frame);
+  }
+
+  function setPeople(list) {
+    if (!root) return;
+    const keep = sel && sel.id;
+    people = (list || []).slice(); placePeople();
+    sel = keep ? people.find((p) => p.id === keep) || null : null;
+    stat(); card();
+  }
+  function setVisible(v) { if (opts) { opts.visible = !!v; if (root && !sel && !selB) card(); } }
+
+  window.OgonekGlobe = { open, close, setPeople, setVisible, bookIndex, isOpen: () => !!root };
+})();

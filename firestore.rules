@@ -85,6 +85,24 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', []);
     }
 
+    // глобус читателей: имя, фото, книга, огонёк и серия. Видят все вошедшие (не больше 1000 за раз); пишет и удаляет только сам человек
+    match /globe/{uid} {
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.query.limit <= 1000;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'b', 'refs', 'plan', 'streak', 'lit', 'seen', 'fc'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.photo is string && request.resource.data.photo.size() <= 500
+        && request.resource.data.b is int && request.resource.data.b >= -1 && request.resource.data.b < 66
+        && request.resource.data.refs is list && request.resource.data.refs.size() <= 3
+        && request.resource.data.plan is string && request.resource.data.plan.size() <= 60
+        && request.resource.data.streak is int
+        && request.resource.data.lit is string && request.resource.data.lit.size() <= 10
+        && request.resource.data.seen is string && request.resource.data.seen.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.fc is int;
+    }
+
     // профиль: любой вошедший пользователь может посмотреть (чтобы решить, добавлять ли в друзья)
     match /profiles/{uid} {
       allow get: if request.auth != null;

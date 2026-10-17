@@ -67,13 +67,14 @@ async function main() {
   function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
-  let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null;
+  let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false;
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
   async function ensureProfile(user) {
     const snap = await F.getDoc(myRef);
     const data = snap.exists() ? snap.data() : null;
+    globeHide = !!(data && data.globeHide);
     myNick = (data && data.nick) || ""; myNameSet = !!(data && (data.nameSet || data.nick));
     if (data && data.code) { myCode = data.code; return; }
     for (let i = 0; i < 6; i++) {
@@ -115,6 +116,7 @@ async function main() {
       F.setDoc(myRef, Object.assign(s, { fof, name: myName(), photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
       F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
+      publishGlobe(s);
     }, 1200);
   }
 
@@ -659,6 +661,57 @@ async function main() {
   }
   $("friendsAll").addEventListener("click", () => openAll("friends"));
 
+  /* ---------- глобус читателей ---------- */
+  // globe/{uid}: имя, фото, книга, которую человек читает сейчас, огонёк и серия. Видят все вошедшие; можно скрыть себя.
+  function globeDoc(s) {
+    const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
+    let b = -1;
+    if (G) for (const k of keys) { if (fDone(s, k)) continue; const i = G.bookIndex(fRef(s, k)); if (i >= 0) { b = i; break; } }
+    return {
+      name: myName(), photo: (me && me.photoURL) || "", b,
+      refs: keys.slice(0, 3).map((k) => (fShort(s, k) + ": " + (fDone(s, k) ? "пройден" : fRef(s, k))).slice(0, 60)),
+      plan: String(s.planName || "").slice(0, 60), streak: s.streak || 0,
+      lit: fLit(s, t) ? t : "", seen: t, fc: myFriends.length
+    };
+  }
+  function publishGlobe(s) {
+    if (!me) return;
+    const ref = F.doc(db, "globe", me.uid);
+    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, globeDoc(s))).catch((e) => console.warn(e));
+  }
+  const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
+  function dayAgo(n) { const d = new Date(Date.now() - n * 864e5); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  async function openGlobe() {
+    const G = window.OgonekGlobe; if (!G || !me) return;
+    const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
+    G.open({
+      people: [mine], visible: !globeHide,
+      onAdd: async (id) => { const ok = await addFriendUid(id); if (!ok) return false; return myFollowers.includes(id) ? "friend" : "pending"; },
+      onProfile: (id) => openProfile(id === me.uid ? "me" : id),
+      onToggle: async () => {
+        globeHide = !globeHide;
+        try { await F.setDoc(myRef, { globeHide }, { merge: true }); publishGlobe(O().summary()); O().toast(globeHide ? "Вы скрыты с глобуса" : "Теперь вас видно на глобусе"); }
+        catch (e) { console.warn(e); globeHide = !globeHide; O().toast("Не удалось. Попробуйте позже."); }
+        return !globeHide;
+      }
+    });
+    try {
+      // только те, кто заходил за последнюю неделю
+      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.where("seen", ">=", dayAgo(7)), F.limit(1000)));
+      const list = [mine];
+      snap.forEach((d) => { if (d.id === me.uid) return; const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
+      G.setPeople(list);
+    } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
+  }
+  {
+    const gb = el("button", "globebtn"); gb.type = "button";
+    const txt = el("span"); txt.append(el("b", null, "Глобус читателей"), el("small", null, "Найдите тех, кто читает Библию вместе с вами"));
+    gb.append(el("span", "gbplanet"), txt);
+    gb.querySelector(".gbplanet").setAttribute("aria-hidden", "true");
+    gb.addEventListener("click", openGlobe);
+    const head = $("friendsCard").querySelector(".reading-head"); if (head) head.after(gb); else $("friendsCard").prepend(gb);
+  }
+
   function renderFriends() {
     if (!me) return;
     $("myCode").textContent = myCode || "…";
@@ -890,6 +943,7 @@ async function main() {
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
     if (!user) {
       closeUserMenu(); closeAll(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
+      if (window.OgonekGlobe) window.OgonekGlobe.close();
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true;
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
@@ -936,6 +990,7 @@ async function main() {
         myProfile = snap.exists() ? snap.data() : {};
         myFollowers = myProfile.followers || []; myDeclined = myProfile.declined || [];
         if ((myProfile.nick || "") !== myNick) { myNick = myProfile.nick || ""; setTopName(); }
+        if (!!myProfile.globeHide !== globeHide) { globeHide = !!myProfile.globeHide; if (window.OgonekGlobe) window.OgonekGlobe.setVisible(!globeHide); }
         // новая заявка — короткое уведомление
         const pend = pendingRequests();
         if (knownReq) pend.filter((u) => !knownReq.has(u)).forEach((u) => cardOf(u).then((c) => O().toast((c.name || "Читатель") + " хочет стать вашим другом")));
