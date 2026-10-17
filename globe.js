@@ -175,7 +175,7 @@
       let v = q.v;
       if (k * 2 >= n) { const j = Math.floor(k * 2 / n), a = k * 2.4; v = nrm([v[0] + Math.cos(a) * 0.012 * j, v[1] + Math.sin(a) * 0.012 * j, v[2] + Math.sin(a + 1) * 0.012 * j]); }
       p.v = v; p.lat = Math.asin(v[1]); p.lon = Math.atan2(v[0], v[2]); p.ph = i * 1.3; p.col = COL[i % 7];
-      p.fire = p.lit === t0;
+      p.fire = p.spotLit !== undefined ? p.spotLit : p.lit === t0;
     });
   }
 
@@ -359,12 +359,13 @@
   async function addFriend(p, b) {
     if (!opts || !opts.onAdd) return; b.disabled = true;
     const r = await opts.onAdd(p.id).catch(() => false);
-    if (r) p.rel = r; card();
+    if (r) people.forEach((q) => { if (q.id === p.id) q.rel = r; }); card();
   }
 
   function stat() {
-    const s = root.querySelector(".gstat"), on = people.filter((p) => p.o), f = on.filter((p) => p.fire).length;
-    s.textContent = "В Огоньке: " + on.length + " · горят сегодня: " + f;
+    const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set();
+    people.forEach((p) => { if (!p.o) return; ids.add(p.id); if (p.fire) lit.add(p.id); });
+    s.textContent = "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
   }
 
   /* ---------- открыть / закрыть ---------- */
@@ -377,7 +378,7 @@
 
   function open(o) {
     addCss(); build(); close();
-    opts = o || {}; people = (opts.people || []).slice(); filt = "all"; newIdx = -1;
+    opts = o || {}; people = expand(opts.people); filt = "all"; newIdx = -1;
     root = el("div", "gmodal"); root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "Глобус читателей");
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
     const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
@@ -408,7 +409,7 @@
 
     // «Найти новых»: по очереди те, кто не в друзьях; сначала те, у кого ещё нет друзей
     function nextNew() {
-      const list = people.filter((p) => p.o && (p.rel === "" || p.rel === "req")).sort((a, b) => ((a.fc || 0) > 0) - ((b.fc || 0) > 0));
+      const list = people.filter((p) => p.o && !p.twin && (p.rel === "" || p.rel === "req")).sort((a, b) => ((a.fc || 0) > 0) - ((b.fc || 0) > 0));
       if (!list.length) { const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.hidden = false; cd.append(el("p", "gmuted", "Сейчас на глобусе нет новых людей. Загляните позже.")); return; }
       newIdx = (newIdx + 1) % list.length; pick(list[newIdx]);
     }
@@ -423,10 +424,20 @@
     raf = requestAnimationFrame(frame);
   }
 
+  // человек, читающий оба завета, стоит на обеих книгах — на каждой свой огонёк
+  function expand(list) {
+    const out = [];
+    (list || []).forEach((p) => {
+      const sp = Array.isArray(p.spots) && p.spots.length ? p.spots.filter((x) => x && typeof x.b === "number" && x.b >= 0 && x.b < 66) : null;
+      if (!sp || !sp.length) { out.push(p); return; }
+      sp.forEach((x, i) => out.push(Object.assign({}, p, { b: x.b, spotLit: !!x.l, twin: i > 0 })));
+    });
+    return out;
+  }
   function setPeople(list) {
     if (!root) return;
     const keep = sel && sel.id;
-    people = (list || []).slice(); placePeople();
+    people = expand(list); placePeople();
     sel = keep ? people.find((p) => p.id === keep) || null : null;
     stat(); card();
   }

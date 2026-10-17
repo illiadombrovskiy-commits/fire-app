@@ -1415,7 +1415,7 @@ function buildSched(def){
   n=Math.max(1,Math.min(3000,n));
   if(d.mode!=="t31")n=Math.max(n,d.mode==="par"?Math.max(otB.length,ntB.length):allB.length);
   let plan, keys, labels={nt:"Новый Завет",ot:"Ветхий Завет"}, short={nt:"НЗ",ot:"ВЗ"};
-  if(d.mode==="t31"){
+  if(d.mode==="t31"&&otB.length&&ntB.length){
     const ot=[];otB.forEach(b=>{for(let c=0;c<b.v.length;c+=3){const z=Math.min(b.v.length,c+3);ot.push([b.a,z-c>1?(c+1)+"–"+z:String(c+1)])}});
     const ntc=[];ntB.forEach(b=>b.v.forEach((x,c)=>ntc.push([b.a,String(c+1)])));
     plan=ot.map((o,i)=>{const x=ntc[i%ntc.length];return [x[0],x[1],o[0],o[1]]});keys=["nt","ot"];
@@ -1511,7 +1511,10 @@ function save(){
 }
 
 const datesOf=k=>new Set(state[k].log.map(x=>x.d));
-function bothSet(){const sets=KEYS.map(datesOf);return new Set([...sets[0]].filter(d=>sets.every(x=>x.has(d))))}
+// завет «участвует» в дне, если в расписании на этот день есть его отрывок (в своём расписании может быть только один завет)
+function keyHasPart(k,d){const i=planIdx(d);return i<0||!!part(k,Math.max(0,Math.min(i,DAYS-1))).book}
+function activeKeys(){const t=today();return KEYS.filter(k=>datesOf(k).has(t)||keyHasPart(k,t))}
+function bothSet(){const sets=KEYS.map(datesOf),all=new Set(sets.flatMap(x=>[...x]));return new Set([...all].filter(d=>KEYS.every((k,i)=>sets[i].has(d)||!keyHasPart(k,d))))}
 function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));
   if(WD){let d=PLAN_START<today()?PLAN_START:today();const t=today();while(d<=t){if(isOffDay(d))s.add(d);d=add(d,1)}} // выходные дни расписания не прерывают серию
   return s}
@@ -1601,9 +1604,10 @@ function render(){
   try{noteFinished()}catch(e){console.warn(e)}
   const t=today(), st=streak(), both=bothSet().has(t), lv=level(state.xp);
   $("streak").textContent=st; $("streakWord").textContent=plural(st,"день подряд","дня подряд","дней подряд");
-  const nDone=KEYS.filter(k=>datesOf(k).has(t)).length;
-  // 0 заветов — огонёк погас; 1 — внутри загорается маленький огонёк; 2 — горит полностью
-  $("heroFlame").classList.toggle("off",nDone===0);$("heroFlame").classList.toggle("half",nDone>0&&nDone<KEYS.length);
+  const AK=activeKeys(), nDone=AK.filter(k=>datesOf(k).has(t)).length;
+  // 0 заветов — огонёк погас; часть — внутри загорается маленький огонёк; все отрывки дня — горит полностью.
+  // Если в расписании один завет, огонёк сразу горит полностью.
+  $("heroFlame").classList.toggle("off",nDone===0);$("heroFlame").classList.toggle("half",nDone>0&&nDone<AK.length);
   $("heroSub").textContent="";
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
@@ -3936,10 +3940,21 @@ function repairInfo(){
   const gap=[];while(!s.has(cur)&&gap.length<4&&cur>=PLAN_START){gap.push(cur);cur=add(cur,-1)}
   if(!gap.length||gap.length>3||!s.has(cur))return null;
   let before=0,c2=cur;while(s.has(c2)){before++;c2=add(c2,-1)}
-  if(before<2)return null;
-  const last=(state.repairs||[]).slice(-1)[0];if(last&&dayNo(t)-dayNo(last)<30)return null;
+  const auto=gap.length===1&&gap[0]===add(t,-1); // пропущен только вчерашний день — вернётся сама, без ограничений
+  if(!auto){if(before<2)return null;const last=(state.repairs||[]).slice(-1)[0];if(last&&dayNo(t)-dayNo(last)<30)return null}
   const ok=gap.every(d=>{const i=planIdx(d);return i>=0&&KEYS.every(k=>readSet(k).has(Math.min(i,DAYS-1)))});
-  return {gap:gap.reverse(),before,ok};
+  return {gap:gap.reverse(),before,ok,auto};
+}
+/* 3) Пропустили вчера — серия возвращается сама, как только вчерашний отрывок прочитан (через «Догнать»).
+   Без кнопки и без ограничения «раз в 30 дней». «Отпущенный» отрывок не считается прочитанным. */
+function autoRepair(){
+  const s=withFrozen(anySet()),t=today(),y=add(t,-1),y2=add(t,-2);
+  if(s.has(y)||!s.has(y2)||y<PLAN_START)return false;
+  const i=planIdx(y);if(i<0)return false;const p=Math.min(i,DAYS-1);
+  if(!KEYS.every(k=>!part(k,p).book||readSet(k).has(p)))return false;
+  state.frzDays=[...new Set(state.frzDays.concat([y]))].sort();state.best=Math.max(state.best||0,streak());save();
+  setTimeout(()=>{try{ignite($("heroFlame"),2)}catch(e){}toast("Серия восстановлена: "+streak()+" "+plural(streak(),"день","дня","дней")+" подряд!")},400);
+  return true;
 }
 function renderRepair(){
   let box=$("streakRepair");const hero=$("heroFlame")&&$("heroFlame").closest(".card");if(!hero)return;
@@ -3947,14 +3962,14 @@ function renderRepair(){
   const r=repairInfo();box.hidden=!r;if(!r)return;box.textContent="";
   const fmt=d=>parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
   const days=r.gap.length===1?fmt(r.gap[0]):fmt(r.gap[0])+" – "+fmt(r.gap[r.gap.length-1]);
-  const tx=el("div","srtx");tx.append(el("b",null,"Серия прервалась: "+days),el("span",null,r.ok?"Отрывки этих дней уже прочитаны — можно вернуть серию ("+(r.before+r.gap.length+(withFrozen(anySet()).has(today())?1:0))+" "+plural(r.before+r.gap.length,"день","дня","дней")+"). Раз в 30 дней.":"Прочитайте отрывки пропущенных дней («Догнать» на главной) — и серию можно будет вернуть. Раз в 30 дней."));
+  const tx=el("div","srtx");tx.append(el("b",null,r.auto?"Вчера пропущено":"Серия прервалась: "+days),el("span",null,r.auto?"Прочитайте вчерашний отрывок («Догнать» на главной) — и серия вернётся сама.":r.ok?"Отрывки этих дней уже прочитаны — можно вернуть серию ("+(r.before+r.gap.length+(withFrozen(anySet()).has(today())?1:0))+" "+plural(r.before+r.gap.length,"день","дня","дней")+"). Раз в 30 дней.":"Прочитайте отрывки пропущенных дней («Догнать» на главной) — и серию можно будет вернуть. Раз в 30 дней."));
   box.append(tx);
-  if(r.ok){const b=el("button","srbtn","🔥 Вернуть серию");b.type="button";b.addEventListener("click",()=>{
+  if(r.ok&&!r.auto){const b=el("button","srbtn","🔥 Вернуть серию");b.type="button";b.addEventListener("click",()=>{
     state.frzDays=[...new Set(state.frzDays.concat(r.gap))].sort();state.repairs=(state.repairs||[]).concat([today()]).slice(-10);
     state.best=Math.max(state.best||0,streak());save();render();ignite($("heroFlame"),2);toast("Серия возвращена: "+streak()+" "+plural(streak(),"день","дня","дней")+" подряд!")});box.append(b)}
 }
 
-render=(f=>function(){const res=f.apply(this,arguments);try{renderRepair()}catch(e){console.warn(e)}try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
+render=(f=>function(){if(!render.busy){render.busy=true;try{if(autoRepair()){render.busy=false;return render.apply(this,arguments)}}catch(e){console.warn(e)}render.busy=false}const res=f.apply(this,arguments);try{renderRepair()}catch(e){console.warn(e)}try{confRenderCard()}catch(e){console.warn(e)}try{applyPage()}catch(e){}return res})(render);
 try{confRenderCard()}catch(e){console.warn(e)}
 try{applyAppMode()}catch(e){console.warn(e)}
 try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=$('pathBox');if(pb&&!pb.dataset.touched&&!pb.dataset.ctouched)pathCenterMe(false)},300))}catch(e){}
@@ -3982,11 +3997,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610171650"></script>
-<script type="module" src="auth.js?v=202610171555"></script>
+<script src="globe.js?v=202610172030"></script>
+<script type="module" src="auth.js?v=202610172030"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261017165000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261017203000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

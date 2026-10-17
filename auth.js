@@ -673,7 +673,9 @@ async function main() {
       name: String(name || "Читатель").slice(0, 60), photo: photo || "", b,
       refs: keys.slice(0, 3).map((k) => (fShort(s, k) + ": " + (fDone(s, k) ? "пройден" : fRef(s, k))).slice(0, 60)),
       plan: String(s.planName || "").slice(0, 60), streak: s.streak || 0,
-      lit: fLit(s, t) ? t : "", seen: t, fc: fc || 0
+      lit: fLit(s, t) ? t : "", seen: t, fc: fc || 0,
+      // по огоньку на каждой книге, которую человек читает сейчас (НЗ и ВЗ): горит, если этот отрывок прочитан сегодня
+      spots: G ? keys.filter((k) => !fDone(s, k)).map((k) => ({ b: G.bookIndex(fRef(s, k)), l: s[k + "Last"] === t })).filter((x) => x.b >= 0).slice(0, 3) : []
     };
   }
   function publishGlobe(s) {
@@ -700,7 +702,7 @@ async function main() {
       // все, у кого есть запись на глобусе
       const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
       const list = [mine], have = new Set([me.uid]);
-      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
+      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
       // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
       Object.keys(friendData).forEach((u) => {
         const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
