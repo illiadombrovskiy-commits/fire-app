@@ -3906,7 +3906,7 @@ function applyPage(){
   document.body.dataset.page=curPage;
   const ph=$("pageHead");const it=list.find(x=>x[0]===curPage);ph.hidden=true;const h1=document.querySelector(".app>.top .brand h1");if(h1)h1.textContent=curPage==="home"?"Огонёк":it[2];
   // друзья: если вход не выполнен — подсказка вместо пустоты
-  const fe=$("friendsEmpty");if(fe){const has=!$("friendsCard").hidden;fe.hidden=has;const login=$("loginTop"),can=login&&!login.hidden;
+  const fe=$("friendsEmpty");if(fe){let was=false;try{was=!!localStorage.getItem("ogonek-owner")}catch(e){}const has=!$("friendsCard").hidden||was;fe.hidden=has;const login=$("loginTop"),can=login&&!login.hidden;
     fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на тропинке и воодушевлять друг друга.":"Друзья доступны на сайте Огонька после входа через Google."}
   try{renderConfFriendsCard()}catch(e){console.warn(e)}
   const nav=$("botNav");if(!nav)return;nav.textContent="";
@@ -3982,11 +3982,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610171545"></script>
-<script type="module" src="auth.js?v=202610171545"></script>
+<script src="globe.js?v=202610171610"></script>
+<script type="module" src="auth.js?v=202610171555"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261017154500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261017161000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

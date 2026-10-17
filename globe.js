@@ -105,6 +105,7 @@
 .gbplanet::before{content:"";position:absolute;left:7px;top:9px;width:13px;height:10px;border-radius:50% 40% 55% 45%;background:#cdb174}
 .gbplanet::after{content:"";position:absolute;right:6px;bottom:8px;width:12px;height:12px;border-radius:45% 55% 40% 60%;background:#5db078}
 .gmodal{position:fixed;inset:0;z-index:34;display:flex;flex-direction:column;background:#05071a;color:#eef0fa;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px));gap:8px}
+.gmodal,.gmodal *{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .gmodal .gtop{display:flex;align-items:center;gap:10px}
 .gmodal .gtop h2{margin:0;font-size:1.15rem;flex:1}
 .gmodal .gx{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#eef0fa;font-size:1.1rem;cursor:pointer}
@@ -142,7 +143,7 @@
   const STK = {
     globe: '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="#2f6fd6"/><path fill="#5db078" d="M17 15c6-4 14-3 16 2 2 5-3 7-2 11 1 5 8 5 7 11-1 5-7 6-9 12-2-7-8-8-10-14-2-5 3-8 1-12-1-3-5-4-3-10z"/><path fill="#cdb174" d="M44 11c6 3 11 9 13 16-4 1-7-2-10-2s-5 3-8 1c-2-2 0-5-1-8 0-3 3-5 6-7z"/><path fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".4" d="M14 26a19 19 0 0 1 10-12"/></svg>',
     flame: '<svg viewBox="0 0 64 80"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
-    flameOff: '<svg viewBox="0 0 64 80"><path fill="#4b5378" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#7a83ad" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
+    flameOff: '<svg viewBox="0 0 64 80"><path fill="#6b7cb0" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#9fb0e0" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
     add: '<svg viewBox="0 0 64 64"><circle cx="25" cy="21" r="11" fill="#8a72f0"/><path fill="#8a72f0" d="M5 56c0-12 9-21 20-21s20 9 20 21z"/><path fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".35" d="M20 17a6 6 0 0 1 8-3"/><circle cx="48" cy="45" r="13" fill="#2fb36b"/><path stroke="#fff" stroke-width="5" stroke-linecap="round" d="M48 38v14M41 45h14"/></svg>',
     pin: '<svg viewBox="0 0 64 64"><path fill="#ff5b3b" d="M32 4a20 20 0 0 1 20 20c0 15-20 36-20 36S12 39 12 24A20 20 0 0 1 32 4z"/><path fill="#b8321c" opacity=".35" d="M32 60S12 39 12 24A20 20 0 0 1 22 7c-3 5-4 11-2 18 3 12 12 35 12 35z"/><circle cx="32" cy="24" r="8" fill="#5b6280"/></svg>'
   };
@@ -189,6 +190,12 @@
     const pr = vs.map(rot); ctx.beginPath();
     for (let i = 0; i < pr.length; i++) { const a = pr[i], b = pr[(i + 1) % pr.length]; if (a[2] > 0 && b[2] > 0) { ctx.moveTo(cx + a[0] * R, cy - a[1] * R); ctx.lineTo(cx + b[0] * R, cy - b[1] * R); } }
     ctx.stroke();
+  }
+  // «спящий» огонёк: человек сегодня ещё не читал — синий, неподвижный, чуть «дышит»
+  function sleepFlame(x, y, s, f) {
+    const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = "#6b7cb0"; ctx.beginPath(); ctx.moveTo(0, -h); ctx.bezierCurveTo(w * 0.9, -h * 0.45, w * 1.1, -h * 0.05, 0, 2 * s); ctx.bezierCurveTo(-w * 1.1, -h * 0.05, -w * 0.9, -h * 0.45, 0, -h); ctx.fill();
+    ctx.fillStyle = "#9fb0e0"; ctx.beginPath(); ctx.ellipse(0, -h * 0.2, w * 0.4, h * 0.24, 0, 0, TAU); ctx.fill(); ctx.restore();
   }
   function flame(x, y, s, f) {
     const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
@@ -262,12 +269,16 @@
       const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, o.sy + fs + 2); ctx.fillStyle = "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, o.sy + fs + 2);
     });
     // люди
-    people.filter((p) => p.z > 0.05).sort((a, b) => a.z - b.z).forEach((p) => {
+    // где люди стоят плотно — без кружков (только огонь или точка); кружки возвращаются при приближении
+    const vis = people.filter((p) => p.z > 0.05), bins = new Map(), BS = 26, key = (x, y) => x + "," + y;
+    vis.forEach((p) => { const k = key(Math.floor(p.sx / BS), Math.floor(p.sy / BS)); bins.set(k, (bins.get(k) || 0) + 1); });
+    vis.forEach((p) => { const bx = Math.floor(p.sx / BS), by = Math.floor(p.sy / BS); let n = 0; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) n += bins.get(key(bx + i, by + j)) || 0; p.crowd = n > 3; });
+    vis.sort((a, b) => a.z - b.z).forEach((p) => {
       const s = (0.6 + 0.4 * p.z) * Math.min(1.5, 0.8 + 0.25 * zoom);
       ctx.globalAlpha = (match(p) ? 1 : 0.22) * Math.min(1, p.z * 3);
-      if (p.rel && p.rel !== "req") { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+      if (p.rel && p.rel !== "req" && (!p.crowd || p.rel === "me")) { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
       if (p.fire) flame(p.sx + Math.sin(t * 5 + p.ph) * 0.6, p.sy, s, 1 + 0.13 * Math.sin(t * 11 + p.ph));
-      else { ctx.fillStyle = "#3b405e"; ctx.strokeStyle = "#8a90b8"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(p.sx, p.sy - 3 * s, 3.6 * s, 0, TAU); ctx.fill(); ctx.stroke(); }
+      else sleepFlame(p.sx, p.sy, s * 0.9, 1 + 0.04 * Math.sin(t * 1.6 + p.ph));
       if (p === sel) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 14 * s + 3 * Math.sin(t * 4), 0, TAU); ctx.stroke(); }
       ctx.globalAlpha = 1;
     });
@@ -384,6 +395,11 @@
     root.append(topb, chips, stage, el("div", "gcard"));
     document.body.append(root);
     ctx = cv.getContext("2d");
+    // без увеличения страницы двойным нажатием (iPhone) и щипком
+    let lastTouch = 0;
+    root.addEventListener("touchend", (e) => { const n = Date.now(); if (n - lastTouch < 350) { e.preventDefault(); const b = e.target.closest && e.target.closest("button"); if (b && !b.disabled) b.click(); } lastTouch = n; }, { passive: false });
+    root.addEventListener("dblclick", (e) => e.preventDefault());
+    root.addEventListener("gesturestart", (e) => e.preventDefault());
 
     // «Найти новых»: по очереди те, кто не в друзьях; сначала те, у кого ещё нет друзей
     function nextNew() {

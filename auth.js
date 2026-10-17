@@ -952,6 +952,7 @@ async function main() {
       if (window.OgonekGlobe) window.OgonekGlobe.close();
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true;
+      { const fe = $("friendsEmpty"); if (fe) fe.hidden = false; }
       if (lsGet(OWNER_KEY)) { lsSet(OWNER_KEY, null); O().setState(O().fresh()); }
       top.textContent = "Войти"; top.classList.remove("user"); topAction = () => { lsSet(SKIP_KEY, null); $("auth").hidden = false; };
       if (lsGet(SKIP_KEY)) { $("auth").hidden = true; showLoginLink(); }
@@ -990,6 +991,7 @@ async function main() {
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
+      { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
       myUnsub = F.onSnapshot(myRef, (snap) => {
