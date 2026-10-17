@@ -116,7 +116,10 @@
 .gmodal .gres{display:flex;flex-wrap:wrap;gap:6px}.gmodal .gres:empty{display:none}
 .gmodal .gchips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gmodal .gchips::-webkit-scrollbar{display:none}
 .gmodal .gchip{flex:none;white-space:nowrap;font:inherit;font-size:.84rem;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#c9cff0;cursor:pointer}
-.gmodal .gchip.on{background:#ff8a1f;border-color:#ff8a1f;color:#1c0d00}
+.gmodal .gchip{display:inline-flex;align-items:center;gap:6px}
+.gmodal .gchip.on{background:rgba(255,138,31,.2);border-color:#ff8a1f;color:#ffe2c4}
+.gstk{display:inline-grid;place-items:center;flex:none}.gstk svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
+.gmodal .gfl .gstk{margin:0 auto 2px}.gmodal .gppl .gbtn{display:inline-flex;align-items:center;gap:6px}
 .gmodal .gstage{position:relative;flex:1;min-height:220px;border-radius:16px;overflow:hidden}
 .gmodal canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .gmodal .gzoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
@@ -133,9 +136,17 @@
 .gmodal .gfl{margin-left:auto;text-align:center;font-weight:700;color:#7e86b8}.gmodal .gfl.on{color:#ffb020}
 .gmodal .gacts{display:flex;gap:8px;margin-top:10px}.gmodal .gacts .gbtn{flex:1}
 .gmodal .gppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.gmodal .gvis{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
-.gmodal .gvis p{flex:1}`;
+.gmodal .gcard[hidden]{display:none}`;
   function addCss() { if (document.getElementById("globeCss")) return; const s = document.createElement("style"); s.id = "globeCss"; s.textContent = CSS; document.head.append(s); }
+  // стикеры в стиле приложения (как значки нижних вкладок)
+  const STK = {
+    globe: '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="#2f6fd6"/><path fill="#5db078" d="M17 15c6-4 14-3 16 2 2 5-3 7-2 11 1 5 8 5 7 11-1 5-7 6-9 12-2-7-8-8-10-14-2-5 3-8 1-12-1-3-5-4-3-10z"/><path fill="#cdb174" d="M44 11c6 3 11 9 13 16-4 1-7-2-10-2s-5 3-8 1c-2-2 0-5-1-8 0-3 3-5 6-7z"/><path fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".4" d="M14 26a19 19 0 0 1 10-12"/></svg>',
+    flame: '<svg viewBox="0 0 64 80"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
+    flameOff: '<svg viewBox="0 0 64 80"><path fill="#4b5378" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#7a83ad" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
+    add: '<svg viewBox="0 0 64 64"><circle cx="25" cy="21" r="11" fill="#8a72f0"/><path fill="#8a72f0" d="M5 56c0-12 9-21 20-21s20 9 20 21z"/><path fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".35" d="M20 17a6 6 0 0 1 8-3"/><circle cx="48" cy="45" r="13" fill="#2fb36b"/><path stroke="#fff" stroke-width="5" stroke-linecap="round" d="M48 38v14M41 45h14"/></svg>',
+    pin: '<svg viewBox="0 0 64 64"><path fill="#ff5b3b" d="M32 4a20 20 0 0 1 20 20c0 15-20 36-20 36S12 39 12 24A20 20 0 0 1 32 4z"/><path fill="#b8321c" opacity=".35" d="M32 60S12 39 12 24A20 20 0 0 1 22 7c-3 5-4 11-2 18 3 12 12 35 12 35z"/><circle cx="32" cy="24" r="8" fill="#5b6280"/></svg>'
+  };
+  function stkEl(k, size) { const s = document.createElement("span"); s.className = "gstk"; s.setAttribute("aria-hidden", "true"); s.style.width = s.style.height = size + "px"; s.innerHTML = STK[k] || ""; return s; }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function btn(text, cls) { const b = el("button", "gbtn" + (cls ? " " + cls : ""), text); b.type = "button"; return b; }
 
@@ -291,13 +302,13 @@
     return a;
   }
   function card() {
-    const cd = root.querySelector(".gcard"); cd.textContent = "";
+    const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.hidden = false;
     if (sel) {
       const p = sel, row = el("div", "gperson"), mid = el("div"); mid.style.minWidth = "0";
       mid.append(el("div", "gname", p.rel === "me" ? (p.name || "Вы") + " (вы)" : (p.name || "Читатель")));
       (p.refs || []).forEach((r) => mid.append(el("div", "gline", r)));
       if (p.plan) mid.append(el("div", "gline", p.plan));
-      const fl = el("div", "gfl" + (p.fire ? " on" : "")); fl.append(el("div", null, "🔥"), el("div", null, String(p.streak || 0)));
+      const fl = el("div", "gfl" + (p.fire ? " on" : "")); fl.append(stkEl(p.fire ? "flame" : "flameOff", 26), el("div", null, String(p.streak || 0)));
       fl.title = p.fire ? "Сегодня уже прочитал(а)" : "Сегодня ещё не читал(а)";
       row.append(avatar(p), mid, fl); cd.append(row);
       const acts = el("div", "gacts");
@@ -306,7 +317,15 @@
       else if (p.rel === "pending") acts.append(Object.assign(btn("Заявка отправлена"), { disabled: true }));
       else if (p.rel === "friend") acts.append(Object.assign(btn("✓ Вы друзья"), { disabled: true }));
       const pr = btn(p.rel === "me" ? "Мой профиль" : "Профиль"); pr.addEventListener("click", () => opts && opts.onProfile && opts.onProfile(p.id)); acts.append(pr);
-      cd.append(acts); return;
+      cd.append(acts);
+      // скрыть себя с глобуса — в своей карточке («Я»)
+      if (p.rel === "me" && opts && opts.onToggle) {
+        const on = !!opts.visible, tb = btn(on ? "Скрыть меня с глобуса" : "Показать меня на глобусе");
+        tb.style.width = "100%"; tb.style.marginTop = "8px";
+        tb.addEventListener("click", async () => { tb.disabled = true; try { opts.visible = await opts.onToggle(); } finally { card(); } });
+        cd.append(tb);
+      }
+      return;
     }
     if (selB) {
       const o = selB, i = o.i + 1;
@@ -314,16 +333,11 @@
       cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase() + (i > 1 ? " · до неё " + BOOKS[i - 2][1] : "") + (i < 66 ? " · после " + BOOKS[i][1] : "")));
       const box = el("div", "gppl");
       if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
-      o.people.slice(0, 40).forEach((p) => { const b = btn((p.fire ? "🔥 " : "· ") + (p.name || "Читатель")); b.addEventListener("click", () => pick(p)); box.append(b); });
+      o.people.slice(0, 40).forEach((p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
       if (o.people.length > 40) box.append(el("span", "gmuted", "и ещё " + (o.people.length - 40)));
       cd.append(box); return;
     }
-    cd.append(el("p", "gmuted", "Нажмите на огонёк или на страну-книгу, чтобы увидеть, кто там читает."));
-    const vis = el("div", "gvis"), on = !!(opts && opts.visible);
-    vis.append(el("p", "gmuted", on ? "Вас видно на глобусе другим читателям." : "Вы скрыты: другие читатели вас не видят."));
-    const tb = btn(on ? "Скрыть меня" : "Показать меня");
-    tb.addEventListener("click", async () => { if (!opts || !opts.onToggle) return; tb.disabled = true; try { opts.visible = await opts.onToggle(); } finally { card(); } });
-    vis.append(tb); cd.append(vis);
+    cd.hidden = true; // пока ничего не выбрано — внизу пусто
   }
   const chWord = (n) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "глава" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "главы" : "глав"; };
   async function addFriend(p, b) {
@@ -352,8 +366,8 @@
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
     const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
     const chips = el("div", "gchips");
-    [["all", "Все"], ["fire", "🔥 Горят"], ["new", "👋 Новые"], ["me", "📍 Я"]].forEach(([f, txt]) => {
-      const c = el("button", "gchip" + (f === "all" ? " on" : ""), txt); c.type = "button";
+    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["new", "Новые", "add"], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
+      const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(stkEl(ic, 20), el("span", null, txt));
       if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
       c.addEventListener("click", () => {
         if (f === "me") { const m = people.find((p) => p.rel === "me"); if (m) pick(m); return; }
@@ -374,7 +388,7 @@
     // «Найти новых»: по очереди те, кто не в друзьях; сначала те, у кого ещё нет друзей
     function nextNew() {
       const list = people.filter((p) => p.o && (p.rel === "" || p.rel === "req")).sort((a, b) => ((a.fc || 0) > 0) - ((b.fc || 0) > 0));
-      if (!list.length) { const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.append(el("p", "gmuted", "Сейчас на глобусе нет новых людей. Загляните позже.")); return; }
+      if (!list.length) { const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.hidden = false; cd.append(el("p", "gmuted", "Сейчас на глобусе нет новых людей. Загляните позже.")); return; }
       newIdx = (newIdx + 1) % list.length; pick(list[newIdx]);
     }
 
@@ -395,7 +409,10 @@
     sel = keep ? people.find((p) => p.id === keep) || null : null;
     stat(); card();
   }
-  function setVisible(v) { if (opts) { opts.visible = !!v; if (root && !sel && !selB) card(); } }
+  function setVisible(v) { if (opts) { opts.visible = !!v; if (root && sel && sel.rel === "me") card(); } }
+
+  // стили кнопки на вкладке «Друзья» нужны сразу, а не только после первого открытия глобуса
+  if (document.head) addCss(); else document.addEventListener("DOMContentLoaded", addCss);
 
   window.OgonekGlobe = { open, close, setPeople, setVisible, bookIndex, isOpen: () => !!root };
 })();
