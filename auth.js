@@ -663,15 +663,17 @@ async function main() {
 
   /* ---------- глобус читателей ---------- */
   // globe/{uid}: имя, фото, книга, которую человек читает сейчас, огонёк и серия. Видят все вошедшие; можно скрыть себя.
-  function globeDoc(s) {
+  function globeDoc(s) { return globeFrom(s, myName(), (me && me.photoURL) || "", myFriends.length); }
+  // запись для глобуса из сводки (своей или друга из его профиля)
+  function globeFrom(s, name, photo, fc) {
     const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
     let b = -1;
     if (G) for (const k of keys) { if (fDone(s, k)) continue; const i = G.bookIndex(fRef(s, k)); if (i >= 0) { b = i; break; } }
     return {
-      name: myName(), photo: (me && me.photoURL) || "", b,
+      name: String(name || "Читатель").slice(0, 60), photo: photo || "", b,
       refs: keys.slice(0, 3).map((k) => (fShort(s, k) + ": " + (fDone(s, k) ? "пройден" : fRef(s, k))).slice(0, 60)),
       plan: String(s.planName || "").slice(0, 60), streak: s.streak || 0,
-      lit: fLit(s, t) ? t : "", seen: t, fc: myFriends.length
+      lit: fLit(s, t) ? t : "", seen: t, fc: fc || 0
     };
   }
   function publishGlobe(s) {
@@ -680,7 +682,6 @@ async function main() {
     (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, globeDoc(s))).catch((e) => console.warn(e));
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
-  function dayAgo(n) { const d = new Date(Date.now() - n * 864e5); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   async function openGlobe() {
     const G = window.OgonekGlobe; if (!G || !me) return;
     const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
@@ -696,10 +697,15 @@ async function main() {
       }
     });
     try {
-      // только те, кто заходил за последнюю неделю
-      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.where("seen", ">=", dayAgo(7)), F.limit(1000)));
-      const list = [mine];
-      snap.forEach((d) => { if (d.id === me.uid) return; const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
+      // все, у кого есть запись на глобусе
+      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
+      const list = [mine], have = new Set([me.uid]);
+      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
+      // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
+      Object.keys(friendData).forEach((u) => {
+        const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
+        try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
+      });
       G.setPeople(list);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
   }

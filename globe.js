@@ -330,7 +330,7 @@
     if (selB) {
       const o = selB, i = o.i + 1;
       cd.append(el("div", "gname", i + ". " + o.name));
-      cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase() + (i > 1 ? " · до неё " + BOOKS[i - 2][1] : "") + (i < 66 ? " · после " + BOOKS[i][1] : "")));
+      cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase()));
       const box = el("div", "gppl");
       if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
       o.people.slice(0, 40).forEach((p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
