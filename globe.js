@@ -423,7 +423,7 @@
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
     const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
     const chips = el("div", "gchips");
-    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["new", "Новые", "add"], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
+    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
       const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(stkEl(ic, 20), el("span", null, txt));
       if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
       c.addEventListener("click", () => {
