@@ -25,7 +25,7 @@
     { n: "Северная Америка", sec: "Пятикнижие и исторические книги", nt: false, a: 0, b: 17, p: [NA, GR] },
     { n: "Южная Америка", sec: "Поэтические книги и большие пророки", nt: false, a: 17, b: 27, p: [SA] },
     { n: "Африка", sec: "Малые пророки", nt: false, a: 27, b: 39, p: [AF, MG] },
-    { n: "Европа", sec: "Евангелия и Деяния", nt: true, a: 39, b: 44, p: [EU, UK] },
+    { n: "Европа", sec: "Евангелия и Деяния", nt: true, a: 39, b: 44, p: [EU] },
     { n: "Азия", sec: "Послания Павла", nt: true, a: 44, b: 58, p: [AS, JP] },
     { n: "Австралия", sec: "Общие послания и Откровение", nt: true, a: 58, b: 66, p: [AU, NG] }
   ];
@@ -46,7 +46,7 @@
   const OTS = ["#cdb174", "#b39554", "#dcc792"], NTS = ["#5db078", "#43945e", "#7cc692"];
 
   /* ---------- карта: строится один раз ---------- */
-  let books = null, ANT = null, ICE = null;
+  let books = null, ANT = null, ICE = null, ISL_VS = null;
   function build() {
     if (books) return;
     books = [];
@@ -88,9 +88,12 @@
     });
     books.sort((a, b) => a.i - b.i);
     ANT = []; for (let lo = -180; lo < 180; lo += 3) ANT.push(vec(-70 + 3 * Math.sin(lo * 3 * D) + 2 * Math.sin(lo * 7 * D), lo));
-    // Антарктида: здесь стоят те, кто ещё не выбрал расписание (без книг, огонёк спит)
-    ICE = { i: -1, name: "Антарктида", cells: [], people: [] };
-    for (let la = -76; la >= -84; la -= 4) for (let lo = -180; lo < 180; lo += 15) ICE.cells.push({ v: vec(la, lo + (la % 8 ? 7 : 0)) });
+    // «Остров выбора» (остров у Европы): здесь стоят те, кто ещё не выбрал расписание (без книги, огонёк спит)
+    const up = smooth(UK.map((x) => x.slice()), 2); ISL_VS = [dens(up)];
+    ICE = { i: -1, name: "Остров выбора", isle: true, cells: [], people: [] };
+    for (let la = 50.4; la <= 58.4; la += 0.45) for (let lo = -6.5; lo <= 2.5; lo += 0.6) if (pip(lo, la, up)) ICE.cells.push({ la, lo, v: vec(la, lo) });
+    ICE.c = nrm(sum(ICE.cells.map((q) => q.v)));
+    ICE.lat = Math.asin(ICE.c[1]); ICE.lon = Math.atan2(ICE.c[0], ICE.c[2]);
   }
 
   // «Мф. 8:23–34» → номер книги (0–65), иначе −1
@@ -119,6 +122,7 @@
 .gmodal .gchips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gmodal .gchips::-webkit-scrollbar{display:none}
 .gmodal .gchip{flex:none;white-space:nowrap;font:inherit;font-size:.84rem;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#c9cff0;cursor:pointer}
 .gmodal .gchip{display:inline-flex;align-items:center;gap:6px}
+.gmodal .gchip.gisl{border-color:rgba(47,196,168,.7);color:#bff3e8;background:rgba(47,196,168,.14)}.gmodal .gchip.gisl.on{background:rgba(47,196,168,.32)}
 .gmodal .gchip.on{background:rgba(255,138,31,.2);border-color:#ff8a1f;color:#ffe2c4}
 .gstk{display:inline-grid;place-items:center;flex:none}.gstk svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
 .gmodal .gfl .gstk{margin:0 auto 2px}.gmodal .gppl .gbtn{display:inline-flex;align-items:center;gap:6px}
@@ -169,12 +173,12 @@
 
   // раскладываем людей по их книгам
   function placePeople() {
-    books.forEach((o) => { o.people = []; }); if (ICE) ICE.people = [];
+    books.forEach((o) => { o.people = []; }); if (ICE) ICE.people = []; const iceN = people.filter((p) => p.b === -2).length;
     const t0 = today();
     people.forEach((p, i) => {
       const o = p.b === -2 ? ICE : books[p.b]; if (!o) { p.o = null; return; }
       const k = o.people.length; o.people.push(p); p.o = o;
-      const n = o.cells.length, q = o.cells[(k * 2) % n];
+      const n = o.cells.length, st = o === ICE ? Math.max(1, Math.floor(n / Math.max(1, Math.min(n, iceN)))) : 2, q = o.cells[(k * st) % n];
       let v = q.v;
       if (k * 2 >= n) { const j = Math.floor(k * 2 / n), a = k * 2.4; v = nrm([v[0] + Math.cos(a) * 0.012 * j, v[1] + Math.sin(a) * 0.012 * j, v[2] + Math.sin(a + 1) * 0.012 * j]); }
       p.v = v; p.lat = Math.asin(v[1]); p.lon = Math.atan2(v[0], v[2]); p.ph = i * 1.3; p.col = COL[i % 7];
@@ -243,7 +247,13 @@
       if (selB && selB.cont === c && selB.path) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke(selB.path); }
       ctx.restore();
     });
+    {
+      const ip = new Path2D(); let iv = false; ISL_VS.forEach((vs) => { if (ring(ip, vs, cx, cy, R)) iv = true; }); ICE.path = iv ? ip : null;
+      const c = rot(ICE.c); ICE.z = c[2]; ICE.sx = cx + c[0] * R; ICE.sy = cy - c[1] * R;
+      if (iv) { const d = lit(c); ctx.fillStyle = "rgb(" + (150 * d | 0) + "," + (232 * d | 0) + "," + (214 * d | 0) + ")"; ctx.fill(ip); if (selB === ICE) { ctx.fillStyle = "rgba(255,255,255,.25)"; ctx.fill(ip); } }
+    }
     ctx.strokeStyle = "rgba(255,245,215,.65)"; ctx.lineWidth = 1.2; CONT.forEach((c) => c.vs.forEach((vs) => coast(vs, cx, cy, R)));
+    ctx.strokeStyle = "#2fc4a8"; ctx.lineWidth = 2; ISL_VS.forEach((vs) => coast(vs, cx, cy, R));
     g = ctx.createRadialGradient(lx, ly, R * 0.25, lx, ly, R * 1.9); g.addColorStop(0, "rgba(2,4,24,0)"); g.addColorStop(1, "rgba(2,4,24,.62)"); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
     // свет огоньков
     ctx.globalCompositeOperation = "lighter";
@@ -258,16 +268,21 @@
     });
     ctx.globalCompositeOperation = "source-over"; ctx.restore();
     ctx.strokeStyle = "rgba(140,190,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    if (ICE.path && ICE.z > 0.1 && ICE.people.length) {
+      const ph = (t % 1.8) / 1.8, rr = R * 0.075 + 8 + ph * 10;
+      ctx.globalAlpha = Math.min(1, ICE.z * 2) * (0.9 - ph * 0.7); ctx.strokeStyle = "#2fc4a8"; ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.arc(ICE.sx, ICE.sy, rr, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
     // названия книг
     ctx.textAlign = "center"; const fs = Math.round(11 + 1.2 * Math.min(zoom, 2)); ctx.font = "600 " + fs + "px system-ui,sans-serif";
     // подписи без наложения: сначала выбранная и крупные книги, мелкие — если есть место
     ctx.lineJoin = "round"; ctx.miterLimit = 2;
     const taken = [];
-    books.filter((o) => o.path && o.z > 0.35).sort((a, b) => (b === selB) - (a === selB) || b.cells.length - a.cells.length).forEach((o) => {
-      const w = ctx.measureText(o.name).width + 6, x0 = o.sx - w / 2, y0 = o.sy + 2, r = [x0, y0, x0 + w, y0 + fs + 4];
+    books.filter((o) => o.path && o.z > 0.35).concat(ICE.path && ICE.z > 0.35 ? [ICE] : []).sort((a, b) => (b === ICE) - (a === ICE) || (b === selB) - (a === selB) || b.cells.length - a.cells.length).forEach((o) => {
+      const oy = o === ICE ? o.sy + R * 0.055 : o.sy, w = ctx.measureText(o.name).width + 6, x0 = o.sx - w / 2, y0 = oy + 2, r = [x0, y0, x0 + w, y0 + fs + 4];
       if (taken.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
       taken.push(r);
-      const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, o.sy + fs + 2); ctx.fillStyle = "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, o.sy + fs + 2);
+      const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, oy + fs + 2); ctx.fillStyle = o === ICE ? "rgba(191,243,232," + a + ")" : "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, oy + fs + 2);
     });
     // люди
     // где люди стоят плотно — без кружков (только огонь или точка); кружки возвращаются при приближении
@@ -306,6 +321,7 @@
     people.forEach((p) => { if (!(p.z > 0.05)) return; const d = Math.hypot(p.sx - x, p.sy - 6 - y); if (d < bd) { bd = d; best = p; } });
     if (best) return pick(best);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (ICE.path && ICE.z > -0.1 && ctx.isPointInPath(ICE.path, x * dpr, y * dpr)) return pickB(ICE);
     let bi = null; books.forEach((o) => { if (o.path && o.cont.path && o.z > -0.1 && ctx.isPointInPath(o.path, x * dpr, y * dpr) && ctx.isPointInPath(o.cont.path, x * dpr, y * dpr) && (!bi || o.z > bi.z)) bi = o; });
     if (bi) return pickB(bi);
     sel = selB = null; card();
@@ -346,6 +362,13 @@
       }
       return;
     }
+    if (selB === ICE) {
+      cd.append(el("div", "gname", "🏝 Остров выбора"));
+      cd.append(el("p", "gmuted", ICE.people.length ? "Здесь те, кто уже в Огоньке, но ещё не выбрал расписание. Позовите их читать вместе!" : "Сейчас здесь никого нет — все уже выбрали расписание."));
+      const box = el("div", "gppl");
+      ICE.people.filter((p) => !p.twin).slice(0, 40).forEach((p) => { const b = btn(p.rel === "me" ? (p.name || "Вы") + " (вы)" : (p.name || "Читатель")); b.prepend(stkEl("flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
+      cd.append(box); return;
+    }
     if (selB) {
       const o = selB, i = o.i + 1;
       cd.append(el("div", "gname", i + ". " + o.name));
@@ -369,6 +392,8 @@
     const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set();
     people.forEach((p) => { if (!p.o) return; ids.add(p.id); if (p.fire) lit.add(p.id); });
     s.textContent = "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
+    const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
+    if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают: " + n; }
   }
 
   /* ---------- открыть / закрыть ---------- */
@@ -396,6 +421,9 @@
       });
       chips.append(c);
     });
+    const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Выбирают"));
+    ic.addEventListener("click", () => { filt = "all"; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE); tz = Math.max(tz, 5); });
+    chips.firstChild.after(ic);
     const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
     const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
     zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");

@@ -1124,6 +1124,14 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .ptrhint{color:var(--flame)!important;font-weight:700}
 body.noplan .app>[data-page]:not(.npcard):not(#installCard):not(.pagehead):not([data-page="friends"]):not([data-page="awards"]):not([data-page="more"]){filter:grayscale(1);opacity:.45;pointer-events:none;user-select:none}
 body.noplan #appTabs,body.noplan #confCard,body.noplan #chPromo{display:none!important}
+.wconf{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;border:2px solid var(--line);margin:4px 0 8px}
+.wconf .ico{width:46px;height:52px}.wconf .ptxt{display:flex;flex-direction:column;gap:2px}.wconf b{font-size:1.02rem}.wconf .ptxt span{font-size:.84rem;color:var(--muted)}
+.wlist{margin:0 0 14px;padding-left:20px;font-size:.92rem}.wlist li{margin:5px 0}
+.wsheet .btn-main{width:100%}
+.wback{width:100%;margin-top:8px;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:700;cursor:pointer}
+.undocard{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--link-soft);border:1.5px solid color-mix(in srgb,var(--link) 40%,transparent);margin:0 0 12px}
+.undocard .ptxt{flex:1;display:flex;flex-direction:column;gap:1px}.undocard b{font-size:.9rem}.undocard .ptxt span{font-size:.8rem;color:var(--muted)}
+.undogo{flex:none;padding:8px 11px;border-radius:10px;border:1.5px solid var(--link);background:transparent;color:var(--link);font:inherit;font-weight:800;font-size:.8rem;cursor:pointer}
 .npcard{border:2px solid var(--flame)!important;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .npcard h2{font:800 1.15rem Georgia,serif;margin:0 0 4px}.npcard p{margin:0 0 12px;color:var(--muted);font-size:.9rem}
 .npcard .btn-main{width:100%}
@@ -2975,8 +2983,9 @@ function openPlanEditor(){
     const row=(on,name,sum,extra,btns)=>{const r=el("div","pedit"+(on?" on":""));const t=el("div","ptxt");t.append(el("b",null,name),el("span",null,sum));if(extra)t.append(el("span","pdone",extra));const bx=el("div","pbtns");bx.append(...btns);r.append(t,bx);sheet.append(r);rows++};
     if(noPlan())sheet.append(el("p","hint","Вы ещё не выбрали расписание."));
     else{
-      if(tt.spb&&SCHED.spb)row(true,SCHED.name,schedSummary(SCHED),"Читаете сейчас · прочитано отрывков: "+planProgress("spb"),[edit(()=>openPlans())]);
-      if(tt.conf&&confSt().joined&&today()<="2026-10-28")row(true,"Челлендж «Божья гора»","Исход 19–20 и Псалом 119 · до 28 октября",confSt().log.length?"Прочитано частей: "+confSt().log.length:"Участвуете",[edit(()=>openPlans())]);
+      const again=()=>canUndo()?[btn("read","Выбрать заново",()=>{close();reChoose()})]:[];
+      if(tt.spb&&SCHED.spb)row(true,SCHED.name,schedSummary(SCHED),"Читаете сейчас · прочитано отрывков: "+planProgress("spb"),[edit(()=>openPlans()),...again()]);
+      if(tt.conf&&confSt().joined&&today()<="2026-10-28")row(true,"Челлендж «Божья гора»","Исход 19–20 и Псалом 119 · до 28 октября",confSt().log.length?"Прочитано частей: "+confSt().log.length:"Участвуете",[edit(()=>openPlans()),...(tt.spb?[]:again())]);
     }
     myPlanList().forEach(d=>{let S=null;try{S=buildSched(d)}catch(e){}if(!S)return;const cur=d.id===SCHED.id&&tt.spb;
       const del=el("button","pdel","Удалить");del.type="button";
@@ -3001,14 +3010,22 @@ function renamePlan(id,name){
    Без расписания — тот, кто не прочитал ни одного отрывка ни в одном расписании и в челлендже
    (даже если раньше по умолчанию стоял на расписании церкви или нажал «участвовать»).
    Считается каждый раз заново, ничего не стирается: стоит прочитать или выбрать — и всё как обычно. */
-function noPlan(){
-  if(state.planChosen)return false;
+function noPlan(){return !state.planChosen&&noReads()}
+// ничего не прочитано ни в одном расписании и в челлендже (своих расписаний тоже нет)
+function noReads(){
   if(!SCHED.spb||Object.keys(state.myScheds||{}).length)return false;
   if(state.nt.read.length||state.ot.read.length||(state.frzDays||[]).length)return false;
   if(Object.values(state.plans||{}).some(x=>x&&((x.nt&&x.nt.read&&x.nt.read.length)||(x.ot&&x.ot.read&&x.ot.read.length))))return false;
   const c=state.conf;if(c&&c.log&&c.log.length)return false;
   if((state.hist||[]).length||(state.finished||[]).length)return false;
   return true;
+}
+function canUndo(){return !!state.planChosen&&noReads()}
+function reChoose(){
+  delete state.planChosen;delete state.ptrEdit;delete state.tracks;
+  const c=confSt();if(!c.log.length)delete c.joined;
+  try{localStorage.setItem("ogonek-app-mode","spb");localStorage.removeItem("ogonek-ptr-tip")}catch(e){}
+  save();render();try{applyAppMode()}catch(e){}window.scrollTo({top:0,behavior:"smooth"});openWelcome();
 }
 function isLogged(){const t=$("loginTop");return !!(t&&t.classList.contains("user")&&!t.hidden)}
 function applyNoPlan(){
@@ -3020,6 +3037,10 @@ function applyNoPlan(){
       const b=el("button","btn-main","Выбрать расписание");b.type="button";b.addEventListener("click",()=>openWelcome());c.append(b);
       const anchor=$("pageHead")||$("appTabs");if(anchor)anchor.after(c)}
     if(c){c.hidden=!np;c.classList.toggle("pg-off",pg!==page)}});
+  {let u=$("undoCard");const can=!np&&canUndo();
+    if(can&&!u){u=el("section","undocard");u.id="undoCard";u.dataset.page="home";const t=el("div","ptxt");t.append(el("b"),el("span",null,"Выбрали случайно? Пока ничего не прочитано, можно выбрать другое."));
+      const b=el("button","undogo","Выбрать другое");b.type="button";b.addEventListener("click",reChoose);u.append(t,b);const anchor=$("pageHead")||$("appTabs");if(anchor)anchor.after(u)}
+    if(u){u.hidden=!can;u.classList.toggle("pg-off",pg!=="home");if(can){const tt=tracks();u.querySelector("b").textContent="Вы выбрали: "+(tt.conf&&!tt.spb?"челлендж «Божья гора»":"расписание церкви в СПб")}}}
   if(np){
     document.querySelectorAll("#testaments .name").forEach(n=>n.textContent="— · —");
     document.querySelectorAll("#testaments .sub").forEach(n=>n.textContent="");
@@ -3035,11 +3056,23 @@ function openWelcome(auto){
   modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
   const hd=el("div","fhead");hd.append(el("h2",null,"Добро пожаловать в Огонёк"));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);hd.append(x);
   sheet.append(hd,el("p","wsub","Читайте Библию каждый день — понемногу и вместе с друзьями. С чего начнём?"));
-  const opt=(cls,ic,tag,tagc,title,desc,fn)=>{const b=el("button","wopt "+cls);b.type="button";b.append(icoEl(ic));const t=el("span","ptxt");if(tag)t.append(el("span","wtag "+tagc,tag));t.append(el("b",null,title),el("span",null,desc));b.append(t);b.addEventListener("click",()=>{close();fn()});return b};
+  const opt=(cls,ic,tag,tagc,title,desc,fn)=>{const b=el("button","wopt "+cls);b.type="button";b.append(icoEl(ic));const t=el("span","ptxt");if(tag)t.append(el("span","wtag "+tagc,tag));t.append(el("b",null,title),el("span",null,desc));b.append(t);b.addEventListener("click",()=>{if(fn.confirm){fn.confirm();return}close();fn()});return b};
+  // челлендж и церковь — сначала короткое описание и «Начать читать», чтобы не выбрать случайно
+  const confirm=(ic,title,lines,list,go)=>{sheet.textContent="";const h2=el("div","fhead"),bk=el("button","pback","‹");bk.type="button";bk.setAttribute("aria-label","Назад");bk.addEventListener("click",()=>{close();openWelcome()});
+    const x2=el("button","fclose","×");x2.type="button";x2.setAttribute("aria-label","Закрыть");x2.addEventListener("click",close);h2.append(bk,el("h2",null,title),x2);
+    const big=el("div","wconf");big.append(icoEl(ic));const tx=el("div","ptxt");tx.append(el("b",null,lines[0]),el("span",null,lines[1]));big.append(tx);
+    const ul=el("ul","wlist");list.forEach(s=>{const li=el("li");li.innerHTML=s;ul.append(li)});
+    const g=el("button","btn-main","Начать читать");g.type="button";g.addEventListener("click",()=>{close();go()});
+    const back=el("button","wback","‹ Назад к выбору");back.type="button";back.addEventListener("click",()=>{close();openWelcome()});
+    sheet.append(h2,big,ul,g,back,el("p","hint","Передумаете — пока не прочитан первый отрывок, на главной будет кнопка «Выбрать другое»."));sheet.scrollTop=0};
+  const esc2=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]);
+  const firstRefs=()=>{try{return KEYS.map(k=>"<b>"+esc2(refStr(part(k,Math.min(nextP(k),DAYS-1))))+"</b>").join(" и ")}catch(e){return ""}};
+  const goChurch=()=>chooseChurch();goChurch.confirm=()=>confirm("flame","Расписание церкви",["Санкт-Петербург · вся Библия за 2 года","Все читают одно и то же, с 28 сентября 2026"],["Каждый день ~15 минут: отрывок из Ветхого и из Нового Завета","Первый отрывок: "+firstRefs(),"На тропинке видно, кто из друзей читает рядом"],chooseChurch);
+  const goCh=()=>chooseChallenge();goCh.confirm=()=>confirm("peak","Челлендж «Божья гора»",["Исход 19–20 и Псалом 119","До 28 октября — к конференции школьников"],["Объём делится поровну на оставшиеся дни","Вопросы, игры и восхождение с друзьями","После 28 октября можно выбрать другое расписание"],chooseChallenge);
   sheet.append(opt("own","book","для всех","or","Своё расписание","Выберите, что читать и в каком темпе: Новый Завет за год, вся Библия или отдельные книги.",()=>openPlans("custom")));
   if(today()<="2026-10-28"){const n=Math.max(1,dayNo("2026-10-28")-dayNo(today())+1);
-    sheet.append(opt("ch","peak","скоро заканчивается · "+n+" "+plural(n,"день","дня","дней"),"","Челлендж «Божья гора»","Исход 19–20 и Псалом 119 до 28 октября — к конференции школьников. Вопросы, игры, восхождение с друзьями.",chooseChallenge))}
-  sheet.append(opt("spb","flame","","","Расписание церкви в Санкт-Петербурге","Если вы из церкви в Санкт-Петербурге: вся Библия за 2 года, все читают одно и то же с 28 сентября 2026.",chooseChurch));
+    sheet.append(opt("ch","peak","скоро заканчивается · "+n+" "+plural(n,"день","дня","дней"),"","Челлендж «Божья гора»","Исход 19–20 и Псалом 119 до 28 октября — к конференции школьников. Вопросы, игры, восхождение с друзьями.",goCh))}
+  sheet.append(opt("spb","flame","","","Расписание церкви в Санкт-Петербурге","Если вы из церкви в Санкт-Петербурге: вся Библия за 2 года, все читают одно и то же с 28 сентября 2026.",goChurch));
   sheet.append(el("p","hint","Расписание можно сменить в любой момент: «План» → «Сменить расписание»."));
   modal.append(sheet);document.body.append(modal);
 }
@@ -4179,11 +4212,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610191330"></script>
-<script type="module" src="auth.js?v=202610191330"></script>
+<script src="globe.js?v=202610191500"></script>
+<script type="module" src="auth.js?v=202610191500"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261019133000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261019150000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
