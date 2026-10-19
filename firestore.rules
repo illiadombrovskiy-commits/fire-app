@@ -95,7 +95,7 @@ service cloud.firestore {
         && request.resource.data.get('spots', []) is list && request.resource.data.get('spots', []).size() <= 3
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
         && request.resource.data.photo is string && request.resource.data.photo.size() <= 500
-        && request.resource.data.b is int && request.resource.data.b >= -1 && request.resource.data.b < 66
+        && request.resource.data.b is int && request.resource.data.b >= -2 && request.resource.data.b < 66
         && request.resource.data.refs is list && request.resource.data.refs.size() <= 3
         && request.resource.data.plan is string && request.resource.data.plan.size() <= 60
         && request.resource.data.streak is int

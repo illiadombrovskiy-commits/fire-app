@@ -46,7 +46,7 @@
   const OTS = ["#cdb174", "#b39554", "#dcc792"], NTS = ["#5db078", "#43945e", "#7cc692"];
 
   /* ---------- карта: строится один раз ---------- */
-  let books = null, ANT = null;
+  let books = null, ANT = null, ICE = null;
   function build() {
     if (books) return;
     books = [];
@@ -88,6 +88,9 @@
     });
     books.sort((a, b) => a.i - b.i);
     ANT = []; for (let lo = -180; lo < 180; lo += 3) ANT.push(vec(-70 + 3 * Math.sin(lo * 3 * D) + 2 * Math.sin(lo * 7 * D), lo));
+    // Антарктида: здесь стоят те, кто ещё не выбрал расписание (без книг, огонёк спит)
+    ICE = { i: -1, name: "Антарктида", cells: [], people: [] };
+    for (let la = -76; la >= -84; la -= 4) for (let lo = -180; lo < 180; lo += 15) ICE.cells.push({ v: vec(la, lo + (la % 8 ? 7 : 0)) });
   }
 
   // «Мф. 8:23–34» → номер книги (0–65), иначе −1
@@ -166,10 +169,10 @@
 
   // раскладываем людей по их книгам
   function placePeople() {
-    books.forEach((o) => { o.people = []; });
+    books.forEach((o) => { o.people = []; }); if (ICE) ICE.people = [];
     const t0 = today();
     people.forEach((p, i) => {
-      const o = books[p.b]; if (!o) { p.o = null; return; }
+      const o = p.b === -2 ? ICE : books[p.b]; if (!o) { p.o = null; return; }
       const k = o.people.length; o.people.push(p); p.o = o;
       const n = o.cells.length, q = o.cells[(k * 2) % n];
       let v = q.v;

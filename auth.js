@@ -547,7 +547,7 @@ async function main() {
     const pathBtn = el("button", "bsbtn", "🏔️ Пройденный путь · " + (isMe ? O().finishedCount() : pd.length)); pathBtn.type = "button";
     pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
     const prow = el("div", "fprow"); prow.append(pathBtn);
-    if (isMe) { const ed = el("button", "bsbtn", "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
+    if (isMe) { const ed = el("button", "bsbtn" + (window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : ""), "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
     if (isMe) { const tr = el("button", "bsbtn", "⛰️ Челленджи"); tr.type = "button"; tr.addEventListener("click", () => { closeProfile(); if (window.confOpenChallenges) window.confOpenChallenges(); }); prow.append(tr); }
     else prow.style.gridTemplateColumns = "1fr";
     sheet.append(head, stats, shelfBtn, prow, reading);
@@ -667,6 +667,8 @@ async function main() {
   // запись для глобуса из сводки (своей или друга из его профиля)
   function globeFrom(s, name, photo, fc) {
     const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
+    // ещё не выбрал расписание — стоит в Антарктиде, без книг
+    if (s && s.noPlan) return { name: String(name || "Читатель").slice(0, 60), photo: photo || "", b: -2, refs: ["Ещё выбирает расписание"], plan: "", streak: s.streak || 0, lit: "", seen: t, fc: fc || 0, spots: [] };
     let b = -1;
     if (G) for (const k of keys) { if (fDone(s, k)) continue; const i = G.bookIndex(fRef(s, k)); if (i >= 0) { b = i; break; } }
     return {
@@ -873,7 +875,7 @@ async function main() {
     if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
     const who = el("div", "umwho", me ? myName() : "");
-    const about = el("button", "umitem", "Профиль"); about.type = "button"; about.setAttribute("role", "menuitem");
+    const about = el("button", "umitem" + (window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : ""), "Профиль"); about.type = "button"; about.setAttribute("role", "menuitem");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
     const plan = el("button", "umitem", "Расписание"); plan.type = "button"; plan.setAttribute("role", "menuitem");
     plan.addEventListener("click", () => { closeUserMenu(); O().openPlans(); });
@@ -983,6 +985,7 @@ async function main() {
       if (remote && O().score(remote) >= O().score(local)) O().setState(remote);
       else await F.setDoc(ref, local);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
+    if (O().progressLoaded) O().progressLoaded();
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
 
