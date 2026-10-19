@@ -132,7 +132,7 @@
 .gmodal .gzoom button{width:38px;height:38px;border-radius:10px;background:rgba(20,26,58,.8);border:1px solid rgba(255,255,255,.2);color:#eef0fa;font-size:1.2rem;cursor:pointer}
 .gmodal .gstat{position:absolute;left:10px;top:10px;font-size:.78rem;color:#aab2e6;pointer-events:none}
 .gmodal .ghint{position:absolute;left:10px;bottom:8px;font-size:.78rem;color:#7e86b8;pointer-events:none}
-.gmodal .gcard{background:#141a3a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px;max-height:38vh;overflow-y:auto}
+.gmodal .gcard{position:absolute;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;box-shadow:0 -6px 24px rgba(0,0,0,.35);background:#141a3a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px;max-height:38vh;overflow-y:auto}
 .gmodal .gmuted{font-size:.88rem;color:#a9b0d6;margin:0}
 .gmodal .gperson{display:flex;gap:12px;align-items:center}
 .gmodal .gav{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;overflow:hidden}
@@ -159,7 +159,7 @@
   /* ---------- состояние окна ---------- */
   const COL = ["#D85A30", "#534AB7", "#0F6E56", "#993556", "#185FA5", "#854F0B", "#3B6D11"];
   let opts = null, people = [], root = null, cv = null, ctx = null, raf = 0, W = 0, H = 0, dpr = 1, ro = null;
-  let yaw = 0, pitch = 0, ty = 0, tp = 0, zoom = 1, tz = 1, vx = 0, vy = 0, fly = false, sel = null, selB = null, filt = "all", t = 0, drag = false, lastT = 0, idleT = 0;
+  let anim = null, OS = 0, yaw = 0, pitch = 0, ty = 0, tp = 0, zoom = 1, tz = 1, vx = 0, vy = 0, fly = false, sel = null, selB = null, filt = "all", t = 0, drag = false, lastT = 0, idleT = 0;
   let cyw = 1, syw = 0, cp = 1, sp = 0, newIdx = -1;
   const L = nrm([-0.55, 0.45, 0.7]), ZMAX = 10; // можно приблизить к самой земле
   const sh = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
@@ -167,6 +167,9 @@
   const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, p: Math.random() * 6 }));
 
   function rot(v) { const x1 = v[0] * cyw + v[2] * syw, z1 = -v[0] * syw + v[2] * cyw; return [x1, v[1] * cp - z1 * sp, v[1] * sp + z1 * cp]; }
+  // ровный перелёт: поворот и приближение/отдаление идут вместе по одной плавной кривой
+  function goTo(y1, p1, z1, ms) { p1 = Math.max(-1.45, Math.min(1.45, p1)); z1 = Math.max(0.8, Math.min(ZMAX, z1)); vx = vy = 0; fly = false;
+    anim = { t0: performance.now(), d: ms || 1100, y0: yaw, p0: pitch, z0: zoom, y1: yaw + sh(y1 - yaw), p1, z1 }; }
   function flyTo(lat, lon) { ty = yaw + sh(-lon - yaw); tp = Math.max(-1.45, Math.min(1.45, lat)); vx = vy = 0; fly = true; }
   const match = (p) => filt === "fire" ? p.fire : filt === "new" ? (p.rel === "" || p.rel === "req") : true;
   const lit = (c) => 0.55 + 0.45 * Math.max(0, dot(c, L));
@@ -218,15 +221,24 @@
   function frame(ts) {
     raf = requestAnimationFrame(frame);
     t = ts / 1000;
+    if (anim) {
+      const k = Math.min(1, (performance.now() - anim.t0) / anim.d), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      yaw = anim.y0 + (anim.y1 - anim.y0) * e; pitch = anim.p0 + (anim.p1 - anim.p0) * e; zoom = Math.exp(Math.log(anim.z0) + (Math.log(anim.z1) - Math.log(anim.z0)) * e);
+      ty = yaw; tp = pitch; tz = zoom; if (k >= 1) { anim = null; idleT = performance.now(); }
+    } else {
     if (!drag) { ty += vx; tp += vy; vx *= 0.95; vy *= 0.95; if (!fly && !sel && !selB && ts - idleT > 2500) ty += 0.0011; }
     tp = Math.max(-1.45, Math.min(1.45, tp));
     const k = fly ? 0.1 : 0.28; yaw += (ty - yaw) * k; pitch += (tp - pitch) * k; zoom += (tz - zoom) * 0.18;
+    }
     if (fly && Math.abs(ty - yaw) < 0.002 && Math.abs(tp - pitch) < 0.002) fly = false;
     cyw = Math.cos(yaw); syw = Math.sin(yaw); cp = Math.cos(pitch); sp = Math.sin(pitch);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = "#05071a"; ctx.fillRect(0, 0, W, H);
     [[0.12, 0.18, 0.55, "rgba(120,70,210,.20)"], [0.92, 0.88, 0.6, "rgba(255,110,60,.10)"]].forEach((n) => { const g = ctx.createRadialGradient(W * n[0], H * n[1], 0, W * n[0], H * n[1], W * n[2]); g.addColorStop(0, n[3]); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
     stars.forEach((s) => { const x = ((s.x * W + yaw * 25) % W + W) % W, y = ((s.y * H + pitch * 25) % H + H) % H; ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.4 * Math.sin(t * 1.5 + s.p) ** 2) + ")"; ctx.fillRect(x, y, s.r, s.r); });
-    const R = Math.min(W, H) * 0.42 * zoom, cx = W / 2, cy = H / 2, lx = cx + L[0] * R * 0.55, ly = cy - L[1] * R * 0.55;
+    // размер окна меняется (карточка внизу появилась/скрылась) — глобус подстраивается плавно, без рывка
+    const cdv = root && root.querySelector(".gcard"), occ = cdv && !cdv.hidden ? Math.min(H * 0.5, cdv.offsetHeight + 6) : 0;
+    OS += (occ - OS) * 0.12; if (Math.abs(occ - OS) < 0.5) OS = occ;
+    const R = Math.min(W, H - OS) * 0.42 * zoom, cx = W / 2, cy = (H - OS) / 2, lx = cx + L[0] * R * 0.55, ly = cy - L[1] * R * 0.55;
     let g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.22); g.addColorStop(0, "rgba(90,160,255,.45)"); g.addColorStop(1, "rgba(90,160,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, TAU); ctx.fill();
     g = ctx.createRadialGradient(lx, ly, R * 0.05, cx, cy, R); g.addColorStop(0, "#3b86e8"); g.addColorStop(0.55, "#164a9e"); g.addColorStop(1, "#061433"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
@@ -306,11 +318,11 @@
     // щипок двумя пальцами — приблизить / отдалить
     const pts = new Map(); let pinch = null;
     const pdist = () => { const a = [...pts.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1; };
-    cv.addEventListener("pointerdown", (e) => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { pinch = { d: pdist(), z: tz }; moved = 99; vx = vy = 0; } });
+    cv.addEventListener("pointerdown", (e) => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { anim = null; pinch = { d: pdist(), z: tz }; moved = 99; vx = vy = 0; } });
     cv.addEventListener("pointermove", (e) => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pinch && pts.size >= 2) tz = Math.max(0.8, Math.min(ZMAX, pinch.z * pdist() / pinch.d)); });
     const pend = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (pts.size === 1) { const a = [...pts.values()][0]; lx0 = a.x; ly0 = a.y; } };
     cv.addEventListener("pointerup", pend); cv.addEventListener("pointercancel", pend);
-    cv.addEventListener("pointerdown", (e) => { if (pts.size > 1) return; drag = true; fly = false; moved = 0; lx0 = e.clientX; ly0 = e.clientY; vx = vy = 0; ty = yaw; tp = pitch; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cv.style.cursor = "grabbing"; });
+    cv.addEventListener("pointerdown", (e) => { anim = null; if (pts.size > 1) return; drag = true; fly = false; moved = 0; lx0 = e.clientX; ly0 = e.clientY; vx = vy = 0; ty = yaw; tp = pitch; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cv.style.cursor = "grabbing"; });
     cv.addEventListener("pointermove", (e) => { if (!drag || pinch) return; const dx = e.clientX - lx0, dy = e.clientY - ly0; lx0 = e.clientX; ly0 = e.clientY; moved += Math.abs(dx) + Math.abs(dy); const k = 0.0055 / zoom; ty += dx * k; tp += dy * k; vx = vx * 0.6 + dx * k * 0.4; vy = vy * 0.6 + dy * k * 0.4; lastT = performance.now(); });
     const end = (e) => { if (!drag || pts.size > 0) return; drag = false; idleT = performance.now(); cv.style.cursor = "grab"; if (performance.now() - lastT > 90) vx = vy = 0; if (moved < 7) { const r = cv.getBoundingClientRect(); tap(e.clientX - r.left, e.clientY - r.top); } };
     cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
@@ -326,8 +338,8 @@
     if (bi) return pickB(bi);
     sel = selB = null; card();
   }
-  function pick(p) { sel = p; selB = null; if (p.o) { if (tz < 1.8) tz = 1.8; flyTo(p.lat - 0.18 / tz, p.lon); } card(); }
-  function pickB(o) { selB = o; sel = null; if (tz < 1.5) tz = 1.5; flyTo(o.lat - 0.1 / tz, o.lon); card(); }
+  function pick(p, z) { sel = p; selB = null; card(); if (p.o) goTo(-p.lon, p.lat, Math.max(zoom, z || 1.8)); }
+  function pickB(o, z) { selB = o; sel = null; card(); goTo(-o.lon, o.lat, Math.max(zoom, z || 1.5)); }
 
   /* ---------- нижняя карточка ---------- */
   function avatar(p) {
@@ -415,19 +427,21 @@
       const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(stkEl(ic, 20), el("span", null, txt));
       if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
       c.addEventListener("click", () => {
-        if (f === "me") { const m = people.find((p) => p.rel === "me"); if (m) pick(m); return; }
+        if (f === "me") { const m = people.find((p) => p.rel === "me"); if (m) { chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c)); filt = "all"; pick(m, 2.5); } return; }
         filt = f; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c));
         if (f === "new") nextNew();
+        // «Все» и «Горят» — снова вся планета: отдаляемся, карточку закрываем
+        else { sel = selB = null; card(); goTo(yaw, pitch, 1, 1100); }
       });
       chips.append(c);
     });
     const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Выбирают"));
-    ic.addEventListener("click", () => { filt = "all"; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE); tz = Math.max(tz, 5); });
+    ic.addEventListener("click", () => { filt = "all"; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE, 5); });
     chips.firstChild.after(ic);
     const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
     const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
     zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");
-    zi.addEventListener("click", () => { tz = Math.min(ZMAX, tz * 1.4); }); zo.addEventListener("click", () => { tz = Math.max(0.8, tz / 1.4); });
+    zi.addEventListener("click", () => { goTo(yaw, pitch, zoom * 1.5, 450); }); zo.addEventListener("click", () => { goTo(yaw, pitch, zoom / 1.5, 450); });
     zm.append(zi, zo); stage.append(zm, el("div", "gstat"), el("div", "ghint", "Крутите в любую сторону · нажмите на человека"));
     root.append(topb, chips, stage, el("div", "gcard"));
     document.body.append(root);
@@ -447,7 +461,7 @@
 
     placePeople();
     const me = people.find((p) => p.rel === "me" && p.o), start = me || { lat: 0.5, lon: books[39].lon };
-    yaw = -start.lon + 0.6; pitch = start.lat - 0.2; ty = -start.lon + 0.3; tp = start.lat - 0.3; zoom = tz = 1; vx = vy = 0; fly = false;
+    yaw = -start.lon + 0.6; pitch = start.lat - 0.2; ty = -start.lon + 0.3; tp = start.lat - 0.3; zoom = tz = 1; vx = vy = 0; fly = false; anim = null; OS = 0;
     bindCanvas(); size();
     if (window.ResizeObserver) { ro = new ResizeObserver(size); ro.observe(stage); } else window.addEventListener("resize", size);
     document.addEventListener("keydown", esc);

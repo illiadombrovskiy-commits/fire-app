@@ -1124,6 +1124,20 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .ptrhint{color:var(--flame)!important;font-weight:700}
 body.noplan .app>[data-page]:not(.npcard):not(#installCard):not(.pagehead):not([data-page="friends"]):not([data-page="awards"]):not([data-page="more"]){filter:grayscale(1);opacity:.45;pointer-events:none;user-select:none}
 body.noplan #appTabs,body.noplan #confCard,body.noplan #chPromo{display:none!important}
+.srow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;margin-bottom:10px}
+.srow.on{border-color:var(--flame);background:color-mix(in srgb,var(--flame) 7%,var(--bg))}
+.srow .ico{width:40px;height:44px}
+.srow .stx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.srow b{font-size:1.02rem}.srow .ssub{font-size:.8rem;color:var(--muted)}
+.stag{align-self:flex-start;padding:1px 8px;border-radius:99px;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;margin-bottom:2px;background:var(--flame)}.stag.ch{background:#2f9e6b}
+.stoday{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;font-weight:700;margin-top:3px}.schk{font-style:normal;color:var(--ok)}
+.sbar{display:block;height:5px;border-radius:9px;background:color-mix(in srgb,var(--muted) 25%,transparent);margin-top:6px;overflow:hidden}.sbar i{display:block;height:100%;border-radius:9px}
+.sgo{color:var(--muted);font-size:1.5rem;flex:none}
+.schg{display:block;width:100%;padding:14px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:1.02rem;cursor:pointer}
+.sback{background:transparent;border:0;color:var(--link);font:inherit;font-weight:700;padding:2px 0 10px;cursor:pointer}
+.sdhead{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--bg);margin-bottom:10px}.sdhead span{font-size:.82rem;color:var(--muted)}
+.sacts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.sacts .btn-main{flex:1 1 200px}
+.sdel{padding:10px 14px;border-radius:14px;border:1.5px solid #e5484d;background:transparent;color:#e5484d;font:inherit;font-weight:700;cursor:pointer}
+.snote{margin:0 0 10px}
 .wconf{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;border:2px solid var(--line);margin:4px 0 8px}
 .wconf .ico{width:46px;height:52px}.wconf .ptxt{display:flex;flex-direction:column;gap:2px}.wconf b{font-size:1.02rem}.wconf .ptxt span{font-size:.84rem;color:var(--muted)}
 .wlist{margin:0 0 14px;padding-left:20px;font-size:.92rem}.wlist li{margin:5px 0}
@@ -1252,9 +1266,13 @@ body.noplan #appTabs,body.noplan #confCard,body.noplan #chPromo{display:none!imp
   </details>
 
   <details class="card fold" id="schedule">
-    <summary class="foldhead"><h2>Расписание</h2><span class="chev" aria-hidden="true"></span></summary>
+    <summary class="foldhead"><h2 id="schedTitle">Мои расписания</h2><span class="chev" aria-hidden="true"></span></summary>
     <div class="foldbody">
-      <div class="pnow"><span id="planNow"></span><button class="btn" id="planOpen" type="button">Сменить расписание</button></div>
+      <div id="schedList"></div>
+      <div id="schedDet">
+      <div id="schedDetHead"></div>
+      <div class="pnow" hidden><span id="planNow"></span><button class="btn" id="planOpen" type="button">Сменить расписание</button></div>
+      <div id="schedWeek">
       <div class="weeknav">
         <button class="btn navbtn" id="wkPrev" type="button" aria-label="Предыдущая неделя">‹</button>
         <select id="wkSel" aria-label="Неделя плана"></select>
@@ -1262,6 +1280,8 @@ body.noplan #appTabs,body.noplan #confCard,body.noplan #chPromo{display:none!imp
       </div>
       <p class="hint" style="margin:0">Выберите любой день: нажмите на отрывок, чтобы открыть его, и на кружок, чтобы отметить прочитанным.</p>
       <div class="sched" id="sched"></div>
+      </div>
+      </div>
     </div>
   </details>
 
@@ -3020,6 +3040,70 @@ function noReads(){
   if((state.hist||[]).length||(state.finished||[]).length)return false;
   return true;
 }
+
+/* ---------- «План»: сначала список «Мои расписания», нажали — детали ---------- */
+let schedView=(()=>{try{return sessionStorage.getItem("ogonek-sched-view")||""}catch(e){return ""}})();
+function setSchedView(v){schedView=v||"";try{sessionStorage.setItem("ogonek-sched-view",schedView)}catch(e){}renderSchedList();const s=$("schedule");if(s){s.open=true;const y=s.getBoundingClientRect().top+window.scrollY-70;if(window.scrollY>y)window.scrollTo({top:y,behavior:"smooth"})}}
+function schedRows(){
+  const tt=tracks(),rows=[],seen=new Set();
+  const add=x=>{if(seen.has(x.id))return;seen.add(x.id);rows.push(x)};
+  if(tt.spb)add({id:SCHED.id,kind:SCHED.spb?"spb":"my",cur:true,def:SCHED.def});
+  add({id:"spb",kind:"spb",cur:false});
+  const fin=new Set((state.finished||[]).map(f=>f.id));
+  myPlanList().forEach(d=>{if(!fin.has(d.id)||d.id===SCHED.id)add({id:d.id,kind:"my",cur:false,def:d})});
+  if(tt.conf&&confSt().joined&&today()<="2026-10-28")rows.push({id:"conf",kind:"conf",cur:!tt.spb});
+  return rows;
+}
+function schedTotal(x){try{if(x.id===SCHED.id)return KEYS.length*DAYS;if(x.kind==="spb")return 2*PLAN_SPB.length;const S=buildSched(x.def);return S.keys.length*S.plan.length}catch(e){return 0}}
+function renderSchedList(){
+  const L=$("schedList"),D=$("schedDet"),T=$("schedTitle");if(!L||!D)return;
+  const rows=schedRows(),x=schedView&&rows.find(r=>r.id===schedView);
+  if(schedView&&!x)schedView="";
+  L.hidden=!!x;D.hidden=!x;L.textContent="";
+  if(!x){T.textContent="Мои расписания";
+    rows.forEach(r=>{
+      const b=el("button","srow"+(r.cur&&r.kind!=="conf"?" on":""));b.type="button";
+      const ic=icoEl(r.kind==="spb"?"flame":r.kind==="conf"?"peak":"book");const t=el("span","stx");
+      let name="",sub="",pct=0,col="var(--flame)";
+      if(r.kind==="conf"){let n=Math.max(1,dayNo("2026-10-28")-dayNo(today())+1);try{pct=myPct();n=confDaysLeft()}catch(e){}
+        t.append(el("span","stag ch","Челлендж · "+n+" "+plural(n,"день","дня","дней")));name="«Божья гора»";sub="Исход 19–20 и Псалом 119 · до 28 октября";col="#2f9e6b"}
+      else{
+        if(r.cur)t.append(el("span","stag cur","Читаете сейчас"));
+        if(r.kind==="spb"){name="Церковь";sub="Санкт-Петербург · вся Библия за 2 года"+(r.cur?" · день "+Math.min(DAYS,todayP()+1)+" из "+DAYS:"")}
+        else{let S=null;try{S=buildSched(r.def)}catch(e){}name=r.cur?SCHED.name:(r.def.name||"Моё расписание");sub=S?schedSummary(S):"";col="var(--link)"}
+        const n=planProgress(r.id),tot=schedTotal(r);pct=tot?Math.min(100,Math.round(n/tot*100)):0;
+        if(!r.cur&&n)sub+=" · прочитано отрывков: "+n;
+      }
+      t.append(el("b",null,name),el("span","ssub",sub));
+      if(r.cur&&r.kind!=="conf"){const td=el("span","stoday"),tp=Math.max(0,Math.min(todayP(),DAYS-1));
+        KEYS.forEach(k=>{const pp=part(k,tp);if(!pp||!pp.book)return;const s=el("span",null,refStr(pp));if(readSet(k).has(tp))s.append(el("i","schk"," ✓"));td.append(s)});if(td.childNodes.length)t.append(td)}
+      const bar=el("span","sbar"),bi=el("i");bi.style.width=Math.max(pct?3:0,pct)+"%";bi.style.background=col;bar.append(bi);t.append(bar);
+      b.append(ic,t,el("span","sgo","›"));b.addEventListener("click",()=>setSchedView(r.id));L.append(b)});
+    const ch=el("button","schg","Сменить расписание");ch.type="button";ch.addEventListener("click",()=>openPlans());L.append(ch);
+    return}
+  // детали
+  const H=$("schedDetHead"),W=$("schedWeek");H.textContent="";
+  const back=el("button","sback","‹ Все расписания");back.type="button";back.addEventListener("click",e=>{e.preventDefault();setSchedView("")});H.append(back);
+  const head=el("div","sdhead"),acts=el("div","sacts");
+  const btn=(cls,txt,fn)=>{const b=el("button",cls,txt);b.type="button";b.addEventListener("click",fn);return b};
+  W.hidden=!(x.cur&&x.kind!=="conf");
+  if(x.kind==="conf"){T.textContent="«Божья гора»";const c=confSt();
+    head.append(el("b",null,"Исход 19–20 и Псалом 119"),el("span",null,"До 28 октября · прочитано частей: "+c.log.length));
+    acts.append(btn("btn-main","Открыть челлендж",()=>{setAppMode("conf");setPage("home")}));
+    const lv=btn("sdel","Выйти",()=>{if(!tracks().spb){toast("Сначала выберите основное расписание");return}if(!lv.dataset.armed){lv.dataset.armed="1";lv.textContent="Точно выйти?";setTimeout(()=>{delete lv.dataset.armed;lv.textContent="Выйти"},4000);return}setTrack("conf",false);setSchedView("");toast("Вы вышли из челленджа. Прочитанное сохранено")});acts.append(lv)}
+  else if(x.cur){T.textContent=x.kind==="spb"?"Церковь":SCHED.name;
+    head.append(el("b",null,x.kind==="spb"?"Санкт-Петербург · вся Библия за 2 года":SCHED.name),el("span",null,schedSummary(SCHED)+" · прочитано "+planProgress(x.id)+" из "+schedTotal(x)+" отрывков"));
+    if(x.kind==="my")acts.append(btn("btn","Изменить",()=>{if(state.ptrEdit==="on"){state.ptrEdit="done";save();try{applyPtr()}catch(e){}}openPlans("custom",SCHED.def)}))}
+  else if(x.kind==="spb"){T.textContent="Церковь";const n=planProgress("spb");
+    head.append(el("b",null,"Санкт-Петербург · вся Библия за 2 года"),el("span",null,"Все читают одно и то же, с 28 сентября 2026"+(n?" · прочитано отрывков: "+n:"")));
+    acts.append(btn("btn-main",n?"Продолжить читать":"Читать расписание церкви",()=>{if(!tracks().spb&&SCHED.spb){setTrack("spb",true);setSchedView("spb");return}switchPlan({id:"spb"})}))}
+  else{const d=x.def;let S=null;try{S=buildSched(d)}catch(e){}T.textContent=d.name||"Моё расписание";const n=planProgress(d.id);
+    head.append(el("b",null,"Своё расписание"),el("span",null,(S?schedSummary(S):"")+" · "+(n?"прочитано отрывков: "+n+" · ":"")+"сейчас не читаете"));
+    acts.append(btn("btn-main",n?"Продолжить читать":"Читать это расписание",()=>switchPlan(d)));
+    const del=btn("sdel","Удалить",()=>{if(!del.dataset.armed){del.dataset.armed="1";del.textContent="Точно удалить?";setTimeout(()=>{delete del.dataset.armed;del.textContent="Удалить"},3500);return}if(!deletePlan(d.id)){setSchedView("")}});acts.append(del)}
+  H.append(head);if(acts.childNodes.length)H.append(acts);
+  if(x.cur&&x.kind!=="conf")H.append(el("p","hint snote","Огонёк помнит, где вы читаете в каждом расписании. Сменить — в списке «Мои расписания» → «Сменить расписание»."));
+}
 function canUndo(){return !!state.planChosen&&noReads()}
 function reChoose(){
   delete state.planChosen;delete state.ptrEdit;delete state.tracks;
@@ -3037,6 +3121,7 @@ function applyNoPlan(){
       const b=el("button","btn-main","Выбрать расписание");b.type="button";b.addEventListener("click",()=>openWelcome());c.append(b);
       const anchor=$("pageHead")||$("appTabs");if(anchor)anchor.after(c)}
     if(c){c.hidden=!np;c.classList.toggle("pg-off",pg!==page)}});
+  try{renderSchedList()}catch(e){console.warn(e)}
   {let u=$("undoCard");const can=!np&&canUndo();
     if(can&&!u){u=el("section","undocard");u.id="undoCard";u.dataset.page="home";const t=el("div","ptxt");t.append(el("b"),el("span",null,"Выбрали случайно? Пока ничего не прочитано, можно выбрать другое."));
       const b=el("button","undogo","Выбрать другое");b.type="button";b.addEventListener("click",reChoose);u.append(t,b);const anchor=$("pageHead")||$("appTabs");if(anchor)anchor.after(u)}
@@ -4046,7 +4131,7 @@ function renderChallenges(){
   if(!closed&&!on){const m=el("button","linkbtn","Подробнее");m.type="button";m.addEventListener("click",()=>openConf("read"));top.append(m)}
   if(on){const lv=el("button","linkbtn","Выйти");lv.type="button";lv.addEventListener("click",()=>{if(!t.spb){toast("Сначала включите основное расписание");return}if(!lv.dataset.armed){lv.dataset.armed="1";lv.textContent="Точно выйти?";setTimeout(()=>{delete lv.dataset.armed;lv.textContent="Выйти"},4000);return}
     setTrack("conf",false);toast("Вы вышли из челленджа. Прочитанное сохранено")});top.append(lv)}
-  card.append(item,top);
+  card.append(item,top);card.hidden=on;
 }
 // подсказка на главной основного расписания: «Сейчас идёт челлендж»
 function renderChPromo(){
@@ -4212,11 +4297,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610191500"></script>
-<script type="module" src="auth.js?v=202610191500"></script>
+<script src="globe.js?v=202610191600"></script>
+<script type="module" src="auth.js?v=202610191600"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261019150000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261019160000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
