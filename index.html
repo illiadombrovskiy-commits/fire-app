@@ -1109,7 +1109,7 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .wopt b{font-size:1.02rem}.wopt .ptxt>span:not(.wtag){font-size:.84rem;color:var(--muted)}
 .wopt.own{border-color:var(--flame);background:var(--flame-soft)}
 .wopt.ch{border-color:#2f8f6b}
-.wopt:hover,.wopt:focus-visible{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.wopt:hover,.wopt:focus-visible{box-shadow:0 6px 16px rgba(0,0,0,.1)}
 .wtag{align-self:flex-start;padding:1px 8px;border-radius:99px;background:#2f8f6b;color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
 .wtag.or{background:var(--flame)}
 .wopt .wtag{color:#fff!important;font-size:.68rem!important}
@@ -3125,7 +3125,7 @@ function summary(){
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
-  if(noPlan())out.noPlan=true;
+  if(noPlan())out.noPlan=true;else out.chosen=true;
   return out;
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
@@ -4179,11 +4179,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610191200"></script>
-<script type="module" src="auth.js?v=202610191200"></script>
+<script src="globe.js?v=202610191330"></script>
+<script type="module" src="auth.js?v=202610191330"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261019120000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261019133000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
