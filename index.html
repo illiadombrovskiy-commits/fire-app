@@ -1846,6 +1846,9 @@ function render(){
   let xd=0,xt=0;try{const c=xCount();xd=c[0];xt=c[1]}catch(e){}
   $("heroFlame").classList.toggle("off",nDone+xd===0);$("heroFlame").classList.toggle("half",nDone+xd>0&&nDone+xd<AK.length+xt);
   $("heroSub").textContent="";
+  // огонёк горит не полностью — подскажем, что ещё осталось сегодня
+  if(nDone+xd>0&&nDone+xd<AK.length+xt){const left=AK.filter(k=>!datesOf(k).has(t)).map(k=>(SCHED.spb?"":"«"+SCHED.name+"»: ")+T[k].label).concat((xCount.left||[]).map(n=>n.startsWith("челлендж")?n:"«"+n+"»"));
+    if(left.length)$("heroSub").textContent="Чтобы огонёк разгорелся полностью, сегодня осталось: "+left.join(", ")}
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
@@ -3152,7 +3155,7 @@ function celebrateNext(){
   box.append(em,el("div","celk","Расписание прочитано!"),el("h2",null,"«"+f.name+"»"+(nth>1?" · "+nth+"-й раз":"")));
   const stt=el("div","celst");[[f.days,plural(f.days,"день","дня","дней")],[f.n||0,plural(f.n||0,"отрывок","отрывка","отрывков")]].forEach(([v,l])=>{const c=el("div");c.append(el("b",null,String(v)),el("span",null,l));stt.append(c)});
   box.append(stt,el("p","celp",fmtLong(f.start)+" — "+fmtLong(f.end)),el("p","celp2","Оно сохранено в профиле, в «Прочитанных расписаниях» — рядом с книжной полкой."));
-  const ok=el("button","btn-main","Слава Богу! 🎉");ok.type="button";
+  const ok=el("button","btn-main","Отлично! 🎉");ok.type="button";
   const done=()=>{f.cel=true;ov.classList.add("out");setTimeout(()=>{ov.remove();celOpen=false;if(!retirePlan(f.id)){save();render();setTimeout(celebrateNext,300)}},250)};
   ok.addEventListener("click",done);box.append(ok);ov.append(box);document.body.append(ov);
   vibrate([20,40,20]);
@@ -3280,8 +3283,11 @@ function xSt(id){state.plans=state.plans||{};let p=state.plans[id];if(!p)p=state
 function xS(id){const C=window.__xc||(window.__xc={}),d=xDef(id);if(!d)return null;const key=JSON.stringify(d);if(!C[id]||C[id].k!==key){try{C[id]={k:key,S:buildSched(d)}}catch(e){return null}}return C[id].S}
 function xNext(id,k){const S=xS(id),r=new Set(xSt(id)[k].read);let p=0;while(p<S.plan.length&&(r.has(p)||!part2(S,k,p).book))p++;return p}
 function xToday(id,k){return xSt(id)[k].log.filter(x=>x.d===today())}
-function xCount(){let d=0,t=0;xOn().forEach(id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{const r=xToday(id,k).length>0;if(!r&&xNext(id,k)>=S.plan.length)return;t++;if(r)d++})});
-  const tt=tracks();if(tt.spb&&tt.conf&&confSt().joined&&today()<="2026-10-28"){t++;if(confSt().log.some(x=>x.d===today()))d++}return [d,t]}
+// что ещё не прочитано сегодня в дополнительных расписаниях и челлендже (для огонька «полностью»)
+function xCount(){let d=0,t=0;const left=[];xOn().forEach(id=>{const S=xS(id);if(!S||S.start>today())return;S.keys.forEach(k=>{const r=xToday(id,k).length>0;if(!r&&xNext(id,k)>=S.plan.length)return;t++;if(r)d++;else if(!left.includes(xName(id)))left.push(xName(id))})});
+  const tt=tracks();if(tt.spb&&tt.conf&&confSt().joined&&today()<="2026-10-28"){let all=false;try{const r=confRead();all=CONF_UNITS.every(u=>r.has(u.i))}catch(e){}
+    const rd=confSt().log.some(x=>x.d===today());if(!all||rd){t++;if(rd)d++;else left.push("челлендж «Божья гора»")}}
+  xCount.left=left;return [d,t]}
 function xMark(id,k,p){const st=xSt(id);const first=!anySet().has(today());st[k].log.push({d:today(),p});if(!st[k].read.includes(p))st[k].read.push(p);state.xp=(state.xp||0)+5;save();render();
   const c=xCount();try{if(first)ignite($("heroFlame"),1)}catch(e){}toast(first?"Огонёк зажёгся — день засчитан в серию":"Отмечено ✓")}
 function xUndo(id,k){const st=xSt(id),l=st[k].log;for(let i=l.length-1;i>=0;i--)if(l[i].d===today()){const p=l.splice(i,1)[0].p;if(!l.some(y=>y.p===p))st[k].read=st[k].read.filter(x=>x!==p);break}save();render()}
@@ -4663,11 +4669,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610192330"></script>
-<script type="module" src="auth.js?v=202610192330"></script>
+<script src="globe.js?v=202610201100"></script>
+<script type="module" src="auth.js?v=202610201100"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261019233000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261020110000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
