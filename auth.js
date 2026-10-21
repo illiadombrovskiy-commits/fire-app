@@ -666,10 +666,14 @@ async function main() {
   function globeDoc(s) { return globeFrom(s, myName(), (me && me.photoURL) || "", myFriends.length); }
   // запись для глобуса из сводки (своей или друга из его профиля)
   // ещё не начал читать: новая версия пишет noPlan / chosen; у старой версии смотрим, что ничего не прочитано
+  // кто уже что-то прочитал или выбрал своё расписание — точно не «выбирает» (даже если в профиле остался старый флаг noPlan:
+  // профиль пишется с merge, и раньше noPlan:true не стирался после выбора)
   function stillChoosing(s) {
-    if (!s) return false; if (s.noPlan) return true; if (s.chosen) return false;
+    if (!s) return false;
     const rd = (s.ntRead || 0) + (s.otRead || 0) + ((s.conf && s.conf.u) || 0);
-    return rd === 0 && (!s.plan || s.plan === "spb") && !(s.plansDone || []).length && !(s.best > 0) && !(s.streak > 0);
+    if (rd > 0 || (s.plan && s.plan !== "spb") || (s.plansDone || []).length) return false;
+    if (s.noPlan === true) return true; if (s.chosen) return false;
+    return !(s.best > 0) && !(s.streak > 0);
   }
   const toIce = (p) => Object.assign(p, { b: -2, spots: [], refs: ["Ещё выбирает расписание"], plan: "" });
   function globeFrom(s, name, photo, fc) {
@@ -718,13 +722,20 @@ async function main() {
         try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
       });
       G.setPeople(list);
-      // кто ещё не прочитал ни одного отрывка (даже если не открывал новую версию) — на «Остров выбора»: смотрим их профили
-      const check = list.filter((p) => p.rel !== "me" && p.b !== -2 && !friendData[p.id]).slice(0, 500);
+      // по профилям уточняем, кто на «Острове выбора»: кто ещё ничего не прочитал — туда; кто уже читает, а запись на глобусе
+      // устарела (стоит на острове) — на книгу, которую он читает
+      const fix = (p, d) => {
+        if (!d) return false; const ch = stillChoosing(d);
+        if (ch && p.b !== -2) { toIce(p); return true; }
+        if (!ch && p.b === -2) { const g = globeFrom(d, p.name, p.photo, p.fc); if (g.b === -2) return false; Object.assign(p, g, { name: p.name, photo: p.photo }); return true; }
+        return false;
+      };
+      const check = list.filter((p) => p.rel !== "me" && !friendData[p.id]).slice(0, 500);
       let moved = 0;
       await Promise.all(check.map(async (p) => {
-        try { const ps = await F.getDoc(F.doc(db, "profiles", p.id)); if (ps.exists() && stillChoosing(ps.data())) { toIce(p); moved++; } } catch (e) {}
+        try { const ps = await F.getDoc(F.doc(db, "profiles", p.id)); if (ps.exists() && fix(p, ps.data())) moved++; } catch (e) {}
       }));
-      list.forEach((p) => { if (p.rel !== "me" && p.b !== -2 && friendData[p.id] && stillChoosing(friendData[p.id])) { toIce(p); moved++; } });
+      list.forEach((p) => { if (p.rel !== "me" && friendData[p.id] && fix(p, friendData[p.id])) moved++; });
       if (moved && G.isOpen()) G.setPeople(list);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
   }
