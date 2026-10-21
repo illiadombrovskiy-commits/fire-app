@@ -928,6 +928,25 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .msnext{margin-top:4px;font-size:.8rem!important;color:var(--muted)}
 .wopt.bib{border-color:color-mix(in srgb,var(--flame) 55%,var(--line))}
 .pchurch{align-self:flex-start;margin:-6px 0 4px 6px;font-size:.84rem}
+/* новинка — жёлтое свечение */
+.newglow{position:relative;border-color:#f5c518!important;box-shadow:0 0 0 2px #f5c518,0 0 18px rgba(245,197,24,.55);animation:newglow 1.8s ease-in-out infinite}
+@keyframes newglow{0%,100%{box-shadow:0 0 0 2px #f5c518,0 0 10px rgba(245,197,24,.35)}50%{box-shadow:0 0 0 2px #f5c518,0 0 22px rgba(245,197,24,.75)}}
+.newbadge{display:inline-block;margin:2px 0;padding:2px 9px;border-radius:999px;background:#f5c518!important;color:#3a2a00!important;opacity:1!important;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;align-self:flex-start;width:max-content}
+.pnew.newglow{background:color-mix(in srgb,#f5c518 14%,var(--surface));color:var(--ink)}
+.bn.newglow{border-radius:14px}
+.bnnew{position:absolute;top:-6px;right:-2px;padding:1px 5px;border-radius:999px;background:#f5c518;color:#3a2a00;font-size:.55rem;font-weight:900;letter-spacing:.04em;box-shadow:0 0 0 2px var(--surface)}
+.bnnewtip{position:absolute;bottom:calc(100% + 12px);right:-6px;white-space:nowrap;padding:8px 12px;border-radius:12px;background:#f5c518;color:#3a2a00;font-size:.8rem;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer;animation:ptrbob 1.6s ease-in-out infinite}
+.bnnewtip::after{content:"";position:absolute;right:26px;bottom:-7px;border:7px solid transparent;border-top-color:#f5c518;border-bottom:0}
+@media (prefers-reduced-motion:reduce){.newglow,.bnnewtip{animation:none}}
+/* новинка — фиолетовый, цвет раздела книг служения */
+.newglow{border-color:#8f72f2!important;box-shadow:0 0 0 2px #8f72f2,0 0 16px rgba(143,114,242,.5);animation:newglow2 2s ease-in-out infinite}
+@keyframes newglow2{0%,100%{box-shadow:0 0 0 2px #8f72f2,0 0 8px rgba(143,114,242,.3)}50%{box-shadow:0 0 0 2px #a48cff,0 0 22px rgba(143,114,242,.7)}}
+.newbadge{background:linear-gradient(135deg,#8f72f2,#b06ae8)!important;color:#fff!important}
+.pnew.newglow{background:color-mix(in srgb,#8f72f2 14%,var(--surface));color:var(--ink)}
+.bnnew{background:linear-gradient(135deg,#8f72f2,#b06ae8);color:#fff}
+.bnnewtip{background:linear-gradient(135deg,#7f62ea,#a45fe0);color:#fff;box-shadow:0 6px 18px rgba(80,50,180,.45)}
+.bnnewtip::after{border-top-color:#a45fe0}
+@media (prefers-reduced-motion:reduce){.newglow{animation:none}}
 </style>
 
 </head>
@@ -3183,7 +3202,8 @@ function openPlans(start,E){
     sheet.append(opt("book","Библия","Своё расписание: какие книги, темп и дата начала","bib",()=>custom()));
     if(!churchOn()){const ch=el("button","linkbtn pchurch","или расписание церкви в Санкт-Петербурге — вся Библия за 2 года");ch.type="button";ch.addEventListener("click",()=>{close();enableChurch()});sheet.append(ch)}
     // церковь и челлендж — только если их ещё нет в «Моих расписаниях»
-    sheet.append(opt("scroll","Жизнеизучение и книги служения","Уитнесс Ли и Вочман Ни · сколько сообщений в неделю — решаете вы","msb",()=>ms()));
+    {const mo=opt("scroll","Жизнеизучение и книги служения","Уитнесс Ли и Вочман Ни · сколько сообщений в неделю — решаете вы","msb"+(msNew()?" newglow":""),()=>ms());
+      if(msNew())mo.querySelector(".ptxt b").after(el("span","newbadge","Новое"));sheet.append(mo)}
     if(!confClosed()&&!(tracks().conf&&confSt().joined))sheet.append(opt("peak","Челлендж «Божья гора»","Исход 19–20 и Псалом 119 · до 28 октября · с друзьями","ch",()=>{close();state.planChosen=true;confJoin();render();toast("Вы в челлендже! Он на главной")}));
     // прежние свои расписания, которые сейчас не в списке
     const ex=state.extra||{},fin=new Set((state.finished||[]).map(f=>f.id)),old=myPlanList().filter(d=>!fin.has(d.id)&&!ex[d.id]&&!(d.id===SCHED.id&&tracks().spb&&!noPlan()));
@@ -3283,6 +3303,7 @@ function openPlans(start,E){
   }
   // книга служения: Жизнеизучение или другая книга, темп — сообщений (глав) в неделю
   function ms(E){
+    if(!state.msSeen){state.msSeen=true;save();try{applyPtr();renderSchedList()}catch(e){}}
     const field=(label,input)=>{const l=el("label","pfield");l.append(el("span",null,label),input);return l};
     sheet.textContent="";sheet.classList.add("msform");sheet.append(head(E?"Изменить расписание":"Книга служения",E?()=>{close();openPlanEditor()}:list));sheet.scrollTop=0;
     const f={ms:E?E.ms:160,from:E&&E.from||1,pw:E&&E.pw||2,rev:E?!!E.rev:true,start:E&&E.start||today(),emb:E&&E.emb||"scroll",name:E?E.name||"":"",tab:"ls",named:!!E,wd:E&&Array.isArray(E.wd)?E.wd.map(Boolean):[true,true,true,true,true,true,true],paper:E?!!E.paper:true};
@@ -3448,6 +3469,7 @@ function msShelf(){
 }
 function openBooks(list,who){
   const mine=!list; list=list||booksSummary();
+  if(mine&&!state.libSeen){state.libSeen=true;save();try{applyPtr()}catch(e){}}
   const read=new Map(list.map(x=>[x[0],x]));
   const modal=el("div","fmodal"),sheet=el("div","fsheet bshelf lib");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label",mine?"Моя библиотека":"Библиотека");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
@@ -3842,7 +3864,7 @@ function renderSchedList(){
     // группы: что читаю (на главной) и что на паузе
     if(rows.length){L.append(el("div","slgrp","Читаю · "+rows.length));rows.forEach(r=>L.append(card(r)))}
     else L.append(el("p","sempty","Сейчас вы ничего не читаете. Добавьте расписание — своё, церкви или челлендж."));
-    const ad=el("button","pnew pbig");ad.type="button";ad.append(el("b",null,"＋ Добавить расписание"),el("span",null,"Своё, церкви или челлендж"));ad.addEventListener("click",()=>openPlans());L.append(ad);
+    const ad=el("button","pnew pbig"+(msNew()?" newglow":""));ad.type="button";ad.append(el("b",null,"＋ Добавить расписание"),el("span",null,msNew()?"Новое: Жизнеизучение и книги служения":"Библия, книги служения или челлендж"));if(msNew())ad.append(el("span","newbadge","Новое"));ad.addEventListener("click",()=>openPlans());L.append(ad);
     L.append(el("p","hint","Чтобы убрать расписание, подержите его тумблер секунду — прочитанное сохранится. Все расписания из списка — на главной, у каждого своя кнопка «Прочитал(а)»."));
     if(!x)return}
   // детали
@@ -3948,7 +3970,19 @@ function chooseChallenge(){
    без входа — на вкладке «План» («Сменить расписание»), пока окно расписаний не откроют */
 function ptrStage(){if(noPlan()||noActive())return "noplan";return state.ptrEdit==="on"?"on":""}
 window.ogonekPtr=ptrStage;
+/* Новинка «Жизнеизучение и книги служения»: жёлтые подсказки, пока человек не открыл этот раздел (state.msSeen) */
+function msNew(){return !state.msSeen&&!noPlan()}
+function libNew(){return !state.libSeen&&!noPlan()}
+function applyNew(){const nav=$("botNav");if(!nav)return;const pg=document.body.dataset.page||"home",on=msNew();
+  const pb=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Расписания");
+  const ab=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Награды");
+  nav.querySelectorAll(".bnnew,.bnnewtip").forEach(n=>n.remove());nav.querySelectorAll(".bn.newglow").forEach(b=>b.classList.remove("newglow"));
+  if(pb&&on&&!pb.classList.contains("need")){pb.classList.add("newglow");pb.append(el("span","bnnew","NEW"));
+    if(pg!=="plan"){const t=el("span","bnnewtip","Новое: Жизнеизучение и книги служения ›");t.addEventListener("click",e=>{e.stopPropagation();setPage("plan");setTimeout(()=>openPlans(),250)});pb.append(t)}}
+  if(ab&&libNew()&&!(pb&&on)){ab.classList.add("newglow");ab.append(el("span","bnnew","NEW"))}
+  const lc=$("libCard");if(lc){lc.classList.toggle("newglow",libNew());let bd=lc.querySelector(".newbadge");if(libNew()&&!bd){bd=el("span","newbadge","Новое");lc.querySelector(".libtx b").after(bd)}else if(!libNew()&&bd)bd.remove()}}
 function applyPtr(){
+  try{applyNew()}catch(e){}
   const st=ptrStage(),top=$("loginTop"),logged=isLogged(),pg=document.body.dataset.page||"home";
   const onName=st==="on"&&logged;
   let dot=$("ptrDot");
@@ -5054,11 +5088,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610211930"></script>
-<script type="module" src="auth.js?v=202610211930"></script>
+<script src="globe.js?v=202610211950"></script>
+<script type="module" src="auth.js?v=202610211950"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261021193000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261021195000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
