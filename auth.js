@@ -737,8 +737,88 @@ async function main() {
     const head = $("friendsCard").querySelector(".reading-head"); if (head) head.after(gb); else $("friendsCard").prepend(gb);
   }
 
+  /* ---------- поиск друзей: по имени среди друзей, подписчиков и всех читателей Огонька; код или почта — сразу профиль ---------- */
+  let fsReaders = null, fsReadersAt = 0, fsTimer = 0;
+  const fsNorm = (s) => String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+  async function fsLoadReaders() {
+    if (fsReaders && Date.now() - fsReadersAt < 300000) return fsReaders;
+    const out = [];
+    try {
+      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
+      snap.forEach((d) => { const x = d.data() || {}; out.push({ uid: d.id, name: String(x.name || ""), photo: x.photo || "" }); });
+    } catch (e) { console.warn(e); }
+    fsReaders = out; fsReadersAt = Date.now(); return out;
+  }
+  function fsSetup() {
+    if ($("fsearch")) return;
+    const wrap = el("div", "fsearch"); wrap.id = "fsearch";
+    const inp = document.createElement("input"); inp.type = "search"; inp.id = "fsInput"; inp.className = "fsinput";
+    inp.placeholder = "🔍 Найти друга: имя, код или почта"; inp.autocomplete = "off"; inp.setAttribute("enterkeyhint", "search");
+    const clr = el("button", "fsclear", "×"); clr.type = "button"; clr.hidden = true; clr.setAttribute("aria-label", "Очистить");
+    const res = el("div", "fsres"); res.id = "fsRes"; res.hidden = true;
+    const row = el("div", "fsbar"); row.append(inp, clr); wrap.append(row, res);
+    $("friendsList").before(wrap);
+    const run = () => { clr.hidden = !inp.value; clearTimeout(fsTimer); fsTimer = setTimeout(() => fsSearch(inp.value), 250); };
+    inp.addEventListener("input", run);
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(fsTimer); fsSearch(inp.value, true); } });
+    clr.addEventListener("click", () => { inp.value = ""; clr.hidden = true; res.hidden = true; res.textContent = ""; inp.focus(); });
+  }
+  function fsPerson(uid, name, photo, note) {
+    const row = el("div", "ffrow freq fsrow"); row.style.cursor = "pointer"; row.title = "Открыть профиль";
+    const nm = el("span", "fsname", name || "Читатель");
+    row.append(avatarEl(name, photo, 34), nm);
+    if (note) row.append(el("small", "fsnote", note));
+    const go = el("span", "fsgo", "›"); row.append(go);
+    row.addEventListener("click", () => openProfile(uid === me.uid ? "me" : uid));
+    return row;
+  }
+  async function fsSearch(raw, enter) {
+    const res = $("fsRes"); if (!res) return;
+    const q = String(raw || "").trim(), nq = fsNorm(q);
+    if (!nq) { res.hidden = true; res.textContent = ""; return; }
+    res.hidden = false; res.textContent = "";
+    // код из 6 знаков или почта — ищем точно и открываем профиль
+    const code = q.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const looksCode = !/\s/.test(q) && code.length === 6 && /^[A-Za-z0-9-]+$/.test(q), looksMail = q.includes("@");
+    if (looksCode || looksMail) {
+      const b = el("button", "btn btn-xp fsbtn", looksMail ? "Найти по почте " + q : "Найти по коду " + code); b.type = "button";
+      b.addEventListener("click", () => addFriendByCode(q)); res.append(b);
+      if (enter) { addFriendByCode(q); return; }
+    }
+    if (nq.length < 2) { res.append(el("p", "hint fshint", "Введите хотя бы две буквы имени")); return; }
+    const words = nq.split(" "), hit = (name) => { const n = fsNorm(name); return words.every((w) => n.includes(w)); };
+    const seen = new Set([me.uid]);
+    // свои: друзья, заявки, подписчики и подписки
+    const mine = [];
+    const rel = (u) => myFriends.includes(u) ? "друг" : pendingRequests().includes(u) ? "заявка вам" : myFollowing.includes(u) ? "заявка отправлена" : myFollowers.includes(u) ? "подписчик" : "";
+    const known = [...new Set(myFriends.concat(myFollowing, myFollowers))];
+    await Promise.all(known.map(async (u) => {
+      const d = friendData[u]; let name = d && d.name, photo = d && d.photo;
+      if (!name) { const c = await cardOf(u); name = c.name; photo = c.photo; }
+      if (name && hit(name)) { mine.push({ uid: u, name, photo }); seen.add(u); }
+    }));
+    if (fsNorm($("fsInput") && $("fsInput").value) !== nq) return; // пока искали, запрос изменился
+    if (mine.length) {
+      res.append(el("span", "label", "Ваши друзья и подписки"));
+      mine.sort((a, b) => a.name.localeCompare(b.name, "ru")).forEach((p) => res.append(fsPerson(p.uid, p.name, p.photo, rel(p.uid))));
+    }
+    const wait = el("p", "hint fshint", "Ищу среди читателей Огонька…"); res.append(wait);
+    const all = await fsLoadReaders();
+    if (fsNorm($("fsInput") && $("fsInput").value) !== nq) return;
+    wait.remove();
+    const others = all.filter((p) => !seen.has(p.uid) && p.name && hit(p.name)).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    if (others.length) {
+      res.append(el("span", "label", "Читатели Огонька · " + others.length));
+      others.slice(0, 30).forEach((p) => res.append(fsPerson(p.uid, p.name, p.photo, "")));
+      if (others.length > 30) res.append(el("p", "hint fshint", "Показаны первые 30 — уточните имя"));
+    }
+    if (!mine.length && !others.length) res.append(el("p", "hint fshint", "Никого не нашли. Попросите у друга код из 6 знаков или его почту Google и введите сюда."));
+    else res.append(el("p", "hint fshint", "Нажмите на человека, чтобы открыть профиль и добавить в друзья."));
+  }
+
   function renderFriends() {
     if (!me) return;
+    try { fsSetup(); } catch (e) { console.warn(e); }
     $("myCode").textContent = myCode || "…";
     const box = $("friendsList"); box.textContent = "";
     // заявки в друзья (мои подписчики, которых я ещё не принял)

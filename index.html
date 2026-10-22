@@ -947,6 +947,19 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .bnnewtip{background:linear-gradient(135deg,#7f62ea,#a45fe0);color:#fff;box-shadow:0 6px 18px rgba(80,50,180,.45)}
 .bnnewtip::after{border-top-color:#a45fe0}
 @media (prefers-reduced-motion:reduce){.newglow{animation:none}}
+.fsearch{margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+.fsbar{position:relative}
+.fsinput{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 40px 11px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);-webkit-appearance:none;appearance:none}
+.fsinput:focus{outline:none;border-color:var(--xp);box-shadow:0 0 0 3px var(--xp-soft)}
+.fsinput::-webkit-search-cancel-button{display:none}
+.fsclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:var(--line);color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
+.fsres{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:14px;border:1.5px solid var(--line)}
+.fsrow{align-items:center;flex-wrap:nowrap}
+.fsrow .fsname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.fsrow .fsnote{color:var(--muted);font-size:12px;white-space:nowrap}
+.fsrow .fsgo{color:var(--muted);font-size:20px;min-width:0}
+.fshint{margin:2px 0 0}
+.fsbtn{align-self:flex-start}
 </style>
 
 </head>
@@ -2135,8 +2148,10 @@ function paceSeries(){
   const dates=[];for(let i=0;i<n;i++)dates.push(add(start,i));
   const out={dates,nt:[],ot:[]};
   KEYS.forEach(k=>{
-    const counts={};state[k].log.forEach(x=>{counts[x.d]=(counts[x.d]||0)+1});
-    let run=state[k].log.filter(x=>x.d<start).length;
+    // считаем прочитанные отрывки (каждый один раз), а не записи журнала: повторные отметки не дают «опережения», а отрывок, отмеченный прочитанным без записи в журнале (после синхронизации с другого устройства), не даёт ложного «отставания»
+    const first={};state[k].log.forEach(x=>{if(x.p!=null&&(!(x.p in first)||x.d<first[x.p]))first[x.p]=x.d});
+    state[k].read.forEach(p=>{if(!(p in first))first[p]=start});
+    const counts={};let run=0;Object.values(first).forEach(d=>{if(d<start)run++;else counts[d]=(counts[d]||0)+1});
     dates.forEach((d,i)=>{
       run+=counts[d]||0;
       let v=run-dueBy(d);
@@ -5088,11 +5103,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610211950"></script>
-<script type="module" src="auth.js?v=202610211950"></script>
+<script src="globe.js?v=202610222330"></script>
+<script type="module" src="auth.js?v=202610222330"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261021195000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261022233000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
