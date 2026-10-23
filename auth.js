@@ -554,6 +554,8 @@ async function main() {
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
     else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
+    // стихи, которые затронули (из сводки профиля)
+    try { const nb = O().notesEl && O().notesEl(d.notes, isMe); if (nb) sheet.append(nb); } catch (e) { console.warn(e); }
     sheet.append(aboutBox, badges);
 
     if (!isMe) {
@@ -677,7 +679,16 @@ async function main() {
     return !s.plan || s.plan === "spb";
   }
   const toIce = (p) => Object.assign(p, { b: -2, spots: [], refs: ["Ещё выбирает расписание"], plan: "" });
+  // свежий стих (сегодня или вчера) — его видят все на глобусе: только ссылка на стих, без слов
+  function verseOf(s) {
+    const t = O().today(), y = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
+    const n = (Array.isArray(s && s.notes) ? s.notes : []).find((z) => z && z.v && z.d && (z.d === t || z.d === y));
+    return n ? { note: String(n.v).slice(0, 40), nd: n.d } : {};
+  }
   function globeFrom(s, name, photo, fc) {
+    return Object.assign(globeFrom0(s, name, photo, fc), verseOf(s));
+  }
+  function globeFrom0(s, name, photo, fc) {
     const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
     // ещё не выбрал расписание — стоит на «Острове выбора», без книги
     if (stillChoosing(s)) return { name: String(name || "Читатель").slice(0, 60), photo: photo || "", b: -2, refs: ["Ещё выбирает расписание"], plan: "", streak: s.streak || 0, lit: "", seen: t, fc: fc || 0, spots: [] };
@@ -695,7 +706,9 @@ async function main() {
   function publishGlobe(s) {
     if (!me) return;
     const ref = F.doc(db, "globe", me.uid);
-    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, globeDoc(s))).catch((e) => console.warn(e));
+    const doc = globeDoc(s);
+    // если правила Firestore ещё не обновлены (нет полей note/nd) — сохраняем без стиха
+    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); delete d2.note; delete d2.nd; return F.setDoc(ref, d2); })).catch((e) => console.warn(e));
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
   async function openGlobe() {
@@ -716,12 +729,14 @@ async function main() {
       // все, у кого есть запись на глобусе
       const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
       const list = [mine], have = new Set([me.uid]);
-      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, rel: relOf(d.id) }); });
+      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "", nd: typeof x.nd === "string" ? x.nd : "", rel: relOf(d.id) }); });
       // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
       Object.keys(friendData).forEach((u) => {
         const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
         try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
       });
+      // слова к стиху видят только друзья (и я сам)
+      list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 200); });
       G.setPeople(list);
       // кто ещё не прочитал ни одного отрывка (даже если не открывал новую версию) — на «Остров выбора»: смотрим их профили
       const check = list.filter((p) => p.rel !== "me" && p.b !== -2 && !friendData[p.id]).slice(0, 500);
@@ -734,6 +749,7 @@ async function main() {
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
   }
   {
+    window.ogonekOpenGlobe = () => openGlobe(); // кнопка-глобус в нижней панели
     const gb = el("button", "globebtn"); gb.type = "button";
     const txt = el("span"); txt.append(el("b", null, "Глобус читателей"), el("small", null, "Найдите тех, кто читает Библию вместе с вами"));
     gb.append(el("span", "gbplanet"), txt);

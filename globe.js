@@ -142,7 +142,13 @@
 .gmodal .gfl{margin-left:auto;text-align:center;font-weight:700;color:#7e86b8}.gmodal .gfl.on{color:#ffb020}
 .gmodal .gacts{display:flex;gap:8px;margin-top:10px}.gmodal .gacts .gbtn{flex:1}
 .gmodal .gppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.gmodal .gcard[hidden]{display:none}`;
+.gmodal .gcard[hidden]{display:none}
+.gmodal .gcx{position:sticky;top:0;float:right;z-index:2;margin:-2px -4px 4px 10px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:#222a55;color:#eef0fa;font-size:1rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.gmodal .gvchip{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#ffb020;color:#fff;font-weight:900;font-size:.8rem;line-height:1}
+.gmodal .gverse{margin-top:10px;padding:9px 11px;border-radius:12px;background:rgba(255,176,32,.12);border-left:3px solid #ffb020}
+.gmodal .gvtop{display:flex;align-items:baseline;gap:8px}.gmodal .gvtop b{color:#ffe2c4}.gmodal .gvtop small{margin-left:auto;color:#a9b0d6;white-space:nowrap}
+.gmodal .gvq{color:#ffb020;font-weight:900}
+.gmodal .gvw{margin-top:4px;color:#eef0fa;font-size:.9rem;overflow-wrap:anywhere}`;
   function addCss() { if (document.getElementById("globeCss")) return; const s = document.createElement("style"); s.id = "globeCss"; s.textContent = CSS; document.head.append(s); }
   // стикеры в стиле приложения (как значки нижних вкладок)
   const STK = {
@@ -160,9 +166,13 @@
   const COL = ["#D85A30", "#534AB7", "#0F6E56", "#993556", "#185FA5", "#854F0B", "#3B6D11"];
   let opts = null, people = [], root = null, cv = null, ctx = null, raf = 0, W = 0, H = 0, dpr = 1, ro = null;
   let anim = null, OS = 0, yaw = 0, pitch = 0, ty = 0, tp = 0, zoom = 1, tz = 1, vx = 0, vy = 0, fly = false, sel = null, selB = null, filt = "all", t = 0, drag = false, lastT = 0, idleT = 0;
+  let clusters = [];
   let cyw = 1, syw = 0, cp = 1, sp = 0, newIdx = -1;
   const L = nrm([-0.55, 0.45, 0.7]), ZMAX = 10; // можно приблизить к самой земле
   const sh = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+  const yday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  // стих, который затронул (сегодня или вчера)
+  const hasVerse = (p) => !!(p && p.note && p.nd && p.nd >= yday());
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, p: Math.random() * 6 }));
 
@@ -171,7 +181,7 @@
   function goTo(y1, p1, z1, ms) { p1 = Math.max(-1.45, Math.min(1.45, p1)); z1 = Math.max(0.8, Math.min(ZMAX, z1)); vx = vy = 0; fly = false;
     anim = { t0: performance.now(), d: ms || 1100, y0: yaw, p0: pitch, z0: zoom, y1: yaw + sh(y1 - yaw), p1, z1 }; }
   function flyTo(lat, lon) { ty = yaw + sh(-lon - yaw); tp = Math.max(-1.45, Math.min(1.45, lat)); vx = vy = 0; fly = true; }
-  const match = (p) => filt === "fire" ? p.fire : filt === "new" ? (p.rel === "" || p.rel === "req") : true;
+  const match = (p) => filt === "fire" ? p.fire : filt === "verse" ? hasVerse(p) : filt === "new" ? (p.rel === "" || p.rel === "req") : true;
   const lit = (c) => 0.55 + 0.45 * Math.max(0, dot(c, L));
 
   // раскладываем людей по их книгам
@@ -269,14 +279,19 @@
     g = ctx.createRadialGradient(lx, ly, R * 0.25, lx, ly, R * 1.9); g.addColorStop(0, "rgba(2,4,24,0)"); g.addColorStop(1, "rgba(2,4,24,.62)"); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
     // свет огоньков
     ctx.globalCompositeOperation = "lighter";
-    const many = people.length > 250;
+    // свет: горящие рядом люди дают одно общее зарево (чем больше людей, тем ярче и шире, но без пересвета)
+    const gl = new Map(), GS = 56;
     people.forEach((p) => {
       if (!p.o) { p.z = -1; return; }
       const v = rot(p.v); p.z = v[2]; p.sx = cx + v[0] * R; p.sy = cy - v[1] * R;
       if (!p.fire || v[2] < 0) return;
-      const fl = 0.85 + 0.15 * Math.sin(t * 7 + p.ph), rr = Math.min(R * (many ? 0.08 : 0.15), 70) * (0.4 + 0.6 * v[2]) * (match(p) ? 1 : 0.5);
-      const q = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, rr); q.addColorStop(0, "rgba(255,160,60," + (0.5 * fl) + ")"); q.addColorStop(0.4, "rgba(255,100,30," + (0.18 * fl) + ")"); q.addColorStop(1, "rgba(255,80,20,0)");
-      ctx.fillStyle = q; ctx.beginPath(); ctx.arc(p.sx, p.sy, rr, 0, TAU); ctx.fill();
+      const k = Math.floor(p.sx / GS) + "," + Math.floor(p.sy / GS); let b = gl.get(k); if (!b) gl.set(k, b = { x: 0, y: 0, z: 0, n: 0, m: 0, ph: p.ph }); b.x += p.sx; b.y += p.sy; b.z += v[2]; b.n++; if (match(p)) b.m++;
+    });
+    gl.forEach((b) => {
+      const x = b.x / b.n, y = b.y / b.n, z = b.z / b.n, fl = 0.85 + 0.15 * Math.sin(t * 7 + b.ph);
+      const rr = Math.min(R * 0.1 * (0.8 + 0.25 * Math.sqrt(b.n)), 64) * (0.4 + 0.6 * z) * (b.m ? 1 : 0.5), a = Math.min(0.5, 0.32 + 0.04 * Math.sqrt(b.n));
+      const q = ctx.createRadialGradient(x, y, 0, x, y, rr); q.addColorStop(0, "rgba(255,160,60," + (a * fl) + ")"); q.addColorStop(0.4, "rgba(255,100,30," + (0.18 * fl) + ")"); q.addColorStop(1, "rgba(255,80,20,0)");
+      ctx.fillStyle = q; ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.fill();
     });
     ctx.globalCompositeOperation = "source-over"; ctx.restore();
     ctx.strokeStyle = "rgba(140,190,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
@@ -296,17 +311,44 @@
       taken.push(r);
       const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, oy + fs + 2); ctx.fillStyle = o === ICE ? "rgba(191,243,232," + a + ")" : "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, oy + fs + 2);
     });
-    // люди
-    // где люди стоят плотно — без кружков (только огонь или точка); кружки возвращаются при приближении
-    const vis = people.filter((p) => p.z > 0.05), bins = new Map(), BS = 26, key = (x, y) => x + "," + y;
-    vis.forEach((p) => { const k = key(Math.floor(p.sx / BS), Math.floor(p.sy / BS)); bins.set(k, (bins.get(k) || 0) + 1); });
-    vis.forEach((p) => { const bx = Math.floor(p.sx / BS), by = Math.floor(p.sy / BS); let n = 0; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) n += bins.get(key(bx + i, by + j)) || 0; p.crowd = n > 3; });
-    vis.sort((a, b) => a.z - b.z).forEach((p) => {
+    // люди. Где плотно — собираем в «костёр» с числом людей; при приближении костры распадаются на отдельных людей.
+    // Я и выбранный человек всегда стоят отдельно.
+    const vis = people.filter((p) => p.z > 0.05 && p.o && (filt === "all" || filt === "new" || match(p) || p.rel === "me" || p === sel)), CR = 42, grid = new Map(), gk = (x, y) => x + "," + y;
+    vis.forEach((p) => { p.cl = null; p.solo = false; const k = gk(Math.floor(p.sx / CR), Math.floor(p.sy / CR)); let c = grid.get(k); if (!c) grid.set(k, c = []); c.push(p); });
+    const prio = (p) => (p.rel === "me" ? 100 : 0) + (p === sel ? 90 : 0) + (p.rel === "friend" ? 8 : 0) + (hasVerse(p) ? 4 : 0) + (p.fire ? 2 : 0) + p.z;
+    const solo = []; clusters = [];
+    vis.slice().sort((x, y) => prio(y) - prio(x)).forEach((p) => {
+      if (p.cl || p.solo) return;
+      if (p.rel === "me" || p === sel) { p.solo = true; solo.push(p); return; }
+      const bx = Math.floor(p.sx / CR), by = Math.floor(p.sy / CR), m = [];
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) (grid.get(gk(bx + i, by + j)) || []).forEach((q) => { if (!q.cl && !q.solo && q.rel !== "me" && q !== sel && Math.hypot(q.sx - p.sx, q.sy - p.sy) < CR) m.push(q); });
+      if (m.length <= 2) { m.forEach((q) => { q.solo = true; solo.push(q); }); if (!m.includes(p)) { p.solo = true; solo.push(p); } return; }
+      const c = { x: p.sx, y: p.sy, z: p.z, lead: p, m, lit: m.filter((q) => q.fire).length, verse: m.some((q) => hasVerse(q) && !q.twin), friend: m.some((q) => q.rel === "friend"), any: m.some(match) };
+      m.forEach((q) => { q.cl = c; }); clusters.push(c);
+    });
+    // костры
+    clusters.sort((x, y) => x.z - y.z).forEach((c) => {
+      const s = (0.6 + 0.4 * c.z) * Math.min(1.5, 0.8 + 0.25 * zoom) * 1.15;
+      ctx.globalAlpha = (c.any ? 1 : 0.22) * Math.min(1, c.z * 3);
+      if (c.friend) { ctx.lineWidth = 2; ctx.strokeStyle = "#8fd0ff"; ctx.beginPath(); ctx.arc(c.x, c.y - 5 * s, 11 * s, 0, TAU); ctx.stroke(); }
+      if (c.lit) flame(c.x, c.y, s, 1 + 0.1 * Math.sin(t * 9 + c.lead.ph)); else sleepFlame(c.x, c.y, s * 0.9, 1);
+      const n = c.m.filter((q) => !q.twin).length || c.m.length, vmode = filt === "verse", txt = (vmode ? "❞ " : "") + n;
+      ctx.font = "800 " + Math.round(11 * Math.min(1.3, s)) + "px system-ui,sans-serif"; ctx.textAlign = "center";
+      const w = Math.max(18, ctx.measureText(txt).width + 10), h = 16 * Math.min(1.3, s), px = c.x + 9 * s, py = c.y + 2 * s;
+      ctx.fillStyle = vmode ? "#ffb020" : c.lit ? "#ff8a1f" : "#3a4270"; ctx.strokeStyle = "#0b1030"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(px, py, w, h, h / 2); else ctx.rect(px, py, w, h); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.fillText(txt, px + w / 2, py + h * 0.74);
+      if (false) { const bx = c.x + 10 * s, by = c.y - 19 * s, br = 6 * s; ctx.fillStyle = "#ffb020"; ctx.strokeStyle = "#0b1030"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.font = "900 " + Math.round(9 * s) + "px system-ui,sans-serif"; ctx.fillText("❞", bx, by + 3.3 * s); }
+      ctx.globalAlpha = 1;
+    });
+    // отдельные люди
+    solo.sort((x, y) => x.z - y.z).forEach((p) => {
       const s = (0.6 + 0.4 * p.z) * Math.min(1.5, 0.8 + 0.25 * zoom);
       ctx.globalAlpha = (match(p) ? 1 : 0.22) * Math.min(1, p.z * 3);
-      if (p.rel && p.rel !== "req" && (!p.crowd || p.rel === "me")) { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+      if (p.rel && p.rel !== "req") { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
       if (p.fire) flame(p.sx + Math.sin(t * 5 + p.ph) * 0.6, p.sy, s, 1 + 0.13 * Math.sin(t * 11 + p.ph));
       else sleepFlame(p.sx, p.sy, s * 0.9, 1 + 0.04 * Math.sin(t * 1.6 + p.ph));
+      if (hasVerse(p) && !p.twin && (filt === "verse" || p === sel || p.rel === "me" || p.rel === "friend" || zoom >= 3)) { const bx = p.sx + 10 * s, by = p.sy - 19 * s, br = 6.5 * s; ctx.fillStyle = "#ffb020"; ctx.strokeStyle = "#0b1030"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.font = "900 " + Math.round(10 * s) + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.fillText("❞", bx, by + 3.6 * s); }
       if (p === sel) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 14 * s + 3 * Math.sin(t * 4), 0, TAU); ctx.stroke(); }
       ctx.globalAlpha = 1;
     });
@@ -330,8 +372,11 @@
   }
   function tap(x, y) {
     let best = null, bd = 22;
-    people.forEach((p) => { if (!(p.z > 0.05)) return; const d = Math.hypot(p.sx - x, p.sy - 6 - y); if (d < bd) { bd = d; best = p; } });
+    people.forEach((p) => { if (!(p.z > 0.05) || !p.solo) return; const d = Math.hypot(p.sx - x, p.sy - 6 - y); if (d < bd) { bd = d; best = p; } });
     if (best) return pick(best);
+    // костёр: приближаемся к нему; на самом близком расстоянии — список людей книги
+    let bc = null, cd0 = 26; clusters.forEach((c) => { const d = Math.hypot(c.x + 6 - x, c.y - 2 - y); if (d < cd0) { cd0 = d; bc = c; } });
+    if (bc) { const p = bc.lead; if (zoom < ZMAX * 0.7) { sel = selB = null; card(); return goTo(-p.lon, p.lat, Math.min(ZMAX, Math.max(zoom * 2.4, 2.2)), 700); } return pickB(p.o, zoom); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (ICE.path && ICE.z > -0.1 && ctx.isPointInPath(ICE.path, x * dpr, y * dpr)) return pickB(ICE);
     let bi = null; books.forEach((o) => { if (o.path && o.cont.path && o.z > -0.1 && ctx.isPointInPath(o.path, x * dpr, y * dpr) && ctx.isPointInPath(o.cont.path, x * dpr, y * dpr) && (!bi || o.z > bi.z)) bi = o; });
@@ -348,16 +393,26 @@
     else a.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
     return a;
   }
+  // карточка внизу: крестик в правом верхнем углу закрывает её
   function card() {
+    card0();
+    const cd = root && root.querySelector(".gcard"); if (!cd || cd.hidden) return;
+    const x = el("button", "gcx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть карточку");
+    x.addEventListener("click", () => { sel = selB = null; card(); });
+    cd.prepend(x);
+  }
+  function card0() {
     const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.hidden = false;
     if (sel) {
       const p = sel, row = el("div", "gperson"), mid = el("div"); mid.style.minWidth = "0";
       mid.append(el("div", "gname", p.rel === "me" ? (p.name || "Вы") + " (вы)" : (p.name || "Читатель")));
       (p.refs || []).forEach((r) => mid.append(el("div", "gline", r)));
       if (p.plan) mid.append(el("div", "gline", p.plan));
+      let vbox = null;
+      if (hasVerse(p)) { const vb = el("div", "gverse"), top = el("div", "gvtop"); top.append(el("span", "gvq", "❞"), el("b", null, p.note), el("small", null, p.nd === today() ? "затронул сегодня" : "затронул вчера")); vb.append(top); if (p.w) vb.append(el("div", "gvw", "«" + p.w + "»")); vbox = vb; }
       const fl = el("div", "gfl" + (p.fire ? " on" : "")); fl.append(stkEl(p.fire ? "flame" : "flameOff", 26), el("div", null, String(p.streak || 0)));
       fl.title = p.fire ? "Сегодня уже прочитал(а)" : "Сегодня ещё не читал(а)";
-      row.append(avatar(p), mid, fl); cd.append(row);
+      row.append(avatar(p), mid, fl); cd.append(row); if (vbox) cd.append(vbox);
       const acts = el("div", "gacts");
       if (p.rel === "") { const a = btn("Добавить в друзья", "main"); a.addEventListener("click", () => addFriend(p, a)); acts.append(a); }
       else if (p.rel === "req") { const a = btn("Принять заявку", "main"); a.addEventListener("click", () => addFriend(p, a)); acts.append(a); }
@@ -387,7 +442,8 @@
       cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase()));
       const box = el("div", "gppl");
       if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
-      o.people.slice(0, 40).forEach((p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
+      const rk = (p) => (p.rel === "friend" || p.rel === "me" ? 4 : 0) + (hasVerse(p) ? 2 : 0) + (p.fire ? 1 : 0);
+      o.people.filter((p) => !p.twin || true).slice().sort((a, b) => rk(b) - rk(a)).slice(0, 40).forEach((p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
       if (o.people.length > 40) box.append(el("span", "gmuted", "и ещё " + (o.people.length - 40)));
       cd.append(box); return;
     }
@@ -423,13 +479,15 @@
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
     const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
     const chips = el("div", "gchips");
-    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
-      const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(stkEl(ic, 20), el("span", null, txt));
+    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["verse", "Стихи", ""], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
+      const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(ic ? stkEl(ic, 20) : el("span", "gvchip", "❞"), el("span", null, txt));
+      if (f === "verse") c.title = "Стихи, которые затронули сегодня и вчера. Нажимайте ещё — покажет следующий";
       if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
       c.addEventListener("click", () => {
         if (f === "me") { const m = people.find((p) => p.rel === "me"); if (m) { chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c)); filt = "all"; pick(m, 2.5); } return; }
         filt = f; chips.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c));
         if (f === "new") nextNew();
+        else if (f === "verse") nextVerse();
         // «Все» и «Горят» — снова вся планета: отдаляемся, карточку закрываем
         else { sel = selB = null; card(); goTo(yaw, pitch, 1, 1100); }
       });
@@ -452,6 +510,13 @@
     root.addEventListener("dblclick", (e) => e.preventDefault());
     root.addEventListener("gesturestart", (e) => e.preventDefault());
 
+    // «Стихи»: по очереди люди, которых затронул стих сегодня или вчера
+    let verseIdx = -1;
+    function nextVerse() {
+      const list = people.filter((p) => p.o && !p.twin && hasVerse(p)).sort((a, b) => (b.nd || "").localeCompare(a.nd || ""));
+      if (!list.length) { sel = selB = null; const cd = root.querySelector(".gcard"); cd.textContent = ""; cd.hidden = false; cd.append(el("p", "gmuted", "Сегодня ещё никто не отметил стих. Отметьте свой после чтения — он появится здесь.")); return; }
+      verseIdx = (verseIdx + 1) % list.length; pick(list[verseIdx], 2.2);
+    }
     // «Найти новых»: по очереди те, кто не в друзьях; сначала те, у кого ещё нет друзей
     function nextNew() {
       const list = people.filter((p) => p.o && !p.twin && (p.rel === "" || p.rel === "req")).sort((a, b) => ((a.fc || 0) > 0) - ((b.fc || 0) > 0));

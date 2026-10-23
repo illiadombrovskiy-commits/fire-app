@@ -960,6 +960,31 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .fsrow .fsgo{color:var(--muted);font-size:20px;min-width:0}
 .fshint{margin:2px 0 0}
 .fsbtn{align-self:flex-start}
+/* «Какой стих затронул?» */
+.vsheet{gap:10px}
+.vhead h2{font-size:1.35rem;margin:0}
+.vheadrow{display:flex;align-items:center;gap:10px}
+.vref{color:var(--muted);font-weight:700;margin-top:2px}
+.vlab{font-size:.78rem;font-weight:700;color:var(--muted);margin-top:4px}
+.vchips{display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow-y:auto;padding:2px}
+.vchap{flex-basis:100%;font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.vchip{min-width:40px;height:36px;padding:0 8px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer}
+.vchip.on{border-color:var(--flame);background:color-mix(in srgb,var(--flame) 18%,var(--bg));color:var(--ink)}
+.vin,.vwords{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.vin:focus,.vwords:focus{outline:none;border-color:var(--xp);box-shadow:0 0 0 3px var(--xp-soft)}
+.vwords{resize:vertical;min-height:72px}
+.vcnt{align-self:flex-end;margin:-4px 0 0}
+.vsheet .btn-main:disabled{opacity:.5}
+.vsheet .linkbtn{align-self:center}
+.vwho{text-align:center;margin:-2px 0 0}
+.vnotes{gap:8px}
+.vnote{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:var(--bg);border-left:3px solid var(--flame)}
+.vntop{display:flex;align-items:baseline;gap:8px}
+.vntop small{color:var(--muted);margin-left:auto;white-space:nowrap}
+.vnote p{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.pnote{cursor:pointer}
+.pnote circle{fill:var(--flame);stroke:var(--surface);stroke-width:2.5}
+.pnote text{font-size:12px;font-weight:900;fill:#fff;pointer-events:none}
 </style>
 
 </head>
@@ -1206,6 +1231,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
 .bn .bnl{font-size:.68rem;font-weight:700;letter-spacing:.01em}
 /* вкладки — только иконки, без надписей: панель тоньше (название остаётся в aria-label и заголовке страницы) */
 .bn .bnl{display:none}
+/* глобус открыт — нижняя панель остаётся видна, глобус занимает экран над ней */
+body.globe-open .gmodal{bottom:var(--navh,62px)!important;padding-bottom:10px!important}
+body.globe-open .gmodal .gcard{bottom:10px!important}
+body.globe-open .botnav{z-index:40}
+.bn.bnglobe .bni{font-size:2.6rem!important;margin:-4px 0;animation:bnspin 9s linear infinite}
+@keyframes bnspin{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){.bn.bnglobe .bni{animation:none}}
 .bn{justify-content:center;padding:6px 2px!important}
 .bn .bni{font-size:1.8rem!important}
 .botnav{padding-top:6px!important;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))!important}
@@ -1792,6 +1824,7 @@ const PLAN_SPB=[["Мф.","1:1–2","Быт.","1:1–5"],["Мф.","1:3–7","Бы
 /* icons */
 /* ---------- Иконки в стиле огонька: плоские, двухцветные, с мягкой тенью снизу ---------- */
 const ICO={
+ globe:'<svg viewBox="0 0 64 64"><defs><clipPath id="gpc"><circle cx="32" cy="34" r="22"/></clipPath></defs><circle cx="32" cy="34" r="22" fill="#2f6fd6"/><g clip-path="url(#gpc)"><path fill="#cdb174" d="M10 22c6-5 14-4 16 1 1 4-3 6-1 10 2 3 6 4 5 9-1 4-6 4-8 9-3-5-9-6-11-12-2-6 3-8 1-12z"/><path fill="#5db078" d="M36 16c7-1 14 3 18 9-3 2-6 0-8 2-2 3 1 7-2 9-3 2-6-1-8 1-2 3 0 7-3 8-2-4-5-6-4-11 0-5 5-6 4-10-1-3-3-5 3-8z"/><path fill="#5db078" d="M42 44c4-2 8 0 9 3-2 4-6 6-10 6 0-3-2-6 1-9z"/></g><path fill="#fff" opacity=".18" d="M32 12a22 22 0 0 0-19 11c6-5 15-7 24-5 4 1 8 3 11 6A22 22 0 0 0 32 12z"/><g transform="translate(16 30) scale(.16)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><g transform="translate(40 18) scale(.16)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><g transform="translate(36 40) scale(.13)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><path fill="#fff" d="M8 8l1 2.5 2.5 1-2.5 1L8 15l-1-2.5-2.5-1 2.5-1z"/><circle cx="57" cy="56" r="1.5" fill="#fff"/></svg>',
  flame:'<svg viewBox="0 0 64 80"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
  mount:'<svg viewBox="0 0 64 64"><path fill="#9fb3c8" d="M8 23c3-8 13-9 17-3 4-5 13-4 15 2" stroke="#9fb3c8" stroke-width="5" stroke-linecap="round" fill="none"/><path fill="#2f8f6b" d="M2 58 L26 18 L36 32 L42 24 L62 58Z"/><path fill="#1f6e51" d="M26 18 L36 32 L30 58 L2 58Z" opacity=".35"/><path fill="#fff" d="M26 18 L32 28 L28 27 L24 31 L20 27Z"/><path fill="#ffc53d" d="M31 44 l3-9 3 9z"/></svg>',
  home:'<svg viewBox="0 0 64 64"><path fill="#ff5b3b" d="M6 30 L32 8 L58 30 L53 35 L32 17 L11 35Z"/><path fill="#ffc53d" d="M13 31 L32 15 L51 31 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#e8a520" d="M13 50 H51 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#ff7a1a" d="M26 59 V43 a6 6 0 0 1 12 0 V59Z"/><circle cx="32" cy="29" r="5" fill="#fff"/></svg>',
@@ -2419,6 +2452,7 @@ function renderDayPath(){
     if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
     g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · "+(pp.ref?(pp.me?"ваше расписание, читаете ":"своё расписание, читает ")+pp.ref:dayLabel(Math.min(DAYS-1,Math.floor(pp.pos))))));
     if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
+    try{noteBadge(g,pp,x,y)}catch(e){}
     svg.append(g); if(pp.me)meY=y;
   };
   Object.entries(groups).forEach(([key,gr])=>{
@@ -2521,6 +2555,7 @@ function renderBiblePath(){
     if(!crowd||pathZoom>=1.5){let nm=pp.me?"Вы":(pp.name||"").split(" ")[0];if(crowd&&nm.length>7)nm=nm.slice(0,6)+"…";g.append(sv("text",{x,y:y+30,"text-anchor":"middle",class:"pname"+(crowd?" small":"")},nm))}
     g.append(sv("title",{},(pp.me?"Вы":pp.name)+" · читает "+pp.ref));
     if(window.Ogonek&&window.Ogonek.onPersonClick){g.style.cursor="pointer";g.addEventListener("click",()=>window.Ogonek.onPersonClick(pp.me?"me":pp.id))}
+    try{noteBadge(g,pp,x,y)}catch(e){}
     svg.append(g); if(pp.me&&!meY)meY=y;
   };
   Object.entries(groups).forEach(([key,gr])=>{
@@ -2839,6 +2874,7 @@ function complete(k,pp){
   const frzAfter=freezesNow();
   if(frzAfter>frzBefore&&!bothNow)flyFreeze(fromBox,frzBefore,frzAfter);
   checkAwards();
+  try{askVerseSoon(k,p,bothNow?700:1400)}catch(e){console.warn(e)}
 }
 /* снежинка заморозки летит от кнопки к плашке «Заморозки» */
 function flyFreeze(fromBox,before,after){
@@ -4069,6 +4105,8 @@ function summary(){
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
+  // стихи, которые затронули: друзья видят их в профиле и на тропинке
+  out.notes=(Array.isArray(state.notes)?state.notes:[]).slice(0,10).map(n=>({d:n.d,v:String(n.v||"").slice(0,40),w:String(n.w||"").slice(0,200)}));
   {const np=noPlan();out.noPlan=np;out.chosen=!np} // оба флага явно: профиль сохраняется с merge, старый флаг иначе остаётся
   return out;
 }
@@ -4975,7 +5013,7 @@ window.confOpenChallenges=()=>{setPage("plan");setSchedView("conf")};
 
 
 /* ---------- Нижние вкладки, как в Duolingo: главная разгружена, остальное — по разделам ---------- */
-const PAGES_SPB=[["home","home","Главная"],["friends","friends","Друзья"],["awards","lib","Библиотека","Книги"],["plan","plan","Расписания","График"],["more","more","Ещё"]];
+const PAGES_SPB=[["home","home","Главная"],["friends","friends","Друзья"],["awards","lib","Библиотека","Книги"],["plan","plan","Расписания","График"]];
 let curPage=(()=>{try{return sessionStorage.getItem("ogonek-page")||"home"}catch(e){return "home"}})();
 function pagesSetup(){
   if(pagesSetup.done)return;pagesSetup.done=true;
@@ -4989,9 +5027,9 @@ function pagesSetup(){
   ["schedule","calendarCard"].forEach(id=>tag($(id),"plan"));
   // «Прогресс плана» — в «План», «Как это работает» — в «Ещё»
   const prog=$("progCard"),how=$("howCard"),f2=prog&&prog.closest(".fold2");
-  if(f2){f2.before(prog);f2.after(how);f2.remove()}tag(prog,"plan");tag(how,"more");
+  if(f2){f2.before(prog);f2.after(how);f2.remove()}tag(prog,"plan");tag(how,"awards"); // раздела «Ещё» больше нет — «Как это работает» и «Впервые читаете Библию?» в «Библиотеке»
   
-  tag($("guideOpen"),"more");tag(document.querySelector(".app>.foot"),"more");
+  tag($("guideOpen"),"awards");{const ac=$("awardsCard"),go=$("guideOpen");if(ac&&go)ac.after(go)} // в «Библиотеке»: сначала книги, алмазы и награды, затем путеводительtag(document.querySelector(".app>.foot"),"awards");
   // друзья без входа — подсказка
   const fe=el("section","card fempty");fe.id="friendsEmpty";fe.dataset.page="friends";
   fe.append(el("h2",null,"Друзья"),el("p","muted",""));$("friendsCard").before(fe);
@@ -5024,7 +5062,11 @@ function applyPage(){
   const nav=$("botNav");if(!nav)return;nav.textContent="";
   list.forEach(([p,icon,label,short])=>{const b=el("button","bn"+(p===curPage?" on":""));b.type="button";b.setAttribute("aria-label",label);if(p===curPage)b.setAttribute("aria-current","page");
     const ii=icoEl(icon);ii.classList.add("bni");b.append(ii,el("span","bnl",short||label));
-    b.addEventListener("click",()=>setPage(p));nav.append(b)});
+    b.addEventListener("click",()=>{const G=window.OgonekGlobe;if(G&&G.isOpen&&G.isOpen())G.close();setPage(p)});nav.append(b);
+    // глобус читателей — в центре нижней панели, открывается поверх любой страницы
+    if(p==="friends"){const gb=el("button","bn bnglobe");gb.type="button";gb.setAttribute("aria-label","Глобус читателей");const gi=icoEl("globe");gi.classList.add("bni");gb.append(gi,el("span","bnl","Глобус"));
+      gb.addEventListener("click",()=>{const G=window.OgonekGlobe;if(G&&G.isOpen&&G.isOpen()){G.close();return}if(window.ogonekOpenGlobe)window.ogonekOpenGlobe();else toast("Глобус читателей откроется после входа через Google")});nav.append(gb)}});
+  globeWatch();
   try{applyNoPlan()}catch(e){}
 }
 
@@ -5085,7 +5127,112 @@ try{confRenderCard()}catch(e){console.warn(e)}
 try{applyAppMode()}catch(e){console.warn(e)}
 try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=$('pathBox');if(pb&&!pb.dataset.touched&&!pb.dataset.ctouched)pathCenterMe(false)},300))}catch(e){}
 
+/* ---------- «Какой стих затронул?»: после отметки «Прочитал» — короткий вопрос; друзья видят стих в профиле и на тропинке ----------
+   state.notes = [{d:"2026-10-23", k:"nt", p:25, v:"Мф. 10:31", w:"пара слов"}] — новые сверху, не больше 60.
+   Спрашиваем один раз в день: если сегодня стих уже записан или нажато «Пропустить» — больше не спрашиваем. */
+const NOTE_MAX=60, NOTE_W=200;
+function notesList(){if(!Array.isArray(state.notes))state.notes=[];return state.notes}
+function verseAskedToday(){const t=today();return notesList().some(n=>n.d===t)||state.verseSkip===t}
+// стихи отрывка для кнопок (число стихов в главах — из BOOKS): «10:26–42», «9:35–10:5», «5:3», «7», «2–4»
+function verseChips(book,ref){
+  const b=BOOKS.find(x=>x.a===book), vc=b&&b.v||[], n=c=>vc[c-1]||0;
+  let c1,v1,c2,v2,m;ref=String(ref||"").replace(/\s+/g,"").replace(/[—−‒-]/g,"–");
+  if(m=/^(\d+):(\d+)[–-](\d+):(\d+)$/.exec(ref)){c1=+m[1];v1=+m[2];c2=+m[3];v2=+m[4]}
+  else if(m=/^(\d+):(\d+)[–-](\d+)$/.exec(ref)){c1=c2=+m[1];v1=+m[2];v2=+m[3]}
+  else if(m=/^(\d+):(\d+)$/.exec(ref)){c1=c2=+m[1];v1=v2=+m[2]}
+  else if(m=/^(\d+)[–-](\d+)$/.exec(ref)){c1=+m[1];c2=+m[2];v1=1;v2=n(c2)}
+  else if(m=/^(\d+)$/.exec(ref)){c1=c2=+m[1];v1=1;v2=n(c1)}
+  else return {ch:null,groups:[]};
+  const groups=[];let total=0;
+  for(let c=c1;c<=c2&&c-c1<6;c++){const a=c===c1?v1:1,z=c===c2?v2:n(c);if(!z||z<a)continue;const list=[];for(let v=a;v<=z;v++)list.push(c+":"+v);total+=list.length;groups.push({c,list})}
+  if(total>150)return {ch:c1,groups:[]};
+  return {ch:c1,groups};
+}
+function normVerse(s,ch){s=String(s||"").replace(/\s+/g,"").replace(/-/g,"–");if(!s)return "";if(/^\d+(–\d+)?$/.test(s)&&ch)return ch+":"+s;return s.slice(0,20)}
+function askVerse(k,p){
+  if(verseAskedToday()||document.querySelector(".fmodal"))return;
+  const x=part(k,p);if(!x||!x.book||x.url)return; // книги служения — без вопроса о стихе
+  const ref=refStr(x), vc=verseChips(x.book,x.ref), multi=vc.groups.length>1, first=vc.groups[0]&&vc.groups[0].list[0];
+  const modal=el("div","fmodal vmodal"),sheet=el("div","fsheet vsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Какой стих затронул?");
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};
+  const skip=()=>{state.verseSkip=today();save();close()};
+  const esc=e=>{if(e.key==="Escape")skip()};document.addEventListener("keydown",esc);
+  modal.addEventListener("click",e=>{if(e.target===modal)skip()});
+  const head=el("div","vhead");head.append(el("h2",null,"Какой стих затронул?"),el("div","vref",ref));
+  const chips=el("div","vchips");let picked="";
+  const inp=document.createElement("input");inp.type="text";inp.id="verseIn";inp.className="vin";inp.inputMode="text";inp.autocomplete="off";
+  inp.placeholder="Стих, например "+(first||(vc.ch?vc.ch+":1":"3:16"));inp.setAttribute("aria-label","Стих");
+  vc.groups.forEach(g=>{if(multi)chips.append(el("span","vchap","Глава "+g.c));
+    g.list.forEach(v=>{const b=el("button","vchip",v.split(":")[1]);b.type="button";b.title=x.book+" "+v;b.addEventListener("click",()=>{picked=v;inp.value=v;chips.querySelectorAll(".vchip").forEach(c=>c.classList.toggle("on",c===b));upd()});chips.append(b)})});
+  inp.addEventListener("input",()=>{picked="";chips.querySelectorAll(".vchip").forEach(c=>c.classList.remove("on"));upd()});
+  const ta=document.createElement("textarea");ta.id="verseWords";ta.className="vwords";ta.maxLength=NOTE_W;ta.rows=3;ta.placeholder="Пара слов: чем коснулся этот стих (можно не писать)";ta.setAttribute("aria-label","Пара слов");
+  const cnt=el("small","hint vcnt","0 / "+NOTE_W);ta.addEventListener("input",()=>{cnt.textContent=ta.value.length+" / "+NOTE_W;upd()});
+  const go=el("button","btn-main","Сохранить стих");go.type="button";
+  const no=el("button","linkbtn","Пропустить");no.type="button";no.addEventListener("click",skip);
+  function upd(){go.disabled=!inp.value.trim()}
+  go.addEventListener("click",()=>{
+    const v=normVerse(inp.value,vc.ch);if(!v){inp.focus();return}
+    const n={d:today(),k,p,v:x.book+" "+v,w:ta.value.replace(/\s+/g," ").trim().slice(0,NOTE_W)};
+    notesList().unshift(n);state.notes=state.notes.slice(0,NOTE_MAX);save();close();
+    try{renderPath()}catch(e){}
+    const r=go.getBoundingClientRect();try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
+    toast("Стих сохранён — его увидят на тропинке, в профиле и на глобусе");
+  });
+  upd();
+  const lab=(t,id)=>{const l=el("label","vlab",t);if(id)l.htmlFor=id;return l};
+  sheet.append(head);
+  if(vc.groups.length)sheet.append(lab("Нажмите на номер стиха"),chips);
+  sheet.append(lab(vc.groups.length?"или впишите сами":"Впишите стих","verseIn"),inp,lab("Пара слов","verseWords"),ta,cnt,go,el("small","hint vwho","Стих увидят друзья и все на глобусе читателей. Ваши слова — только друзья."),no);
+  modal.append(sheet);document.body.append(modal);
+}
+// показать вопрос, когда на экране нет праздника, сундука и других окон
+function askVerseSoon(k,p,delay){
+  if(verseAskedToday())return;let tries=0;
+  const tick=()=>{if(++tries>80)return;
+    const busy=!$("celebrate").hidden||($("chest")&&!$("chest").hidden)||document.querySelector(".fmodal");
+    if(busy)return setTimeout(tick,400);askVerse(k,p)};
+  setTimeout(tick,delay||1400);
+}
+// список стихов — для профиля и для окна с тропинки
+function fmtNoteDay(d){const t=today();if(d===t)return "сегодня";if(d===add(t,-1))return "вчера";return parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}
+function noteItem(n){const li=el("div","vnote");const top=el("div","vntop");top.append(el("b",null,n.v),el("small",null,fmtNoteDay(n.d)));li.append(top);if(n.w)li.append(el("p",null,"«"+n.w+"»"));return li}
+function notesEl(notes,isMe){
+  notes=Array.isArray(notes)?notes.filter(n=>n&&n.v):[];
+  if(!notes.length&&!isMe)return null;
+  const box=el("div","freading vnotes");box.append(el("span","label","Стихи, которые затронули"));
+  if(!notes.length)box.append(el("small","hint","После чтения отметьте стих, который затронул, — друзья увидят его здесь."));
+  notes.slice(0,5).forEach(n=>box.append(noteItem(n)));
+  return box;
+}
+function openNotes(name,notes){
+  const modal=el("div","fmodal"),sheet=el("div","fsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");
+  const close=()=>modal.remove();modal.addEventListener("click",e=>{if(e.target===modal)close()});
+  const h=el("div","vhead");const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);
+  const hh=el("div","vheadrow");hh.append(el("h2",null,name),x);h.append(hh,el("div","vref","Стихи, которые затронули"));
+  sheet.append(h);(notes||[]).slice(0,10).forEach(n=>sheet.append(noteItem(n)));
+  modal.append(sheet);document.body.append(modal);x.focus();
+}
+// свежий стих (сегодня или вчера) — значок-цитата у человека на тропинке
+function freshNotes(pp){const n=pp.me?notesList():((pathPeople.find(f=>f.id===pp.id)||{}).notes||[]);const y=add(today(),-1);return n.filter(z=>z&&z.v&&z.d>=y)}
+function noteBadge(g,pp,x,y){
+  const ns=freshNotes(pp);if(!ns.length)return;
+  const b=sv("g",{class:"pnote",role:"button","aria-label":"Стих, который затронул"});
+  b.append(sv("circle",{cx:x+14,cy:y-14,r:9.5}),sv("text",{x:x+14,y:y-9.5,"text-anchor":"middle"},"❞"));
+  b.append(sv("title",{},(pp.me?"Ваш стих: ":(pp.name||"")+": ")+ns[0].v));
+  b.addEventListener("click",e=>{e.stopPropagation();openNotes(pp.me?"Ваши стихи":(pp.name||"Друг"),pp.me?notesList():((pathPeople.find(f=>f.id===pp.id)||{}).notes||[]))});
+  g.append(b);
+}
+
+// пока открыт глобус: нижняя панель видна, кнопка-глобус подсвечена, остальные — нет
+function globeWatch(){
+  if(globeWatch.done)return;globeWatch.done=true;
+  const upd=()=>{const open=!!document.querySelector(".gmodal");document.body.classList.toggle("globe-open",open);
+    const nav=$("botNav");if(!nav)return;document.documentElement.style.setProperty("--navh",nav.offsetHeight+"px");
+    nav.querySelectorAll(".bn").forEach(b=>{const g=b.classList.contains("bnglobe");b.classList.toggle("on",open?g:(!g&&b.getAttribute("aria-label")===((PAGES_SPB.find(x=>x[0]===curPage)||[])[2])))})};
+  new MutationObserver(upd).observe(document.body,{childList:true});upd();
+}
 window.Ogonek={
+  notesEl, openNotes,
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   // отрывок друга по его расписанию (если он на общем церковном или на том же, что и вы)
@@ -5109,11 +5256,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610232100"></script>
-<script type="module" src="auth.js?v=202610232100"></script>
+<script src="globe.js?v=202610240020"></script>
+<script type="module" src="auth.js?v=202610240020"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261023210000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261024002000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

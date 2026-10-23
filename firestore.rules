@@ -91,7 +91,9 @@ service cloud.firestore {
       allow list: if request.auth != null && request.query.limit <= 1000;
       allow delete: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'photo', 'b', 'refs', 'plan', 'streak', 'lit', 'seen', 'fc', 'spots'])
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'b', 'refs', 'plan', 'streak', 'lit', 'seen', 'fc', 'spots', 'note', 'nd'])
+        && request.resource.data.get('note', '') is string && request.resource.data.get('note', '').size() <= 40
+        && request.resource.data.get('nd', '') is string && request.resource.data.get('nd', '').size() <= 10
         && request.resource.data.get('spots', []) is list && request.resource.data.get('spots', []).size() <= 3
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
         && request.resource.data.photo is string && request.resource.data.photo.size() <= 500
