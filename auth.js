@@ -667,9 +667,14 @@ async function main() {
   // запись для глобуса из сводки (своей или друга из его профиля)
   // ещё не начал читать: новая версия пишет noPlan / chosen; у старой версии смотрим, что ничего не прочитано
   function stillChoosing(s) {
-    if (!s) return false; if (s.noPlan) return true; if (s.chosen) return false;
+    if (!s) return false;
+    // кто хоть что-то прочитал (есть серия, рекорд, прочитанные отрывки) — уже не на острове, что бы ни было записано в флагах
     const rd = (s.ntRead || 0) + (s.otRead || 0) + ((s.conf && s.conf.u) || 0);
-    return rd === 0 && (!s.plan || s.plan === "spb") && !(s.plansDone || []).length && !(s.best > 0) && !(s.streak > 0);
+    if (rd > 0 || s.streak > 0 || s.best > 0 || (s.plansDone || []).length) return false;
+    // профиль пишется с merge: старый noPlan:true мог остаться рядом с новым chosen:true — тогда верим chosen
+    if (s.chosen === true) return false;
+    if (s.noPlan === true) return true;
+    return !s.plan || s.plan === "spb";
   }
   const toIce = (p) => Object.assign(p, { b: -2, spots: [], refs: ["Ещё выбирает расписание"], plan: "" });
   function globeFrom(s, name, photo, fc) {
@@ -753,14 +758,18 @@ async function main() {
     if ($("fsearch")) return;
     const wrap = el("div", "fsearch"); wrap.id = "fsearch";
     const inp = document.createElement("input"); inp.type = "search"; inp.id = "fsInput"; inp.className = "fsinput";
-    inp.placeholder = "🔍 Найти друга: имя, код или почта"; inp.autocomplete = "off"; inp.setAttribute("enterkeyhint", "search");
+    inp.placeholder = "🔍 Имя, код или почта"; inp.autocomplete = "off"; inp.setAttribute("enterkeyhint", "search");
     const clr = el("button", "fsclear", "×"); clr.type = "button"; clr.hidden = true; clr.setAttribute("aria-label", "Очистить");
     const res = el("div", "fsres"); res.id = "fsRes"; res.hidden = true;
     const row = el("div", "fsbar"); row.append(inp, clr); wrap.append(row, res);
     $("friendsList").before(wrap);
     const run = () => { clr.hidden = !inp.value; clearTimeout(fsTimer); fsTimer = setTimeout(() => fsSearch(inp.value), 250); };
     inp.addEventListener("input", run);
-    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(fsTimer); fsSearch(inp.value, true); } });
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(fsTimer); fsSearch(inp.value, true); inp.blur(); } });
+    // нажатие в любом другом месте экрана убирает клавиатуру — не нужно жать «Готово»
+    const hideKb = (e) => { if (document.activeElement === inp && e.target !== inp && e.target !== clr) inp.blur(); };
+    document.addEventListener("touchstart", hideKb, { passive: true, capture: true });
+    document.addEventListener("mousedown", hideKb, true);
     clr.addEventListener("click", () => { inp.value = ""; clr.hidden = true; res.hidden = true; res.textContent = ""; inp.focus(); });
   }
   function fsPerson(uid, name, photo, note) {

@@ -1791,6 +1791,7 @@ const ICO={
  mount:'<svg viewBox="0 0 64 64"><path fill="#9fb3c8" d="M8 23c3-8 13-9 17-3 4-5 13-4 15 2" stroke="#9fb3c8" stroke-width="5" stroke-linecap="round" fill="none"/><path fill="#2f8f6b" d="M2 58 L26 18 L36 32 L42 24 L62 58Z"/><path fill="#1f6e51" d="M26 18 L36 32 L30 58 L2 58Z" opacity=".35"/><path fill="#fff" d="M26 18 L32 28 L28 27 L24 31 L20 27Z"/><path fill="#ffc53d" d="M31 44 l3-9 3 9z"/></svg>',
  home:'<svg viewBox="0 0 64 64"><path fill="#ff5b3b" d="M6 30 L32 8 L58 30 L53 35 L32 17 L11 35Z"/><path fill="#ffc53d" d="M13 31 L32 15 L51 31 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#e8a520" d="M13 50 H51 V56 a3 3 0 0 1-3 3 H16 a3 3 0 0 1-3-3Z"/><path fill="#ff7a1a" d="M26 59 V43 a6 6 0 0 1 12 0 V59Z"/><circle cx="32" cy="29" r="5" fill="#fff"/></svg>',
  friends:'<svg viewBox="0 0 64 64"><circle cx="22" cy="22" r="10" fill="#8a72f0"/><path fill="#8a72f0" d="M4 54c0-11 8-19 18-19s18 8 18 19z"/><circle cx="43" cy="24" r="9" fill="#3fa7e0"/><path fill="#3fa7e0" d="M28 56c0-10 7-17 15-17s16 7 16 17z"/><path fill="#fff" opacity=".35" d="M17 18a6 6 0 0 1 8-3" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+ lib:'<svg viewBox="0 0 64 64"><rect x="10" y="17" width="9" height="34" rx="2" fill="#e8532f"/><rect x="20" y="10" width="9" height="41" rx="2" fill="#ffc53d"/><rect x="30" y="19" width="8" height="32" rx="2" fill="#8a72f0"/><rect x="40" y="14" width="9" height="36" rx="2" fill="#3fa7e0" transform="rotate(14 44.5 50)"/><g fill="#fff" opacity=".55"><rect x="10" y="23" width="9" height="2.5"/><rect x="20" y="17" width="9" height="2.5"/><rect x="20" y="42" width="9" height="2.5"/><rect x="30" y="25" width="8" height="2.5"/></g><rect x="5" y="50" width="54" height="8" rx="3" fill="#b07a45"/><rect x="5" y="50" width="54" height="3" rx="1.5" fill="#d29a5e"/></svg>',
  awards:'<svg viewBox="0 0 64 64"><path fill="#e8a520" d="M14 10h36v14a18 18 0 0 1-36 0z"/><path fill="#ffc53d" d="M16 10h32v13a16 16 0 0 1-32 0z"/><path fill="none" stroke="#ffc53d" stroke-width="5" d="M14 15H7v5a9 9 0 0 0 9 9M50 15h7v5a9 9 0 0 1-9 9"/><rect x="28" y="40" width="8" height="9" fill="#e8a520"/><rect x="18" y="49" width="28" height="9" rx="3" fill="#ff7a1a"/><path fill="#fff" d="M32 15l2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg>',
  plan:'<svg viewBox="0 0 64 64"><rect x="7" y="11" width="50" height="46" rx="8" fill="#e8eef6"/><path fill="#ff5b3b" d="M7 19a8 8 0 0 1 8-8h34a8 8 0 0 1 8 8v7H7z"/><rect x="18" y="5" width="6" height="12" rx="3" fill="#6b7a90"/><rect x="40" y="5" width="6" height="12" rx="3" fill="#6b7a90"/><g fill="#9fb3c8"><rect x="15" y="32" width="8" height="7" rx="2"/><rect x="28" y="32" width="8" height="7" rx="2"/><rect x="15" y="44" width="8" height="7" rx="2"/><rect x="28" y="44" width="8" height="7" rx="2"/><rect x="41" y="44" width="8" height="7" rx="2"/></g><rect x="41" y="32" width="8" height="7" rx="2" fill="#2f8f6b"/></svg>',
  more:'<svg viewBox="0 0 64 64"><path fill="#6b4fd8" d="M32 16c-8-6-18-7-27-4v40c9-3 19-2 27 4z"/><path fill="#8a72f0" d="M32 16c8-6 18-7 27-4v40c-9-3-19-2-27 4z"/><path fill="#fff" opacity=".9" d="M10 17c6-2 13-1 18 2v31c-5-3-12-4-18-2zM54 17c-6-2-13-1-18 2v31c5-3 12-4 18-2z"/><path fill="#ff5b3b" d="M40 8h7v20l-3.5-3-3.5 3z"/></svg>',
@@ -3990,7 +3991,7 @@ function msNew(){return !state.msSeen&&!noPlan()}
 function libNew(){return !state.libSeen&&!noPlan()}
 function applyNew(){const nav=$("botNav");if(!nav)return;const pg=document.body.dataset.page||"home",on=msNew();
   const pb=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Расписания");
-  const ab=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Награды");
+  const ab=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Библиотека");
   nav.querySelectorAll(".bnnew,.bnnewtip").forEach(n=>n.remove());nav.querySelectorAll(".bn.newglow").forEach(b=>b.classList.remove("newglow"));
   if(pb&&on&&!pb.classList.contains("need")){pb.classList.add("newglow");pb.append(el("span","bnnew","NEW"));
     if(pg!=="plan"){const t=el("span","bnnewtip","Новое: Жизнеизучение и книги служения ›");t.addEventListener("click",e=>{e.stopPropagation();setPage("plan");setTimeout(()=>openPlans(),250)});pb.append(t)}}
@@ -4063,7 +4064,7 @@ function summary(){
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
-  if(noPlan())out.noPlan=true;else out.chosen=true;
+  {const np=noPlan();out.noPlan=np;out.chosen=!np} // оба флага явно: профиль сохраняется с merge, старый флаг иначе остаётся
   return out;
 }
 window.__gemDebug={chaptersDone:()=>chaptersDone(),pool:()=>gemPool().length,cur:()=>gemRun&&gemRun.qs[gemRun.i]&&gemRun.qs[gemRun.i].q[1],gems:()=>state.gems};
@@ -4937,7 +4938,7 @@ function renderChallenges(){
     const off=el("section","card spboff");off.id="spbOff";off.dataset.page="plan";sch.before(off);
     off.append(el("h2",null,"Основное расписание"),el("p","muted","Сейчас у вас только челлендж. Подключите общее расписание церкви в Санкт-Петербурге — вся Библия за 2 года вместе с друзьями."));
     const b=el("button","cbtn","Подключить основное расписание");b.type="button";b.addEventListener("click",()=>{setTrack("spb",true);toast("Основное расписание подключено")});off.append(b)
-    const off2=off.cloneNode(false);off2.id="spbOff2";off2.dataset.page="awards";off2.append(el("h2",null,"Награды"),el("p","muted","Алмазы и награды — за чтение по основному расписанию. В челлендже вы собираете ⭐ за вопросы и игры."));
+    const off2=off.cloneNode(false);off2.id="spbOff2";off2.dataset.page="awards";off2.append(el("h2",null,"Библиотека"),el("p","muted","Алмазы и награды — за чтение по основному расписанию. В челлендже вы собираете ⭐ за вопросы и игры."));
     const b2=el("button","cbtn","Подключить основное расписание");b2.type="button";b2.addEventListener("click",()=>{setTrack("spb",true);toast("Основное расписание подключено")});off2.append(b2);$("gemsCard").before(off2)}
   card.textContent="";const t=tracks(),c=confSt(),closed=confClosed(),on=t.conf&&!closed;
   card.append(el("div","chh","Челленджи · временные задания"));
@@ -4969,7 +4970,7 @@ window.confOpenChallenges=()=>{setPage("plan");setSchedView("conf")};
 
 
 /* ---------- Нижние вкладки, как в Duolingo: главная разгружена, остальное — по разделам ---------- */
-const PAGES_SPB=[["home","home","Главная"],["friends","friends","Друзья"],["awards","awards","Награды"],["plan","plan","Расписания"],["more","more","Ещё"]];
+const PAGES_SPB=[["home","home","Главная"],["friends","friends","Друзья"],["awards","lib","Библиотека"],["plan","plan","Расписания"],["more","more","Ещё"]];
 let curPage=(()=>{try{return sessionStorage.getItem("ogonek-page")||"home"}catch(e){return "home"}})();
 function pagesSetup(){
   if(pagesSetup.done)return;pagesSetup.done=true;
@@ -5103,11 +5104,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610222330"></script>
-<script type="module" src="auth.js?v=202610222330"></script>
+<script src="globe.js?v=202610231220"></script>
+<script type="module" src="auth.js?v=202610231220"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261022233000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261023122000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
