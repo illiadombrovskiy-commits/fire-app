@@ -1199,20 +1199,20 @@ body:not(.mode-conf):not(.with-conf) #confCard{display:none!important}
 /* нижние вкладки */
 .pg-off{display:none!important}
 .pagehead{font-size:1.6rem;margin:-4px 0 -4px}
-body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
 .botnav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;justify-content:center;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:2px solid var(--line)}
 .bn{position:relative;flex:1;max-width:96px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;border-radius:14px;background:transparent;border:2px solid transparent;color:var(--muted)}
 .bn .bni{font-size:1.65rem;line-height:1;filter:saturate(.9)}
 .bn .bnl{font-size:.68rem;font-weight:700;letter-spacing:.01em}
-/* вкладки: у открытой — иконка и короткое название, у остальных — только крупная иконка */
-.bn:not(.on) .bnl{display:none}
-.bn:not(.on){justify-content:center}
-.bn:not(.on) .bni{font-size:1.9rem}
-.bn.on{flex:1.35;max-width:120px}
+/* вкладки — только иконки, без надписей: панель тоньше (название остаётся в aria-label и заголовке страницы) */
+.bn .bnl{display:none}
+.bn{justify-content:center;padding:6px 2px!important}
+.bn .bni{font-size:1.8rem!important}
+.botnav{padding-top:6px!important;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))!important}
 .bn.on{border-color:var(--link);background:var(--link-soft);color:var(--link)}
 .bn.on .bni{filter:none;transform:scale(1.06)}
 .bnb{position:absolute;top:2px;right:14%;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame);color:#fff;font-style:normal;font-size:.68rem;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
-.toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+.toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
 .fempty p{margin:0}
 /* иконки в стиле огонька */
 .ico{display:inline-grid;place-items:center;flex:none}
@@ -5109,11 +5109,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610231820"></script>
-<script type="module" src="auth.js?v=202610231820"></script>
+<script src="globe.js?v=202610232100"></script>
+<script type="module" src="auth.js?v=202610232100"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261023182000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261023210000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
