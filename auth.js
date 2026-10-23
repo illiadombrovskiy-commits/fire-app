@@ -749,13 +749,8 @@ async function main() {
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
   }
   {
-    window.ogonekOpenGlobe = () => openGlobe(); // кнопка-глобус в нижней панели
-    const gb = el("button", "globebtn"); gb.type = "button";
-    const txt = el("span"); txt.append(el("b", null, "Глобус читателей"), el("small", null, "Найдите тех, кто читает Библию вместе с вами"));
-    gb.append(el("span", "gbplanet"), txt);
-    gb.querySelector(".gbplanet").setAttribute("aria-hidden", "true");
-    gb.addEventListener("click", openGlobe);
-    const head = $("friendsCard").querySelector(".reading-head"); if (head) head.after(gb); else $("friendsCard").prepend(gb);
+    // глобус открывается кнопкой в центре нижней панели; в «Друзьях» отдельной кнопки больше нет
+    window.ogonekOpenGlobe = () => openGlobe();
   }
 
   /* ---------- поиск друзей: по имени среди друзей, подписчиков и всех читателей Огонька; код или почта — сразу профиль ---------- */
