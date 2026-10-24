@@ -4081,8 +4081,8 @@ function chooseChallenge(){
 function ptrStage(){if(noPlan()||noActive())return "noplan";return state.ptrEdit==="on"?"on":""}
 window.ogonekPtr=ptrStage;
 /* Новинка «Жизнеизучение и книги служения»: жёлтые подсказки, пока человек не открыл этот раздел (state.msSeen) */
-function msNew(){return !state.msSeen&&!noPlan()}
-function libNew(){return !state.libSeen&&!noPlan()}
+function msNew(){return false} /* новинка уже знакома всем — подсказки «Новое» больше не показываем */
+function libNew(){return false}
 function applyNew(){const nav=$("botNav");if(!nav)return;const pg=document.body.dataset.page||"home",on=msNew();
   const pb=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Расписания");
   const ab=[...nav.querySelectorAll(".bn")].find(b=>b.getAttribute("aria-label")==="Библиотека");
@@ -5411,7 +5411,7 @@ window.Ogonek={
 <script type="module" src="auth.js?v=202610241045"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261024104500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261024210000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
