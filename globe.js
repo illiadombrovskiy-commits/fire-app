@@ -173,7 +173,7 @@
   const sh = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
   const yday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   // стих, который затронул (сегодня или вчера)
-  const hasVerse = (p) => !!(p && p.note && p.nd && p.nd >= yday());
+  const hasVerse = (p) => !!(p && p.note && p.nd && p.nd === today()); // стих виден только сегодня
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, p: Math.random() * 6 }));
 
@@ -410,7 +410,7 @@
       (p.refs || []).forEach((r) => mid.append(el("div", "gline", r)));
       if (p.plan) mid.append(el("div", "gline", p.plan));
       let vbox = null;
-      if (hasVerse(p)) { const vb = el("div", "gverse"), top = el("div", "gvtop"); top.append(el("span", "gvq", "❞"), el("b", null, p.note), el("small", null, p.nd === today() ? "затронул сегодня" : "затронул вчера")); vb.append(top); if (p.w) vb.append(el("div", "gvw", "«" + p.w + "»")); vbox = vb; }
+      if (hasVerse(p)) { const vb = el("div", "gverse"), top = el("div", "gvtop"); top.append(el("span", "gvq", "❞"), el("b", null, p.note), el("small", null, "затронул сегодня")); vb.append(top); if (p.w) vb.append(el("div", "gvw", "«" + p.w + "»")); vbox = vb; }
       const fl = el("div", "gfl" + (p.fire ? " on" : "")); fl.append(stkEl(p.fire ? "flame" : "flameOff", 26), el("div", null, String(p.streak || 0)));
       fl.title = p.fire ? "Сегодня уже прочитал(а)" : "Сегодня ещё не читал(а)";
       row.append(avatar(p), mid, fl); cd.append(row); if (vbox) cd.append(vbox);

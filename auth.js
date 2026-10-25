@@ -561,8 +561,11 @@ async function main() {
     if (!isMe) {
       // друзья друга: можно сразу добавить к себе
       const fof = el("div", "ffof"), others = (d.friends || []).filter((u) => u !== me.uid);
-      fof.append(el("span", "label", "Друзья · " + others.length));
-      if (!others.length) fof.append(el("span", "hint", "Других друзей пока нет"));
+      // я тоже его друг — показываем себя первым, а в счётчике учитываем
+      const meToo = myFriends.includes(id) || (d.friends || []).includes(me.uid), total = others.length + (meToo ? 1 : 0);
+      fof.append(el("span", "label", "Друзья · " + total));
+      if (meToo) { const r = el("div", "ffrow ffme"); r.append(avatarEl(myName(), me.photoURL, 34), el("span", null, myName() + " (вы)")); const b = el("span", "hint", "Это вы"); b.style.flex = "none"; r.append(b); fof.append(r); }
+      if (!total) fof.append(el("span", "hint", "Друзей пока нет"));
       sheet.append(fof);
       others.slice(0, 50).forEach(async (u) => {
         const row = el("div", "ffrow"); fof.append(row);
@@ -679,10 +682,10 @@ async function main() {
     return !s.plan || s.plan === "spb";
   }
   const toIce = (p) => Object.assign(p, { b: -2, spots: [], refs: ["Ещё выбирает расписание"], plan: "" });
-  // свежий стих (сегодня или вчера) — его видят все на глобусе: только ссылка на стих, без слов
+  // сегодняшний стих — его видят все на глобусе до полуночи: только ссылка на стих, без слов
   function verseOf(s) {
-    const t = O().today(), y = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
-    const n = (Array.isArray(s && s.notes) ? s.notes : []).find((z) => z && z.v && z.d && (z.d === t || z.d === y));
+    const t = O().today();
+    const n = (Array.isArray(s && s.notes) ? s.notes : []).find((z) => z && z.v && z.d === t);
     return n ? { note: String(n.v).slice(0, 40), nd: n.d } : {};
   }
   function globeFrom(s, name, photo, fc) {

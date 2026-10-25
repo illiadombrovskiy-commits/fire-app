@@ -986,6 +986,37 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .pnote{cursor:pointer}
 .pnote circle{fill:var(--flame);stroke:var(--surface);stroke-width:2.5}
 .pnote text{font-size:12px;font-weight:900;fill:#fff;pointer-events:none}
+
+/* «Библиотека»: разделы и одинаковые строки */
+.libsec{font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 6px -8px}
+.libcard .libtx{gap:5px}
+.libbarn{font-size:.86rem!important;font-weight:700;color:var(--ink)!important}
+.libbar{display:block;height:7px;border-radius:99px;background:var(--bg);overflow:hidden}
+.libbar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#d4a017,#b8722c)}
+.lgroup{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.lgroup>*{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:0!important}
+.lgroup>*+*{border-top:1px solid var(--line)!important}
+.lgroup>.card{padding:13px 14px}
+.lgroup .foldhead{gap:10px}
+.lgroup .foldhead h2{flex:1;display:flex;align-items:center;gap:12px;font-size:1.1rem;min-width:0}
+.lico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:none;font-size:1.35rem;line-height:1}
+.lico.lgem{background:color-mix(in srgb,#37b6e8 18%,transparent)}.lico.lgem .gemicon{width:26px;height:26px;margin:0;vertical-align:0}
+.lico.lmedal{background:color-mix(in srgb,#f5c518 20%,transparent)}
+.lico.lguide{background:var(--link-soft)}
+.lico.lhow{background:var(--flame-soft)}
+.ltt{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.ltt b{font-family:var(--display);font-size:1.12rem}
+.ltt small{font-family:var(--body);font-size:.78rem;font-weight:500;color:var(--muted);margin-top:2px}
+.lgroup .gemsum{flex:none;font-size:.78rem}
+.lgroup .gemcount{font-size:1.3rem}
+.lgroup>.guidebanner{padding:13px 14px;gap:12px;align-items:center}
+.lgroup>.guidebanner b{font-size:1.12rem}
+.lgroup>.guidebanner span.gbt{font-size:.78rem;display:block;margin-top:2px}
+.lgroup>.guidebanner .gbgo{font-size:1.5rem;color:var(--muted)}
+.lgroup .foldbody{margin-top:14px}
+/* прочитанное расписание: висит до конца дня */
+.xcard.xfin{border-color:var(--ok)}
+.xfinhint{margin:0;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--ok) 14%,var(--surface));font-size:.86rem;line-height:1.35}
 </style>
 
 </head>
@@ -2207,7 +2238,7 @@ function render(){
 
   {const n=booksSummary().length;$("booksOpen").textContent="📚 Моя библиотека · Библия "+n+" из 66";
     let ls=0,mo=0;try{const m=msShelf();ls=m.filter(o=>o.B.k==="ls").length;mo=m.length-ls}catch(e){}
-    $("libSub").textContent="Библия "+n+" из 66 · Жизнеизучение: начато "+ls+" · книги служения: "+mo}
+    $("libSub").textContent="Жизнеизучение: начато "+ls+" · книги служения: "+mo;const lb=$("libBarI");if(lb)lb.style.width=Math.max(n?3:0,Math.round(n/66*100))+"%";const lnn=$("libBarN");if(lnn)lnn.textContent="Библия · "+n+" из 66"}
   const pr=$("prog");pr.textContent="";
   KEYS.forEach(k=>{
     const a=state[k].read.length, cur=part(k,nextP(k));
@@ -3645,12 +3676,25 @@ function openBooks(list,who){
 /* ---------- пройденные расписания и управление своими расписаниями ---------- */
 // расписание пройдено, когда прочитаны все его дни; запоминаем это навсегда (даже если расписание потом удалить)
 function planDoneInfo(id,def,st){let S=null;try{S=id===SCHED.id?SCHED:buildSched(def||{id})}catch(e){return null}
-  if(!S.keys.every(k=>((st[k]&&st[k].read)||[]).length>=S.plan.length))return null;
+  // прочитано всё, где есть чтение (в книгах служения бывают дни без чтения)
+  if(!S.keys.every(k=>{const r=new Set((st[k]&&st[k].read)||[]);for(let p=0;p<S.plan.length;p++){if(r.has(p))continue;let b=true;try{b=!!part2(S,k,p).book}catch(e){}if(b)return false}return true}))return null;
   const end=S.keys.flatMap(k=>((st[k]&&st[k].log)||[]).map(x=>x.d)).sort().pop()||today();
   const first=S.keys.flatMap(k=>((st[k]&&st[k].log)||[]).map(x=>x.d)).sort()[0]||S.start;
   const d=id===SCHED.id?SCHED.def:def,n=S.keys.reduce((a,k)=>a+(((st[k]&&st[k].read)||[]).length),0);
   const f={id,name:S.name,days:S.plan.length,start:first,end,n};if(d&&d.custom){f.emb=myEmb(d);f.def=JSON.parse(JSON.stringify(d))}return f}
+/* прочитанное расписание висит на главной до конца дня (можно нажать «Отменить»), а назавтра уходит само */
+function finRetire(){
+  if(finRetire.busy)return;finRetire.busy=true;
+  try{const t=today();let ch=false;
+    state.finished=(state.finished||[]).filter(f=>{if(f.gone||f.end<t)return true;
+      const st=f.id===SCHED.id?state:(state.plans||{})[f.id],def=f.id===SCHED.id?SCHED.def:(st&&st.def);
+      let ok=true;try{ok=!!(st&&planDoneInfo(f.id,def,st))}catch(e){}
+      if(!ok)ch=true;return ok}); // отметку отменили в тот же день — расписание снова в работе
+    state.finished.forEach(f=>{if(f.gone||f.end>=t)return;f.gone=true;ch=true;try{retirePlan(f.id)}catch(e){console.warn(e)}});
+    if(ch)save();
+  }finally{finRetire.busy=false}}
 function noteFinished(){
+  try{finRetire()}catch(e){console.warn(e)}
   state.finished=state.finished||[];const have=new Set(state.finished.map(x=>x.id));let added=false;
   const check=(id,def,st)=>{if(have.has(id))return;const f=planDoneInfo(id,def,st);if(f){state.finished.push(f);have.add(id);added=true}};
   check(SCHED.id,SCHED.def,state);
@@ -3668,9 +3712,9 @@ function celebrateNext(){
   const em=el("div","celemb");em.append(icoEl(f.emb||"book"));
   box.append(em,el("div","celk","Расписание прочитано!"),el("h2",null,"«"+f.name+"»"+(nth>1?" · "+nth+"-й раз":"")));
   const stt=el("div","celst");[[f.days,plural(f.days,"день","дня","дней")],[f.n||0,plural(f.n||0,"отрывок","отрывка","отрывков")]].forEach(([v,l])=>{const c=el("div");c.append(el("b",null,String(v)),el("span",null,l));stt.append(c)});
-  box.append(stt,el("p","celp",fmtLong(f.start)+" — "+fmtLong(f.end)),el("p","celp2","Оно сохранено в профиле, в «Прочитанных расписаниях» — рядом с книжной полкой."));
+  box.append(stt,el("p","celp",fmtLong(f.start)+" — "+fmtLong(f.end)),el("p","celp2","Оно сохранено в профиле, в «Прочитанных расписаниях». С главной оно уйдёт завтра — сегодня ещё можно отменить отметку."));
   const ok=el("button","btn-main","Отлично! 🎉");ok.type="button";
-  const done=()=>{f.cel=true;ov.classList.add("out");setTimeout(()=>{ov.remove();celOpen=false;if(!retirePlan(f.id)){save();render();setTimeout(celebrateNext,300)}},250)};
+  const done=()=>{f.cel=true;ov.classList.add("out");setTimeout(()=>{ov.remove();celOpen=false;save();render();setTimeout(celebrateNext,300)},250)}; // уйдёт с главной завтра (finRetire)
   ok.addEventListener("click",done);box.append(ok);ov.append(box);document.body.append(ov);
   vibrate([20,40,20]);
   const r=em.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
@@ -3829,6 +3873,7 @@ function renderExtras(){
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km,el("span","xst"+(dn===S.keys.length?" ok":""),dn===S.keys.length?"готово ✓":dn+" из "+S.keys.length));
     hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);card.append(hd);
+    if(id!=="spb"&&(state.finished||[]).some(f=>f.id===id&&!f.gone)){card.classList.add("xfin");card.append(el("p","xfinhint","🎉 Прочитано до конца! Сегодня ещё можно отменить отметку — завтра это расписание уйдёт с главной."))}
     const tg=el("div","tgrid");
     S.keys.forEach(k=>{const tcd=el("div","tcard"),np=xNext(id,k),ti=dayNo(today())-dayNo(S.start),tod=xToday(id,k),done=tod.length>0;
       const th=el("div","thead");const hb=el("div","tht");hb.append(el("b",null,S.keys.length>1?S.labels[k]:"Сегодня"));th.append(hb);tcd.append(th);
@@ -5084,6 +5129,7 @@ function pagesSetup(){
   
   tag($("guideOpen"),"awards");{const ac=$("awardsCard"),go=$("guideOpen");if(ac&&go)ac.after(go)} // в «Библиотеке»: сначала книги, алмазы и награды, затем путеводитель
   tag(document.querySelector(".app>.foot"),"awards");
+  try{libLayout()}catch(e){console.warn(e)}
   // друзья без входа — подсказка
   const fe=el("section","card fempty");fe.id="friendsEmpty";fe.dataset.page="friends";
   fe.append(el("h2",null,"Друзья"),el("p","muted",""));$("friendsCard").before(fe);
@@ -5100,6 +5146,28 @@ function pathFocusSoon(){const pb=$("pathBox");if(pb){delete pb.dataset.touched;
   requestAnimationFrame(()=>requestAnimationFrame(()=>pathCenterMe(false)));setTimeout(()=>pathCenterMe(false),250)}
 function setPage(p){if(p==="plan")schedView="";
   curPage=p;try{sessionStorage.setItem("ogonek-page",p)}catch(e){}applyPage();window.scrollTo({top:0});if(p==="home")pathFocusSoon();
+}
+/* «Библиотека»: Мои книги → Достижения → Как читать Библию — одинаковые строки с иконками */
+function libLayout(){
+  const lc=$("libCard"),gc=$("gemsCard"),ac=$("awardsCard"),go=$("guideOpen"),hw=$("howCard");if(!lc||!gc||!ac||!go||!hw||libLayout.done)return;libLayout.done=true;
+  const sec=(t,spb)=>{const h=el("div","libsec",t);h.dataset.page="awards";if(spb)h.dataset.spb="1";return h};
+  const tile=(cls,ch)=>{const t=el("span","lico "+cls);t.setAttribute("aria-hidden","true");if(typeof ch==="string")t.textContent=ch;else if(ch)t.append(ch);return t};
+  const two=(t,sub)=>{const w=el("span","ltt");w.append(el("b",null,t));if(sub){const s2=el("small",null,sub);w.append(s2)}return w};
+  const g1=el("div","lgroup");g1.dataset.page="awards";g1.dataset.spb="1";
+  const g2=el("div","lgroup");g2.dataset.page="awards";
+  // книги: полоска прогресса Библии
+  const tx=lc.querySelector(".libtx");if(tx&&!$("libBarI")){const bn=el("span","libbarn","");bn.id="libBarN";const bar=el("span","libbar"),bi=el("i");bi.id="libBarI";bar.append(bi);tx.querySelector("b").after(bn,bar)}
+  lc.before(sec("Мои книги"));
+  lc.after(sec("Достижения",1),g1);g1.append(gc,ac);
+  g1.after(sec("Как читать Библию"),g2);g2.append(go,hw);
+  // алмазы
+  {const h=gc.querySelector(".foldhead h2"),gi=h&&h.querySelector(".gemicon");if(h){if(gi){gi.classList.remove("big");h.prepend(tile("lgem",gi))}const tn=[...h.childNodes].find(n=>n.nodeType===3);if(tn){tn.remove();h.append(two("Алмазы","Вопросы по главам"))}}}
+  // награды
+  {const h=ac.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lmedal","🏅"),two("Награды","Значки за серии и книги"))}}
+  // путеводитель
+  {const gb=go.querySelector(".gbshelf");if(gb)gb.replaceWith(tile("lguide","📖"));const t=go.querySelector(".gbt");if(t)t.textContent="Что это за книга и как читать ссылки вроде «Мф. 3:7–17»"}
+  // как это работает
+  {const h=hw.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lhow","💡"),two("Как работает Огонёк","Огонёк, серия дней и заморозки"))}}
 }
 function applyPage(){
   pagesSetup();
@@ -5238,7 +5306,7 @@ function askVerse(k,p,x0,xid){
   const lab=(t,id)=>{const l=el("label","vlab",t);if(id)l.htmlFor=id;return l};
   sheet.append(head);
   if(vc.groups.length)sheet.append(lab("Нажмите на номер стиха"),chips);
-  sheet.append(lab(vc.groups.length?"или впишите сами":"Впишите стих","verseIn"),inp,lab("Пара слов","verseWords"),ta,cnt,go,el("small","hint vwho","Стих увидят друзья и все на глобусе читателей. Ваши слова — только друзья."),no);
+  sheet.append(lab(vc.groups.length?"или впишите сами":"Впишите стих","verseIn"),inp,lab("Пара слов","verseWords"),ta,cnt,go,el("small","hint vwho","Стих виден до конца дня — друзьям и всем на глобусе. Ваши слова — только друзьям."),no);
   modal.append(sheet);document.body.append(modal);
 }
 const MS_REACT=[["🔥","Зажгло"],["💡","Открылось новое"],["❤️","Тронуло сердце"],["🙏","Помолился"]];
@@ -5267,7 +5335,7 @@ function askMinistry(k,p,x,xid){
   });
   upd();
   const lab=(t,id)=>{const l=el("label","vlab",t);if(id)l.htmlFor=id;return l};
-  sheet.append(head,lab("Ваша реакция"),chips,lab("Пара слов (можно не писать)","msWords"),ta,cnt,go,el("small","hint vwho","Название книги увидят друзья и все на глобусе читателей. Ваши слова — только друзья."),no);
+  sheet.append(head,lab("Ваша реакция"),chips,lab("Пара слов (можно не писать)","msWords"),ta,cnt,go,el("small","hint vwho","Видно до конца дня — друзьям и всем на глобусе. Ваши слова — только друзьям."),no);
   modal.append(sheet);document.body.append(modal);
 }
 // показать вопрос, когда на экране нет праздника, сундука и других окон
@@ -5282,11 +5350,11 @@ function askVerseSoon(k,p,delay,x0,xid){
 function fmtNoteDay(d){const t=today();if(d===t)return "сегодня";if(d===add(t,-1))return "вчера";return parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}
 function noteItem(n){const li=el("div","vnote");const top=el("div","vntop");top.append(el("b",null,n.v),el("small",null,fmtNoteDay(n.d)));li.append(top);if(n.r)li.append(el("small","vnr",n.r));if(n.w)li.append(el("p",null,"«"+n.w+"»"));return li}
 function notesEl(notes,isMe){
-  notes=Array.isArray(notes)?notes.filter(n=>n&&n.v):[];
+  const td=today();notes=Array.isArray(notes)?notes.filter(n=>n&&n.v&&n.d===td).slice(0,1):[]; // только сегодняшний, один — завтра исчезнет
   if(!notes.length&&!isMe)return null;
-  const box=el("div","freading vnotes");box.append(el("span","label","Что затронуло"));
-  if(!notes.length)box.append(el("small","hint","После чтения отметьте, что затронуло, — друзья увидят это здесь."));
-  notes.slice(0,5).forEach(n=>box.append(noteItem(n)));
+  const box=el("div","freading vnotes");box.append(el("span","label","Что затронуло сегодня"));
+  if(!notes.length)box.append(el("small","hint","После чтения отметьте, что затронуло, — друзья увидят это до конца дня."));
+  notes.forEach(n=>box.append(noteItem(n)));
   return box;
 }
 function openNotes(name,notes){
@@ -5297,14 +5365,14 @@ function openNotes(name,notes){
   sheet.append(h);(notes||[]).slice(0,10).forEach(n=>sheet.append(noteItem(n)));
   modal.append(sheet);document.body.append(modal);x.focus();
 }
-// свежий стих (сегодня или вчера) — значок-цитата у человека на тропинке
-function freshNotes(pp){const n=pp.me?notesList():((pathPeople.find(f=>f.id===pp.id)||{}).notes||[]);const y=add(today(),-1);return n.filter(z=>z&&z.v&&z.d>=y)}
+// стих виден только сегодня (до полуночи) и только последний — как история
+function freshNotes(pp){const n=pp.me?notesList():((pathPeople.find(f=>f.id===pp.id)||{}).notes||[]);const t=today();return n.filter(z=>z&&z.v&&z.d===t).slice(0,1)}
 function noteBadge(g,pp,x,y){
   const ns=freshNotes(pp);if(!ns.length)return;
   const b=sv("g",{class:"pnote",role:"button","aria-label":"Стих, который затронул"});
   b.append(sv("circle",{cx:x+14,cy:y-14,r:9.5}),sv("text",{x:x+14,y:y-9.5,"text-anchor":"middle"},"❞"));
   b.append(sv("title",{},(pp.me?"Ваш стих: ":(pp.name||"")+": ")+ns[0].v));
-  b.addEventListener("click",e=>{e.stopPropagation();openNotes(pp.me?"Ваши стихи":(pp.name||"Друг"),pp.me?notesList():((pathPeople.find(f=>f.id===pp.id)||{}).notes||[]))});
+  b.addEventListener("click",e=>{e.stopPropagation();openNotes(pp.me?"Ваш стих сегодня":(pp.name||"Друг"),ns)});
   g.append(b);
 }
 
@@ -5407,11 +5475,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610241045"></script>
-<script type="module" src="auth.js?v=202610241045"></script>
+<script src="globe.js?v=202610252245"></script>
+<script type="module" src="auth.js?v=202610252245"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261024210000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261025224500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
