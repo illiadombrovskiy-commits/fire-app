@@ -960,7 +960,8 @@ async function main() {
     try { await F.setDoc(ref, Object.assign({}, base, { hours, friends: cfg ? !!cfg.friends : true }), { merge: true }); }
     catch (e) { console.warn(e); await F.setDoc(ref, base, { merge: true }); }
   }
-  // окно «Уведомления» (из меню имени)
+  // окно «Уведомления» (из меню имени и из подсказки «Новое»)
+  window.ogonekOpenNotify = () => openNotifySettings();
   function notifyStatus() { if (!pushCapable()) return "unsupported"; return Notification.permission; }
   function openNotifySettings() {
     O().openNotify({
@@ -1019,6 +1020,7 @@ async function main() {
     const about = item(window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : "", "user", "Профиль");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
     const bell = item("", "bell", "Уведомления");
+    try { if (O().ntNew && O().ntNew()) bell.append(el("span", "newbadge", "Новое")); } catch (e) {}
     bell.addEventListener("click", () => { closeUserMenu(); openNotifySettings(); });
     const out = item(" danger", "exit", "Выйти"), outT = out.querySelector(".umt");
     out.addEventListener("click", () => {

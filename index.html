@@ -1097,6 +1097,9 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
 @keyframes phzin{from{opacity:0}to{opacity:1}}
 @keyframes phzpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.phz,.phzbox{animation:none}}
+
+.umitem .newbadge{margin-left:auto}
+.nttip{max-width:calc(100vw - 32px)}
 </style>
 
 </head>
@@ -4230,7 +4233,17 @@ function applyNew(){const nav=$("botNav");if(!nav)return;const pg=document.body.
     if(pg!=="plan"){const t=el("span","bnnewtip","Новое: Жизнеизучение и книги служения ›");t.addEventListener("click",e=>{e.stopPropagation();setPage("plan");setTimeout(()=>openPlans(),250)});pb.append(t)}}
   if(ab&&libNew()&&!(pb&&on)){ab.classList.add("newglow");ab.append(el("span","bnnew","NEW"))}
   const lc=$("libCard");if(lc){lc.classList.toggle("newglow",libNew());let bd=lc.querySelector(".newbadge");if(libNew()&&!bd){bd=el("span","newbadge","Новое");lc.querySelector(".libtx b").after(bd)}else if(!libNew()&&bd)bd.remove()}}
+/* указатель «Новое: уведомления» — сегодня и завтра (26–27.10), пока человек не открыл настройки */
+function ntNew(){let seen=false;try{seen=!!localStorage.getItem("ogonek-nt-seen")}catch(e){}return !seen&&today()<="2026-10-27"&&isLogged()}
+function ntSeen(){try{localStorage.setItem("ogonek-nt-seen","1")}catch(e){}["ntTip","ntDot"].forEach(id=>{const n=$(id);if(n)n.remove()})}
+function applyNtTip(){const on=ntNew(),top=$("loginTop"),pg=document.body.dataset.page||"home";
+  let dot=$("ntDot");const pd=$("ptrDot");if(on&&!dot&&top&&!(pd&&!pd.hidden)){dot=el("span","ptrdot ntdot");dot.id="ntDot";dot.setAttribute("aria-hidden","true");top.after(dot)}if(dot&&!on)dot.remove();
+  let tip=$("ntTip");if(on&&pg==="home"&&!tip&&!$("ptrTip")&&top){tip=el("button","ptrtip nttip","🔔 Новое: настройте уведомления ›");tip.type="button";tip.id="ntTip";
+    tip.addEventListener("click",e=>{e.stopPropagation();ntSeen();if(window.ogonekOpenNotify)window.ogonekOpenNotify();else openNotify({})});
+    const hdr=document.querySelector(".app>.top");if(hdr)hdr.append(tip)}
+  if(tip&&(!on||pg!=="home"))tip.remove()}
 function applyPtr(){
+  try{applyNtTip()}catch(e){}
   try{applyNew()}catch(e){}
   const st=ptrStage(),top=$("loginTop"),logged=isLogged(),pg=document.body.dataset.page||"home";
   const onName=st==="on"&&logged;
@@ -5250,6 +5263,7 @@ function ntHours(c){return c.on?[...new Set(c.times.filter(t=>t.on).map(t=>t.h))
 function ntPart(h){return h<5?"ночью":h<12?"утром":h<17?"днём":"вечером"}
 function ntText(c){const hs=ntHours(c);if(!hs.length)return "выключены";return hs.map(h=>h+":00").join(", ")}
 function openNotify(opts){
+  try{ntSeen()}catch(e){}
   opts=opts||{};let c=ntLoad(),adding=false;
   const modal=el("div","fmodal ntmodal"),sh=el("div","fsheet ntsheet");sh.setAttribute("role","dialog");sh.setAttribute("aria-modal","true");sh.setAttribute("aria-label","Уведомления");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc);
@@ -5619,7 +5633,7 @@ function bookCelebrate(o,after){
   addEventListener("resize",fit,{once:true});
 }
 window.Ogonek={
-  notesEl, openNotes, photoZoom, openNotify, ico:icoEl, ntLoad, ntHours, ntText,
+  notesEl, openNotes, photoZoom, ntNew, openNotify, ico:icoEl, ntLoad, ntHours, ntText,
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   // отрывок друга по его расписанию (если он на общем церковном или на том же, что и вы)
@@ -5643,11 +5657,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610262110"></script>
-<script type="module" src="auth.js?v=202610262110"></script>
+<script src="globe.js?v=202610262150"></script>
+<script type="module" src="auth.js?v=202610262150"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261026211000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261026215000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
