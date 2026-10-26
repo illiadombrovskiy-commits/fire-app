@@ -1,7 +1,9 @@
-"""Огонёк: вечернее напоминание в 22:00 тем, кто сегодня ещё ничего не прочитал.
+"""Огонёк: напоминания тем, кто сегодня ещё ничего не прочитал из Библии.
 
+Часы напоминаний человек выбирает сам в приложении (меню имени → «Уведомления»): push/{uid}.hours,
+например [11, 14, 22]. Если hours нет (старые подписки) — по умолчанию 14:00 и 22:00.
 Запускается каждый час из GitHub Actions (.github/workflows/remind.yml).
-Берёт подписки из Firestore (коллекция push/{uid}: tokens, tz, on, lastSent),
+Берёт подписки из Firestore (коллекция push/{uid}: tokens, tz, on, hours, lastSlot, lastSent),
 смотрит прогресс в profiles/{uid} (ntLast, otLast, streak, friends) и шлёт push через Firebase Cloud Messaging.
 Нужен секрет репозитория FIREBASE_SERVICE_ACCOUNT — JSON ключа сервисного аккаунта Firebase.
 """
@@ -13,6 +15,7 @@ import re
 import sys
 
 HOUR = 22
+DEFAULT_HOURS = [14, 22]
 SITE = "https://bible-fire.ru/"
 PLAN_START = dt.date(2026, 9, 28)
 
@@ -43,9 +46,27 @@ def todays_refs(plan, day):
     return f"{d[0]} {d[1]}", f"{d[2]} {d[3]}"
 
 
-def pick_message(streak_at_risk, streak, refs, friends_read, rnd=random):
-    """Возвращает (заголовок, текст). Варианты чередуются случайно."""
+def pick_message(streak_at_risk, streak, refs, friends_read, rnd=random, hour=HOUR):
+    """Возвращает (заголовок, текст). Варианты чередуются случайно. До 18:00 — дневные тексты."""
     opts = []
+    if hour < 18:
+        if streak_at_risk and streak > 0:
+            dn = f"{streak} {plural(streak, 'день', 'дня', 'дней')}"
+            opts += [
+                ("Огонёк ждёт тебя 🔥", f"Серия {dn} подряд. Найди 10 минут для сегодняшнего отрывка."),
+                ("Продолжим серию?", f"{dn} подряд — сегодняшнее чтение ждёт. Пара минут, и огонёк горит."),
+            ]
+        else:
+            opts += [
+                ("Минутка со Словом 🔥", "Сегодняшние отрывки ждут тебя — всего 10 минут."),
+                ("Огонёк ещё не горит", "Открой сегодняшнее чтение, пока есть свободная минута."),
+            ]
+        if refs:
+            opts.append(("Слово на сегодня", f"{' и '.join(refs)} — 10 минут, и огонёк горит."))
+        if friends_read:
+            who = friends_read[0] + (f" и ещё {len(friends_read) - 1}" if len(friends_read) > 1 else "")
+            opts.append(("Друзья уже читают", f"{who} уже прочитали сегодня — присоединяйся!" if len(friends_read) > 1 else f"{who} уже читает сегодня — присоединяйся!"))
+        return rnd.choice(opts)
     if streak_at_risk and streak > 0:
         dn = f"{streak} {plural(streak, 'день', 'дня', 'дней')}"
         opts += [
@@ -69,24 +90,36 @@ def pick_message(streak_at_risk, streak, refs, friends_read, rnd=random):
     return rnd.choice(opts)
 
 
+def hours_of(push):
+    hs = push.get("hours")
+    if isinstance(hs, list):
+        return sorted({int(h) for h in hs if isinstance(h, (int, float)) and 0 <= int(h) <= 23})
+    return list(DEFAULT_HOURS)
+
+
 def decide(push, profile, now_utc):
-    """Нужно ли слать сейчас. Возвращает (send: bool, local_day, at_risk, streak)."""
+    """Нужно ли слать сейчас. Возвращает (send, local_day, at_risk, streak, slot_hour).
+    Слот — последний выбранный час, который уже наступил; по каждому слоту — одно напоминание в день."""
     tz = int(push.get("tz", 180))
     local = now_utc + dt.timedelta(minutes=tz)
     day = local.date()
-    if not push.get("on") or not push.get("tokens"):
-        return False, day, False, 0
-    if local.hour < int(push.get("hour", HOUR)):
-        return False, day, False, 0
-    if push.get("lastSent") == day.isoformat():
-        return False, day, False, 0
+    hs = [h for h in hours_of(push) if h <= local.hour]
+    if not push.get("on") or not push.get("tokens") or not hs:
+        return False, day, False, 0, None
+    slot = hs[-1]
+    if local.hour > slot + 1:  # пропущенный запуск: поздно слать дневное — ждём следующий слот
+        return False, day, False, 0, slot
+    if push.get("lastSlot") == f"{day.isoformat()}@{slot}":
+        return False, day, False, 0, slot
+    if "lastSlot" not in push and slot >= 22 and push.get("lastSent") == day.isoformat():
+        return False, day, False, 0, slot
     p = profile or {}
     today = day.isoformat()
     if p.get("ntLast") == today or p.get("otLast") == today:
-        return False, day, False, 0
+        return False, day, False, 0, slot
     last = max(p.get("ntLast") or "", p.get("otLast") or "")
     at_risk = last == (day - dt.timedelta(days=1)).isoformat()
-    return True, day, at_risk, int(p.get("streak") or 0)
+    return True, day, at_risk, int(p.get("streak") or 0), slot
 
 
 def main():
@@ -107,9 +140,9 @@ def main():
         uid, push = snap.id, snap.to_dict()
         prof_snap = db.collection("profiles").document(uid).get()
         profile = prof_snap.to_dict() if prof_snap.exists else {}
-        ok, day, at_risk, streak = decide(push, profile, now)
+        ok, day, at_risk, streak, slot = decide(push, profile, now)
         if force:
-            ok, title, body = True, "Проверка напоминания", "Так будет выглядеть напоминание в 22:00 🔥"
+            ok, title, body = True, "Проверка напоминания", "Так будет выглядеть напоминание Огонька 🔥"
         if not ok:
             skipped += 1
             continue
@@ -124,7 +157,7 @@ def main():
             keys = profile.get("keys") or ["nt", "ot"]
             own = [profile.get(k + "Ref") for k in keys if profile.get(k + "Ref")]
             refs = tuple(own) if own else (todays_refs(plan, day) if (profile.get("plan") or "spb") == "spb" else None)
-            title, body = pick_message(at_risk, streak, refs, friends_read)
+            title, body = pick_message(at_risk, streak, refs, friends_read, hour=slot if slot is not None else HOUR)
         dead = []
         for tok in push.get("tokens", []):
             msg = messaging.Message(
@@ -139,7 +172,7 @@ def main():
                 dead.append(tok)
             except Exception as e:  # noqa: BLE001
                 print("ошибка отправки", uid, type(e).__name__, e)
-        patch = {} if force else {"lastSent": day.isoformat()}
+        patch = {} if force else {"lastSent": day.isoformat(), "lastSlot": f"{day.isoformat()}@{slot}"}
         if dead:
             patch["tokens"] = firestore.ArrayRemove(dead)
         if patch:
