@@ -1017,6 +1017,86 @@ textarea.aboutok{animation:aboutglow 1s ease}
 /* прочитанное расписание: висит до конца дня */
 .xcard.xfin{border-color:var(--ok)}
 .xfinhint{margin:0;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--ok) 14%,var(--surface));font-size:.86rem;line-height:1.35}
+
+/* тропинка: обозначение линии плана в углу */
+.plegend{position:relative;height:0;z-index:3}
+.plegbtn{position:absolute;left:10px;top:20px;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--link) 45%,var(--line));background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--link);font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.plegbtn i{display:block;width:18px;height:0;border-top:2px dashed var(--link)}
+/* окна поверх глобуса не прячутся под нижней панелью */
+body.globe-open .fmodal{bottom:var(--navh,70px)}
+body.globe-open .fmodal .fsheet{max-height:calc(100dvh - var(--navh,70px) - 32px);min-height:0}
+/* нижняя панель: иконки крупнее */
+.bn .bni.ico{width:38px!important;height:38px!important}
+.botnav .bn{padding:3px 2px!important}
+.bn.bnglobe .bni.ico{width:46px!important;height:46px!important;margin:-6px 0}
+.bn .bni:not(.ico){font-size:2.2rem!important}
+.bnglobe .bni:not(.ico){font-size:2.9rem!important}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
+.toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
+/* производительность: светятся и колышутся только главный огонёк и огоньки заветов, у друзей — спокойные */
+.flame:not(.off):not(.ignite){animation:none}
+.flame:not(.off) .f2{animation:none}
+#heroFlame:not(.off):not(.ignite){animation:flglow 2.4s ease-in-out infinite}
+#heroFlame:not(.off) .f2,.thead .flame:not(.off) .f2{animation:fl2 .95s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#heroFlame,#heroFlame .f2,.thead .flame .f2{animation:none!important}}
+
+/* настройки уведомлений */
+.ntsheet{gap:14px}
+.ntbell{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--flame-soft);flex:none}.ntbell .ico{width:32px;height:32px;filter:none}
+.ntrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+.ntmain{border-color:color-mix(in srgb,var(--flame) 45%,var(--line))}
+.nttx{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.nttx b{font-size:1rem}.nttx small{font-size:.8rem;color:var(--muted);line-height:1.3}
+.ntgroup{display:flex;flex-direction:column;gap:8px}
+.ntgroup.off{opacity:.45;pointer-events:none}
+.nttime{display:flex;align-items:baseline;gap:8px;flex:1}
+.nttime b{font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1}
+.nttime small{color:var(--muted);font-size:.85rem}
+.ntdel{background:none;color:var(--muted);font-size:.8rem;text-decoration:underline;padding:4px}
+.ntadd{padding:11px;border-radius:14px;border:1.5px dashed var(--link);background:var(--link-soft);color:var(--link);font-weight:700}
+.ntpick{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+.nthours{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.nth{padding:9px 0;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:.85rem;font-variant-numeric:tabular-nums}
+.nth.have{opacity:.35}
+.ntpick .linkbtn{align-self:center}
+.ntsw{position:relative;flex:none;width:52px;height:32px;cursor:pointer}
+.ntsw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.ntsw span{position:absolute;inset:0;border-radius:999px;background:var(--off);transition:background .2s}
+.ntsw span::after{content:"";position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.ntsw input:checked+span{background:var(--ok)}
+.ntsw input:checked+span::after{transform:translateX(20px)}
+.ntsw input:focus-visible+span{outline:3px solid var(--xp);outline-offset:2px}
+.ntperm{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--flame-soft)}
+.ntperm p{margin:0;font-size:.9rem;line-height:1.4}
+.ntbtn{width:100%}
+.ntfoot{text-align:center;margin:0}
+/* пробное уведомление (демо) — как баннер на телефоне */
+.ntbanner{position:fixed;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:18px;background:color-mix(in srgb,#2a2f45 92%,transparent);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:ntin .35s cubic-bezier(.2,1.2,.4,1)}
+.ntbanner .ntapp{width:36px;height:36px;border-radius:9px;background:#ff7a1a;display:grid;place-items:center;font-size:1.2rem;flex:none}
+.ntbanner b{display:block;font-size:.9rem}.ntbanner span{font-size:.86rem;opacity:.9;line-height:1.3}
+.ntbanner small{margin-left:auto;font-size:.72rem;opacity:.6}
+@keyframes ntin{from{transform:translateY(-120%)}to{transform:none}}
+/* тропинка: «По плану» и дата в две строки */
+.plegbtn span{display:flex;flex-direction:column;line-height:1.15;text-align:left}
+.plegbtn span small{font-size:.72rem;font-weight:700;opacity:.85}
+
+/* меню имени: иконки */
+.umitem.umico{display:flex;align-items:center;gap:12px}
+.umi{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--bg);flex:none}
+.umi .ico{width:26px;height:26px;filter:none}
+.umitem.umico.danger{color:#e5484d;background:transparent}
+
+/* фото крупно */
+.fhead .favatar,.gmodal .gav{cursor:zoom-in}
+.phz{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:rgba(5,8,22,.94);animation:phzin .2s ease;cursor:zoom-out}
+.phz.out{opacity:0;transition:opacity .18s}
+.phzbox{display:flex;flex-direction:column;align-items:center;gap:14px;animation:phzpop .25s cubic-bezier(.2,1.3,.4,1)}
+.phzbox img,.phzl{width:min(82vw,420px);height:min(82vw,420px);border-radius:28px;object-fit:cover;box-shadow:0 20px 60px rgba(0,0,0,.5);background:#2a2f45}
+.phzl{display:grid;place-items:center;font-family:var(--display);font-size:min(40vw,200px);font-weight:800;color:#fff}
+.phzn{color:#fff;font-family:var(--display);font-size:1.4rem;font-weight:700;text-align:center}
+.phzx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem;line-height:1}
+@keyframes phzin{from{opacity:0}to{opacity:1}}
+@keyframes phzpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.phz,.phzbox{animation:none}}
 </style>
 
 </head>
@@ -1904,6 +1984,9 @@ const PLAN_SPB=[["Мф.","1:1–2","Быт.","1:1–5"],["Мф.","1:3–7","Бы
 /* icons */
 /* ---------- Иконки в стиле огонька: плоские, двухцветные, с мягкой тенью снизу ---------- */
 const ICO={
+ user:'<svg viewBox="0 0 64 64"><circle cx="32" cy="21" r="12" fill="#ff9a3c"/><path fill="#ff7a1a" d="M9 58c0-13 10-23 23-23s23 10 23 23z"/><path d="M26 16a8 8 0 0 1 9-4" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".45"/></svg>',
+ bell:'<svg viewBox="0 0 64 64"><rect x="29" y="3" width="6" height="8" rx="3" fill="#e8a520"/><path fill="#ffc53d" d="M32 8c-11 0-19 9-19 20v12l-6 8h50l-6-8V28c0-11-8-20-19-20z"/><path fill="#e8a520" d="M7 48h50v3a3 3 0 0 1-3 3H10a3 3 0 0 1-3-3z"/><circle cx="32" cy="57" r="5" fill="#ff7a1a"/><path d="M21 28a11 11 0 0 1 7-11" stroke="#fff" stroke-width="3.5" stroke-linecap="round" fill="none" opacity=".5"/></svg>',
+ exit:'<svg viewBox="0 0 64 64"><rect x="9" y="6" width="30" height="52" rx="4" fill="#8a72f0"/><path fill="#6b4fd8" d="M9 10l18 6v44l-14-2a4 4 0 0 1-4-4z"/><circle cx="22" cy="35" r="2.5" fill="#ffc53d"/><path d="M35 32h21m-8-8 8 8-8 8" stroke="#e5484d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
  globe:'<svg viewBox="0 0 64 64"><defs><clipPath id="gpc"><circle cx="32" cy="34" r="22"/></clipPath></defs><circle cx="32" cy="34" r="22" fill="#2f6fd6"/><g clip-path="url(#gpc)"><path fill="#cdb174" d="M10 22c6-5 14-4 16 1 1 4-3 6-1 10 2 3 6 4 5 9-1 4-6 4-8 9-3-5-9-6-11-12-2-6 3-8 1-12z"/><path fill="#5db078" d="M36 16c7-1 14 3 18 9-3 2-6 0-8 2-2 3 1 7-2 9-3 2-6-1-8 1-2 3 0 7-3 8-2-4-5-6-4-11 0-5 5-6 4-10-1-3-3-5 3-8z"/><path fill="#5db078" d="M42 44c4-2 8 0 9 3-2 4-6 6-10 6 0-3-2-6 1-9z"/></g><path fill="#fff" opacity=".18" d="M32 12a22 22 0 0 0-19 11c6-5 15-7 24-5 4 1 8 3 11 6A22 22 0 0 0 32 12z"/><g transform="translate(16 30) scale(.16)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><g transform="translate(40 18) scale(.16)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><g transform="translate(36 40) scale(.13)"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></g><path fill="#fff" d="M8 8l1 2.5 2.5 1-2.5 1L8 15l-1-2.5-2.5-1 2.5-1z"/><circle cx="57" cy="56" r="1.5" fill="#fff"/></svg>',
  flame:'<svg viewBox="0 0 64 80"><path fill="#ff7a1a" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/><path fill="#ffc53d" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/></svg>',
  mount:'<svg viewBox="0 0 64 64"><path fill="#9fb3c8" d="M8 23c3-8 13-9 17-3 4-5 13-4 15 2" stroke="#9fb3c8" stroke-width="5" stroke-linecap="round" fill="none"/><path fill="#2f8f6b" d="M2 58 L26 18 L36 32 L42 24 L62 58Z"/><path fill="#1f6e51" d="M26 18 L36 32 L30 58 L2 58Z" opacity=".35"/><path fill="#fff" d="M26 18 L32 28 L28 27 L24 31 L20 27Z"/><path fill="#ffc53d" d="M31 44 l3-9 3 9z"/></svg>',
@@ -2063,8 +2146,8 @@ const todayP=()=>datesBefore(iso(new Date()));
 // сколько отрывков должно быть прочитано к концу дня d
 const dueBy=d=>Math.max(0,Math.min(DAYS,datesBefore(sd.add(d,1))));
 const isOffDay=d=>!!WD&&!WD[sd.dow(d)];
-function shortDay(p){return parse(planDate(p)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}
-function dayLabel(p){const s=parse(planDate(p)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});return s.charAt(0).toUpperCase()+s.slice(1)}
+function shortDay(p){return ruFmt(planDate(p),1)}
+function dayLabel(p){return ruFmt(planDate(p),2)}
 function startDay(k,book){return PLAN.findIndex(d=>d[T[k].bi]===book)}
 const BOOKSTARTS=[];KEYS.forEach(k=>PLAN.forEach((d,i)=>{if(!i||PLAN[i-1][T[k].bi]!==d[T[k].bi])BOOKSTARTS.push({i,k,book:d[T[k].bi]})}));
 
@@ -2206,11 +2289,14 @@ function render(){
   const AK=activeKeys(), nDone=AK.filter(k=>datesOf(k).has(t)).length;
   // 0 заветов — огонёк погас; часть — внутри загорается маленький огонёк; все отрывки дня — горит полностью.
   // Если в расписании один завет, огонёк сразу горит полностью.
-  let xd=0,xt=0;try{const c=xCount();xd=c[0];xt=c[1]}catch(e){}
-  $("heroFlame").classList.toggle("off",nDone+xd===0);$("heroFlame").classList.toggle("half",nDone+xd>0&&nDone+xd<AK.length+xt);
+  // огонёк в полную силу — когда прочитана вся Библия на сегодня (основное расписание и свои расписания по Библии);
+  // книги служения, Жизнеизучение и челлендж на силу огонька не влияют, но тоже зажигают его и держат серию
+  let xd=0,xt=0;try{const c=xCount(true);xd=c[0];xt=c[1]}catch(e){}
+  const litAny=nDone+xd>0||anySet().has(t);
+  $("heroFlame").classList.toggle("off",!litAny);$("heroFlame").classList.toggle("half",litAny&&nDone+xd<AK.length+xt);
   $("heroSub").textContent="";
-  // огонёк горит не полностью — подскажем, что ещё осталось сегодня
-  if(nDone+xd>0&&nDone+xd<AK.length+xt){const left=AK.filter(k=>!datesOf(k).has(t)).map(k=>(SCHED.spb?"":"«"+SCHED.name+"»: ")+T[k].label).concat((xCount.left||[]).map(n=>n.startsWith("челлендж")?n:"«"+n+"»"));
+  // огонёк горит не полностью — подскажем, что ещё осталось сегодня по Библии
+  if(litAny&&nDone+xd<AK.length+xt){const left=AK.filter(k=>!datesOf(k).has(t)).map(k=>(SCHED.spb?"":"«"+SCHED.name+"»: ")+T[k].label).concat((xCount.left||[]).map(n=>n.startsWith("челлендж")?n:"«"+n+"»"));
     if(left.length)$("heroSub").textContent="Чтобы огонёк разгорелся полностью, сегодня осталось: "+left.join(", ")}
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
@@ -2442,13 +2528,15 @@ function hashCol(id){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))|
 function spbDayOfRef(s){const m=/^(.*\S)\s+(\d[\d:–—\-]*)$/.exec(s||"");if(!m||!BOOK[m[1]])return null;const book=m[1],[c]=chapRange(m[2]),bi=BOOK[book].t==="nt"?0:2;
   let first=-1;for(let i=0;i<PLAN_SPB.length;i++){const d=PLAN_SPB[i];if(d[bi]!==book)continue;if(first<0)first=i;const [a,z]=chapRange(d[bi+1]);if(c>=a&&c<=z)return i}
   return null}
+const RU_DF={1:new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"short"}),2:new Intl.DateTimeFormat("ru-RU",{weekday:"short",day:"numeric",month:"long"})},RU_DC=new Map();
+function ruFmt(ds,kind){const key=kind+ds;let v=RU_DC.get(key);if(v===undefined){v=RU_DF[kind].format(parse(ds));if(kind===2)v=v.charAt(0).toUpperCase()+v.slice(1);RU_DC.set(key,v)}return v}
 function renderDayPath(){
   const box=$("path"); if(!box)return;
   // тропинка всегда идёт по общему расписанию церкви (как раньше), даже если вы сейчас читаете по своему
   const P=PLAN_SPB, DAYS=P.length, PLAN_START=SPB_START;
   const planDate=i=>add(SPB_START,i), todayP=()=>dayNo(today())-dayNo(SPB_START);
-  const shortDay=i=>parse(planDate(i)).toLocaleDateString("ru-RU",{day:"numeric",month:"short"});
-  const dayLabel=i=>{const t=parse(planDate(i)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});return t.charAt(0).toUpperCase()+t.slice(1)};
+  const shortDay=i=>ruFmt(planDate(i),1);
+  const dayLabel=i=>ruFmt(planDate(i),2);
   const part=(k,i)=>{const d=P[Math.max(0,Math.min(i,DAYS-1))],bi=k==="nt"?0:2;return {book:d[bi],ref:d[bi+1]}};
   const BOOKSTARTS=[];["nt","ot"].forEach(k=>{const bi=k==="nt"?0:2;P.forEach((d,i)=>{if(!i||P[i-1][bi]!==d[bi])BOOKSTARTS.push({i,k,book:d[bi]})})});
   const readSet=k=>SCHED.spb?new Set(state[k].read):new Set();
@@ -2467,12 +2555,14 @@ function renderDayPath(){
   const W=Math.max(280,box.clientWidth||320), gap=58, padT=40, padB=lo===0?160:40, n=hi-lo+1, H=padT+padB+(n-1)*gap, cx=W/2, A=Math.min(90,W*0.26);
   const X=i=>cx+A*Math.sin((i-lo)*Math.PI/3.5), Y=i=>padT+(hi-i)*gap;
   const posXY=pos=>{const a=Math.floor(pos),b=Math.min(hi,a+1),t=pos-a;return [X(a)+(X(b)-X(a))*t,Y(a)+(Y(b)-Y(a))*t]};
-  const svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка чтения: где вы и ваши друзья по плану"});
+  const rn=readSet("nt"),ro=readSet("ot");let rs=0;rn.forEach(x=>rs+=x+1);ro.forEach(x=>rs+=(x+1)*7);
+  const ckey=[W,H,tp,mePos,rn.size,ro.size,rs,lo,hi,DAYS].join("|"),PC=renderDayPath.c;let svg;
+  if(PC&&PC.k===ckey)svg=PC.svg.cloneNode(true);else{
+  svg=sv("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,class:"pathsvg",role:"img","aria-label":"Тропинка чтения: где вы и ваши друзья по плану"});
   let d="";for(let i=lo;i<=hi;i++)d+=(i===lo?"M":"L")+X(i).toFixed(1)+" "+Y(i).toFixed(1);
   svg.append(sv("path",{d,fill:"none",stroke:"var(--trail)","stroke-width":8,"stroke-linecap":"round","stroke-linejoin":"round"}));
   const doneTo=Math.min(hi,mePos);let dd="";for(let i=lo;i<=Math.floor(doneTo);i++)dd+=(i===lo?"M":"L")+X(i).toFixed(1)+" "+Y(i).toFixed(1);
   if(doneTo>lo){const [ex,ey]=posXY(doneTo);dd+="L"+ex.toFixed(1)+" "+ey.toFixed(1);svg.append(sv("path",{d:dd,fill:"none",stroke:"var(--flame)","stroke-width":4,"stroke-linecap":"round","stroke-linejoin":"round","stroke-dasharray":"2 8"}))}
-  const rn=readSet("nt"),ro=readSet("ot");
   for(let i=lo;i<=hi;i++){
     const both=rn.has(i)&&ro.has(i), one=rn.has(i)||ro.has(i);
     const g=sv("g",{class:"pnode"+(both?" both":one?" one":"")});
@@ -2512,15 +2602,19 @@ function renderDayPath(){
     g.append(sv("text",{x:tx,y:sy+76,"text-anchor":"middle"},"Старт · "+parse(PLAN_START).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})));
     g.append(sv("text",{x:tx,y:sy+90,"text-anchor":"middle",class:"pstartsub"},"все начинают отсюда"));
     svg.append(g)}
+  renderDayPath.c={k:ckey,svg:svg.cloneNode(true)}}
   // где по плану нужно быть сегодня: пунктир через всю тропинку и флажок
   {const ty=Y(tp), tx=X(tp), left=tx>cx;
    svg.insertBefore(sv("line",{x1:6,x2:W-6,y1:ty,y2:ty,class:"pplanline"}),svg.firstChild);
    svg.append(sv("circle",{cx:tx,cy:ty,r:20,class:"pplanring"}));
-   const fx=left?14:W-14, anchor=left?"start":"end";
-   const lab=sv("g",{class:"pplanflag"});
-   lab.append(sv("text",{x:fx,y:ty-8,"text-anchor":anchor},"⚑ По плану сегодня"));
-   lab.append(sv("text",{x:fx,y:ty+16,"text-anchor":anchor,class:"pplansub"},shortDay(tp)));
-   svg.append(lab);}
+    // подпись — в левом верхнем углу окна тропинки (на линии её закрывали люди); нажатие — к линии
+    const pb0=$("pathBox");let lg=$("pathLegend");
+    if(pb0&&!lg){lg=el("div","plegend");lg.id="pathLegend";const b=el("button","plegbtn");b.type="button";b.append(el("i"),el("span"));lg.append(b);pb0.before(lg)}
+    if(lg){lg.hidden=false;const b=lg.querySelector("button");{const sp=b.querySelector("span");sp.textContent="";sp.append(el("b",null,"По плану"),el("small",null,shortDay(tp)))}b.setAttribute("aria-label","По плану сегодня — "+shortDay(tp)+". Показать на тропинке");
+      b.onclick=()=>{const pb=$("pathBox");if(pb){pb.dataset.touched="1";pb.scrollTo({top:Math.max(0,ty*pathZoom-pb.clientHeight/2),behavior:"smooth"})}}}}
+  let psig="";try{psig=ckey+"#"+pathZoom+"#"+[...pathOpen].join(",")+"#"+JSON.stringify(people.map(p=>{let v="";try{v=(freshNotes(p)[0]||{}).v||""}catch(e){}return [p.id,p.pos,p.photo,p.name,p.ref,v]}))}catch(e){}
+  if(psig&&renderDayPath.s===psig&&renderDayPath.el&&box.firstChild===renderDayPath.el&&!pathKeep)return;
+  renderDayPath.s=psig;
   // people: grouped by position so avatars on the same spot sit side by side
   const groups={};people.forEach(pp=>{const k=pp.pos.toFixed(2);(groups[k]=groups[k]||[]).push(pp)});
   let meY=0;
@@ -2563,7 +2657,7 @@ function renderDayPath(){
   });
   // zoom: scale the whole drawing; the box scrolls both ways
   svg.setAttribute("width",Math.round(W*pathZoom));svg.setAttribute("height",Math.round(H*pathZoom));
-  box.textContent="";box.append(svg);
+  box.textContent="";box.append(svg);renderDayPath.el=svg;
   const lead=people.slice().sort((a,b)=>b.pos-a.pos)[0];
   $("pathSub").textContent="";
   const pb=$("pathBox");
@@ -3843,10 +3937,10 @@ function xS(id){const C=window.__xc||(window.__xc={}),d=xDef(id);if(!d)return nu
 function xNext(id,k){const S=xS(id),r=new Set(xSt(id)[k].read);let p=0;while(p<S.plan.length&&(r.has(p)||!part2(S,k,p).book))p++;return p}
 function xToday(id,k){return xSt(id)[k].log.filter(x=>x.d===today())}
 // что ещё не прочитано сегодня в дополнительных расписаниях и челлендже (для огонька «полностью»)
-function xCount(){let d=0,t=0;const left=[];xOn().forEach(id=>{const S=xS(id);if(!S||S.start>today())return;S.keys.forEach(k=>{const r=xToday(id,k).length>0;if(!r&&xNext(id,k)>=S.plan.length)return;
+function xCount(bible){let d=0,t=0;const left=[];xOn().forEach(id=>{const S=xS(id);if(!S||S.start>today()||(bible&&S.ms))return;S.keys.forEach(k=>{const r=xToday(id,k).length>0;if(!r&&xNext(id,k)>=S.plan.length)return;
     if(!r&&S.ms){const ti=dayNo(today())-dayNo(S.start);if(ti<S.plan.length&&!S.plan[ti][0]&&xNext(id,k)>=ti)return}
     t++;if(r)d++;else if(!left.includes(xName(id)))left.push(xName(id))})});
-  const tt=tracks();if(tt.spb&&tt.conf&&confSt().joined&&today()<="2026-10-28"){let all=false;try{const r=confRead();all=CONF_UNITS.every(u=>r.has(u.i))}catch(e){}
+  const tt=tracks();if(!bible&&tt.spb&&tt.conf&&confSt().joined&&today()<="2026-10-28"){let all=false;try{const r=confRead();all=CONF_UNITS.every(u=>r.has(u.i))}catch(e){}
     const rd=confSt().log.some(x=>x.d===today());if(!all||rd){t++;if(rd)d++;else left.push("челлендж «Божья гора»")}}
   xCount.left=left;return [d,t]}
 function xMark(id,k,p){const bkB=bkSnap();setTimeout(()=>{try{bkCheck(bkB)}catch(e){}},0);try{const S=xS(id);askVerseSoon(k,p,1400,part2(S,k,p),id)}catch(e){}const st=xSt(id);const first=!anySet().has(today());st[k].log.push({d:today(),p});if(!st[k].read.includes(p))st[k].read.push(p);state.xp=(state.xp||0)+5;save();render();
@@ -4912,7 +5006,7 @@ function confPathChrome(conf){
   confPathSetup();const pm=$("pathMode");pm.hidden=true;
   pm.querySelectorAll("button").forEach(b=>b.classList.toggle("on",(b.dataset.m==="conf")===conf));
   
-  $("confPeople").hidden=!conf;$("pathBox").classList.toggle("cpbox",conf);
+  $("confPeople").hidden=!conf;$("pathBox").classList.toggle("cpbox",conf);{const lg=$("pathLegend");if(lg)lg.hidden=conf}
 }
 function renderConfPath(){
   confPathChrome(true);
@@ -5147,6 +5241,80 @@ function pathFocusSoon(){const pb=$("pathBox");if(pb){delete pb.dataset.touched;
 function setPage(p){if(p==="plan")schedView="";
   curPage=p;try{sessionStorage.setItem("ogonek-page",p)}catch(e){}applyPage();window.scrollTo({top:0});if(p==="home")pathFocusSoon();
 }
+
+/* ---------- настройки уведомлений: напоминания (если огонёк ещё не горит) и уведомления от друзей ----------
+   cfg = {on, times:[{h,on}], friends}. Сохранение — через opts.save (auth.js пишет в push/{uid}: hours[], friends, on). */
+const NT_DEF={on:true,times:[{h:14,on:true},{h:22,on:true}],friends:true};
+function ntLoad(){try{const c=JSON.parse(localStorage.getItem("ogonek-notify")||"null");if(c&&Array.isArray(c.times))return c}catch(e){}return JSON.parse(JSON.stringify(NT_DEF))}
+function ntHours(c){return c.on?[...new Set(c.times.filter(t=>t.on).map(t=>t.h))].sort((a,b)=>a-b):[]}
+function ntPart(h){return h<5?"ночью":h<12?"утром":h<17?"днём":"вечером"}
+function ntText(c){const hs=ntHours(c);if(!hs.length)return "выключены";return hs.map(h=>h+":00").join(", ")}
+function openNotify(opts){
+  opts=opts||{};let c=ntLoad(),adding=false;
+  const modal=el("div","fmodal ntmodal"),sh=el("div","fsheet ntsheet");sh.setAttribute("role","dialog");sh.setAttribute("aria-modal","true");sh.setAttribute("aria-label","Уведомления");
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc);
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});
+  const sw=(on,fn,label)=>{const l=el("label","ntsw");const i=document.createElement("input");i.type="checkbox";i.checked=!!on;i.setAttribute("aria-label",label);i.addEventListener("change",()=>fn(i.checked));l.append(i,el("span"));return l};
+  let saveT=0;const save=()=>{try{localStorage.setItem("ogonek-notify",JSON.stringify(c))}catch(e){}clearTimeout(saveT);saveT=setTimeout(()=>{Promise.resolve(opts.save&&opts.save(c,ntHours(c))).then(()=>toast(ntHours(c).length?"Сохранено · напомню в "+ntText(c):"Напоминания выключены")).catch(()=>toast("Не удалось сохранить. Проверьте интернет."))},500)};
+  function draw(){
+    sh.textContent="";
+    const hd=el("div","fhead");const ic=el("span","ntbell");ic.append(icoEl("bell"));const tt=el("div");tt.append(el("h2",null,"Уведомления"),el("div","hint","Огонёк напомнит, только если сегодня вы ещё не читали"));
+    const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);hd.append(ic,tt,x);sh.append(hd);
+    // разрешение на телефоне
+    const st=opts.status?opts.status():"granted";
+    if(st!=="granted"){const b=el("div","ntperm");
+      b.append(el("p",null,st==="unsupported"?"Этот браузер не присылает уведомления. На iPhone — добавьте Огонёк на экран «Домой» и откройте оттуда.":st==="denied"?"Уведомления запрещены в настройках телефона. Разрешите их для Огонька — и напоминания заработают.":"Чтобы напоминания приходили, разрешите уведомления на этом телефоне."));
+      if(st==="default"){const go=el("button","btn-main","Разрешить уведомления");go.type="button";go.addEventListener("click",async()=>{try{await (opts.ask&&opts.ask())}catch(e){}draw()});b.append(go)}
+      sh.append(b)}
+    // главный выключатель
+    const main=el("div","ntrow ntmain");const mt=el("div","nttx");mt.append(el("b",null,"Напоминать о чтении"),el("small",null,c.on?"Напомню в "+ntText(c):"Сейчас выключено"));
+    main.append(mt,sw(c.on,v=>{c.on=v;save();draw()},"Напоминать о чтении"));sh.append(main);
+    // времена
+    const box=el("div","ntgroup"+(c.on?"":" off"));box.append(el("div","label","Если огонёк ещё не горит, напомнить"));
+    c.times.slice().sort((a,b)=>a.h-b.h).forEach(t=>{
+      const r=el("div","ntrow");const tm=el("div","nttime");tm.append(el("b",null,String(t.h).padStart(2,"0")+":00"),el("small",null,ntPart(t.h)));
+      const del=el("button","ntdel","Убрать");del.type="button";del.setAttribute("aria-label","Убрать "+t.h+":00");del.addEventListener("click",()=>{c.times=c.times.filter(z=>z!==t);save();draw()});
+      r.append(tm,del,sw(t.on,v=>{t.on=v;save();draw()},"Напоминание в "+t.h+":00"));box.append(r)});
+    if(c.times.length<4){
+      if(!adding){const add=el("button","ntadd","＋ Добавить время");add.type="button";add.addEventListener("click",()=>{adding=true;draw()});box.append(add)}
+      else{const pk=el("div","ntpick");pk.append(el("div","hint","Во сколько напомнить?"));const g=el("div","nthours");
+        for(let h=6;h<=23;h++){const b=el("button","nth"+(c.times.some(t=>t.h===h)?" have":""),String(h).padStart(2,"0")+":00");b.type="button";b.disabled=c.times.some(t=>t.h===h);
+          b.addEventListener("click",()=>{c.times.push({h,on:true});c.on=true;adding=false;save();draw()});g.append(b)}
+        const cn=el("button","linkbtn","Отмена");cn.type="button";cn.addEventListener("click",()=>{adding=false;draw()});pk.append(g,cn);box.append(pk)}}
+    sh.append(box);
+    // от друзей
+    const fr=el("div","ntrow");const ft=el("div","nttx");ft.append(el("b",null,"От друзей"),el("small",null,"Когда друг воодушевил вас или позвал читать вместе"));
+    fr.append(ft,sw(c.friends,v=>{c.friends=v;save()},"Уведомления от друзей"));sh.append(fr);
+    // проверка
+    if(opts.test){const tb=el("button","btn ntbtn","Прислать пробное уведомление");tb.type="button";tb.addEventListener("click",()=>opts.test(c));sh.append(tb)}
+    sh.append(el("p","hint ntfoot","Время — по часам вашего телефона. Если огонёк уже горит, напоминание не придёт."));
+  }
+  draw();modal.append(sh);document.body.append(modal);
+}
+
+
+/* ---------- фото человека крупно: нажатие на аватар в профиле или в карточке глобуса ---------- */
+function bigPhoto(src){return String(src||"").replace(/=s\d+(-c)?$/,"=s640-c").replace(/\/s\d+(-c)?\//,"/s640-c/")}
+function photoZoom(src,name,bg,letter){
+  const old=document.querySelector(".phz");if(old)old.remove();
+  const ov=el("div","phz");ov.setAttribute("role","dialog");ov.setAttribute("aria-modal","true");ov.setAttribute("aria-label",name?"Фото: "+name:"Фото");
+  const box=el("div","phzbox");
+  if(src){const img=document.createElement("img");img.alt=name||"";img.referrerPolicy="no-referrer";img.src=bigPhoto(src);img.onerror=()=>{if(img.src!==src)img.src=src};box.append(img)}
+  else{const l=el("div","phzl",(letter||name||"?").trim().charAt(0).toUpperCase());if(bg)l.style.background=bg;box.append(l)}
+  if(name)box.append(el("div","phzn",name));
+  const x=el("button","phzx","×");x.type="button";x.setAttribute("aria-label","Закрыть");
+  const close=()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),180);document.removeEventListener("keydown",esc,true)};
+  const esc=e=>{if(e.key==="Escape"){e.stopPropagation();close()}};document.addEventListener("keydown",esc,true);
+  ov.addEventListener("click",close);ov.append(box,x);document.body.append(ov);x.focus();
+}
+document.addEventListener("click",e=>{
+  const a=e.target.closest&&e.target.closest(".fhead .favatar,.gmodal .gav");if(!a)return;
+  e.stopPropagation();e.preventDefault();
+  const img=a.querySelector("img"),host=a.closest(".fhead")||a.parentElement;
+  const nm=((host&&host.querySelector("h2,b"))||{}).textContent||"";
+  photoZoom(img&&img.getAttribute("src"),nm.replace(/\s*\(вы\)$/,""),getComputedStyle(a).backgroundColor,a.textContent);
+},true);
+
 /* «Библиотека»: Мои книги → Достижения → Как читать Библию — одинаковые строки с иконками */
 function libLayout(){
   const lc=$("libCard"),gc=$("gemsCard"),ac=$("awardsCard"),go=$("guideOpen"),hw=$("howCard");if(!lc||!gc||!ac||!go||!hw||libLayout.done)return;libLayout.done=true;
@@ -5451,7 +5619,7 @@ function bookCelebrate(o,after){
   addEventListener("resize",fit,{once:true});
 }
 window.Ogonek={
-  notesEl, openNotes,
+  notesEl, openNotes, photoZoom, openNotify, ico:icoEl, ntLoad, ntHours, ntText,
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   // отрывок друга по его расписанию (если он на общем церковном или на том же, что и вы)
@@ -5475,11 +5643,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610252245"></script>
-<script type="module" src="auth.js?v=202610252245"></script>
+<script src="globe.js?v=202610262110"></script>
+<script type="module" src="auth.js?v=202610262110"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261025224500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261026211000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

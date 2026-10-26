@@ -360,6 +360,7 @@ async function main() {
 
   function systemNotify(c) {
     if (!("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
+    try { if (O().ntLoad && !O().ntLoad().friends) return; } catch (e) {} // «От друзей» выключено в настройках уведомлений
     const title = (c.name || "Друг") + " " + KIND[kindOf(c)].verb;
     const opts = { body: msgText(c), icon: "icon-192.png", tag: "cheer-" + c.id, lang: "ru" };
     if (navigator.serviceWorker && navigator.serviceWorker.ready) {
@@ -396,7 +397,7 @@ async function main() {
     try { navigator.vibrate && navigator.vibrate([60, 40, 60, 40, 140]); } catch (e) {}
   }
 
-  // одно согласие на всё: воодушевления и приглашения от друзей + напоминание в 22:00
+  // одно согласие на всё: воодушевления и приглашения от друзей + напоминания
   function bellButton() {
     if (!("Notification" in window) || Notification.permission !== "default") return null;
     const b = el("button", "linkbtn bellbtn", "🔔 Включить уведомления: напоминания и воодушевления от друзей");
@@ -547,9 +548,7 @@ async function main() {
     const pathBtn = el("button", "bsbtn", "🏁 Прочитанные расписания · " + (isMe ? O().finishedCount() : pd.length)); pathBtn.type = "button";
     pathBtn.addEventListener("click", () => O().openFinished(isMe ? null : pd, isMe ? null : (d.name || "").split(" ")[0]));
     const prow = el("div", "fprow"); prow.append(pathBtn);
-    if (isMe) { const ed = el("button", "bsbtn" + (window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : ""), "✏️ Мои расписания · " + O().myPlansCount()); ed.type = "button"; ed.addEventListener("click", () => { closeProfile(); O().openPlanEditor(); }); prow.append(ed); }
-    if (isMe) { const tr = el("button", "bsbtn", "⛰️ Челленджи"); tr.type = "button"; tr.addEventListener("click", () => { closeProfile(); if (window.confOpenChallenges) window.confOpenChallenges(); }); prow.append(tr); }
-    else prow.style.gridTemplateColumns = "1fr";
+    prow.style.gridTemplateColumns = "1fr"; // свои расписания и челленджи — во вкладке «Расписания»
     sheet.append(head, stats, shelfBtn, prow, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
@@ -953,9 +952,32 @@ async function main() {
     return MSG.Msg.getToken(MSG.m, { serviceWorkerRegistration: reg });
   }
   async function savePush(token, on) {
-    const patch = { on, hour: 22, tz: -new Date().getTimezoneOffset(), updated: F.serverTimestamp() };
-    if (token) patch.tokens = F.arrayUnion(token);
-    await F.setDoc(F.doc(db, "push", me.uid), patch, { merge: true });
+    let cfg = null, hours = [22]; try { cfg = O().ntLoad(); hours = O().ntHours(cfg); } catch (e) {}
+    const base = { on: !!on && hours.length > 0, hour: hours.includes(22) ? 22 : (hours[hours.length - 1] || 22), tz: -new Date().getTimezoneOffset(), updated: F.serverTimestamp() };
+    if (token) base.tokens = F.arrayUnion(token);
+    const ref = F.doc(db, "push", me.uid);
+    // новые поля: hours (все часы напоминаний) и friends; если правила Firestore их ещё не знают — сохраняем как раньше
+    try { await F.setDoc(ref, Object.assign({}, base, { hours, friends: cfg ? !!cfg.friends : true }), { merge: true }); }
+    catch (e) { console.warn(e); await F.setDoc(ref, base, { merge: true }); }
+  }
+  // окно «Уведомления» (из меню имени)
+  function notifyStatus() { if (!pushCapable()) return "unsupported"; return Notification.permission; }
+  function openNotifySettings() {
+    O().openNotify({
+      status: notifyStatus,
+      ask: () => enableReminder(),
+      save: async (c, hours) => {
+        lsSet(REMIND_KEY, hours.length ? "1" : "0");
+        if (notifyStatus() !== "granted") return;
+        let t = null; try { t = await pushToken(); } catch (e) { console.warn(e); }
+        await savePush(t, hours.length > 0);
+      },
+      test: async () => {
+        if (notifyStatus() !== "granted") { O().toast("Сначала разрешите уведомления"); return; }
+        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Огонёк", { body: "Так будет выглядеть напоминание: огонёк сегодня ещё не горит 🙏", icon: "icon-192.png", tag: "ogonek-test" }); }
+        catch (e) { console.warn(e); O().toast("Не получилось показать уведомление"); }
+      }
+    });
   }
   async function enableReminder() {
     if (!me) return;
@@ -970,7 +992,7 @@ async function main() {
     try {
       const t = await pushToken(); await savePush(t, true);
       lsSet(REMIND_KEY, "1"); lsSet(REMIND_HIDE, null);
-      O().toast("Готово! Если до 22:00 не прочитаете, Огонёк напомнит");
+      { let tx = "22:00"; try { tx = O().ntText(O().ntLoad()); } catch (e) {} O().toast("Готово! Если не прочитаете, Огонёк напомнит: " + tx); }
     } catch (e) { console.warn(e); O().toast("Не получилось включить напоминание. Проверьте интернет и попробуйте ещё раз."); }
   }
   async function disableReminder() {
@@ -993,17 +1015,18 @@ async function main() {
     if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
     const who = el("div", "umwho", me ? myName() : "");
-    const about = el("button", "umitem" + (window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : ""), "Профиль"); about.type = "button"; about.setAttribute("role", "menuitem");
+    const item = (cls, icon, text) => { const b = el("button", "umitem umico" + cls); b.type = "button"; b.setAttribute("role", "menuitem"); const i = el("span", "umi"); try { i.append(O().ico(icon)); } catch (e) {} const t = el("span", "umt", text); b.append(i, t); return b; };
+    const about = item(window.ogonekPtr && window.ogonekPtr() === "on" ? " ptr" : "", "user", "Профиль");
     about.addEventListener("click", () => { closeUserMenu(); openProfile("me", true); });
-    const plan = el("button", "umitem", "Расписание"); plan.type = "button"; plan.setAttribute("role", "menuitem");
-    plan.addEventListener("click", () => { closeUserMenu(); O().openPlans(); });
-    const out = el("button", "umitem danger", "Выйти"); out.type = "button"; out.setAttribute("role", "menuitem");
+    const bell = item("", "bell", "Уведомления");
+    bell.addEventListener("click", () => { closeUserMenu(); openNotifySettings(); });
+    const out = item(" danger", "exit", "Выйти"), outT = out.querySelector(".umt");
     out.addEventListener("click", () => {
       if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
-      out.dataset.armed = "1"; out.textContent = "Нажмите ещё раз, чтобы выйти";
-      setTimeout(() => { delete out.dataset.armed; out.textContent = "Выйти"; }, 3000);
+      out.dataset.armed = "1"; outT.textContent = "Нажмите ещё раз, чтобы выйти";
+      setTimeout(() => { delete out.dataset.armed; outT.textContent = "Выйти"; }, 3000);
     });
-    m.append(who, about, plan, out);
+    m.append(who, about, bell, out);
     const r = top.getBoundingClientRect();
     m.style.top = (r.bottom + window.scrollY + 6) + "px";
     m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + "px";
