@@ -1100,6 +1100,24 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
 
 .umitem .newbadge{margin-left:auto}
 .nttip{max-width:calc(100vw - 32px)}
+
+/* окна не уезжают вбок: длинные строки переносятся внутри, а не расширяют окно */
+.fsheet{overflow-x:hidden;overscroll-behavior:contain}
+.fall .fsheet{touch-action:pan-y}
+.friend{grid-template-columns:auto minmax(0,1fr) auto}
+.friend>*{min-width:0;max-width:100%}
+.friend button{white-space:normal;max-width:100%;min-width:0}
+.ftabs{min-width:0}
+
+/* окно и страница никогда не уезжают вбок (на iPhone широкое содержимое давало качание влево-вправо) */
+html,body{overflow-x:hidden;overscroll-behavior-x:none}
+.fmodal{overflow:hidden;touch-action:pan-y;grid-template-columns:minmax(0,1fr)}
+.fsheet{min-width:0;max-width:min(520px,100%);touch-action:pan-y}
+.fall .fsheet{padding-left:18px;padding-right:18px}
+.fall .fallTop{margin-left:-18px;margin-right:-18px}
+.fall .friends,.fall .friend{min-width:0;max-width:100%}
+.fstreak{min-width:0}
+.fahead{white-space:normal;text-align:center;line-height:1.2}
 </style>
 
 </head>
@@ -2246,7 +2264,7 @@ function renderTestament(k){
   const card=el("div","tcard");
   const head=el("div","thead");
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 64 80");svg.setAttribute("class","flame"+(lit?"":" off"));svg.id="flame-"+k;svg.innerHTML=FLAME;
-  const hb=el("div");hb.className="tht";hb.append(el("b",null,T[k].label),el("span",null,"· "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")));
+  const hb=el("div");hb.className="tht";hb.append(el("b",null,T[k].label)); // одна общая серия — в огоньке наверху, у заветов отдельной нет
   // огонёк за каждый прочитанный сегодня отрывок
   if(todays.length){
     const mm=el("div","minis");mm.id="minis-"+k;mm.title="Отрывков прочитано сегодня: "+todays.length;
@@ -5657,11 +5675,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610292300"></script>
-<script type="module" src="auth.js?v=202610292300"></script>
+<script src="globe.js?v=202610300015"></script>
+<script type="module" src="auth.js?v=202610300015"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261029230000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261030001500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
