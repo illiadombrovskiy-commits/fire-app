@@ -458,9 +458,10 @@
   }
 
   function stat() {
-    const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set();
-    people.forEach((p) => { if (!p.o) return; ids.add(p.id); if (p.fire) lit.add(p.id); });
-    s.textContent = "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
+    const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set(), t0 = today();
+    // считаем всех читателей, даже тех, кого пока некуда поставить на карте (иначе число «прыгало» по мере загрузки)
+    people.forEach((p) => { ids.add(p.id); if (p.o ? p.fire : p.lit === t0) lit.add(p.id); });
+    s.textContent = opts && opts.loading ? "Загружаю читателей…" : "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
     const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
     if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают: " + n; }
   }
@@ -547,7 +548,7 @@
   }
   function setPeople(list) {
     if (!root) return;
-    const keep = sel && sel.id;
+    const keep = sel && sel.id; if (opts) opts.loading = false;
     people = expand(list); placePeople();
     sel = keep ? people.find((p) => p.id === keep) || null : null;
     stat(); card();

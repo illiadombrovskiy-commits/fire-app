@@ -717,7 +717,7 @@ async function main() {
     const G = window.OgonekGlobe; if (!G || !me) return;
     const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
     G.open({
-      people: [mine], visible: !globeHide,
+      people: [mine], visible: !globeHide, loading: true,
       onAdd: async (id) => { const ok = await addFriendUid(id); if (!ok) return false; return myFollowers.includes(id) ? "friend" : "pending"; },
       onProfile: (id) => openProfile(id === me.uid ? "me" : id),
       onToggle: async () => {
@@ -733,6 +733,7 @@ async function main() {
       const list = [mine], have = new Set([me.uid]);
       snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "", nd: typeof x.nd === "string" ? x.nd : "", rel: relOf(d.id) }); });
       // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
+      for (let i = 0; i < 15 && myFriends.some((u) => !friendData[u]); i++) await new Promise((r) => setTimeout(r, 200));
       Object.keys(friendData).forEach((u) => {
         const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
         try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
@@ -748,7 +749,7 @@ async function main() {
       }));
       list.forEach((p) => { if (p.rel !== "me" && p.b !== -2 && friendData[p.id] && stillChoosing(friendData[p.id])) { toIce(p); moved++; } });
       if (moved && G.isOpen()) G.setPeople(list);
-    } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); }
+    } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); try { G.setPeople([mine]); } catch (e2) {} }
   }
   {
     // глобус открывается кнопкой в центре нижней панели; в «Друзьях» отдельной кнопки больше нет
