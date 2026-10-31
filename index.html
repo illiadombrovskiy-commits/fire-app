@@ -1120,6 +1120,14 @@ html,body{overflow-x:hidden;overscroll-behavior-x:none}
 .fahead{white-space:normal;text-align:center;line-height:1.2}
 
 .libarch{align-self:center;font-size:.85rem;color:var(--muted)}
+
+/* «Прогресс плана» больше не отдельной карточкой во вкладке «Расписания» — он в «Библиотеке» */
+#progCard{display:none!important}
+.lprog{display:none!important} /* прогресс по расписанию убран совсем */
+.lptitle{font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.larch{display:flex;flex-direction:row;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;padding:13px 14px}
+.larch .libgo{margin-left:auto;font-size:1.6rem;color:var(--muted)}
+.archlab{margin-top:6px}
 </style>
 
 </head>
@@ -3806,14 +3814,14 @@ function finRetire(){
     state.finished=(state.finished||[]).filter(f=>{if(f.gone||f.end<t)return true;
       const st=f.id===SCHED.id?state:(state.plans||{})[f.id],def=f.id===SCHED.id?SCHED.def:(st&&st.def);
       let ok=true;try{ok=!!(st&&planDoneInfo(f.id,def,st))}catch(e){}
-      if(!ok)ch=true;return ok}); // отметку отменили в тот же день — расписание снова в работе
+      if(!ok){ch=true;if(f.cel){state.finCel=state.finCel||{};state.finCel[f.id]=t}}return ok}); // отметку отменили в тот же день — расписание снова в работе
     state.finished.forEach(f=>{if(f.gone||f.end>=t)return;f.gone=true;ch=true;try{retirePlan(f.id)}catch(e){console.warn(e)}});
     if(ch)save();
   }finally{finRetire.busy=false}}
 function noteFinished(){
   try{finRetire()}catch(e){console.warn(e)}
   state.finished=state.finished||[];const have=new Set(state.finished.map(x=>x.id));let added=false;
-  const check=(id,def,st)=>{if(have.has(id))return;const f=planDoneInfo(id,def,st);if(f){state.finished.push(f);have.add(id);added=true}};
+  const check=(id,def,st)=>{if(have.has(id))return;const f=planDoneInfo(id,def,st);if(f){if((state.finCel||{})[id]===today())f.cel=true;state.finished.push(f);have.add(id);added=true}};
   check(SCHED.id,SCHED.def,state);
   Object.entries(state.plans||{}).forEach(([id,x])=>check(id,x.def,x));
   if(added)save();
@@ -3829,7 +3837,7 @@ function celebrateNext(){
   const em=el("div","celemb");em.append(icoEl(f.emb||"book"));
   box.append(em,el("div","celk","Расписание прочитано!"),el("h2",null,"«"+f.name+"»"+(nth>1?" · "+nth+"-й раз":"")));
   const stt=el("div","celst");[[f.days,plural(f.days,"день","дня","дней")],[f.n||0,plural(f.n||0,"отрывок","отрывка","отрывков")]].forEach(([v,l])=>{const c=el("div");c.append(el("b",null,String(v)),el("span",null,l));stt.append(c)});
-  box.append(stt,el("p","celp",fmtLong(f.start)+" — "+fmtLong(f.end)),el("p","celp2","Оно сохранено в профиле, в «Прочитанных расписаниях». С главной оно уйдёт завтра — сегодня ещё можно отменить отметку."));
+  box.append(stt,el("p","celp",fmtLong(f.start)+" — "+fmtLong(f.end)),el("p","celp2","Сегодня оно ещё на главной — можно отменить отметку. Завтра оно само уйдёт в «Архив» (вкладка «Библиотека»)."));
   const ok=el("button","btn-main","Отлично! 🎉");ok.type="button";
   const done=()=>{f.cel=true;ov.classList.add("out");setTimeout(()=>{ov.remove();celOpen=false;save();render();setTimeout(celebrateNext,300)},250)}; // уйдёт с главной завтра (finRetire)
   ok.addEventListener("click",done);box.append(ok);ov.append(box);document.body.append(ov);
@@ -3986,11 +3994,14 @@ function renderExtras(){
   let lab=$("primLab");const many=ids.length>0||document.body.classList.contains("with-conf");
   if(!lab){const hd=tc.querySelector(".reading-head");if(hd){lab=el("span","primlab");lab.id="primLab";hd.append(lab)}}
   if(lab){lab.hidden=noPlan()||!tracks().spb;lab.className="kmark "+(SCHED.spb?"k-spb":"k-my");lab.textContent="";lab.append(icoEl(SCHED.spb?"flame":myEmb(SCHED.def)),SCHED.spb?"Церковь":"Моё · "+SCHED.name)}
+  {let ph=$("primFin");const pf=!SCHED.spb&&(state.finished||[]).some(f=>f.id===SCHED.id&&!f.gone);
+    if(pf&&!ph){const hd=tc.querySelector(".reading-head");if(hd){ph=el("p","xfinhint");ph.id="primFin";hd.after(ph)}}
+    if(ph){ph.hidden=!pf;if(pf)ph.textContent="🎉 «"+SCHED.name+"» прочитано до конца! Сегодня ещё можно отменить отметку. Завтра расписание само уйдёт в «Архив» (вкладка «Библиотека»)."}}
   ids.forEach(id=>{const S=xS(id);if(!S)return;const card=el("section","card xcard");
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km);if(dn===S.keys.length)hr.append(el("span","xst ok","готово ✓")); // счётчик «0 из 1» убран — показываем только «готово»
     hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);card.append(hd);
-    if(id!=="spb"&&(state.finished||[]).some(f=>f.id===id&&!f.gone)){card.classList.add("xfin");card.append(el("p","xfinhint","🎉 Прочитано до конца! Сегодня ещё можно отменить отметку — завтра это расписание уйдёт с главной."))}
+    if(id!=="spb"&&(state.finished||[]).some(f=>f.id===id&&!f.gone)){card.classList.add("xfin");card.append(el("p","xfinhint","🎉 Прочитано до конца! Сегодня ещё можно отменить отметку. Завтра расписание само уйдёт в «Архив» (вкладка «Библиотека»)."))}
     const tg=el("div","tgrid");
     S.keys.forEach(k=>{const tcd=el("div","tcard"),np=xNext(id,k),ti=dayNo(today())-dayNo(S.start),tod=xToday(id,k),done=tod.length>0;
       const th=el("div","thead");const hb=el("div","tht");hb.append(el("b",null,S.keys.length>1?S.labels[k]:"Сегодня"));th.append(hb);tcd.append(th);
@@ -4184,7 +4195,9 @@ function applyNoPlan(){
       c.append(el("h2",null,"Выберите расписание, чтобы начать"),el("p",null,"Своё, челлендж «Божья гора» или расписание церкви в Санкт-Петербурге"));
       const b=el("button","btn-main","Выбрать расписание");b.type="button";b.addEventListener("click",()=>openWelcome());c.append(b);
       const anchor=$("pageHead")||$("appTabs");if(anchor)anchor.after(c)}
-    if(c){c.hidden=!np;c.classList.toggle("pg-off",pg!==page)}});
+    if(c){c.hidden=!np;c.classList.toggle("pg-off",pg!==page);
+      if(np){const fin=noActive()&&(state.finished||[]).some(f=>f.gone);c.querySelector("h2").textContent=fin?"Расписание прочитано — выберите новое":"Выберите расписание, чтобы начать";
+        c.querySelector("p").textContent=fin?"Прочитанное сохранено в «Архиве» во вкладке «Библиотека». Выберите, что читать дальше.":"Своё расписание или общее расписание церкви в Санкт-Петербурге"}}});
   try{renderSchedList()}catch(e){console.warn(e)}
   {let u=$("undoCard");const can=!np&&canUndo();
     if(can&&!u){u=el("section","undocard");u.id="undoCard";u.dataset.page="home";const t=el("div","ptxt");t.append(el("b"),el("span",null,"Выбрали случайно? Пока ничего не прочитано, можно выбрать другое."));
@@ -5349,6 +5362,20 @@ document.addEventListener("click",e=>{
   photoZoom(img&&img.getAttribute("src"),nm.replace(/\s*\(вы\)$/,""),getComputedStyle(a).backgroundColor,a.textContent);
 },true);
 
+/* «Архив»: прочитанные расписания и прошедшие челленджи — открыть и посмотреть */
+function openArchive(){
+  openFinished();
+  const sh=[...document.querySelectorAll(".pdone-sheet")].pop();if(!sh)return;
+  const h=sh.querySelector(".fhead h2");if(h)h.textContent="Архив";
+  const big=sh.querySelector(".bsbig");if(big)big.before(el("div","label","Прочитанные расписания"));
+  try{if(confClosed()){
+    sh.append(el("div","label archlab","Челленджи"));
+    const c=confSt(),r=confRead(),pct=Math.round(CONF_UNITS.filter(u=>r.has(u.i)).reduce((s,u)=>s+u.w,0)/CONF_VERSES*100);
+    const ul=el("ol","fdlist"),li=el("li"),ic=el("span","fdemb");ic.append(icoEl("mount"));
+    const tx=el("div");tx.append(el("b",null,"«Божья гора»"),el("span",null,"Исход 19–20 и Псалом 119 · до 28 октября 2026 · "+(c.joined||(c.log||[]).length?"ваш итог "+pct+"%":"вы не участвовали")));
+    const b=el("button","fdre","Открыть");b.type="button";b.addEventListener("click",()=>{const m=sh.closest(".fmodal");if(m)m.remove();openConf("read")});
+    li.append(ic,tx,b);ul.append(li);sh.append(ul)}}catch(e){console.warn(e)}
+}
 /* «Библиотека»: Мои книги → Достижения → Как читать Библию — одинаковые строки с иконками */
 function libLayout(){
   const lc=$("libCard"),gc=$("gemsCard"),ac=$("awardsCard"),go=$("guideOpen"),hw=$("howCard");if(!lc||!gc||!ac||!go||!hw||libLayout.done)return;libLayout.done=true;
@@ -5360,10 +5387,15 @@ function libLayout(){
   // книги: полоска прогресса Библии
   const tx=lc.querySelector(".libtx");if(tx&&!$("libBarI")){const bn=el("span","libbarn","");bn.id="libBarN";const bar=el("span","libbar"),bi=el("i");bi.id="libBarI";bar.append(bi);tx.querySelector("b").after(bn,bar)}
   lc.before(sec("Мои книги"));
+  // прогресс по расписанию (раньше — отдельная карточка «Прогресс плана» во вкладке «Расписания») и архив
+  {const pr=$("prog");const ar=el("button","card larch");ar.type="button";ar.id="archCard";ar.dataset.page="awards";
+    const ai=el("span","lico lgem");ai.append(icoEl("scroll"));const at=el("span","ltt");at.append(el("b",null,"Архив"),el("small",null,"Прочитанные расписания и прошедшие челленджи"));
+    ar.append(ai,at,el("span","libgo","›"));ar.addEventListener("click",()=>openArchive());
+    if(pr){const pc=el("section","card lprog");pc.dataset.page="awards";pc.dataset.spb="1";pc.append(el("div","lptitle","Прогресс по расписанию"),pr);lc.after(pc);pc.after(ar)}else lc.after(ar)}
   lc.after(sec("Достижения",1),g1);g1.append(gc,ac);
   g1.after(sec("Как читать Библию"),g2);g2.append(go,hw);
-  // архив прошедшего челленджа — неприметная ссылка внизу, только для тех, кто участвовал
-  try{if(confClosed()){const c=confSt();if(c.joined||(c.log||[]).length){const ar=el("button","linkbtn libarch","Архив: челлендж «Божья гора»");ar.type="button";ar.dataset.page="awards";ar.addEventListener("click",()=>openConf("read"));g2.after(ar)}}}catch(e){}
+  {const pc=document.querySelector(".lprog"),ar=$("archCard");if(pc)lc.after(pc);if(ar)(pc||lc).after(ar)} // прогресс и архив — сразу под «Моей библиотекой»
+
   // алмазы
   {const h=gc.querySelector(".foldhead h2"),gi=h&&h.querySelector(".gemicon");if(h){if(gi){gi.classList.remove("big");h.prepend(tile("lgem",gi))}const tn=[...h.childNodes].find(n=>n.nodeType===3);if(tn){tn.remove();h.append(two("Алмазы","Вопросы по главам"))}}}
   // награды
@@ -5593,6 +5625,10 @@ function bkSnap(){const s=new Set();try{booksFinished().forEach(x=>s.add(x.a+"@"
 function bkCheck(before){let fin=[],ms=[];
   try{fin=booksFinished().filter(x=>!before.has(x.a+"@"+x.d+"@"+x.plan))}catch(e){}
   try{ms=msShelf().filter(o=>o.full&&!before.has("ms@"+o.id))}catch(e){}
+  // отменили и снова отметили в тот же день — праздник книги второй раз не показываем
+  {const T0=today();if(!state.bkCel||state.bkCel.d!==T0)state.bkCel={d:T0,k:[]};const BC=state.bkCel.k;
+    fin=fin.filter(x=>!BC.includes("b@"+x.a));ms=ms.filter(o=>!BC.includes("ms@"+o.id));
+    fin.forEach(x=>BC.push("b@"+x.a));ms.forEach(o=>BC.push("ms@"+o.id));if(fin.length||ms.length)try{save()}catch(e){}}
   const q=[];const seen=new Set();
   fin.forEach(x=>{if(seen.has(x.a))return;seen.add(x.a);q.push({bible:x.a})});
   ms.forEach(o=>q.push({ms:o}));
@@ -5679,11 +5715,11 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610302215"></script>
-<script type="module" src="auth.js?v=202610302215"></script>
+<script src="globe.js?v=202610310945"></script>
+<script type="module" src="auth.js?v=202610310945"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261030221500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261031094500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
