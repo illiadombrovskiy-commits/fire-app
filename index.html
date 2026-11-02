@@ -6285,6 +6285,7 @@ function weekHtml(){
 /* ---------- звонок: у каждого костра своя комната ---------- */
 /* в настоящем приложении — Google Meet API (spaces.create) через вход Google; в демо ссылка-пример */
 function meetCode(){const s=(G.code+"ogonekfire").toLowerCase().replace(/[^a-z]/g,"x");return s.slice(0,3)+"-"+s.slice(3,7)+"-"+s.slice(7,10)}
+function svcName(u){u=String(u||"");return /telemost|yandex/i.test(u)?"Яндекс Телемост":/vk\.(com|ru)|calls\.vk/i.test(u)?"VK Звонки":/meet\.google/i.test(u)?"Google Meet":/zoom\./i.test(u)?"Zoom":"звонок по ссылке"}
 function roomUrl(){return DEMO?"https://meet.google.com/"+meetCode():(G.link||"")}
 function callLive(){const L=G.live;return L&&(L.in||[]).length&&Date.now()-L.t<90*6e4?L:null}
 const inCall=()=>{const L=callLive();return !!(L&&(L.in||[]).includes("me"))};
@@ -6315,7 +6316,7 @@ document.addEventListener("visibilitychange",()=>{
   const F=FIRES.find(f=>f.code===c.code);if(!F){callAway=null;return}
   const k=G;G=F;const on=inCall();G=k;if(!on){callAway=null;return}
   setTimeout(()=>{if(document.hidden||document.querySelector(".rgmodal"))return;
-    sheet("Звонок закончился?",`<p class="rghint">Если вы уже вышли из Google Meet, нажмите «Да» — и в группе снова будет «📞 Позвонить».</p>
+    sheet("Звонок закончился?",`<p class="rghint">Если вы уже вышли из звонка (${esc(svcName(F.link))}), нажмите «Да» — и в группе снова будет «📞 Позвонить».</p>
       <button class="rgbtn" type="button" data-y>Да, звонок закончился</button>
       <button class="rgbtn sec" type="button" data-n>Нет, я ещё в звонке</button>`,(el,close)=>{
       el.querySelector("[data-y]").onclick=()=>{close();leaveCall(F)};
@@ -6350,7 +6351,7 @@ function incoming(F,by){
   document.body.appendChild(n);setTimeout(()=>n.classList.add("in"),30);
   const open=()=>{n.remove();
     sheet("",`<div class="rgincall">${av(by)}<h3>${esc(who(by).name)} зовёт читать вместе</h3><p>Жизненная группа «${esc(F.name)}»${T.refs.length?" · сегодня "+esc(T.refs.join(", ")):""}</p>
-      <div class="rgcallav big">${(F.live&&F.live.in||[by]).map(id=>av(id)).join("")}</div><small>${(F.live&&F.live.in||[by]).length} уже в звонке · Google Meet</small></div>
+      <div class="rgcallav big">${(F.live&&F.live.in||[by]).map(id=>av(id)).join("")}</div><small>${(F.live&&F.live.in||[by]).length} уже в звонке · ${esc(svcName(F.link))}</small></div>
       <a class="rgbtn rggo" href="${esc(url)}" target="_blank" rel="noopener" data-join>📞 Войти в звонок</a>
       <button class="rgbtn sec" type="button" data-later>Не сейчас</button>`,(el,close)=>{
       el.querySelector("[data-join]").onclick=()=>{G=F;callAway={code:F.code};const L=F.live;if(L&&!L.in.includes("me")){L.in.push("me");put({"live.in":L.in.map(uidOf)})}store();close();render()};
@@ -6360,7 +6361,7 @@ function incoming(F,by){
 function startCall(){
   callAway={code:G.code};
   if(!DEMO){
-    if(!G.link){O().toast(G.owner==="me"?"Добавьте ссылку на Google Meet: «Расписания» → ваша группа → «Настроить группу»":"Создатель группы ещё не добавил ссылку на звонок");return}
+    if(!G.link){O().toast(G.owner==="me"?"Добавьте ссылку на звонок: «Расписания» → ваша группа → «Настроить группу»":"Создатель группы ещё не добавил ссылку на звонок");return}
     const L=callLive();
     if(L){if(!L.in.includes("me"))put({"live.in":(L.in.concat("me")).map(uidOf)})}
     else{put({live:{by:MYUID,t:Date.now(),in:[MYUID]}});try{O().toast("Друзья в группе увидят «📞 Войти» у себя в Огоньке")}catch(e){}}
@@ -6567,9 +6568,9 @@ function setup(edit){
     <div data-what></div>
     <div class="rglbl">Сколько человек</div>
     <div class="rgpace rgsize">${[2,4,6].map(n=>`<button type="button" data-sz="${n}" class="${size===n?"on":""}" ${n<minSize?"disabled":""}>${n}</button>`).join("")}</div>
-    ${DEMO?"":`<div class="rglbl">Звонок в Google Meet</div>
-    <div class="rgbox"><input class="rginput" id="rgLink" inputmode="url" placeholder="https://meet.google.com/abc-defg-hij" value="${esc(link)}">
-      <p class="rghint">Создайте встречу один раз и вставьте ссылку — по кнопке «📞 Позвонить» все будут заходить в неё. <a href="https://meet.google.com/new" target="_blank" rel="noopener">Создать встречу в Google Meet ›</a></p></div>`}
+    ${DEMO?"":`<div class="rglbl">Ссылка на звонок</div>
+    <div class="rgbox"><input class="rginput" id="rgLink" inputmode="url" placeholder="https://telemost.yandex.ru/j/…" value="${esc(link)}">
+      <p class="rghint">Создайте встречу один раз и вставьте ссылку — по кнопке «📞 Позвонить» все будут заходить в неё. Без VPN работают <a href="https://telemost.yandex.ru/" target="_blank" rel="noopener">Яндекс Телемост ›</a> и <a href="https://calls.vk.com/" target="_blank" rel="noopener">VK Звонки ›</a></p></div>`}
     <div class="rglbl">Созвоны <span style="font-weight:500;color:var(--muted)">— по желанию</span></div>
     <div data-meet></div>
     <button class="rgbtn" type="button" data-make>${edit?"Сохранить":"Создать группу"}</button>
@@ -6785,11 +6786,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611020910"></script>
-<script type="module" src="auth.js?v=202611020910"></script>
+<script src="globe.js?v=202611020920"></script>
+<script type="module" src="auth.js?v=202611020920"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261102091000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261102092000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
