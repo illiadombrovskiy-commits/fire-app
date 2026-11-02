@@ -1711,6 +1711,385 @@ body:has(.celov) .sparks{z-index:9100}@keyframes celIn{from{opacity:0}}@keyframe
 @keyframes ptrring{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.25)}}
 @keyframes ptrglow{0%,100%{box-shadow:0 0 0 0 rgba(255,122,26,0)}50%{box-shadow:0 0 0 6px rgba(255,122,26,.25)}}
 @media (prefers-reduced-motion:reduce){.ptrdot,.ptrtip,.bntip,.bn.need::before,.pact.ptr,.bsbtn.ptr,.umitem.ptr::after,.bsbtn.ptr::after{animation:none!important}}
+/* ===== Группа «Читаем вместе» ===== */
+.grp{position:relative;overflow:hidden}
+.grp .rghead{display:flex;align-items:center;gap:10px}
+.grp .rgtitle{flex:1;min-width:0}
+.grp .rgtitle h2{margin:0;font-size:1.25rem;line-height:1.2}
+.grp .rgtitle small{display:block;color:var(--muted);font-size:.84rem;margin-top:4px;line-height:1.6}
+.grp .rgstreak{display:inline-flex;align-items:center;gap:4px;background:var(--flame-soft);color:var(--flame);font-weight:800;font-size:.85rem;padding:2px 8px;border-radius:99px;white-space:nowrap;font-size:.8rem;vertical-align:1px}
+.grp .rgmore{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:1.1rem;cursor:pointer;flex:none}
+.grp .rgfire{display:flex;align-items:center;gap:14px;margin:12px 0 6px}
+.grp .rgfire svg{width:96px;height:96px;flex:none}
+.grp .rgfire .rgtx b{display:block;font-size:1.05rem}
+.grp .rgfire .rgtx>span{color:var(--muted);font-size:.88rem}
+.grp .rgbar{display:flex;gap:4px;margin-top:8px}
+.grp .rgbar i{flex:1;height:7px;border-radius:9px;background:var(--off);opacity:.6}
+.grp .rgbar i.on{background:var(--flame);opacity:1}
+.rgfl{transform-origin:50px 78px;transition:transform .8s cubic-bezier(.3,1.6,.5,1),opacity .6s}
+.rgfl.anim{animation:gflick 1.6s ease-in-out infinite}
+@keyframes gflick{0%,100%{transform:scale(var(--s)) rotate(-1.5deg)}50%{transform:scale(calc(var(--s)*1.05)) rotate(1.5deg)}}
+.rgglow{transition:opacity .8s}
+.grp .rgmem{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.rgm{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0}
+.rgav{position:relative;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:1.2rem;flex:none}
+.rgav.off{filter:grayscale(.65);opacity:.75}
+.rgav .rgbadge{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:var(--surface);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.rgav .rgbadge svg{width:16px;height:16px}
+.rgm .rgn{font-weight:700;font-size:.86rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rgm .rgs{font-size:.76rem;color:var(--muted);min-height:1.2em}
+.rgm .rgs.ok{color:var(--ok);font-weight:700}
+.rgcheer{border:0;background:var(--xp-soft);color:var(--xp);font:inherit;font-weight:800;font-size:.76rem;padding:6px 8px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.rgcheer.done{background:var(--bg);color:var(--muted);cursor:default}
+.rgcheer.me{background:var(--flame-soft);color:var(--flame)}
+.rginbox{display:flex;gap:10px;align-items:flex-start;background:var(--xp-soft);border-radius:14px;padding:10px 12px;margin-top:12px;font-size:.9rem}
+.rginbox .rgav{width:32px;height:32px;font-size:.85rem}
+.rginbox b{color:var(--xp)}
+.rgsec{margin-top:16px}
+.rgsec h3{margin:0 0 8px;font-size:.95rem;display:flex;align-items:center;gap:6px}
+.rgsec h3{flex-wrap:wrap}.rgsec h3 small{color:var(--muted);font-weight:500;font-size:.78rem;flex-basis:100%}
+.rgfeed{display:flex;flex-direction:column;gap:8px}
+.rgpost{display:flex;gap:10px;background:var(--bg);border-radius:14px;padding:10px 12px;animation:qin .3s ease}
+.rgpost .rgav{width:34px;height:34px;font-size:.85rem}
+.rgpost .rgpb{flex:1;min-width:0}
+.rgpost .rgpt{font-size:.82rem;color:var(--muted)}
+.rgpost .rgpt b{color:var(--ink)}
+.rgpost .rgpv{display:inline-block;font-weight:800;color:var(--link);background:var(--link-soft);border-radius:8px;padding:2px 8px;margin:4px 0 2px;text-decoration:none;font-size:.88rem}
+.rgpost .rgpw{font-size:.92rem;line-height:1.35}
+.rgpost .rgpr{display:flex;gap:6px;margin-top:6px}
+.rgre{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:3px 9px;font:inherit;font-size:.82rem;cursor:pointer}
+.rgre.on{border-color:var(--flame);background:var(--flame-soft);color:var(--flame);font-weight:700}
+.rgempty{color:var(--muted);font-size:.88rem;background:var(--bg);border-radius:14px;padding:10px 12px}
+.rgweek{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.rgday{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;color:var(--muted)}
+.rgday .rgd{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1.5px dashed var(--line)}
+.rgday .rgd svg{width:18px;height:18px}
+.rgday.full .rgd{background:var(--flame-soft);border:0}
+.rgday.part .rgd{background:var(--bg);border:1.5px solid var(--line)}
+.rgday.now .rgd{border:2px solid var(--flame)}
+.rgday.now{color:var(--flame);font-weight:800}
+.rgnote{color:var(--muted);font-size:.78rem;margin-top:12px;text-align:center}
+.rgnew{display:flex;flex-direction:column;gap:10px}
+.rgnew .rgpeople{display:flex;align-items:center}
+.rgnew .rgpeople .rgav{width:44px;height:44px;border:3px solid var(--surface);margin-left:-10px;font-size:1rem}
+.rgnew .rgpeople .rgav:first-child{margin-left:0}
+.rgnew p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.4}
+.rgbtn{border:0;background:var(--flame);color:#fff;font:inherit;font-weight:800;font-size:1rem;padding:13px 16px;border-radius:14px;cursor:pointer;width:100%}
+.rgbtn.sec{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.rgbtn:disabled{opacity:.45;cursor:default}
+/* окна */
+.rgmodal{position:fixed;inset:0;z-index:70;background:color-mix(in srgb,#000 45%,transparent);display:grid;place-items:end center}
+.rgsheet{width:100%;max-width:520px;max-height:90dvh;overflow-y:auto;overflow-x:hidden;background:var(--surface);color:var(--ink);border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;animation:gup .28s ease}
+@keyframes gup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.rgsheet .rgsh{display:flex;align-items:center;gap:10px}
+.rgsheet .rgsh h3{margin:0;flex:1;font-size:1.15rem}
+.rgsheet .rgx{width:34px;height:34px;border-radius:50%;border:0;background:var(--bg);color:var(--ink);font-size:1.1rem;cursor:pointer}
+.rgphr{display:flex;flex-direction:column;gap:8px}
+.rgphr button{text-align:left;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.95rem;padding:11px 12px;border-radius:14px;cursor:pointer}
+.rgphr button.on{border-color:var(--xp);background:var(--xp-soft)}
+.rginput{width:100%;box-sizing:border-box;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;padding:11px 12px;border-radius:14px}
+.rglbl{font-weight:800;font-size:.9rem}
+.rgpick{display:flex;flex-direction:column;gap:6px}
+.rgpick label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--bg);cursor:pointer}
+.rgpick label .rgav{width:38px;height:38px;font-size:.95rem}
+.rgpick label>span:not(.rgav){flex:1;font-weight:700}
+.rgpick input{width:22px;height:22px;accent-color:var(--flame)}
+.rgseg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rgseg button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:10px;border-radius:14px;cursor:pointer;text-align:left;font-size:.86rem}
+.rgseg button b{display:block;font-size:.95rem;margin-bottom:2px}
+.rgseg button.on{border-color:var(--flame);background:var(--flame-soft)}
+.rgcode{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:14px;padding:10px 12px}
+.rgcode b{font-size:1.3rem;letter-spacing:.18em;flex:1}
+.rglist{display:flex;flex-direction:column;gap:6px}
+.rglist .rgli{display:flex;align-items:center;gap:10px;padding:6px 0}
+.rglist .rgli .rgav{width:36px;height:36px;font-size:.9rem}
+.rglist .rgli>span:not(.rgav){flex:1}
+.rglist .rgli small{color:var(--muted)}
+.rgsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rgsum div{background:var(--bg);border-radius:14px;padding:10px;text-align:center}
+.rgsum b{display:block;font-size:1.4rem;color:var(--flame)}
+.rgsum span{font-size:.76rem;color:var(--muted)}
+/* праздник */
+.rgcel{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#4a2208 0%,#1a0d05 60%,#0c0603 100%);color:#fff;text-align:center;padding:24px;animation:gfade .4s ease}
+@keyframes gfade{from{opacity:0}to{opacity:1}}
+.rgcel svg{width:190px;height:190px;filter:drop-shadow(0 0 40px rgba(255,140,40,.65))}
+.rgcel h2{font-family:var(--display);font-size:1.9rem;margin:10px 0 6px;color:#ffd9a8}
+.rgcel p{margin:0 0 6px;color:#f3d6b8;font-size:1rem}
+.rgcel .rgcp{display:flex;justify-content:center;gap:10px;margin:16px 0 20px}
+.rgcel .rgcp .rgav{width:50px;height:50px;box-shadow:0 0 0 3px #ffb054,0 0 18px rgba(255,170,80,.7);animation:gpop .5s cubic-bezier(.3,1.7,.5,1) backwards}
+@keyframes gpop{from{transform:scale(0)}to{transform:scale(1)}}
+.rgcel .rgbtn{max-width:280px}
+@media (prefers-reduced-motion:reduce){.rgfl.anim,.rgsheet,.rgpost,.rgcel .rgcp .rgav{animation:none!important}}
+/* места и приглашение */
+.rgseat{width:52px;height:52px;border-radius:50%;border:2px dashed var(--line);background:var(--bg);color:var(--muted);font-size:1.5rem;cursor:pointer;display:grid;place-items:center;flex:none}
+.rgav.inv{outline:2px dashed var(--muted);outline-offset:2px}
+.rginvbar{margin-top:12px;width:100%;border:1.5px dashed var(--flame);background:var(--flame-soft);color:var(--flame);font:inherit;font-weight:800;padding:11px;border-radius:14px;cursor:pointer}
+.rghint{margin:0;color:var(--muted);font-size:.86rem;line-height:1.4}
+.rgli2{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--bg)}
+.rgli2 .rgav{width:38px;height:38px;font-size:.95rem}
+.rgli2>span:not(.rgav){flex:1;font-weight:700}
+.rgok{font-size:.82rem;font-weight:700;color:var(--ok)}
+/* шаги настройки */
+.rgstep{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1rem;margin-top:4px}
+.rgstep span{width:24px;height:24px;border-radius:50%;background:var(--flame);color:#fff;display:grid;place-items:center;font-size:.8rem;flex:none}
+.rgstep em{font-style:normal;font-weight:500;color:var(--muted);font-size:.8rem}
+.rgname{display:flex;flex-direction:column;gap:4px;border-radius:16px}
+.rgname small{color:var(--muted);font-size:.8rem;padding-left:4px}
+.rgname.need .rginput{border-color:#e0533d;background:color-mix(in srgb,#e0533d 8%,var(--bg))}
+.rgname.need small{color:#e0533d;font-weight:700}
+.rgname.need{animation:rgshake .45s}
+@keyframes rgshake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.rgpace{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rgpace button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:800;font-size:1.05rem;padding:9px;border-radius:12px;cursor:pointer}
+.rgpace button.on{border-color:var(--xp);background:var(--xp-soft);color:var(--xp)}
+.rglink{align-self:flex-start;border:0;background:none;color:var(--muted);font:inherit;font-size:.86rem;text-decoration:underline;cursor:pointer;padding:2px 0}
+.rgblist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;overscroll-behavior:contain}
+.rgblist button{text-align:left;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:9px 12px;border-radius:12px;cursor:pointer}
+.rgblist button b{display:block;font-size:.93rem}
+.rgblist button small{color:var(--muted);font-size:.78rem}
+.rgbsel{display:flex;align-items:center;gap:10px;background:var(--xp-soft);border-radius:14px;padding:10px 12px}
+.rgbsel>div{flex:1;min-width:0}
+.rgbsel b{display:block}
+.rgbsel small{color:var(--muted);font-size:.8rem}
+/* книга служения на карточке */
+.rgbk-ico{width:38px;height:38px;border-radius:11px;background:var(--xp-soft);display:grid;place-items:center;font-size:1.2rem;flex:none}
+.rgaddbook{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;border:1.5px dashed var(--xp);background:transparent;color:var(--ink);font:inherit;text-align:left;padding:10px 12px;border-radius:14px;cursor:pointer}
+.rgaddbook>span:nth-child(2){flex:1;min-width:0}
+.rgaddbook b{display:block;color:var(--xp)}
+.rgaddbook small{color:var(--muted);font-size:.8rem}
+.rgaddbook>span:last-child{color:var(--xp);font-weight:800;font-size:1.1rem}
+.rgbook{margin-top:16px;border:1.5px solid color-mix(in srgb,var(--xp) 35%,var(--line));border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.rgbk-h{display:flex;gap:10px;align-items:center}
+.rgbk-h small{display:block;color:var(--xp);font-weight:700;font-size:.76rem}
+.rgbk-h b{display:block;font-size:1rem;line-height:1.25}
+.rgbk-w{font-size:.82rem;color:var(--muted);font-weight:700}
+.rgbk-m{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;background:var(--bg);border-radius:12px;padding:9px 12px;color:var(--ink);text-decoration:none;font-weight:700;font-size:.93rem}
+.rgbk-m span{color:var(--xp);font-size:.8rem}
+.rgbk-m em{font-style:normal;color:var(--link);font-size:.8rem;margin-left:auto;font-weight:600}
+.rgbk-who{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rgbk-p{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;color:var(--ok);font-weight:800}
+.rgbk-p .rgav{width:28px;height:28px;font-size:.72rem}
+.rgbk-c{font-size:.8rem;color:var(--muted);margin-left:auto}
+.rgbook>.rgbk-c{margin-left:0}
+.rgbk-prog{height:6px;border-radius:9px;background:var(--bg);overflow:hidden}
+.rgbk-prog i{display:block;height:100%;background:var(--xp);border-radius:9px}
+.rgbook .rgbtn{background:var(--xp);font-size:.95rem;padding:11px}
+.rgbook .rgbtn.sec{background:var(--bg);color:var(--ink)}
+
+/* вкладка «Расписания»: читать вместе */
+.libhide{display:none!important}
+.rgfirebtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:10px;padding:14px;border-radius:16px;border:2px solid color-mix(in srgb,var(--flame) 45%,var(--line));background:linear-gradient(135deg,var(--flame-soft),var(--surface));color:var(--ink);font:inherit;cursor:pointer}
+.rgfirebtn .rgfi{width:46px;height:46px;flex:none}
+.rgfirebtn>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rgfirebtn b{font-size:1.05rem}
+.rgfirebtn small{color:var(--muted);font-size:.84rem;line-height:1.3}
+.rgfirebtn em{font-style:normal;color:var(--flame);font-weight:800;font-size:1.2rem}
+.slgrp.rgtog{margin-top:18px}
+.wopt.fire{border-color:color-mix(in srgb,var(--flame) 55%,var(--line));background:linear-gradient(135deg,var(--flame-soft),var(--surface))}
+/* ===== упрощённая карточка (v4) ===== */
+.rgtop{display:flex;align-items:center;gap:12px}
+.rgtop>svg{width:72px;height:72px;flex:none}
+.rgtt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rgtt h2{margin:0;font-size:1.2rem;line-height:1.2}
+.rgtt b{font-size:.98rem}
+.rgtt small{color:var(--muted);font-size:.84rem}
+.rgpeople2{display:flex;gap:6px;justify-content:space-around;margin-top:14px}
+.rgp{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;color:var(--ink);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;padding:0;min-width:0;flex:1}
+.rgp>span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rgp .rgav{width:54px;height:54px;font-size:1.2rem}
+.rgp.on .rgav{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--flame)}
+.rgck{position:absolute;top:36px;left:calc(50% + 12px);width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;font-style:normal;font-size:.75rem;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
+.rgp .rgseat{width:54px;height:54px}
+.rghint.rgc{text-align:center;margin-top:8px;font-size:.8rem}
+.rgmeet{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--link-soft);color:var(--ink);text-decoration:none}
+.rgmeet>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+.rgmeet b{font-size:.98rem}
+.rgmeet small{color:var(--muted);font-size:.8rem}
+.rgmeet em{font-style:normal;font-weight:800;color:#fff;background:var(--link);padding:7px 14px;border-radius:99px;font-size:.9rem}
+.rgmeet.calm em{background:none;color:var(--link);padding:0;font-size:1.2rem}
+.rgmeet.live{background:color-mix(in srgb,var(--ok) 16%,var(--surface))}
+.rgmeet.live em{background:var(--ok)}
+.rgcam{font-size:1.4rem}
+.rgdot{width:12px;height:12px;border-radius:50%;background:var(--ok);margin:0 5px;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent);animation:rglive 1.6s infinite}
+@keyframes rglive{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.rgrows{margin-top:12px;border-top:1px solid var(--line)}
+.rgrow{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:12px 2px;cursor:pointer}
+.rgrow:last-child{border-bottom:0;padding-bottom:2px}
+.rgri{width:34px;height:34px;border-radius:10px;background:var(--bg);display:grid;place-items:center;font-size:1.05rem;flex:none;color:var(--flame);font-weight:900}
+.rgrow>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+.rgrow b{font-size:.94rem}
+.rgrow small{color:var(--muted);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rgrow em{font-style:normal;color:var(--muted);font-size:1.2rem}
+/* настройка */
+.rgopt{display:flex;align-items:center;gap:12px;width:100%;border:1.5px dashed var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:11px 12px;border-radius:14px;cursor:pointer}
+.rgopt>span:first-child{font-size:1.3rem}
+.rgopt>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+.rgopt small{color:var(--muted);font-size:.8rem}
+.rgopt em{font-style:normal;color:var(--flame);font-weight:800;font-size:1.2rem}
+.rgbox{display:flex;flex-direction:column;gap:8px;border:1.5px solid var(--line);border-radius:14px;padding:12px}
+.rgboxh{display:flex;align-items:center;gap:8px}
+.rgboxh b{flex:1;min-width:0}
+.rgdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.rgdays button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.82rem;font-weight:700;padding:8px 0;border-radius:10px;cursor:pointer}
+.rgdays button.on{border-color:var(--link);background:var(--link-soft);color:var(--link)}
+.rgtime{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:.9rem}
+.rgtime input{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;padding:8px 10px;border-radius:10px}
+.rginput.bad{border-color:#e0533d}
+/* v5: звонок, размер костра */
+.rgcall{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border-radius:16px;background:var(--ok);color:#fff;text-decoration:none}
+.rgcall>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+.rgcall b{font-size:1.02rem}
+.rgcall small{opacity:.9;font-size:.8rem}
+.rgphone{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:1.2rem;flex:none}
+.rgcall.live{background:color-mix(in srgb,var(--ok) 14%,var(--surface));color:var(--ink);border:2px solid var(--ok)}
+.rgcall.live small{color:var(--muted);opacity:1}
+.rgcallav{display:flex}
+.rgcallav .rgav{width:30px;height:30px;font-size:.75rem;margin-left:-8px;box-shadow:0 0 0 2px var(--surface)}
+.rgpeople2.s6 .rgav,.rgpeople2.s6 .rgseat{width:44px;height:44px;font-size:1rem}
+.rgpeople2.s6 .rgck{top:28px;left:calc(50% + 8px);width:19px;height:19px}
+.rgpeople2.s6{gap:2px}
+.rgpeople2.s6 .rgp{font-size:.74rem}
+.rgsize button:disabled{opacity:.35;cursor:default}
+.rgtop{min-height:56px}
+.rgfirebtn em{font-size:.9rem;padding:6px 12px;border-radius:99px;background:var(--flame-soft);white-space:nowrap}
+/* v7: чтение костра как расписание, создатель настраивает */
+.rgplan{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.rgplan>small{color:var(--muted);font-size:.82rem}
+.rgplan>b{font-size:1rem}
+.rgtoday{display:flex;align-items:center;gap:10px;width:100%;border:1.5px solid color-mix(in srgb,var(--flame) 40%,var(--line));background:var(--flame-soft);color:var(--ink);font:inherit;text-align:left;padding:11px 12px;border-radius:14px;cursor:pointer}
+.rgtoday>span{flex:1;min-width:0;display:flex;flex-direction:column}
+.rgtoday small{color:var(--muted);font-size:.8rem}
+.rgtoday em{font-style:normal;font-weight:800;color:#fff;background:var(--flame);padding:6px 14px;border-radius:99px;font-size:.88rem}
+.rgtoday.done{background:color-mix(in srgb,var(--ok) 10%,var(--surface));border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.rgtoday.done em{background:var(--ok)}
+.rgkind{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rgkind button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:700;font-size:.84rem;padding:10px 6px;border-radius:12px;cursor:pointer;line-height:1.2}
+.rgkind button.on{border-color:var(--flame);background:var(--flame-soft);color:var(--flame)}
+.rgbks{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}
+.rgbsec>span{display:block;font-size:.76rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.rgbsec>div{display:flex;flex-wrap:wrap;gap:5px}
+.rgbsec button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.82rem;padding:5px 9px;border-radius:99px;cursor:pointer}
+.rgbsec button.on{border-color:var(--flame);background:var(--flame);color:#fff}
+.rgfive{grid-template-columns:repeat(5,1fr)}
+.rgprev{display:flex;flex-direction:column;gap:2px;background:var(--bg);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.rgprev span{color:var(--muted);font-size:.82rem}
+.rgbtn.warn{background:#d9532c}
+.rginvite{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.rginvite svg{width:96px;height:96px}
+.rginvite h3{margin:0;font-family:var(--display);font-size:1.5rem}
+.rginvite p{margin:0;color:var(--muted)}
+.rgstart{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;padding:0}
+.rgstart>svg{width:64px;height:64px;flex:none}
+.rgstart>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.rgstart b{font-size:1.05rem}
+.rgstart small{color:var(--muted);font-size:.84rem;line-height:1.3}
+.rgstart em{font-style:normal;font-weight:800;color:#fff;background:var(--flame);padding:8px 14px;border-radius:99px;font-size:.9rem}
+.rgsel{position:relative;padding-right:96px}.rgsel .rgre{position:absolute;right:10px;top:10px}
+.pickmode .pname,.pickmode .msemb,.pickmode .mstop{display:none!important}
+/* ===== v9: компактно, кнопки меньше ===== */
+.grp{padding-top:12px;padding-bottom:12px}
+.rgtop2{display:flex;align-items:center;gap:8px}
+.rgtop2>svg{width:40px;height:40px;flex:none}
+.rgtop2 h2{flex:1;min-width:0;margin:0;font-size:1.05rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rgmore2{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:.95rem;cursor:pointer;flex:none;padding:0}
+.rgcall2{display:inline-flex;align-items:center;gap:5px;flex:none;background:var(--ok);color:#fff;text-decoration:none;font-weight:800;font-size:.78rem;padding:6px 10px;border-radius:99px;white-space:nowrap}
+.rgcall2.live{background:color-mix(in srgb,var(--ok) 14%,var(--surface));color:var(--ok);border:1.5px solid var(--ok);padding:4px 8px}
+.rgcall2 .rgdot{width:8px;height:8px;margin:0 2px}
+.rgcall2 .rgcallav .rgav{width:20px;height:20px;font-size:.6rem;margin-left:-6px}
+.rgtoday2{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;border-radius:12px;background:var(--flame-soft)}
+.rgtoday2.done{background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.rglbl2{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex:none}
+.rglinks{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px 10px}
+.rglink2{color:var(--link);font-weight:800;font-size:.92rem;text-decoration:underline;text-underline-offset:2px}
+.rgnone{color:var(--muted);font-size:.86rem}
+.rgmark{flex:none;border:0;background:var(--flame);color:#fff;font:inherit;font-weight:800;font-size:.76rem;padding:5px 10px;border-radius:99px;cursor:pointer}
+.rgtoday2.done .rgmark{background:var(--ok)}
+.rgpeople3{display:flex;gap:4px;margin-top:10px;overflow-x:auto}
+.rgpeople3 .rgp{flex:0 0 auto;width:52px;font-size:.7rem;gap:3px}
+.rgpeople3 .rgp .rgav,.rgpeople3 .rgseat{width:34px;height:34px;font-size:.8rem}
+.rgpeople3 .rgp.on .rgav{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--flame)}
+.rgpeople3 .rgck{top:22px;left:calc(50% + 7px);width:15px;height:15px;font-size:.55rem}
+.rgpeople3 .rgseat{font-size:1rem;border-width:1.5px}
+.grp .rgrows{margin-top:8px}
+.grp .rgrow{padding:8px 2px;gap:8px}
+.grp .rgri{width:26px;height:26px;font-size:.85rem;border-radius:8px}
+.grp .rgrow b{font-size:.85rem}
+.grp .rgrow small{font-size:.74rem}
+.rgstart>svg{width:40px;height:40px}
+.rgstart b{font-size:.95rem}
+.rgstart small{font-size:.78rem}
+.rgstart em{padding:6px 12px;font-size:.8rem}
+/* кнопки в окнах костра */
+.rgsheet{gap:10px;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.rgsheet .rgsh h3{font-size:1.05rem}
+.rgsheet .rgx{width:30px;height:30px;font-size:.95rem}
+.rgbtn{padding:10px 14px;font-size:.9rem;border-radius:12px}
+.rginput{padding:9px 11px;font-size:.95rem;border-radius:12px}
+.rgpace button,.rgkind button{padding:7px 6px;font-size:.84rem;border-radius:10px}
+.rgkind button{font-size:.78rem}
+.rglbl{font-size:.84rem}
+.rgli2{padding:6px 8px}
+.rgli2 .rgav,.rglist .rgli .rgav{width:30px;height:30px;font-size:.78rem}
+.rgre{padding:3px 9px;font-size:.78rem}
+.rgprev{font-size:.84rem;padding:8px 10px}
+.rgopt{padding:9px 10px}
+.rgphr button{padding:9px 10px;font-size:.88rem}
+.rgtop2 h2{white-space:normal;font-size:1rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* v11: несколько костров, отметка на карточке */
+.grpwrap{display:flex;flex-direction:column;gap:16px}
+.rgdone{flex:none;display:inline-flex;align-items:center;gap:8px;color:var(--ok);font-weight:800;font-size:.8rem;white-space:nowrap}
+.rgundo{border:0;background:none;color:var(--muted);font:inherit;font-size:.76rem;font-weight:600;text-decoration:underline;cursor:pointer;padding:2px}
+.rgfirebtn{padding:10px 12px;margin-top:8px}
+.rgfirebtn .rgfi{width:36px;height:36px}
+.rgfirebtn b{font-size:.95rem}
+.rgfirebtn small{font-size:.78rem}
+.rgfirenew{width:100%;margin-top:8px;border:1.5px dashed var(--flame);background:var(--flame-soft);color:var(--flame);font:inherit;font-weight:800;font-size:.9rem;padding:10px;border-radius:14px;cursor:pointer}
+.rgfirebtn small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rgfirebtn em{font-size:.78rem;padding:5px 10px}
+.rgkind.two{grid-template-columns:1fr 1fr}
+.rgkind.two button{font-size:.88rem}
+.rgautoname{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;border:1.5px dashed var(--line);margin-top:8px}
+.rgautoname span{font-size:.78rem;color:var(--muted)}
+.rgautoname b{font-size:.95rem}
+[data-what]{display:flex;flex-direction:column;gap:8px}
+.rgprev.rgsel{padding-right:96px}
+.rgaddrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rgaddrow .pnew.pbig{min-width:0;padding:12px}
+.rgaddrow .pnew.pbig b{font-size:.95rem}
+.rgaddrow .pnew.pbig span{font-size:.78rem;line-height:1.3}
+.rgaddrow .newbadge{display:none}
+.rgaddrow{grid-template-columns:1fr}
+.rgaddrow .pnew.pbig{padding:14px}
+.rgaddrow .pnew.pbig b{font-size:1.05rem}
+.rgaddrow .pnew.pbig span{font-size:.86rem}
+/* v17: созвоны и входящий звонок */
+.rgmeetline{margin-top:6px;font-size:.8rem;color:var(--muted)}
+.rgring{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:12px;background:color-mix(in srgb,var(--ok) 14%,var(--surface));font-size:.84rem}
+.rgring b{flex:1}
+.rgring span:last-child{color:var(--muted);font-size:.76rem}
+.rgcall2.ring{animation:rgringa 1.2s ease-in-out infinite}
+@keyframes rgringa{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+.rgpush{position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top,0px));z-index:90;display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:18px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.25);color:var(--ink);transform:translateY(-130%);transition:transform .35s ease;cursor:pointer;max-width:500px;margin:0 auto}
+.rgpush.in{transform:none}
+.rgpush img{width:38px;height:38px;border-radius:9px;flex:none}
+.rgpush div{flex:1;min-width:0;display:flex;flex-direction:column}
+.rgpush b{font-size:.86rem}
+.rgpush span{font-size:.84rem}
+.rgpush small{color:var(--muted);font-size:.72rem;align-self:flex-start}
+.rgincall{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding-top:4px}
+.rgincall>.rgav{width:72px;height:72px;font-size:1.8rem;animation:rgringa 1.2s ease-in-out infinite}
+.rgincall h3{margin:6px 0 0;font-size:1.2rem}
+.rgincall p{margin:0;color:var(--muted);font-size:.9rem}
+.rgincall small{color:var(--muted);font-size:.78rem}
+.rgcallav.big{display:flex;margin-top:4px}
+.rgcallav.big .rgav{width:34px;height:34px;font-size:.85rem;margin-left:-8px;box-shadow:0 0 0 2px var(--surface)}
+.rgbtn.rggo{background:var(--ok);text-align:center;text-decoration:none;display:block}
+.rgpico{width:38px;height:38px;border-radius:9px;flex:none;background:#1b2340;display:grid;place-items:center}.rgpico svg{width:22px;height:26px}
+.rgttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rgttl h2{flex:none}
+.rgbookln{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rgbookln{display:block;margin-top:6px;font-size:.86rem;color:var(--ink);font-weight:600;white-space:normal}
+.rgav img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}.rgav{overflow:visible}
+.rgcheerln{margin-top:8px;padding:7px 10px;border-radius:12px;background:var(--xp-soft);font-size:.84rem;line-height:1.35}.rgcheerln b{color:var(--xp)}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -1767,6 +2146,8 @@ body:has(.celov) .sparks{z-index:9100}@keyframes celIn{from{opacity:0}}@keyframe
     </div>
     <div class="tgrid" id="testaments"></div>
   </section>
+
+  <div class="grpwrap" id="groupCard" data-page="home" hidden></div>
 
   <section class="card conf" id="confCard" hidden></section>
 
@@ -1989,6 +2370,34 @@ function msPlan(d){
     // лишние дни (страниц меньше, чем дней) — без чтения
     for(let r=0;r<Math.max(0,left);r++)out.push(["","","","","","",0]);
     return out};
+  if(d.by==="pages"||d.by==="end"){
+    // поровну по страницам: каждый день читаем ppd страниц, один день не захватывает два сообщения
+    const P=[];U.forEach(u=>{for(let q=0;q<u.pages;q++)P.push([u,q])});
+    const dw0=msDow(d.start),isRd=o=>wd[(dw0+o)%7];
+    const build=ppd=>{const plan=[],REST=["","","","","","",0];let i=0,o=0,a=0;
+      while(i<U.length&&o<20000){
+        if(!isRd(o)){plan.push(REST);o++;continue}
+        const u=U[i],bb=Math.min(u.pages,a+ppd);
+        plan.push(row(u,a,bb,a===0&&bb===u.pages?1:2));
+        if(bb>=u.pages){i++;a=0}else a=bb;
+        o++}
+      return plan};
+    if(d.by==="end"&&d.end){const x=d.start.split("-").map(Number),y=d.end.split("-").map(Number);
+      const days=Math.round((new Date(y[0],y[1]-1,y[2])-new Date(x[0],x[1]-1,x[2]))/864e5)+1;let rd=0;for(let o=0;o<days;o++)if(isRd(o))rd++;
+      // сообщений больше, чем дней чтения — по нескольку целых сообщений в день, поровну по страницам
+      if(U.length>rd){const plan=[],REST=["","","","","","",0],tot=P.length;let i=0,o=0,dn=0,acc=0;
+        while(i<U.length&&o<20000){if(!isRd(o)){plan.push(REST);o++;continue}
+          dn++;const goal=Math.round(tot*dn/rd),j0=i;
+          while(i<U.length&&(i===j0||acc+U[i].pages<=goal)){acc+=U[i].pages;i++}
+          const u1=U[j0],u2=U[i-1];
+          plan.push([(B.k==="ls"?"Сообщ. ":"Гл. ")+u1.n+(u2.n>u1.n?"–"+u2.n:"")+",","стр. "+u1.p0+"–"+(u2.p0+u2.pages-1),"","",MS_URL+id+"&part="+u1.p0,u1.title,u1.n]);o++}
+        return plan}
+      // сколько страниц в день нужно, чтобы успеть к дате (один день не захватывает два сообщения)
+      let ppd=Math.max(1,Math.ceil(P.length/Math.max(1,rd))),plan=build(ppd);
+      while(plan.length>days&&ppd<P.length){ppd++;plan=build(ppd)}
+      return plan}
+    return build(Math.max(1,+d.ppd||5));
+  }
   // недели по календарю (пн–вс); в каждой — только выбранные дни; в остальные дни строка пустая (отдых)
   const plan=[],REST=["","","","","","",0];let i=0,off=0,dw=msDow(d.start),first=true;
   while(i<U.length&&off<20000){
@@ -2218,6 +2627,7 @@ function save(){
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
   const p=remoteSave?remoteSave(JSON.parse(JSON.stringify(state))):null;
   if(window.Ogonek&&window.Ogonek.onSave)try{window.Ogonek.onSave()}catch(e){}
+  if(window.ogGroupRender)try{window.ogGroupRender()}catch(e){}
   return p;
 }
 
@@ -3454,10 +3864,10 @@ function versesPerDay(S){let v=0;S.plan.forEach(d=>S.keys.forEach(k=>{const b=BO
   else if((m=/^(\d+):(\d+)(?:[–—-](\d+))?$/.exec(ref)))v+=(+(m[3]||m[2]))-(+m[2])+1;
   else{const [a,z]=chapRange(ref);for(let c=a;c<=z;c++)v+=b.v[c-1]||0}}));return Math.round(v/S.plan.length)}
 function openPlans(start,E){
-  if(start!=="custom"&&noPlan()){openWelcome();return}
+  if(start!=="custom"&&start!=="ms"&&noPlan()){openWelcome();return}
   if(start!=="custom"&&state.ptrEdit==="on"&&!isLogged()){state.ptrEdit="done";save();try{applyPtr()}catch(e){}} // без входа указатель ведёт сюда
   const modal=el("div","fmodal plans"),sheet=el("div","fsheet psheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Расписание чтения");
-  const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
+  const close=()=>{modal.remove();document.removeEventListener("keydown",esc);setTimeout(()=>{window.__planPick=null;if(window.__planPickClosed){const f=window.__planPickClosed;window.__planPickClosed=null;f()}},0)};const esc=e=>{if(e.key==="Escape")close()};
   modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
   const head=(title,back)=>{const h=el("div","fhead");if(back){const b=el("button","pback","‹");b.type="button";b.setAttribute("aria-label","Назад");b.addEventListener("click",back);h.append(b)}
     h.append(el("h2",null,title));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);h.append(x);return h};
@@ -3468,7 +3878,7 @@ function openPlans(start,E){
     sheet.append(opt("book","Библия","Своё расписание: какие книги, темп и дата начала","bib",()=>custom()));
     if(!churchOn()){const ch=el("button","linkbtn pchurch","или расписание церкви в Санкт-Петербурге — вся Библия за 2 года");ch.type="button";ch.addEventListener("click",()=>{close();enableChurch()});sheet.append(ch)}
     // церковь и челлендж — только если их ещё нет в «Моих расписаниях»
-    {const mo=opt("scroll","Жизнеизучение и книги служения","Уитнесс Ли и Вочман Ни · сколько сообщений в неделю — решаете вы","msb"+(msNew()?" newglow":""),()=>ms());
+    {const mo=opt("scroll","Жизнеизучение и книги служения","Уитнесс Ли и Вочман Ни · в неделю, страниц в день или к дате","msb"+(msNew()?" newglow":""),()=>ms());
       if(msNew())mo.querySelector(".ptxt b").after(el("span","newbadge","Новое"));sheet.append(mo)}
     if(!confClosed()&&!(tracks().conf&&confSt().joined))sheet.append(opt("peak","Челлендж «Божья гора»","Исход 19–20 и Псалом 119 · до 28 октября · с друзьями","ch",()=>{close();state.planChosen=true;confJoin();render();toast("Вы в челлендже! Он на главной")}));
     // прежние свои расписания, которые сейчас не в списке
@@ -3487,8 +3897,8 @@ function openPlans(start,E){
   }
   function custom(E){
     if(E&&E.ms)return ms(E);
-    sheet.classList.remove("msform");
-    sheet.textContent="";sheet.append(head(E?"Изменить расписание":"Своё расписание",E?()=>{close();openPlanEditor()}:noPlan()?()=>{close();openWelcome()}:list));sheet.scrollTop=0;
+    sheet.classList.remove("msform");sheet.classList.toggle("pickmode",!!window.__planPick);
+    sheet.textContent="";sheet.append(head(E?"Изменить расписание":"Своё расписание",window.__planPick?()=>{close()}:E?()=>{close();openPlanEditor()}:noPlan()?()=>{close();openWelcome()}:list));sheet.scrollTop=0;
     const f={name:E?(E.name||"Моё расписание"):"Моё расписание",start:today(),sec:ALLSEC.slice(),mode:"par",by:"end",end:add(today(),364),amount:3};
     if(E){f.name=E.name||f.name;f.start=E.start||f.start;f.mode=E.mode||f.mode;f.by=E.by||f.by;if(E.end)f.end=E.end;if(E.amount)f.amount=E.amount}
     const field=(label,input)=>{const l=el("label","pfield");l.append(el("span",null,label),input);return l};
@@ -3542,7 +3952,7 @@ function openPlans(start,E){
     paceBox.append(radio("pby",[["end","Закончить к дате"],["verses","Стихов в день"],["chapters","Глав в день"]],()=>f.by,v=>{f.by=v;if(v==="verses")f.amount=40;if(v==="chapters")f.amount=3;drawPace()}),paceRow);
     drawPace();sheet.append(paceBox);
     const prev=el("div","pprev");sheet.append(prev);
-    const go=el("button","btn-main",E?"Сохранить изменения":"Создать и начать читать");go.type="button";sheet.append(go);
+    const go=el("button","btn-main",E?"Сохранить изменения":"Создать и начать читать");go.type="button";if(window.__planPick)go.textContent="Готово — читаем это в группе";sheet.append(go);
     if(E)sheet.append(el("p","hint","Если поменять книги, даты или темп, расписание начнётся заново с первого дня. Серия дней сохранится. Только новое название — прогресс не меняется."));
     sheet.append(el("p","hint","Читаем каждый день. Отрывки делятся поровну по числу стихов, по возможности — по целым главам. Один день не захватывает две книги."));
     const def=()=>({id:E?E.id:"my-"+Date.now().toString(36),custom:true,name:f.name,emb:f.emb,start:f.start,books:BOOKS.filter(b=>f.books.has(b.a)).map(b=>b.a),mode:f.mode,by:f.by,end:f.end,amount:f.amount});
@@ -3551,7 +3961,7 @@ function openPlans(start,E){
       if(f.by==="end"&&(!f.end||f.end<=f.start)){prev.append(el("b",null,"Дата окончания должна быть позже начала"));go.disabled=true;return}
       try{const S=buildSched(def());prev.append(el("b",null,schedSummary(S)),el("span",null,"В среднем ~"+versesPerDay(S)+" стихов в день · первый день: "+S.keys.map(k=>refStr(part2(S,k,0))).join(" и ")));go.disabled=false}catch(e){console.warn(e);prev.append(el("b",null,"Не получилось составить расписание"));go.disabled=true}}
     upd();
-    go.addEventListener("click",()=>{const d=def();
+    go.addEventListener("click",()=>{const d=def();if(window.__planPick){const cb=window.__planPick;window.__planPick=null;close();cb(d);return}
       if(!f.name){nmf.classList.remove("need");void nmf.offsetWidth;nmf.classList.add("need");nmf.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>nm.focus({preventScroll:true}),350);vibrate(20);return}
       if(E){const k=x=>JSON.stringify([x.start,(x.books||[]).join(),x.mode,x.by,x.by==="end"?x.end:x.amount]);
         if(k(d)===k(E)){if(d.name===E.name&&d.emb===(E.emb||"book")){close();return}renamePlan(E.id,d.name,d.emb);return}
@@ -3571,14 +3981,14 @@ function openPlans(start,E){
   function ms(E){
     if(!state.msSeen){state.msSeen=true;save();try{applyPtr();renderSchedList()}catch(e){}}
     const field=(label,input)=>{const l=el("label","pfield");l.append(el("span",null,label),input);return l};
-    sheet.textContent="";sheet.classList.add("msform");sheet.append(head(E?"Изменить расписание":"Книга служения",E?()=>{close();openPlanEditor()}:list));sheet.scrollTop=0;
-    const f={ms:E?E.ms:160,from:E&&E.from||1,pw:E&&E.pw||2,rev:E?!!E.rev:true,start:E&&E.start||today(),emb:E&&E.emb||"scroll",name:E?E.name||"":"",tab:"ls",named:!!E,wd:E&&Array.isArray(E.wd)?E.wd.map(Boolean):[true,true,true,true,true,true,true],paper:E?!!E.paper:true};
+    sheet.textContent="";sheet.classList.add("msform");sheet.classList.toggle("pickmode",!!window.__planPick);sheet.append(head(E?"Изменить расписание":"Книга служения",window.__planPick?()=>{close()}:E?()=>{close();openPlanEditor()}:list));sheet.scrollTop=0;
+    const f={ms:E?E.ms:160,from:E&&E.from||1,pw:E&&E.pw||2,rev:E?!!E.rev:true,start:E&&E.start||today(),emb:E&&E.emb||"scroll",name:E?E.name||"":"",tab:"ls",named:!!E,wd:E&&Array.isArray(E.wd)?E.wd.map(Boolean):[true,true,true,true,true,true,true],paper:E?!!E.paper:true,by:E&&E.by||"week",ppd:E&&E.ppd||5,end:E&&E.end||""};
     if(msBook(f.ms)&&msBook(f.ms).k!=="ls")f.tab="other";
     f.name=msBook(f.ms).t; // название — всегда название книги, выбирается только эмблема
     sheet.append(el("p","hint mstop","Книги с сайта ministrybooks.online. В карточке на главной — ссылка прямо на нужную страницу."));
     // эмблема; название расписания — название книги
     const nmf=el("div","pname msemb"+(E?"":" pick")),nm=el("b","msname",f.name);
-    const nmh=el("span","msh","Выберите значок расписания");
+    const nmh=el("span","msh","Выберите значок расписания");if(window.__planPick)nmh.style.display="none";
     const nmp=el("span","msptr",E?"Её видите вы и друзья":"👇 Нажмите на картинку — она будет рядом с расписанием у вас и у друзей");
     const nmRow=el("div","pnrow"),embNow=el("span","embnow");const drawNow=()=>{embNow.textContent="";embNow.append(icoEl(f.emb))};drawNow();
     nmRow.append(embNow,nm);nmf.append(nmRow,nmp,embPicker(()=>f.emb,v=>{f.emb=v;drawNow();nmf.classList.remove("pick");nmp.textContent="✓ Значок выбран — его видите вы и друзья"}));
@@ -3637,17 +4047,22 @@ function openPlans(start,E){
     const wdBtns=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map((t,i)=>{const b=el("button","pbook-c",t);b.type="button";b.style.setProperty("--c","var(--link)");
       b.addEventListener("click",()=>{if(f.wd[i]&&f.wd.filter(Boolean).length===1){toast("Нужен хотя бы один день чтения");return}f.wd[i]=!f.wd[i];upd()});wdRow.append(b);return b});
     const wdHint=el("span","mswdh");
-    paceBox.append(wdL,wdRow,wdHint,paceL,pw);
+    const byL=el("span","plab msh","Темп"),byRow=el("div","mspw msby");
+    const byBtns=[["week","В неделю"],["pages","Страниц в день"],["end","К дате"]].map(([v,t])=>{const b=el("button","pbook-c",t);b.type="button";b.style.setProperty("--c","var(--xp)");b.addEventListener("click",()=>{f.by=v;if(v==="end"&&!f.end){const t=new Date(f.start+"T12:00:00");t.setDate(t.getDate()+60);f.end=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")}upd()});byRow.append(b);return [v,b]});
+    const ppdL=el("span","plab msh","Страниц в день"),ppdRow=el("div","mspw");
+    const ppdBtns=[1,2,3,4,5,7,10].map(n=>{const b=el("button","pbook-c",String(n));b.type="button";b.style.setProperty("--c","var(--flame)");b.addEventListener("click",()=>{f.ppd=n;upd()});ppdRow.append(b);return [n,b]});
+    const endI=el("input");endI.type="date";endI.addEventListener("change",()=>{f.end=endI.value;upd()});const endF=field("Закончить к дате",endI);endF.firstChild.className="msh";
+    paceBox.append(wdL,wdRow,wdHint,byL,byRow,paceL,pw,ppdL,ppdRow,endF);
     const pwBtns=[1,2,3,4,5,6,7].map(n=>{const b=el("button","pbook-c",String(n));b.type="button";b.style.setProperty("--c","var(--flame)");b.addEventListener("click",()=>{f.pw=n;upd()});pw.append(b);return b});
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
     const stF=field("Дата начала",st);stF.firstChild.className="msh";sheet.append(nmh,nmf,bookBox,fromF,papL,paceBox,stF);
     const prev=el("div","pprev msprev");sheet.append(prev);
-    const go=el("button","btn-main",E?"Сохранить изменения":"Создать и начать читать");go.type="button";sheet.append(go);
+    const go=el("button","btn-main",E?"Сохранить изменения":"Создать и начать читать");go.type="button";if(window.__planPick)go.textContent="Готово — читаем это в группе";sheet.append(go);
     sheet.append(el("p","hint","Неделя — с понедельника по воскресенье. Дни чтения делятся между сообщениями по числу страниц; один день не захватывает два сообщения. В дни без чтения расписание отдыхает — серия от этого не прерывается, если в этот день читаете Библию."));
-    const def=()=>({id:E?E.id:"ms-"+Date.now().toString(36),custom:true,ms:f.ms,from:f.from,pw:f.pw,...(f.wd.every(Boolean)?{}:{wd:f.wd.map(x=>x?1:0)}),...(f.from>1&&f.paper?{paper:true}:{}),name:f.name,emb:f.emb,start:f.start});
+    const def=()=>({id:E?E.id:"ms-"+Date.now().toString(36),custom:true,ms:f.ms,from:f.from,pw:f.pw,...(f.by==="pages"?{by:"pages",ppd:f.ppd}:f.by==="end"&&f.end?{by:"end",end:f.end}:{}),...(f.wd.every(Boolean)?{}:{wd:f.wd.map(x=>x?1:0)}),...(f.from>1&&f.paper?{paper:true}:{}),name:f.name,emb:f.emb,start:f.start});
     function upd(){
       if(go.dataset.arm){delete go.dataset.arm;go.classList.remove("warn");go.textContent=E?"Сохранить изменения":"Создать и начать читать"}
-      const B=msBook(f.ms),isLs=B.k==="ls";paceL.textContent=isLs?"Сообщений в неделю":"Глав в неделю";const one=B.m.length<2;fromF.hidden=one;paceL.hidden=one;pw.hidden=one;fromL.textContent=isLs?"Начать с сообщения":"Начать с главы";
+      const B=msBook(f.ms),isLs=B.k==="ls";paceL.textContent=isLs?"Сообщений в неделю":"Глав в неделю";const one=B.m.length<2;fromF.hidden=one;paceL.hidden=one||f.by!=="week";pw.hidden=one||f.by!=="week";ppdL.hidden=ppdRow.hidden=f.by!=="pages";endF.hidden=f.by!=="end";endI.value=f.end||"";endI.min=f.start;byBtns.forEach(([v,b])=>b.classList.toggle("on",f.by===v));ppdBtns.forEach(([n,b])=>b.classList.toggle("on",f.ppd===n));if(f.by==="end"&&(!f.end||f.end<=f.start)){prev.textContent="";prev.append(el("b",null,"Дата окончания должна быть позже начала"));go.disabled=true;return}fromL.textContent=isLs?"Начать с сообщения":"Начать с главы";
       const K=f.wd.filter(Boolean).length;if(f.pw>K)f.pw=K;
       wdBtns.forEach((b,i)=>{b.classList.toggle("on",f.wd[i]);b.setAttribute("aria-pressed",String(f.wd[i]))});
       wdHint.textContent=K===7?"Каждый день":K+" "+plural(K,"день","дня","дней")+" в неделю · в остальные — отдых";
@@ -3667,8 +4082,8 @@ function openPlans(start,E){
       prev.append(tb);
     }
     drawBooks();drawFrom();upd();
-    go.addEventListener("click",()=>{const d=def();
-      if(E){const k=x=>JSON.stringify([x.ms,x.from||1,x.pw,!!x.rev,x.start,x.wd||null]);
+    go.addEventListener("click",()=>{const d=def();if(window.__planPick){const cb=window.__planPick;window.__planPick=null;close();cb(d);return}
+      if(E){const k=x=>JSON.stringify([x.ms,x.from||1,x.pw,!!x.rev,x.start,x.wd||null,x.by||"",x.ppd||0,x.end||""]);
         if(k(d)===k(E)){const pap=!!d.paper!==!!E.paper;if(d.name===E.name&&d.emb===(E.emb||"scroll")&&!pap){close();return}
           if(pap)[state.schedDef,(state.myScheds||{})[E.id],((state.plans||{})[E.id]||{}).def].forEach(x=>{if(x&&x.id===E.id){if(d.paper)x.paper=true;else delete x.paper}});
           renamePlan(E.id,d.name,d.emb);return}
@@ -3681,7 +4096,7 @@ function openPlans(start,E){
       state.extra=state.extra||{};state.extra[d.id]=true;state.planChosen=true;save();close();setSchedView("");render();
       toast("«"+d.name+"» добавлено — оно на главной");});
   }
-  if(start==="custom")custom(E);else list();modal.append(sheet);document.body.append(modal);
+  if(start==="custom")custom(E);else if(start==="ms")ms(E);else list();modal.append(sheet);document.body.append(modal);
 }
 function autoName(set){const a=BOOKS.filter(b=>set.has(b.a)),sh=b=>b.n.replace(/^Евангелие (от|по) /,"По ");if(!a.length)return "Моё расписание";
   if(a.length===66)return "Вся Библия";if(a.length===39&&a.every(b=>b.t==="ot"))return "Ветхий Завет";if(a.length===27&&a.every(b=>b.t==="nt"))return "Новый Завет";
@@ -3884,7 +4299,8 @@ function openFinished(list,who){
   modal.append(sheet);document.body.append(modal);
 }
 // удаление своих расписаний (только из профиля); дни чтения остаются в серии
-function myPlanList(){const out=new Map();
+function myPlanList(){return myPlanList0().filter(d=>String(d.id).indexOf("fire-")!==0)}
+function myPlanList0(){const out=new Map();
   Object.values(state.myScheds||{}).forEach(d=>out.set(d.id,d));
   if(!SCHED.spb)out.set(SCHED.id,SCHED.def);
   Object.entries(state.plans||{}).forEach(([id,x])=>{if(id!=="spb"&&x.def)out.set(id,x.def)});
@@ -3997,7 +4413,7 @@ function renderExtras(){
   {let ph=$("primFin");const pf=!SCHED.spb&&(state.finished||[]).some(f=>f.id===SCHED.id&&!f.gone);
     if(pf&&!ph){const hd=tc.querySelector(".reading-head");if(hd){ph=el("p","xfinhint");ph.id="primFin";hd.after(ph)}}
     if(ph){ph.hidden=!pf;if(pf)ph.textContent="🎉 «"+SCHED.name+"» прочитано до конца! Сегодня ещё можно отменить отметку. Завтра расписание само уйдёт в «Архив» (вкладка «Библиотека»)."}}
-  ids.forEach(id=>{const S=xS(id);if(!S)return;const card=el("section","card xcard");
+  ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km);if(dn===S.keys.length)hr.append(el("span","xst ok","готово ✓")); // счётчик «0 из 1» убран — показываем только «готово»
     hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);card.append(hd);
@@ -4035,7 +4451,7 @@ function schedRows(){
   myPlanList().forEach(d=>{if(!fin.has(d.id))add({id:d.id,kind:"my",on:!!ex[d.id]&&tt.spb&&!np,def:d})});
   if(today()<="2026-10-28"){const j=!!(tt.conf&&confSt().joined)&&!np;rows.splice(rows.findIndex(r=>!r.primary&&!r.on)>=0?Math.max(1,rows.findIndex(r=>!r.primary&&!r.on)):rows.length,0,{id:"conf",kind:"conf",on:j,joined:j})}
   // в «Моих расписаниях» — только добавленные (включённые)
-  return rows.filter(x=>x.on).sort((a,b)=>(b.primary?1:0)-(a.primary?1:0));
+  return rows.filter(x=>x.on&&String(x.id).indexOf("fire-")!==0).sort((a,b)=>(b.primary?1:0)-(a.primary?1:0));
 }
 function schedTotal(x){try{if(x.primary)return KEYS.length*DAYS;const S=x.kind==="spb"&&!x.primary?buildSched({id:"spb"}):buildSched(x.def);return S.keys.filter(k=>k).length*S.plan.length}catch(e){return 0}}
 /* убрать расписание из «Моих расписаний» (подержать тумблер):
@@ -4147,7 +4563,7 @@ function renderSchedList(){
     // группы: что читаю (на главной) и что на паузе
     if(rows.length){L.append(el("div","slgrp","Читаю · "+rows.length));rows.forEach(r=>L.append(card(r)))}
     else L.append(el("p","sempty","Сейчас вы ничего не читаете. Добавьте расписание — своё, церкви или челлендж."));
-    const ad=el("button","pnew pbig"+(msNew()?" newglow":""));ad.type="button";ad.append(el("b",null,"＋ Добавить расписание"),el("span",null,msNew()?"Новое: Жизнеизучение и книги служения":(confClosed()?"Библия или книги служения":"Библия, книги служения или челлендж")));if(msNew())ad.append(el("span","newbadge","Новое"));ad.addEventListener("click",()=>openPlans());L.append(ad);
+    const ad=el("button","pnew pbig"+(msNew()?" newglow":""));ad.type="button";ad.append(el("b",null,"＋ Добавить расписание"),el("span",null,msNew()?"Новое: Жизнеизучение и книги служения":(confClosed()?"Библия или книги служения":"Библия, книги служения или челлендж")));if(msNew())ad.append(el("span","newbadge","Новое"));ad.addEventListener("click",()=>openPlans());L.append(ad);{const FL=window.ogFireList?window.ogFireList():[];const nb=el("button","pnew pbig rgfirenew2");nb.type="button";nb.append(el("b",null,"＋ Создать жизненную группу"),el("span",null,"Читать вместе с друзьями"));nb.addEventListener("click",()=>{try{window.ogFireNew()}catch(e){}});const row=el("div","rgaddrow");L.append(row);row.append(ad,nb);if(FL.length)L.append(el("div","slgrp rgtog","Мои жизненные группы · "+FL.length));FL.forEach(f=>{const fb=el("button","rgfirebtn");fb.type="button";fb.innerHTML='<svg class="rgfi" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(22 0) scale(.88)"><path d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z" fill="#ff7a1a"/><path d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z" fill="#ffc94a"/></g><g stroke-linecap="round"><path d="M14 90 L86 74" stroke="#8a5a32" stroke-width="10"/><path d="M14 74 L86 90" stroke="#6e4426" stroke-width="10"/></g></svg><span><b>'+f.name.replace(/[<>&]/g,"")+'</b><small>'+f.n+" из "+f.size+" · "+f.what.replace(/[<>&]/g,"")+'</small></span><em>'+(f.own?"Настроить":"Открыть")+'</em>';fb.addEventListener("click",()=>{try{window.ogFireMenu(f.code)}catch(e){}});L.append(fb)})}
     L.append(el("p","hint","Чтобы убрать расписание, подержите его тумблер секунду — прочитанное сохранится. Все расписания из списка — на главной, у каждого своя кнопка «Прочитал(а)»."));
     if(!x)return}
   // детали
@@ -5393,7 +5809,7 @@ function libLayout(){
     ar.append(ai,at,el("span","libgo","›"));ar.addEventListener("click",()=>openArchive());
     if(pr){const pc=el("section","card lprog");pc.dataset.page="awards";pc.dataset.spb="1";pc.append(el("div","lptitle","Прогресс по расписанию"),pr);lc.after(pc);pc.after(ar)}else lc.after(ar)}
   lc.after(sec("Достижения",1),g1);g1.append(gc,ac);
-  g1.after(sec("Как читать Библию"),g2);g2.append(go,hw);
+  go.classList.add("libhide");hw.classList.add("libhide");
   {const pc=document.querySelector(".lprog"),ar=$("archCard");if(pc)lc.after(pc);if(ar)(pc||lc).after(ar)} // прогресс и архив — сразу под «Моей библиотекой»
 
   // алмазы
@@ -5690,6 +6106,21 @@ function bookCelebrate(o,after){
   nx.addEventListener("click",()=>close());
   addEventListener("resize",fit,{once:true});
 }
+window.ogSetPage=p=>setPage(p);
+window.ogOpenEditor=(kind,E,cb,onClose)=>{window.__planPick=cb;window.__planPickClosed=onClose||null;openPlans(kind==="ms"?"ms":"custom",E||undefined)};
+window.ogBooks=()=>({books:BOOKS.map(b=>({a:b.a,n:b.n,t:b.t,s:b.s,c:b.v.length})),sections:SECTIONS});
+window.ogPlanAdd=d=>{if(state.myScheds&&JSON.stringify(state.myScheds[d.id])===JSON.stringify(d)&&state.extra&&state.extra[d.id])return;state.myScheds=state.myScheds||{};state.myScheds[d.id]=d;state.plans=state.plans||{};const o=state.plans[d.id];if(!o||JSON.stringify(o.def)!==JSON.stringify(d))state.plans[d.id]={nt:{log:[],read:[]},ot:{log:[],read:[]},frzDays:[],def:d};state.extra=state.extra||{};state.extra[d.id]=true;state.planChosen=true;save();render()};
+window.ogPlanRemove=id=>{if(state.extra&&state.extra[id]){delete state.extra[id];save();render()}};
+window.ogPlanPreview=d=>{try{const S=buildSched(d);return {sum:schedSummary(S),first:S.keys.map(k=>refStr(part2(S,k,0))).filter(Boolean).join(" и ")}}catch(e){return null}};
+window.ogPlanToday=id=>{try{const S=xS(id);if(!S)return null;const refs=[],urls=[];let done=0,need=0;S.keys.forEach(k=>{const td=xToday(id,k);const p=td.length?td[0].p:xNext(id,k);if(p>=S.plan.length)return;const x=part2(S,k,p);if(!x.book)return;need++;if(td.length)done++;refs.push(refStr(x));urls.push(x.url?x.url:chapterUrl(x))});return {refs,urls,done:need>0&&done===need,any:done>0,rest:need===0}}catch(e){return null}};
+window.ogRefresh=()=>{try{render()}catch(e){}};
+window.ogPlanMark=id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{if(xToday(id,k).length)return;const p=xNext(id,k);if(p<S.plan.length&&part2(S,k,p).book)xMark(id,k,p)})};
+window.ogPlanUndo=id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{if(xToday(id,k).length)xUndo(id,k)})};
+window.ogChurchMark=()=>{KEYS.forEach(k=>{if(!(state[k].log||[]).some(l=>l.d===today())&&nextP(k)<DAYS)complete(k)})};
+window.ogChurchUndo=()=>{KEYS.forEach(k=>{(state[k].log||[]).filter(l=>l.d===today()).map(l=>l.p).forEach(p=>unmark(k,p))})};
+window.ogChurch=()=>{if(!churchOn())enableChurch()};
+window.ogChurchToday=()=>{const r=[],u=[];let any=false;KEYS.forEach(k=>{const t=(state[k].log||[]).filter(l=>l.d===today());const p=t.length?t[0].p:nextP(k);if(p>=DAYS)return;if(t.length)any=true;r.push(refStr(part(k,p)));u.push(chapterUrl(part(k,p)))});return {refs:r,urls:u,any}};
+window.ogAskVerse=()=>{if(state.verseSkip===today())state.verseSkip="";const k=KEYS.find(k=>(state[k].log||[]).some(l=>l.d===today()))||KEYS[0];const l=(state[k].log||[]).filter(l=>l.d===today()).pop();askVerse(k,l?l.p:nextP(k))};
 window.Ogonek={
   notesEl, openNotes, photoZoom, ntNew, openNotify, ico:icoEl, ntLoad, ntHours, ntText,
   summary, today, dayLabel, plural, daysWord, DAYS, KEYS, FLAME, burst, vibrate,
@@ -5715,11 +6146,589 @@ window.Ogonek={
 
 })();
 </script>
-<script src="globe.js?v=202610310945"></script>
-<script type="module" src="auth.js?v=202610310945"></script>
+<script>/* ===== Костёр — группа «Читаем вместе» (до 4 человек) — ДЕМО: данные группы локально ===== */
+(function(){
+const O=()=>window.Ogonek, GK="ogonek-fires-demo6";
+/* DEMO — только демо-страница (вымышленные друзья, всё в браузере). На сайте группы живут в Firestore (groups/{КОД}), сеть подключает auth.js через window.ogGroupsNet */
+const DEMO=!!window.__ogDemo;
+let NET=null, MYUID=null, NAMES={}, PHOTOS={};
+const PAL=["#2f9e6b","#d05a8c","#c98a12","#3f7fd6","#7a5cc4","#d9532c","#1f8a9e","#8a6d3b"];
+function colorOf(id){let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PAL[h%PAL.length]}
+const uidOf=id=>id==="me"?MYUID:id, idOf=u=>u===MYUID?"me":u;
+function put(patch){if(DEMO||!NET||!G)return Promise.resolve();return NET.update(G.code,patch).catch(e=>{console.warn(e);try{O().toast("Не удалось сохранить в группе. Проверьте интернет.")}catch(_){}})}
+/* документ Firestore → внутренний вид группы */
+function fromDoc(d){
+  const t=today(),fresh=d.day===t,reads=fresh?(d.reads||{}):{},vs=fresh?(d.verses||{}):{};
+  Object.assign(NAMES,d.names||{});Object.assign(PHOTOS,d.photos||{});
+  const prev=FIRES.find(f=>f.code===d.code)||{};
+  const L=d.live&&Date.now()-d.live.t<90*6e4?{by:idOf(d.live.by),t:d.live.t,in:(d.live.in||[]).map(idOf)}:null;
+  const ch=fresh&&d.cheers&&d.cheers[MYUID];
+  return {code:d.code,name:d.name||"Жизненная группа",owner:idOf(d.owner),plan:d.plan||{kind:"church"},size:d.size||4,meet:d.meet||null,link:d.link||"",
+    created:d.created||t,streak:0,made:true,live:L,
+    members:(d.members||[]).map(u=>({id:idOf(u),st:"in",read:u===MYUID?null:(reads[u]||null),react:{fire:[],pray:[]}})),
+    verses:Object.fromEntries(Object.entries(vs).filter(([u])=>u!==MYUID)),
+    inbox:ch?[{from:idOf(ch.from),t:ch.txt}]:[],
+    cheered:Object.fromEntries(Object.entries(fresh?(d.cheers||{}):{}).filter(([u,c])=>c&&c.from===MYUID).map(([u])=>[idOf(u),true])),
+    cel:prev.cel||"",day:t,myReact:{},myTime:fresh&&reads[MYUID]||null,_doc:d};
+}
+const MAX=()=>G&&G.size||4;
+const $c=document.getElementById("groupCard"); if(!$c)return;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>O().today();
+const hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+const pl=(n,a,b,c)=>O().plural(n,a,b,c).replace(/^\d+\s*/,"");
+const FRIENDS=[
+  {id:"tolya",name:"Анатолий",c:"#2f9e6b"},
+  {id:"lada",name:"Лада",c:"#d05a8c"},
+  {id:"lusya",name:"Люся",c:"#c98a12"},
+  {id:"ruslan",name:"Руслан",c:"#3f7fd6"}
+];
+const DEMO_READ={tolya:"07:12",lada:"08:40",lusya:"09:05",ruslan:null};
+const PHR=["Ждём тебя 🙂 Сегодня совсем короткий отрывок","Без тебя группа не в сборе 🔥","Помолился(лась) за тебя. Почитаем вместе?"];
+/* ---------- книги служения (из MSB основного скрипта) ---------- */
+const MSURL="https://ministrybooks.online/?mb=";
+function bookInfo(id){try{return msBook(id)}catch(e){return null}}
+function bookList(){
+  const out=[];try{
+    MSB.ls.forEach(x=>{const t=bookInfo(x[0]);if(t&&t.m&&t.m.length>1)out.push({id:x[0],t:t.t,a:"Уитнесс Ли",n:t.m.length,ls:1})});
+    MSB.other.forEach(x=>{const t=bookInfo(x[0]);if(t&&t.m&&t.m.length>1)out.push({id:x[0],t:x[1],a:x[2],n:t.m.length})});
+  }catch(e){}
+  return out;
+}
+const POPULAR=[559,236,268,619,160,161];
+function weekStart(d){const t=new Date((d||today())+"T12:00:00");t.setDate(t.getDate()-((t.getDay()+6)%7));return t}
+function bookWeek(B){return Math.max(0,Math.round((weekStart()-weekStart(B.start))/(7*864e5)))}
+function bookNow(B){const t=bookInfo(B.ms);if(!t)return null;const w=bookWeek(B),a=w*B.pw,list=[];
+  for(let i=a;i<Math.min(a+B.pw,t.m.length);i++)list.push({i,part:t.m[i][0],title:t.m[i][1]});
+  return {t,w,list,total:t.m.length,doneAll:a>=t.m.length}}
+function chName(t){return t.ls?t.t:"«"+t.t+"»"}
+/* ---------- стихи друзей (из сегодняшних отрывков) ---------- */
+function todayRefs(){
+  const out={};try{const st=O().getState(),sm=O().summary(),t=today();
+    ["nt","ot"].forEach(k=>{const l=((st[k]||{}).log||[]).filter(x=>x.d===t);const p=l.length?l[0].p:sm[k+"Next"];out[k]=O().refOf(k,p)})}catch(e){}
+  return out;
+}
+function verses(){
+  if(!DEMO)return Object.fromEntries(Object.entries((G&&G.verses)||{}).map(([u,v])=>[idOf(u),v]));
+  if(G&&G.plan&&G.plan.kind==="ms")return {};
+  if(G&&G.plan&&G.plan.kind==="bible"){const r=(planToday().refs[0]||"");const m=/^(.+?) (\d+)/.exec(r);const v=m?m[1]+" "+m[2]+":":"";
+    return v?{tolya:{v:v+5,w:"Этот стих прямо для меня сегодня."},lada:{v:v+12,w:"Помолилась этим стихом — стало спокойно."},lusya:{v:v+3,w:"Записала себе на весь день."},ruslan:{v:v+8,w:"Прочитал и помолился."}}:{}}
+  const s=todayRefs(), nt=s.nt||"", ot=s.ot||"";
+  if(/^Мф\. 13:3/.test(nt)) return {
+    tolya:{v:"Мф. 13:8",w:"Хочу, чтобы моё сердце было доброй землёй, а не дорогой и не камнями."},
+    lada:{v:"Быт. 31:3",w:"Бог обещал быть с ним в дороге. Значит, и со мной сегодня, в этой неделе."},
+    lusya:{v:"Мф. 13:12",w:"Хочу каждый день получать от Господа всё больше."},
+    ruslan:{v:"Мф. 13:9",w:"Спасибо, что подбодрили! Хочу не просто читать, а слышать."}};
+  const one=(r,d)=>{const m=/^(.+? \d+):(\d+)/.exec(r);return m?m[1]+":"+(+m[2]+d):r};
+  return {tolya:{v:one(nt,2),w:"Этот стих прямо для меня сегодня."},lada:{v:one(ot,2),w:"Помолилась этим стихом утром — стало спокойно."},
+    lusya:{v:one(nt,4),w:"Записала себе на весь день."},ruslan:{v:one(nt,1),w:"Спасибо, что подбодрили! Прочитал и помолился."}};
+}
+/* ---------- состояние ---------- */
+function seed(){
+  const st=weekStart();st.setDate(st.getDate()-14);
+  const s=st.getFullYear()+"-"+String(st.getMonth()+1).padStart(2,"0")+"-"+String(st.getDate()).padStart(2,"0");
+  return {name:"Утренняя группа",owner:"me",plan:{kind:"bible",def:{id:"fire-7KQ2FD",custom:true,name:"Утренняя группа",emb:"flame",start:today(),books:["Мф."],mode:"seq",by:"chapters",amount:2}},code:"7KQ2FD",created:"2026-10-26",streak:6,
+    size:4,
+    members:[
+      {id:"me",st:"in"},
+      {id:"tolya",st:"in",read:"07:12",react:{fire:["lada"],pray:[]}},
+      {id:"lada",st:"in",read:"08:40",react:{fire:["tolya"],pray:["tolya"]}},
+      {id:"ruslan",st:"in",read:null,react:{fire:[],pray:[]}}],
+    inbox:[{from:"lada",t:"Ждём тебя 🙂 Сегодня Мф. 13 — про семя и землю"}],
+    cheered:{},cel:"",day:today(),myReact:{}};
+}
+let G=null, FIRES=[];
+function dayReset(f){if(!f.owner)f.owner="me";if(f.day!==today()){f.members.forEach(m=>{if(m.id!=="me"){m.read=m.st==="in"?null:m.read;m.react={fire:[],pray:[]}}});f.cheered={};f.inbox=[];f.day=today();f.myTime=null}}
+function seed2(){
+  const code="J7PX2A",def={id:"fire-"+code,custom:true,name:"Вечерний огонь",emb:"flame",start:today(),books:["Ин."],mode:"seq",by:"chapters",amount:1};
+  return {name:"Вечерний огонь",owner:"tolya",plan:{kind:"bible",def},size:4,meet:{days:[1,3],time:"21:00"},code,created:today(),streak:0,made:true,
+    members:[{id:"tolya",st:"in",read:"07:12",react:{fire:[],pray:[]}},{id:"lada",st:"in",read:"08:40",react:{fire:["tolya"],pray:[]}},{id:"me",st:"in"}],inbox:[],cheered:{},cel:"",day:today(),myReact:{}};
+}
+function load(){
+  if(!DEMO){FIRES=[];G=null;return}
+  try{FIRES=JSON.parse(localStorage.getItem(GK)||"[]")||[]}catch(e){FIRES=[]}
+  if(!Array.isArray(FIRES))FIRES=[];
+  if(/nogroup/.test(location.hash))FIRES=FIRES.filter(f=>f.made);
+  if(!FIRES.length&&location.hash.indexOf("full")>=0){FIRES=[seed(),seed2()];setTimeout(()=>{try{window.ogPlanAdd(FIRES[0].plan.def);window.ogPlanAdd(FIRES[1].plan.def)}catch(e){}},300)}
+  FIRES.forEach(dayReset);G=FIRES[0]||null;
+}
+function store(){if(!DEMO)return;try{localStorage.setItem(GK,JSON.stringify(FIRES))}catch(e){}}
+function pick(code){const f=FIRES.find(x=>x.code===code);if(f)G=f;return f}
+function who(id){if(id==="me")return {id:"me",name:"Вы",c:"var(--flame)",photo:DEMO?"":(PHOTOS[MYUID]||"")};const f=DEMO&&FRIENDS.find(f=>f.id===id);if(f)return f;return {id,name:String(NAMES[id]||"Друг").split(" ")[0],c:colorOf(id),photo:PHOTOS[id]||""}}
+const joined=()=>G.members.filter(m=>m.st==="in"), invited=()=>G.members.filter(m=>m.st==="inv");
+function myRead(){let s={};try{s=O().summary()}catch(e){}const t=today();return (s.ntLast===t||s.otLast===t)}
+function myNote(){try{const n=(O().getState().notes||[]).filter(x=>x.d===today()&&!x.m);return n[0]||null}catch(e){return null}}
+function readOf(m){return m.id==="me"?(planToday().any?(G.myTime||"сегодня"):null):(m.st==="in"?m.read:null)}
+function av(id,cls){const w=who(id);const ini=id==="me"?"Я":(w.name[0]||"?");return `<span class="rgav ${cls||""}" style="background:${w.c}">${w.photo?`<img src="${esc(w.photo)}" alt="" referrerpolicy="no-referrer">`:ini}</span>`}
+const FL=`<path d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z" fill="#ff7a1a"/><path d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z" fill="#ffc94a"/>`;
+function miniFlame(on){return `<svg viewBox="0 0 64 80">${on?FL:'<path d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z" fill="none" stroke="#b8bdcc" stroke-width="5"/>'}</svg>`}
+function campfire(n,tot,big){
+  const r=tot?n/tot:0, s=n?0.35+0.65*r:0;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">
+   <defs><radialGradient id="gg${big?"b":""}"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs><circle class="rgglow" cx="50" cy="62" r="46" fill="url(#gg${big?"b":""})" opacity="${n===tot&&tot?1:r*.6}"/>
+   <g class="rgfl ${n?"anim":""}" style="--s:${s};transform:scale(${s})" opacity="${n?1:0}"><g transform="translate(18 -2)">${FL}</g></g>
+   ${n?"":'<g fill="#b8bdcc" opacity=".7"><circle cx="46" cy="52" r="3"/><circle cx="54" cy="44" r="4"/><circle cx="48" cy="34" r="5"/></g>'}
+   <g stroke-linecap="round"><path d="M18 88 L82 74" stroke="#8a5a32" stroke-width="9"/><path d="M18 74 L82 88" stroke="#6e4426" stroke-width="9"/></g>
+   ${Array.from({length:tot},(_,i)=>`<circle cx="${50+(i-(tot-1)/2)*14}" cy="96" r="3.4" fill="${i<n?"#ff7a1a":"#c9cddb"}"/>`).join("")}
+  </svg>`;
+}
+function weekHtml(){
+  const t=new Date(today()+"T12:00:00"), dow=(t.getDay()+6)%7, names=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+  const cr=new Date((G.created||today())+"T12:00:00"), J=joined();
+  return names.map((nm,i)=>{const d=new Date(t);d.setDate(t.getDate()-dow+i);let cls="",ic="";
+    if(i<dow&&d>=cr&&G.streak>=dow-i){cls="full";ic=miniFlame(true)}
+    else if(i===dow){const n=J.filter(readOf).length;cls="now"+(n===J.length?" full":"");ic=n===J.length?miniFlame(true):`<b style="font-size:.7rem;color:var(--ink)">${n}/${J.length}</b>`}
+    return `<div class="rgday ${cls}"><span class="rgd">${ic}</span>${nm}</div>`}).join("");
+}
+/* ---------- звонок: у каждого костра своя комната ---------- */
+/* в настоящем приложении — Google Meet API (spaces.create) через вход Google; в демо ссылка-пример */
+function meetCode(){const s=(G.code+"ogonekfire").toLowerCase().replace(/[^a-z]/g,"x");return s.slice(0,3)+"-"+s.slice(3,7)+"-"+s.slice(7,10)}
+function roomUrl(){return DEMO?"https://meet.google.com/"+meetCode():(G.link||"")}
+function callLive(){const L=G.live;return L&&Date.now()-L.t<90*6e4?L:null}
+/* ---------- созвоны по расписанию ---------- */
+const DOWN=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+function meetDays(M){const d=(M.days||[]).slice().sort();return d.length===7?"каждый день":d.join()==="0,1,2,3,4"?"по будням":d.map(i=>DOWN[i]).join(", ")}
+function meetState(){const M=G.meet;if(!M||!(M.days||[]).length)return null;
+  const now=new Date(),dw=(now.getDay()+6)%7,[h,mi]=(M.time||"21:00").split(":").map(Number);
+  if(M.days.includes(dw)){const st=new Date();st.setHours(h,mi||0,0,0);const df=(now-st)/6e4;
+    if(df>=-10&&df<=60)return {now:true,txt:"Созвон сейчас"};if(df<-10)return {txt:"Созвон сегодня в "+M.time}}
+  for(let i=1;i<=7;i++){const k=(dw+i)%7;if(M.days.includes(k))return {txt:"Созвон "+(i===1?"завтра":DOWN[k].toLowerCase())+" в "+M.time}}
+  return null}
+function callHtml(){
+  const L=callLive(),url=esc(roomUrl()||"#");
+  if(L&&L.by!=="me"&&!(L.in||[]).includes("me"))return `<a class="rgcall2 ring" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Войти</a>`;
+  if(L){const ins=L.in||[];return `<a class="rgcall2 live" href="${url}" target="_blank" rel="noopener" data-go="call"><span class="rgdot"></span>Звонок · ${ins.length}<span class="rgcallav">${ins.slice(0,4).map(id=>av(id)).join("")}</span></a>`}
+  const S=meetState();if(S&&S.now)return `<a class="rgcall2 ring" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Созвон сейчас</a>`;
+  return `<a class="rgcall2" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Позвонить</a>`;
+}
+function callNote(){
+  const L=callLive();
+  if(L&&L.by!=="me"&&!(L.in||[]).includes("me"))return `<div class="rgring"><span class="rgdot"></span><b>${esc(who(L.by).name)} зовёт читать вместе</b><span>сейчас</span></div>`;
+  const S=meetState();return S&&!L?`<div class="rgmeetline">🗓 ${esc(S.txt)} · ${esc(meetDays(G.meet))}</div>`:"";
+}
+/* что видит друг, когда ему звонят: уведомление на телефоне + окно в Огоньке */
+function incoming(F,by){
+  const k=G;G=F;const T=planToday(),url=roomUrl();G=k;
+  const n=document.createElement("div");n.className="rgpush";
+  n.innerHTML=`<span class="rgpico">${miniFlame(true)}</span><div><b>Огонёк · ${esc(F.name)}</b><span>📞 ${esc(who(by).name)} зовёт читать вместе — присоединяйтесь</span></div><small>сейчас</small>`;
+  document.body.appendChild(n);setTimeout(()=>n.classList.add("in"),30);
+  const open=()=>{n.remove();
+    sheet("",`<div class="rgincall">${av(by)}<h3>${esc(who(by).name)} зовёт читать вместе</h3><p>Жизненная группа «${esc(F.name)}»${T.refs.length?" · сегодня "+esc(T.refs.join(", ")):""}</p>
+      <div class="rgcallav big">${(F.live&&F.live.in||[by]).map(id=>av(id)).join("")}</div><small>${(F.live&&F.live.in||[by]).length} уже в звонке · Google Meet</small></div>
+      <a class="rgbtn rggo" href="${esc(url)}" target="_blank" rel="noopener" data-join>📞 Войти в звонок</a>
+      <button class="rgbtn sec" type="button" data-later>Не сейчас</button>`,(el,close)=>{
+      el.querySelector("[data-join]").onclick=()=>{G=F;const L=F.live;if(L&&!L.in.includes("me")){L.in.push("me");put({"live.in":L.in.map(uidOf)})}store();close();render()};
+      el.querySelector("[data-later]").onclick=close;})};
+  n.onclick=open;setTimeout(()=>{if(n.isConnected){n.classList.remove("in");setTimeout(open,300)}},3200);
+}
+function startCall(){
+  if(!DEMO){
+    if(!G.link){O().toast(G.owner==="me"?"Добавьте ссылку на Google Meet: «Расписания» → ваша группа → «Настроить группу»":"Создатель группы ещё не добавил ссылку на звонок");return}
+    const L=callLive();
+    if(L){if(!L.in.includes("me"))put({"live.in":(L.in.concat("me")).map(uidOf)})}
+    else{put({live:{by:MYUID,t:Date.now(),in:[MYUID]}});try{O().toast("Друзья в группе увидят «📞 Войти» у себя в Огоньке")}catch(e){}}
+    return}
+  const L=callLive();
+  if(L){if(!(L.in||[]).includes("me"))L.in=(L.in||[]).concat("me");store();setTimeout(render,300);return}
+  G.live={by:"me",t:Date.now(),in:["me"]};store();setTimeout(render,300);
+  try{O().toast("Друзьям у костра пришло: «Зовут читать вместе — присоединяйтесь»")}catch(e){}
+  /* демо: друзья подключаются */
+  const others=joined().filter(m=>m.id!=="me").map(m=>m.id),F=G;
+  others.slice(0,2).forEach((id,i)=>setTimeout(()=>{const l=F.live&&Date.now()-F.live.t<90*6e4?F.live:null;if(l&&!l.in.includes(id)){l.in.push(id);store();render();try{O().toast(`${who(id).name} в звонке`)}catch(e){}}},4000+i*4500));
+}
+function demoRing(){
+  /* демо: Анатолий звонит в первом костре, где он есть (или в первом костре) */
+  const F=FIRES.find(f=>f.members.some(m=>m.id==="tolya"&&m.st==="in"))||FIRES[0];if(!F)return;
+  const by=F.members.find(m=>m.id!=="me"&&m.st==="in");const id=by?by.id:"tolya";
+  F.live={by:id,t:Date.now(),in:[id]};store();render();incoming(F,id);
+}
+/* ---------- чтение костра = обычное расписание Огонька ---------- */
+function planId(){return G.plan&&G.plan.kind!=="church"?"fire-"+G.code:"spb"}
+function planToday(){
+  if(!G.plan||G.plan.kind==="church"){const r=window.ogChurchToday?window.ogChurchToday():null;return r||{refs:[],urls:[],any:myRead()}}
+  const r=window.ogPlanToday?window.ogPlanToday(planId()):null;return r||{refs:[],urls:[],any:false};
+}
+function planDesc(P){
+  if(!P||P.kind==="church")return "Расписание церкви — вся Библия за 2 года";
+  if(P.kind==="ms"){const t=bookInfo(P.def.ms),d=P.def;
+    const pace=d.by==="pages"?d.ppd+" "+pl(d.ppd,"страница","страницы","страниц")+" в день":d.by==="end"&&d.end?"до "+new Date(d.end+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"long"}):d.pw+" "+pl(d.pw,"сообщение","сообщения","сообщений")+" в неделю";
+    return (t?t.t:"Книга служения")+" · "+pace}
+  const B=window.ogBooks?window.ogBooks().books:[];const names=(P.def.books||[]).map(a=>{const b=B.find(x=>x.a===a);return b?b.n.replace(/^Евангелие по /,"По "):a});
+  const bk=names.length===66?"Вся Библия":names.length<=2?names.join(", "):names[0]+" … "+names[names.length-1]+" ("+names.length+" "+pl(names.length,"книга","книги","книг")+")";
+  const d=P.def,pace=d.by==="chapters"?d.amount+" "+pl(d.amount,"глава","главы","глав")+" в день":d.by==="verses"?d.amount+" "+pl(d.amount,"стих","стиха","стихов")+" в день":d.end?"до "+new Date(d.end+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}):"";
+  return bk+(pace?" · "+pace:"");
+}
+function planBook(P){
+  if(!P||P.kind==="church")return "Расписание церкви";
+  if(P.kind==="ms"){const t=bookInfo(P.def.ms);return t?t.t:"Книга служения"}
+  const B=window.ogBooks?window.ogBooks().books:[];const names=(P.def.books||[]).map(a=>{const b=B.find(x=>x.a===a);return b?b.n:a});
+  return names.length===66?"Вся Библия":names.length<=2?names.join(", "):names[0]+" … "+names[names.length-1];
+}
+function planRow(){
+  const T=planToday();
+  const links=T.refs.length?T.refs.map((r,i)=>`<a class="rglink2" href="${esc((T.urls||[])[i]||"#")}" target="_blank" rel="noopener">${esc(r)}</a>`).join(""):`<span class="rgnone">${T.rest?"сегодня отдых":"прочитано всё 🎉"}</span>`;
+  const btn=!T.refs.length?"":T.any?`<span class="rgdone">✓ Прочитано<button class="rgundo" type="button" data-go="undo">Отмена</button></span>`:`<button class="rgmark" type="button" data-go="mark">Прочитал(а)</button>`;
+  return `<div class="rgtoday2 ${T.any?"done":""}"><span class="rglbl2">Сегодня</span><div class="rglinks">${links}</div>${btn}</div>`;
+}
+function markRead(){
+  if(G.plan.kind==="church"){try{window.ogChurchMark()}catch(e){}}else{try{window.ogPlanMark(planId())}catch(e){}}
+  G.myTime=hm();store();syncRead(G);renderAll();
+}
+/* моя отметка и мой стих — в документ группы, чтобы видели друзья */
+function syncRead(F){
+  if(DEMO||!NET||!F||!F._doc)return;const k=G;G=F;
+  const any=planToday().any,d=F._doc,t=today(),fresh=d.day===t,mine=fresh&&d.reads&&d.reads[MYUID];
+  const nt=any&&F.plan.kind!=="ms"?myNote():null,mv=fresh&&d.verses&&d.verses[MYUID];
+  let patch=null;
+  if(any&&!mine)patch=fresh?{["reads."+MYUID]:F.myTime||hm()}:{day:t,reads:{[MYUID]:F.myTime||hm()},verses:{},cheers:{}};
+  if(!any&&mine)patch={["reads."+MYUID]:NET.del()};
+  if(nt&&(!mv||mv.v!==nt.v||mv.w!==(nt.w||""))){patch=patch||{};if(patch.day)patch.verses={[MYUID]:{v:nt.v,w:nt.w||""}};else if(fresh)patch["verses."+MYUID]={v:nt.v,w:nt.w||""}}
+  if(patch&&Object.keys(patch).length)put(patch);G=k;
+}
+function undoRead(){
+  if(G.plan.kind==="church"){try{window.ogChurchUndo()}catch(e){}}else{try{window.ogPlanUndo(planId())}catch(e){}}
+  G.myTime=null;store();syncRead(G);renderAll();try{O().toast("Отметка снята")}catch(e){}
+}
+function postsToday(){const V=verses(),out=[];joined().forEach(m=>{if(!readOf(m))return;let p=null;if(m.id==="me"){const nt=myNote();if(nt)p={v:nt.v,w:nt.w||""}}else p=V[m.id];if(p&&p.v)out.push({m,p})});return out}
+function versesRow(){
+  const P=postsToday();
+  if(G.plan&&G.plan.kind==="ms")return "";
+  if(!P.length)return planToday().any?`<button class="rgrow" data-go="verse" type="button"><span class="rgri">❞</span><span><b>Какой стих затронул вас?</b><small>Поделитесь — друзья в группе увидят</small></span><em>›</em></button>`:"";
+  return `<button class="rgrow" data-go="feed" type="button"><span class="rgri">❞</span><span><b>${P.length} ${pl(P.length,"стих","стиха","стихов")} сегодня</b><small>${P.map(x=>esc(x.m.id==="me"?"Вы":who(x.m.id).name)+": "+esc(x.p.v)).join(" · ")}</small></span><em>›</em></button>`;
+}
+function feedSheet(){
+  const draw=()=>postsToday().map(({m,p})=>{const re=m.react||{fire:[],pray:[]},mr=G.myReact[m.id]||{};const fc=(re.fire||[]).length+(mr.fire?1:0),pc=(re.pray||[]).length+(mr.pray?1:0);
+    return `<div class="rgpost">${av(m.id)}<div class="rgpb"><div class="rgpt"><b>${esc(who(m.id).name)}</b></div><span class="rgpv">❞ ${esc(p.v)}</span>${p.w?`<div class="rgpw">${esc(p.w)}</div>`:""}
+    ${m.id==="me"||!DEMO?"":`<div class="rgpr"><button class="rgre ${mr.fire?"on":""}" data-re="fire" data-id="${m.id}" type="button">🔥 ${fc||""}</button><button class="rgre ${mr.pray?"on":""}" data-re="pray" data-id="${m.id}" type="button">🙏 ${pc||""}</button></div>`}</div></div>`}).join("");
+  sheet("Что затронуло сегодня",`<p class="rghint">Видят только друзья в группе</p><div class="rgfeed" data-f>${draw()}</div>${myRead()&&!myNote()?'<button class="rgbtn" type="button" data-my>❞ Поделиться своим стихом</button>':""}`,(el,close)=>{
+    el.addEventListener("click",e=>{const b=e.target.closest("[data-re]");if(b){const id=b.dataset.id,k=b.dataset.re;G.myReact[id]=G.myReact[id]||{};G.myReact[id][k]=!G.myReact[id][k];store();el.querySelector("[data-f]").innerHTML=draw()}
+      if(e.target.closest("[data-my]")){close();try{window.ogAskVerse()}catch(_){}}});
+  });
+}
+/* ---------- карточка ---------- */
+function renderAll(){
+  if(!FIRES.length){renderEmpty();return}
+  $c.hidden=false;const keep=G;
+  /* не пересоздаём карточки, если их набор не поменялся — только содержимое */
+  const codes=FIRES.map(f=>f.code).join();
+  if($c.dataset.codes!==codes){$c.innerHTML=FIRES.map(f=>`<section class="card grp" data-fire="${esc(f.code)}"></section>`).join("");$c.dataset.codes=codes}
+  FIRES.forEach(f=>{G=f;const el=$c.querySelector(`[data-fire="${f.code}"]`);if(el)el.innerHTML=cardHtml()});
+  G=FIRES.includes(keep)?keep:FIRES[0];
+}
+const render=renderAll;
+function cardHtml(){
+  const J=joined(), tot=J.length, n=J.filter(readOf).length, all=tot>1&&n===tot;
+  const streak=G.streak+(all?1:0);
+  const people=G.members.map(m=>{const w=who(m.id);
+    if(m.st==="inv")return `<div class="rgp">${av(m.id,"off inv")}<span>${esc(w.name)}</span></div>`;
+    const r=readOf(m),can=!r&&m.id!=="me"&&!G.cheered[m.id];
+    return `<button class="rgp ${r?"on":""}" type="button" data-p="${m.id}">${av(m.id,r?"":"off")}${r?'<i class="rgck">✓</i>':""}<span>${esc(w.name)}</span></button>`}).join("")
+    +(G.members.length<MAX()&&G.owner==="me"?`<button class="rgp" type="button" data-go="invite"><span class="rgseat">＋</span><span>Позвать</span></button>`:"");
+
+  maybeCelebrate(all,streak);
+  return `
+   <div class="rgtop2">${campfire(n,Math.max(tot,1))}<h2>${esc(G.name)}</h2>${callHtml()}</div>
+   <div class="rgbookln">📖 ${esc(planBook(G.plan))}</div>
+   ${callNote()}
+   ${G.inbox&&G.inbox.length&&!readOf(G.members.find(m=>m.id==="me")||{id:"me"})?G.inbox.map(x=>`<div class="rgcheerln">💬 <b>${esc(who(x.from).name)}:</b> «${esc(x.t)}»</div>`).join(""):""}
+   ${planRow()}
+   <div class="rgpeople3">${people}</div>
+   ${versesRow()?`<div class="rgrows">${versesRow()}</div>`:""}`;
+}
+function renderEmpty(){
+  /* пока костра нет — на главной ничего; создать можно во вкладке «Расписания» */
+  $c.hidden=true;$c.innerHTML="";$c.dataset.codes="";
+}
+/* ---------- окна ---------- */
+function sheet(title,body,onMount){
+  const m=document.createElement("div");m.className="rgmodal";
+  m.innerHTML=`<div class="rgsheet" role="dialog" aria-label="${esc(title)}"><div class="rgsh"><h3>${title}</h3><button class="rgx" type="button" aria-label="Закрыть">✕</button></div>${body}</div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove();
+  m.addEventListener("click",e=>{if(e.target===m||e.target.closest(".rgx"))close()});
+  onMount&&onMount(m.querySelector(".rgsheet"),close);return close;
+}
+function cheer(id){
+  const w=who(id);let pick=0;
+  sheet(`Подбодрить: ${esc(w.name)}`,`
+    <div style="display:flex;gap:10px;align-items:center">${av(id,"off")}<span style="color:var(--muted);font-size:.92rem">${esc(w.name)} получит уведомление на телефон. Подбодрить можно раз в день.</span></div>
+    <div class="rgphr">${PHR.map((p,i)=>`<button type="button" data-i="${i}" class="${i?"":"on"}">${esc(p)}</button>`).join("")}</div>
+    <input class="rginput" id="rgCheerTxt" maxlength="120" placeholder="или напишите своё…">
+    <button class="rgbtn" type="button" data-send>Отправить</button>`,(el,close)=>{
+    const inp=el.querySelector(".rginput");
+    el.querySelectorAll(".rgphr button").forEach(b=>b.onclick=()=>{pick=+b.dataset.i;inp.value="";el.querySelectorAll(".rgphr button").forEach(x=>x.classList.toggle("on",x===b))});
+    inp.oninput=()=>el.querySelectorAll(".rgphr button").forEach(x=>x.classList.toggle("on",!inp.value&&+x.dataset.i===pick));
+    el.querySelector("[data-send]").onclick=()=>{
+      const F=G,txt=(inp.value.trim()||PHR[pick]).slice(0,120);G.cheered[id]=true;store();close();render();
+      if(!DEMO){const d=F._doc,fresh=d&&d.day===today();put(fresh?{["cheers."+uidOf(id)]:{from:MYUID,txt}}:{day:today(),reads:{},verses:{},cheers:{[uidOf(id)]:{from:MYUID,txt}}});try{O().toast(`${w.name} увидит у себя: «${txt}»`)}catch(e){}return}
+      try{O().toast(`${w.name} получит: «${txt}»`)}catch(e){}
+      setTimeout(()=>{const m=F.members.find(x=>x.id===id);if(m&&m.st==="in"&&!m.read){m.read=hm();store();render();try{O().toast(`🔥 ${w.name} ${/а$|я$/.test(w.name)?"прочитала":"прочитал"} — спасибо, что подбодрили!`)}catch(e){}}},5000);
+    };
+  });
+}
+/* --- позвать друзей (только создатель костра) --- */
+function invite(){
+  const free=()=>MAX()-G.members.length;
+  sheet("Позвать друзей",`
+    <p class="rghint" data-free></p>
+    <button class="rgbtn" type="button" data-copy>🔗 Скопировать ссылку на группу</button>
+    <p class="rghint">Отправьте её в Telegram, WhatsApp или СМС. Друг откроет ссылку, нажмёт «Присоединиться» — и чтение группы появится у него в Огоньке.</p>
+    ${DEMO?`<div class="rglbl">Или позовите друзей из Огонька</div>
+    <div class="rgpick" data-list></div>`:(navigator.share?`<button class="rgbtn sec" type="button" data-share>📤 Отправить через…</button>`:"")}
+    <button class="rgbtn sec" type="button" data-done>Готово</button>`,(el,close)=>{
+    const draw=()=>{
+      el.querySelector("[data-free]").textContent=free()?`Свободно ${free()} ${pl(free(),"место","места","мест")} из ${MAX()-1}. Когда друг примет приглашение, он появится в группе.`:`Все места заняты — в группе ${MAX()} ${pl(MAX(),"человек","человека","человек")}.`;
+      if(!DEMO)return;el.querySelector("[data-list]").innerHTML=FRIENDS.map(f=>{const m=G.members.find(x=>x.id===f.id);
+        const b=m?(m.st==="in"?`<span class="rgok">в группе</span>`:`<button class="rgre on" type="button" data-un="${f.id}">Приглашён ✓</button>`):(free()?`<button class="rgre" type="button" data-inv="${f.id}">Пригласить</button>`:`<span class="rgok" style="color:var(--muted)">нет мест</span>`);
+        return `<div class="rgli2">${av(f.id)}<span>${f.name}</span>${b}</div>`}).join("");
+    };
+    draw();
+    el.addEventListener("click",e=>{
+      const i=e.target.closest("[data-inv]"),u=e.target.closest("[data-un]");
+      if(i&&free()){const id=i.dataset.inv,F=G;G.members.push({id,st:"inv",read:DEMO_READ[id],react:{fire:[],pray:[]}});store();draw();render();
+        /* демо: друг принимает через 4 с */
+        setTimeout(()=>{const m=F.members.find(x=>x.id===id);if(m&&m.st==="inv"){m.st="in";store();render();try{O().toast(`🔥 ${who(id).name} теперь в вашей группе`)}catch(e){}}},4000+Math.random()*2500)}
+      if(u){G.members=G.members.filter(x=>x.id!==u.dataset.un);store();draw();render()}
+    });
+    const url=location.origin+location.pathname+"?group="+G.code, gname=G.name;
+    el.querySelector("[data-copy]").onclick=e=>{try{navigator.clipboard.writeText(url).catch(()=>{})}catch(_){}e.target.textContent="✓ Ссылка скопирована"};
+    const sh=el.querySelector("[data-share]");if(sh)sh.onclick=()=>{try{navigator.share({title:"Огонёк · "+gname,text:"Читаем Библию вместе в жизненной группе «"+gname+"». Присоединяйся:",url}).catch(()=>{})}catch(_){}};
+    el.querySelector("[data-done]").onclick=close;
+  });
+}
+/* --- создать / настроить костёр (один экран, шаги) --- */
+function setup(edit){
+  if(edit&&G&&G.owner!=="me")return O().toast("Менять группу может только тот, кто её создал");
+  const E=edit?G:null;
+  let size=E?E.size||4:4, kind=E&&E.plan&&E.plan.kind!=="church"?E.plan.kind:"", defs={bible:null,ms:null};
+  let bname=E?E.name:"";
+  if(E&&E.plan&&E.plan.def)defs[E.plan.kind]=E.plan.def;
+  const minSize=E?E.members.length:1;
+  let meet=E&&E.meet?{days:(E.meet.days||[]).slice(),time:E.meet.time||"21:00"}:null;
+  let link=E&&E.link||"";
+  const msName=d=>{const t=d&&bookInfo(d.ms);return t?t.t:"Книга служения"};
+  sheet(edit?"Настроить группу":"Новая жизненная группа",`
+    <div class="rglbl">Что читаем</div>
+    <div class="rgkind two">${[["bible","Библия"],["ms","Книга служения"]].map(([k,t])=>`<button type="button" data-k="${k}" class="${kind===k?"on":""}">${t}</button>`).join("")}</div>
+    <div data-what></div>
+    <div class="rglbl">Сколько человек</div>
+    <div class="rgpace rgsize">${[2,4,6].map(n=>`<button type="button" data-sz="${n}" class="${size===n?"on":""}" ${n<minSize?"disabled":""}>${n}</button>`).join("")}</div>
+    ${DEMO?"":`<div class="rglbl">Звонок в Google Meet</div>
+    <div class="rgbox"><input class="rginput" id="rgLink" inputmode="url" placeholder="https://meet.google.com/abc-defg-hij" value="${esc(link)}">
+      <p class="rghint">Создайте встречу один раз и вставьте ссылку — по кнопке «📞 Позвонить» все будут заходить в неё. <a href="https://meet.google.com/new" target="_blank" rel="noopener">Создать встречу в Google Meet ›</a></p></div>`}
+    <div class="rglbl">Созвоны <span style="font-weight:500;color:var(--muted)">— по желанию</span></div>
+    <div data-meet></div>
+    <button class="rgbtn" type="button" data-make>${edit?"Сохранить":"Создать группу"}</button>
+    ${edit?"":`<p class="rghint" style="text-align:center">Потом вы отправите друзьям ссылку — они просто присоединятся.</p>`}`,(el,close)=>{
+    const modal=el.closest(".rgmodal"), W=el.querySelector("[data-what]"), mk=el.querySelector("[data-make]");
+    el.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=+b.dataset.sz;el.querySelectorAll("[data-sz]").forEach(x=>x.classList.toggle("on",x===b))});
+    const MX=el.querySelector("[data-meet]");
+    const drawMeet=()=>{
+      if(!meet){MX.innerHTML=`<button class="rgopt" type="button" data-mon><span>🗓</span><span><b>Созваниваться в определённое время</b><small>Например, по вторникам и четвергам в 21:00 — всем придёт напоминание</small></span><em>＋</em></button>`;return}
+      MX.innerHTML=`<div class="rgbox"><div class="rgdays">${DOWN.map((d,i)=>`<button type="button" data-d="${i}" class="${meet.days.includes(i)?"on":""}">${d}</button>`).join("")}</div>
+        <label class="rgtime">Во сколько <input type="time" id="rgMeetTime" value="${esc(meet.time)}"></label>
+        <p class="rghint">За 10 минут всем в группе придёт напоминание, а на карточке появится «📞 Созвон сейчас».</p>
+        <button class="rglink" type="button" data-moff>Без созвонов по расписанию</button></div>`;
+      MX.querySelector("#rgMeetTime").onchange=e=>{meet.time=e.target.value||"21:00"}};
+    drawMeet();
+    MX.addEventListener("click",e=>{
+      if(e.target.closest("[data-mon]")){meet={days:[1,3],time:"21:00"};drawMeet();return}
+      if(e.target.closest("[data-moff]")){meet=null;drawMeet();return}
+      const d=e.target.closest("[data-d]");if(d){const i=+d.dataset.d;meet.days=meet.days.includes(i)?meet.days.filter(x=>x!==i):meet.days.concat(i);d.classList.toggle("on")}});
+    /* книги выбираются в тех же окнах, что и «Своё расписание» / «Книга служения» */
+    const openEd=k=>{if(!window.ogOpenEditor)return;modal.style.display="none";
+      const back=()=>{modal.style.display=""};
+      window.ogOpenEditor(k,defs[k],d=>{defs[k]=d;kind=k;back();draw()},back)};
+    el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{kind=b.dataset.k;draw();if(!defs[kind])openEd(kind)});
+    function draw(){
+      el.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("on",x.dataset.k===kind));
+      if(!kind){W.innerHTML=`<p class="rghint">Выберите книги Библии или книгу служения — так же, как в своём расписании.</p>`;mk.disabled=true;return}
+      const d=defs[kind];
+      if(!d){W.innerHTML=`<button class="rgopt" type="button" data-ed><span>${kind==="ms"?"📖":"📜"}</span><span><b>${kind==="ms"?"Выбрать книгу служения":"Выбрать книги Библии"}</b><small>Откроется окно, как при создании расписания</small></span><em>›</em></button>`;mk.disabled=true;return}
+      const p=window.ogPlanPreview?window.ogPlanPreview(d):null;
+      const sel=`<div class="rgprev rgsel"><b>${esc(planDesc({kind,def:d}))}</b>${p?`<span>${esc(p.sum)}</span><span>Первый день: ${esc(p.first)}</span>`:""}<button class="rgre" type="button" data-ed>Изменить</button></div>`;
+      const nameBox=`<label class="rglbl" for="rgName">Название жизненной группы</label><div class="rgname" data-nbox><input class="rginput" id="rgName" maxlength="30" placeholder="Например: Братья с Петроградки" value="${esc(bname)}"><small data-nh>Придумайте сами — его увидят друзья. Что читаете, будет написано ниже названия.</small></div>`;
+      W.innerHTML=sel+nameBox;mk.disabled=false;
+      const nm=W.querySelector("#rgName");if(nm)nm.oninput=()=>{bname=nm.value;if(nm.value.trim()){W.querySelector("[data-nbox]").classList.remove("need");W.querySelector("[data-nh]").textContent="Придумайте сами — его увидят друзья. Что читаете, будет написано ниже названия."}};
+    }
+    draw();
+    W.addEventListener("click",e=>{if(e.target.closest("[data-ed]"))openEd(kind)});
+    mk.onclick=()=>{
+      const li=el.querySelector("#rgLink");if(li){link=li.value.trim();if(link&&!/^https:\/\/\S+\.\S+/.test(link)){li.classList.add("bad");li.focus();O().toast("Вставьте ссылку целиком, начиная с https://");return}}
+      let name;
+      {name=(bname||"").trim();
+        if(!name){const nbox=W.querySelector("[data-nbox]"),nh=W.querySelector("[data-nh]"),nm=W.querySelector("#rgName");nbox.classList.remove("need");void nbox.offsetWidth;nbox.classList.add("need");nh.textContent="👆 Напишите название группы";nm.focus();nbox.scrollIntoView({block:"center",behavior:"smooth"});return}}
+      const code=E?E.code:"K"+Math.random().toString(36).slice(2,7).toUpperCase();
+      const d=Object.assign({},defs[kind],{id:"fire-"+code,name,emb:"flame"});
+      const plan={kind,def:d};
+      if(edit){
+        const strip=x=>x&&Object.assign({},x,{name:0,id:0,emb:0});
+        const changed=G.plan.kind!==kind||JSON.stringify(strip(G.plan.def))!==JSON.stringify(strip(d));
+        if(changed&&!mk.dataset.arm){mk.dataset.arm=1;mk.classList.add("warn");mk.textContent="Чтение начнётся заново у всех — нажмите ещё раз";return}
+        if(changed&&G.plan.kind!=="church")try{window.ogPlanRemove(planId())}catch(_){}
+        G.name=name;G.size=size;G.meet=meet&&meet.days.length?meet:null;G.link=link;if(changed)G.plan=plan;else if(G.plan.def)G.plan.def.name=name;
+        put({name,size,meet:G.meet,link,plan:G.plan});
+        try{window.ogPlanAdd(G.plan.def)}catch(_){}
+        store();close();render();try{window.ogRefresh&&window.ogRefresh()}catch(_){}try{O().toast(changed?"Сохранено — у друзей тоже обновится":"Сохранено")}catch(e){}return}
+      if(!DEMO){
+        if(!NET){O().toast("Войдите через Google, чтобы создать жизненную группу");return}
+        mk.disabled=true;mk.textContent="Создаём…";
+        NET.create({name,size,meet:meet&&meet.days.length?meet:null,link,plan:{kind,def:Object.assign({},d,{id:""})},created:today()}).then(code=>{
+          const dd=Object.assign({},d,{id:"fire-"+code});NET.update(code,{"plan.def.id":dd.id}).catch(()=>{});
+          try{window.ogPlanAdd(dd)}catch(_){}
+          close();try{window.ogSetPage&&window.ogSetPage("home")}catch(e){}
+          try{O().toast(`Группа «${name}» создана — теперь отправьте ссылку друзьям`)}catch(e){}
+          const wait=(n)=>{const F=FIRES.find(f=>f.code===code);if(F){G=F;render();const c=$c.querySelector(`[data-fire="${code}"]`);if(c)c.scrollIntoView({block:"center",behavior:"smooth"});invite()}else if(n<20)setTimeout(()=>wait(n+1),250)};wait(0);
+        }).catch(e=>{console.warn(e);mk.disabled=false;mk.textContent="Создать группу";O().toast("Не получилось создать группу. Проверьте интернет.")});
+        return}
+      G={name,owner:"me",plan,size,meet:meet&&meet.days.length?meet:null,code,created:today(),streak:0,made:true,members:[{id:"me",st:"in"}],inbox:[],cheered:{},cel:"",day:today(),myReact:{}};FIRES.push(G);
+      try{window.ogPlanAdd(d)}catch(_){}
+      store();close();render();try{window.ogRefresh&&window.ogRefresh()}catch(_){}try{window.ogSetPage&&window.ogSetPage("home")}catch(e){}
+      try{O().toast(`Группа «${name}» создана — теперь отправьте ссылку друзьям`)}catch(e){}
+      const F=G;setTimeout(()=>{G=F;const c=$c.querySelector(`[data-fire="${F.code}"]`)||$c;c.scrollIntoView({block:"center",behavior:"smooth"});invite()},500);
+    };
+  });
+}
+function menu(){
+  const own=G.owner==="me";
+  sheet(esc(G.name),`
+    <p class="rghint">Читаем: ${esc(planDesc(G.plan))}</p>
+    <div class="rglist">${G.members.map(m=>`<div class="rgli">${av(m.id,m.st==="inv"?"off":"")}<span><b>${esc(who(m.id).name)}</b>${m.id===G.owner?' <small style="color:var(--muted);font-weight:500">· создал(а) группу</small>':""}</span><small>${m.st==="inv"?"приглашён":readOf(m)?"сегодня ✓":"сегодня ещё нет"}</small></div>`).join("")}</div>
+    ${own?`<button class="rgbtn" type="button" data-set>Настроить группу</button>`:""}
+    ${own&&G.members.length<MAX()?`<button class="rgbtn sec" type="button" data-inv>Отправить ссылку друзьям</button>`:""}
+    ${own?"":`<p class="rghint">Менять группу может только ${esc(who(G.owner).name)} — тот, кто её создал.</p>`}
+    <button class="rgbtn sec" type="button" data-leave style="color:#c0392b">Выйти из группы</button>`,(el,close)=>{
+    const on=(s,f)=>{const b=el.querySelector(s);if(b)b.onclick=f};
+    on("[data-set]",()=>{close();setup(true)});
+    on("[data-inv]",()=>{close();invite()});
+    const lv=el.querySelector("[data-leave]");lv.onclick=()=>{if(!lv.dataset.arm){lv.dataset.arm=1;lv.textContent="Точно выйти? Прочитанное сохранится. Нажмите ещё раз";return}
+      if(G.plan.kind!=="church")try{window.ogPlanRemove(planId())}catch(_){}
+      if(!DEMO&&NET){const F=G;NET.leave(F.code,F._doc).catch(e=>{console.warn(e);O().toast("Не получилось выйти. Проверьте интернет.")})}
+      FIRES=FIRES.filter(f=>f!==G);G=FIRES[0]||null;store();close();render();try{window.ogRefresh&&window.ogRefresh()}catch(_){}};
+  });
+}
+function how(){}
+/* --- присоединиться по ссылке: друг видит приглашение и одну кнопку --- */
+function joinReal(code){
+  if(!NET)return;
+  NET.get(code).then(d=>{
+    if(!d){O().toast("Группа не найдена — возможно, её удалили");return}
+    if((d.members||[]).includes(MYUID)){O().toast("Вы уже в группе «"+d.name+"»");return}
+    Object.assign(NAMES,d.names||{});Object.assign(PHOTOS,d.photos||{});
+    const full=(d.members||[]).length>=(d.size||4),k=G;G={plan:d.plan,code:d.code};const pv=d.plan&&d.plan.def&&window.ogPlanPreview?window.ogPlanPreview(Object.assign({},d.plan.def,{id:"fire-"+code})):null;G=k;
+    sheet("Приглашение в жизненную группу",`
+      <div class="rginvite">${campfire((d.members||[]).length,(d.size||4))}<h3>${esc(d.name)}</h3><p>${esc(who(d.owner).name)} зовёт вас читать вместе</p></div>
+      <div class="rgplan"><small>Читаем</small><b>${esc(planDesc(d.plan))}</b>${pv?`<small>${esc(pv.sum)}</small>`:""}</div>
+      <div class="rgpeople2">${(d.members||[]).map(u=>`<div class="rgp">${av(u)}<span>${esc(who(u).name)}</span></div>`).join("")}</div>
+      ${full?`<p class="rghint" style="text-align:center">В группе уже ${d.size} ${pl(d.size,"человек","человека","человек")} — мест нет.</p>`:`<button class="rgbtn" type="button" data-j>Присоединиться</button>`}`,(el,close)=>{
+      const b=el.querySelector("[data-j]");if(b)b.onclick=()=>{b.disabled=true;b.textContent="Присоединяемся…";
+        NET.join(code).then(ok=>{if(!ok){b.textContent="Мест нет";return}
+          if(d.plan&&d.plan.def)try{window.ogPlanAdd(Object.assign({},d.plan.def,{id:"fire-"+code}))}catch(_){}
+          close();try{window.ogSetPage&&window.ogSetPage("home")}catch(e){}
+          O().toast("Вы в группе «"+d.name+"» — чтение появилось на главной");
+        }).catch(e=>{console.warn(e);b.disabled=false;b.textContent="Присоединиться";O().toast("Не получилось присоединиться. Проверьте интернет.")})}});
+  }).catch(e=>{console.warn(e);O().toast("Не получилось открыть приглашение. Проверьте интернет.")});
+}
+function join(){
+  const BB=window.ogBooks?window.ogBooks():{books:[]};
+  const code="J7PX2A", def={id:"fire-"+code,custom:true,name:"Вечерний огонь",emb:"flame",start:today(),books:["Ин."],mode:"seq",by:"chapters",amount:1};
+  const inv={name:"Вечерний огонь",owner:"tolya",plan:{kind:"bible",def},size:4,code,created:today(),streak:0,made:true,
+    members:[{id:"tolya",st:"in",read:"07:12",react:{fire:[],pray:[]}},{id:"lada",st:"in",read:"08:40",react:{fire:["tolya"],pray:[]}}],inbox:[],cheered:{},cel:"",day:today(),myReact:{}};
+  const pv=window.ogPlanPreview?window.ogPlanPreview(def):null;
+  sheet("Приглашение в жизненную группу",`
+    <div class="rginvite">${campfire(2,3)}<h3>${esc(inv.name)}</h3><p>${esc(who("tolya").name)} зовёт вас читать вместе</p></div>
+    <div class="rgplan"><small>Читаем</small><b>${esc(planDesc(inv.plan))}</b>${pv?`<small>${esc(pv.sum)}</small>`:""}</div>
+    <div class="rgpeople2">${inv.members.map(m=>`<div class="rgp">${av(m.id)}<span>${esc(who(m.id).name)}</span></div>`).join("")}<div class="rgp"><span class="rgseat" style="border-color:var(--flame);color:var(--flame)">Я</span><span>Вы</span></div><div class="rgp"><span class="rgseat">·</span><span style="color:var(--muted)">место</span></div></div>
+    <button class="rgbtn" type="button" data-j>Присоединиться</button>`,(el,close)=>{el.querySelector("[data-j]").onclick=()=>{
+      FIRES=FIRES.filter(f=>f.code!==inv.code);G=inv;G.members.push({id:"me",st:"in"});FIRES.push(G);try{window.ogPlanAdd(def)}catch(_){}store();close();render();try{window.ogRefresh&&window.ogRefresh()}catch(_){}try{window.ogSetPage&&window.ogSetPage("home")}catch(e){}
+      setTimeout(()=>{const c=$c.querySelector(`[data-fire="${inv.code}"]`)||$c;c.scrollIntoView({block:"center",behavior:"smooth"})},300);try{O().toast("Вы в группе «Вечерний огонь» — чтение появилось на главной")}catch(e){}}});
+}
+function goRead(){
+  /* к карточке этого чтения на главной (у своего расписания костра — название костра) */
+  const want=G.name;let el=null;
+  document.querySelectorAll("#app .xcard, #app .card").forEach(c=>{if(!el&&!c.closest("#groupCard")&&!c.hidden&&want&&c.textContent.includes(want))el=c});
+  (el||document.getElementById("testaments")||$c).scrollIntoView({behavior:"smooth",block:"center"});
+}
+/* ---------- праздник: прочитали все ---------- */
+let celWait=null;
+function overlayOpen(){const c=document.getElementById("celebrate"),ch=document.getElementById("chest");
+  return (c&&!c.hidden)||(ch&&!ch.hidden)||!!document.querySelector(".fmodal,.bkcel,.celov,.rgmodal,.rgcel")}
+function maybeCelebrate(all,streak){
+  if(!all||G.cel===today())return;
+  clearInterval(celWait);
+  const F=G;let t0=Date.now();celWait=setInterval(()=>{if(Date.now()-t0<2600||overlayOpen())return;clearInterval(celWait);if(F.cel===today())return;F.cel=today();store();const k=G;G=F;celebrate(streak);G=k},700);
+}
+function celebrate(streak){
+  const J=joined(),d=document.createElement("div");d.className="rgcel";
+  d.innerHTML=`<div>${campfire(J.length,J.length,1)}<h2>Сегодня прочитали все!</h2>
+    <p>${esc(G.name)}: ${streak} ${pl(streak,"день","дня","дней")} вместе</p>
+    <div class="rgcp">${J.map((m,i)=>av(m.id).replace('style="','style="animation-delay:'+(0.15+i*.15)+'s;')).join("")}</div>
+    <button class="rgbtn" type="button">Отлично! 🎉</button></div>`;
+  document.body.appendChild(d);
+  try{const r=d.querySelector("svg").getBoundingClientRect();O().burst(r.left+r.width/2,r.top+r.height/2,40)}catch(e){}
+  try{O().vibrate&&O().vibrate([30,40,60])}catch(e){}
+  d.querySelector("button").onclick=()=>d.remove();
+}
+/* ---------- события ---------- */
+$c.addEventListener("click",e=>{
+  const card=e.target.closest("[data-fire]");if(!card||!pick(card.dataset.fire))return;
+  const pp=e.target.closest("[data-p]");if(pp){const id=pp.dataset.p,m=G.members.find(x=>x.id===id);
+    if(id==="me"){if(!readOf(m))goRead();else if(!myNote()&&G.plan.kind!=="ms")try{window.ogAskVerse()}catch(_){};return}
+    if(!readOf(m)){if(G.cheered[id])return O().toast("Вы уже подбодрили сегодня");return cheer(id)}
+    return O().toast(`${who(id).name} ${/а$|я$/.test(who(id).name)?"прочитала":"прочитал"} сегодня в ${readOf(m)}`)}
+  const b=e.target.closest("[data-cheer],[data-go],[data-re]");if(!b)return;
+  if(b.dataset.cheer)return cheer(b.dataset.cheer);
+  if(b.dataset.re){const id=b.dataset.id,k=b.dataset.re;G.myReact[id]=G.myReact[id]||{};G.myReact[id][k]=!G.myReact[id][k];store();render();return}
+  const g=b.dataset.go;
+  if(g==="read")return goRead();
+  if(g==="mark")return markRead();
+  if(g==="undo")return undoRead();
+  if(g==="verse"){try{(window.ogAskVerse||function(){})()}catch(_){};return}
+  if(g==="menu")return menu();
+  if(g==="new")return setup(false);
+  if(g==="addbook")return setup(true);
+  if(g==="invite")return G.owner==="me"?invite():O().toast("Позвать друзей может тот, кто создал группу");
+  if(g==="call")return startCall();
+  if(g==="join")return join();
+});
+/* вход из вкладки «Расписания» */
+window.ogFireList=()=>FIRES.map(f=>{G=f;return {code:f.code,name:f.name,n:joined().length,inv:invited().length,size:MAX(),own:f.owner==="me",what:planDesc(f.plan)}});
+window.ogFireMenu=code=>{if(pick(code))menu()};
+window.ogFireNew=()=>{if(!DEMO&&!NET){O().toast("Войдите через Google (кнопка вверху), чтобы создать жизненную группу");const b=document.getElementById("loginTop");if(b&&!b.hidden)b.click();return}setup(false)};
+window.ogFireInfo=()=>FIRES.length?{n:FIRES.length}:null;
+window.ogFireSettings=()=>setup(false);
+window.ogFireOpen=()=>setup(false);
+let wasRead=null;
+/* сеть: auth.js после входа отдаёт net, при выходе — null */
+let seenCall={};
+window.ogGroupsNet=function(net,joinCode){
+  if(DEMO)return;
+  if(NET&&NET.stop)try{NET.stop()}catch(e){}
+  NET=net;MYUID=net?net.uid:null;FIRES=[];G=null;
+  if(!net){render();try{window.ogRefresh&&window.ogRefresh()}catch(e){}return}
+  NAMES[net.uid]=net.name();PHOTOS[net.uid]=net.photo||"";
+  NET.stop=net.watchMine(docs=>{
+    const keep=G&&G.code;FIRES=docs.map(fromDoc);G=FIRES.find(f=>f.code===keep)||FIRES[0]||null;
+    /* расписание группы у меня — такое же, как у создателя */
+    FIRES.forEach(f=>{if(f.plan&&f.plan.def&&f.plan.kind!=="church"){const want=Object.assign({},f.plan.def,{id:"fire-"+f.code});try{window.ogPlanAdd(want)}catch(e){}}
+      /* мне звонят */
+      const L=f.live;if(L&&L.by!=="me"&&!L.in.includes("me")&&!seenCall[f.code+L.t]&&Date.now()-L.t<10*6e4){seenCall[f.code+L.t]=1;incoming(f,L.by)}});
+    FIRES.forEach(f=>syncRead(f));
+    render();try{window.ogRefresh&&window.ogRefresh()}catch(e){}
+  });
+  if(joinCode)setTimeout(()=>joinReal(joinCode),600);
+};
+window.ogGroupRender=function(){
+  /* время своей отметки — для каждого костра своё */
+  const keep=G;FIRES.forEach(f=>{G=f;const any=planToday().any;if(any&&!f.myTime)f.myTime=hm();if(!any)f.myTime=null;syncRead(f)});G=keep;store();render()};
+load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
+})();
+</script>
+<script src="globe.js?v=202611020800"></script>
+<script type="module" src="auth.js?v=202611020800"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261031094500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261102080000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

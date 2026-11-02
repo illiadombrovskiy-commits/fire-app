@@ -1089,12 +1089,70 @@ async function main() {
     window.confNet(net, team);
   }
 
+  /* ---------- жизненные группы: читать вместе (groups/{КОД}) ---------- */
+  let groupsUnsub = null;
+  function setupGroups() {
+    if (!window.ogGroupsNet) return;
+    const gref = (code) => F.doc(db, "groups", code);
+    const nm = () => String(myName() || "Читатель").slice(0, 40), ph = () => me.photoURL || "";
+    const net = {
+      uid: me.uid, name: nm, photo: ph(),
+      del: () => F.deleteField(),
+      watchMine(cb) {
+        if (groupsUnsub) groupsUnsub();
+        groupsUnsub = F.onSnapshot(F.query(F.collection(db, "groups"), F.where("members", "array-contains", me.uid)),
+          (qs) => { const list = []; qs.forEach((d) => list.push(d.data())); list.sort((x, y) => String(x.created || "").localeCompare(String(y.created || ""))); cb(list); },
+          (e) => console.warn(e));
+        return () => { if (groupsUnsub) { groupsUnsub(); groupsUnsub = null; } };
+      },
+      async create(data) {
+        for (let i = 0; i < 6; i++) {
+          const code = randomCode();
+          const ok = await F.runTransaction(db, async (tx) => {
+            const s = await tx.get(gref(code));
+            if (s.exists()) return false;
+            tx.set(gref(code), Object.assign({}, data, { code, owner: me.uid, members: [me.uid], names: { [me.uid]: nm() }, photos: { [me.uid]: ph() } }));
+            return true;
+          }).catch((e) => { console.warn(e); return false; });
+          if (ok) return code;
+        }
+        throw new Error("Не удалось создать группу");
+      },
+      async get(code) { const s = await F.getDoc(gref(code)); return s.exists() ? s.data() : null; },
+      update(code, patch) { return F.updateDoc(gref(code), patch); },
+      join(code) {
+        return F.runTransaction(db, async (tx) => {
+          const s = await tx.get(gref(code)); if (!s.exists()) return false;
+          const d = s.data(), m = d.members || [];
+          if (m.includes(me.uid)) return true;
+          if (m.length >= (d.size || 4)) return false;
+          tx.update(gref(code), { members: m.concat(me.uid), ["names." + me.uid]: nm(), ["photos." + me.uid]: ph() });
+          return true;
+        });
+      },
+      leave(code) {
+        return F.runTransaction(db, async (tx) => {
+          const s = await tx.get(gref(code)); if (!s.exists()) return;
+          const d = s.data(), m = (d.members || []).filter((u) => u !== me.uid);
+          if (!m.length) { tx.delete(gref(code)); return; }
+          const patch = { members: m };
+          if (d.owner === me.uid) patch.owner = m[0]; // создатель ушёл — группу ведёт следующий
+          tx.update(gref(code), patch);
+        });
+      }
+    };
+    const q = new URLSearchParams(location.search), code = (q.get("group") || q.get("fire") || "").toUpperCase();
+    if (code) history.replaceState(null, "", location.pathname);
+    window.ogGroupsNet(net, /^[A-Z0-9]{6}$/.test(code) ? code : null);
+  }
+
   /* ---------- session ---------- */
   A.onAuthStateChanged(auth, async (user) => {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
+    if (groupsUnsub) { groupsUnsub(); groupsUnsub = null; } if (window.ogGroupsNet) window.ogGroupsNet(null);
     if (!user) {
       closeUserMenu(); closeAll(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       if (window.OgonekGlobe) window.OgonekGlobe.close();
@@ -1157,6 +1215,7 @@ async function main() {
       O().onPersonClick = (id) => openProfile(id);
       listenCheers();
       try { setupTeams(); } catch (e) { console.warn(e); }
+      try { setupGroups(); } catch (e) { console.warn(e); }
       const add = new URLSearchParams(location.search).get("add");
       if (add) { history.replaceState(null, "", location.pathname); addFriendByCode(add); }
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить друзей. Проверьте настройки Firestore."); }
