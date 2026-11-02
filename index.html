@@ -2092,6 +2092,8 @@ body:has(.celov) .sparks{z-index:9100}@keyframes celIn{from{opacity:0}}@keyframe
 .rgcheerln{margin-top:8px;padding:7px 10px;border-radius:12px;background:var(--xp-soft);font-size:.84rem;line-height:1.35}.rgcheerln b{color:var(--xp)}
 a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 .rgcall2 .rgcallav{margin-left:3px}.rgcall2 .rgcallav .rgav{width:22px;height:22px;margin-left:-6px;box-shadow:0 0 0 1.5px var(--surface)}.rgcall2 .rgcallav .rgav:first-child{margin-left:0}.rgcall2.live{padding:3px 4px 3px 9px}
+.rgwait{font-size:.78rem;color:var(--muted);font-weight:700;margin-right:2px}
+.rgpeople3{padding:5px 4px 2px;margin-top:5px}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -6285,7 +6287,7 @@ function weekHtml(){
 /* ---------- звонок: у каждого костра своя комната ---------- */
 /* в настоящем приложении — Google Meet API (spaces.create) через вход Google; в демо ссылка-пример */
 function meetCode(){const s=(G.code+"ogonekfire").toLowerCase().replace(/[^a-z]/g,"x");return s.slice(0,3)+"-"+s.slice(3,7)+"-"+s.slice(7,10)}
-function svcName(u){u=String(u||"");return /telemost|yandex/i.test(u)?"Яндекс Телемост":/vk\.(com|ru)|calls\.vk/i.test(u)?"VK Звонки":/meet\.google/i.test(u)?"Google Meet":/zoom\./i.test(u)?"Zoom":"звонок по ссылке"}
+function svcName(u){u=String(u||"");return /telemost|yandex/i.test(u)?"Яндекс Телемост":/vk\.(com|ru)|calls\.vk/i.test(u)?"VK Звонки":/meet\.google/i.test(u)?"Google Meet":/zoom\.(us|com)/i.test(u)?"Zoom":"звонок по ссылке"}
 function roomUrl(){return DEMO?"https://meet.google.com/"+meetCode():(G.link||"")}
 function callLive(){const L=G.live;return L&&(L.in||[]).length&&Date.now()-L.t<90*6e4?L:null}
 const inCall=()=>{const L=callLive();return !!(L&&(L.in||[]).includes("me"))};
@@ -6514,7 +6516,12 @@ function ogFriends(){
   return l.map(f=>{NAMES[f.uid]=NAMES[f.uid]||f.name;if(f.photo&&!PHOTOS[f.uid])PHOTOS[f.uid]=f.photo;return {id:idOf(f.uid),name:f.name}});
 }
 function invite(){
-  const free=()=>MAX()-G.members.length;
+  const F=G,sent=invLoad();
+  /* мои ещё не принятые приглашения: не в группе и письмо у друга ещё лежит */
+  let pend=DEMO?null:((sent[F.code]||[]).filter(id=>!F.members.some(m=>m.id===id)));
+  const pending=()=>DEMO?F.members.filter(m=>m.st==="inv").map(m=>m.id):pend;
+  const free=()=>{G=F;return MAX()-F.members.filter(m=>m.st!=="inv").length-pending().length};
+  const saveSent=()=>{sent[F.code]=pend.slice();invSave(sent)};
   sheet("Позвать друзей",`
     <p class="rghint" data-free></p>
     <div class="rglbl">Друзья в Огоньке</div>
@@ -6524,28 +6531,34 @@ function invite(){
     ${!DEMO&&navigator.share?`<button class="rgbtn sec" type="button" data-share>📤 Отправить через…</button>`:""}
     <p class="rghint">Друг откроет ссылку, нажмёт «Присоединиться» — и чтение группы появится у него в Огоньке.</p>
     <button class="rgbtn" type="button" data-done>Готово</button>`,(el,close)=>{
-    const F=G,sent=invLoad();
-    const draw=()=>{G=F;
-      el.querySelector("[data-free]").textContent=free()?`Свободно ${free()} ${pl(free(),"место","места","мест")} из ${MAX()-1}. Когда друг примет приглашение, он появится в группе.`:`Все места заняты — в группе ${MAX()} ${pl(MAX(),"человек","человека","человек")}.`;
+    const draw=()=>{G=F;const fr_=free(),P=pending();
+      el.querySelector("[data-free]").textContent=(fr_>0?`Свободно ${fr_} ${pl(fr_,"место","места","мест")} из ${MAX()-1}.`:fr_<0?`Приглашений больше, чем мест — отзовите лишние.`:P.length?`Все места разобраны приглашениями. Отзовите приглашение, чтобы позвать другого.`:`Все места заняты — в группе ${MAX()} ${pl(MAX(),"человек","человека","человек")}.`)
+        +(P.length?` Ждём ответа: ${P.length}.`:"");
       const fr=ogFriends(),L=el.querySelector("[data-list]");
       if(!fr.length){L.innerHTML=`<p class="rghint">Пока нет друзей в Огоньке. Добавьте их во вкладке «Друзья» — и они появятся здесь.</p>`;return}
-      L.innerHTML=fr.map(f=>{const m=G.members.find(x=>x.id===f.id),was=DEMO?(m&&m.st==="inv"):(sent[G.code]||[]).includes(f.id);
-        const b=m&&m.st==="in"?`<span class="rgok">в группе</span>`:was?`<button class="rgre on" type="button" data-un="${esc(f.id)}">Приглашён ✓</button>`:(free()?`<button class="rgre" type="button" data-inv="${esc(f.id)}">Пригласить</button>`:`<span class="rgok" style="color:var(--muted)">нет мест</span>`);
+      L.innerHTML=fr.map(f=>{const m=F.members.find(x=>x.id===f.id&&x.st==="in"),was=P.includes(f.id);
+        const b=m?`<span class="rgok">в группе</span>`:was?`<span class="rgwait">приглашён</span><button class="rgre" type="button" data-un="${esc(f.id)}">Отозвать</button>`:(fr_>0?`<button class="rgre" type="button" data-inv="${esc(f.id)}">Пригласить</button>`:`<span class="rgok" style="color:var(--muted)">нет мест</span>`);
         return `<div class="rgli2">${av(f.id)}<span>${esc(who(f.id).name)}</span>${b}</div>`}).join("");
     };
     draw();
+    /* проверить, какие приглашения ещё ждут (друг мог отказаться или уже вступить) */
+    if(!DEMO&&pend.length&&NET&&NET.invAlive)Promise.all(pend.map(id=>NET.invAlive(uidOf(id),F.code).catch(()=>true))).then(r=>{pend=pend.filter((id,i)=>r[i]);saveSent();if(el.isConnected)draw()});
     el.addEventListener("click",e=>{
       const i=e.target.closest("[data-inv]"),u=e.target.closest("[data-un]");G=F;
-      if(i&&free()){const id=i.dataset.inv;
+      if(i&&free()>0){const id=i.dataset.inv;
         if(!DEMO){i.disabled=true;i.textContent="…";
-          NET.invite(uidOf(id),G.code,G.name).then(()=>{(sent[F.code]=sent[F.code]||[]).push(id);invSave(sent);draw();try{O().toast(`${who(id).name} увидит приглашение в Огоньке`)}catch(_){}})
+          NET.invite(uidOf(id),F.code,F.name).then(()=>{if(!pend.includes(id))pend.push(id);saveSent();draw();try{O().toast(`${who(id).name} увидит приглашение в Огоньке`)}catch(_){}})
             .catch(err=>{console.warn(err);i.disabled=false;i.textContent="Пригласить";O().toast("Не удалось отправить приглашение. Проверьте интернет.")});return}
-        G.members.push({id,st:"inv",read:DEMO_READ[id],react:{fire:[],pray:[]}});store();draw();render();
-        /* демо: друг принимает через 4 с */
-        setTimeout(()=>{const m=F.members.find(x=>x.id===id);if(m&&m.st==="inv"){m.st="in";store();render();try{O().toast(`🔥 ${who(id).name} теперь в вашей группе`)}catch(e){}}},4000+Math.random()*2500)}
-      if(u){if(DEMO){G.members=G.members.filter(x=>x.id!==u.dataset.un);store();draw();render()}else O().toast("Приглашение уже у друга — он сам решит, присоединиться ли")}
+        F.members.push({id,st:"inv",read:DEMO_READ[id],react:{fire:[],pray:[]}});store();draw();render();
+        /* демо: друг принимает через 6 с (если приглашение не отозвали) */
+        setTimeout(()=>{const m=F.members.find(x=>x.id===id);if(m&&m.st==="inv"){m.st="in";store();render();if(el.isConnected)draw();try{O().toast(`🔥 ${who(id).name} теперь в вашей группе`)}catch(e){}}},6000+Math.random()*2500);return}
+      if(u){const id=u.dataset.un;
+        if(DEMO){F.members=F.members.filter(x=>!(x.id===id&&x.st==="inv"));store();draw();render();try{O().toast(`Приглашение ${who(id).name} отозвано`)}catch(_){}return}
+        u.disabled=true;u.textContent="…";
+        NET.revoke(uidOf(id),F.code).then(()=>{pend=pend.filter(x=>x!==id);saveSent();draw();try{O().toast(`Приглашение ${who(id).name} отозвано`)}catch(_){}})
+          .catch(err=>{console.warn(err);u.disabled=false;u.textContent="Отозвать";O().toast("Не удалось отозвать. Проверьте интернет.")})}
     });
-    const url=location.origin+location.pathname+"?group="+G.code, gname=G.name;
+    const url=location.origin+location.pathname+"?group="+F.code, gname=F.name;
     el.querySelector("[data-copy]").onclick=e=>{try{navigator.clipboard.writeText(url).catch(()=>{})}catch(_){}e.target.textContent="✓ Ссылка скопирована"};
     const sh=el.querySelector("[data-share]");if(sh)sh.onclick=()=>{try{navigator.share({title:"Огонёк · "+gname,text:"Читаем Библию вместе в жизненной группе «"+gname+"». Присоединяйся:",url}).catch(()=>{})}catch(_){}};
     el.querySelector("[data-done]").onclick=close;
@@ -6568,9 +6581,9 @@ function setup(edit){
     <div data-what></div>
     <div class="rglbl">Сколько человек</div>
     <div class="rgpace rgsize">${[2,4,6].map(n=>`<button type="button" data-sz="${n}" class="${size===n?"on":""}" ${n<minSize?"disabled":""}>${n}</button>`).join("")}</div>
-    ${DEMO?"":`<div class="rglbl">Ссылка на звонок</div>
-    <div class="rgbox"><input class="rginput" id="rgLink" inputmode="url" placeholder="https://telemost.yandex.ru/j/…" value="${esc(link)}">
-      <p class="rghint">Создайте встречу один раз и вставьте ссылку — по кнопке «📞 Позвонить» все будут заходить в неё. Без VPN работают <a href="https://telemost.yandex.ru/" target="_blank" rel="noopener">Яндекс Телемост ›</a> и <a href="https://calls.vk.com/" target="_blank" rel="noopener">VK Звонки ›</a></p></div>`}
+    ${DEMO?"":`<div class="rglbl">Звонок в Zoom</div>
+    <div class="rgbox"><input class="rginput" id="rgLink" inputmode="url" placeholder="https://zoom.us/j/…" value="${esc(link)}">
+      <p class="rghint">В Zoom возьмите ссылку своей «Личной конференции» — она постоянная — и вставьте сюда. По кнопке «📞 Позвонить» все будут заходить в неё. <a href="https://zoom.us/profile" target="_blank" rel="noopener">Моя ссылка в Zoom ›</a></p></div>`}
     <div class="rglbl">Созвоны <span style="font-weight:500;color:var(--muted)">— по желанию</span></div>
     <div data-meet></div>
     <button class="rgbtn" type="button" data-make>${edit?"Сохранить":"Создать группу"}</button>
@@ -6652,7 +6665,14 @@ function menu(){
     ${own?`<button class="rgbtn" type="button" data-set>Настроить группу</button>`:""}
     ${own&&G.members.length<MAX()?`<button class="rgbtn sec" type="button" data-inv>Отправить ссылку друзьям</button>`:""}
     ${own?"":`<p class="rghint">Менять группу может только ${esc(who(G.owner).name)} — тот, кто её создал.</p>`}
-    <button class="rgbtn sec" type="button" data-leave style="color:#c0392b">Выйти из группы</button>`,(el,close)=>{
+    <button class="rgbtn sec" type="button" data-leave style="color:#c0392b">Выйти из группы</button>
+    ${own?`<button class="rgbtn sec" type="button" data-del style="color:#c0392b">Удалить группу</button>`:""}`,(el,close)=>{
+    const del=el.querySelector("[data-del]");if(del)del.onclick=()=>{
+      if(!del.dataset.arm){del.dataset.arm=1;del.textContent="Удалить группу у всех участников? Нажмите ещё раз";return}
+      const F=G;if(F.plan.kind!=="church")try{window.ogPlanRemove(planId())}catch(_){}
+      if(!DEMO&&NET)NET.remove(F.code).catch(e=>{console.warn(e);O().toast("Не получилось удалить группу. Проверьте интернет.")});
+      FIRES=FIRES.filter(f=>f!==F);G=FIRES[0]||null;store();close();render();try{window.ogRefresh&&window.ogRefresh()}catch(_){}
+      try{O().toast("Группа «"+F.name+"» удалена")}catch(_){}};
     const on=(s,f)=>{const b=el.querySelector(s);if(b)b.onclick=f};
     on("[data-set]",()=>{close();setup(true)});
     on("[data-inv]",()=>{close();invite()});
@@ -6678,6 +6698,7 @@ function joinReal(code,inv){
       <div class="rgpeople2">${(d.members||[]).map(u=>`<div class="rgp">${av(u)}<span>${esc(who(u).name)}</span></div>`).join("")}</div>
       ${full?`<p class="rghint" style="text-align:center">В группе уже ${d.size} ${pl(d.size,"человек","человека","человек")} — мест нет.</p>`:`<button class="rgbtn" type="button" data-j>Присоединиться</button>`}
       ${inv?`<button class="rgbtn sec" type="button" data-no>Не сейчас</button>`:""}`,(el,close)=>{
+      if(inv){const md=el.closest(".rgmodal");if(md)md.dataset.inv=code}
       const no=el.querySelector("[data-no]");if(no)no.onclick=()=>{drop();close()};
       if(full)drop();
       const b=el.querySelector("[data-j]");if(b)b.onclick=()=>{b.disabled=true;b.textContent="Присоединяемся…";
@@ -6767,7 +6788,9 @@ window.ogGroupsNet=function(net,joinCode){
   if(!net){render();try{window.ogRefresh&&window.ogRefresh()}catch(e){}return}
   NAMES[net.uid]=net.name();PHOTOS[net.uid]=net.photo||"";
   NET.stop=net.watchMine(docs=>{
-    const keep=G&&G.code;FIRES=docs.map(fromDoc);G=FIRES.find(f=>f.code===keep)||FIRES[0]||null;
+    const keep=G&&G.code,was=FIRES.map(f=>({code:f.code,name:f.name}));FIRES=docs.map(fromDoc);
+    /* группу удалил создатель (или меня в ней больше нет) — убрать её чтение */
+    was.forEach(w=>{if(!docs.some(d=>d.code===w.code)){try{window.ogPlanRemove("fire-"+w.code)}catch(e){}}});G=FIRES.find(f=>f.code===keep)||FIRES[0]||null;
     /* расписание группы у меня — такое же, как у создателя */
     FIRES.forEach(f=>{if(f.plan&&f.plan.def&&f.plan.kind!=="church"){const want=Object.assign({},f.plan.def,{id:"fire-"+f.code});try{window.ogPlanAdd(want)}catch(e){}}
       /* мне звонят */
@@ -6777,7 +6800,10 @@ window.ogGroupsNet=function(net,joinCode){
   });
   if(joinCode)setTimeout(()=>joinReal(joinCode),600);
   /* приглашения от друзей из Огонька */
-  if(net.watchInv){const shown={};net.watchInv(list=>{list.forEach(i=>{if(!i||!i.group||shown[i.group])return;shown[i.group]=1;
+  if(net.watchInv){const shown={};net.watchInv(list=>{
+    /* приглашение отозвали — закрыть его окно, если открыто */
+    const have=new Set(list.map(i=>i&&i.group));Object.keys(shown).forEach(c=>{if(!have.has(c)){delete shown[c];document.querySelectorAll(`.rgmodal[data-inv="${c}"]`).forEach(m=>m.remove())}});
+    list.forEach(i=>{if(!i||!i.group||shown[i.group])return;shown[i.group]=1;
     const go=n=>{if(document.querySelector(".rgmodal,.fmodal")&&n<40)return setTimeout(()=>go(n+1),1500);joinReal(i.group,i)};setTimeout(()=>go(0),900)})})}
 };
 window.ogGroupRender=function(){
@@ -6786,11 +6812,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611020920"></script>
-<script type="module" src="auth.js?v=202611020920"></script>
+<script src="globe.js?v=202611021000"></script>
+<script type="module" src="auth.js?v=202611021000"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261102092000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261102100000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>

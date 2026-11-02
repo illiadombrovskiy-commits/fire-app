@@ -1104,6 +1104,9 @@ async function main() {
         return F.setDoc(F.doc(db, "groupinv", uid, "inbox", code), { from: me.uid, name: nm(), photo: ph(), group: code, gname: String(gname || "").slice(0, 60), at: Date.now() });
       },
       dropInvite(code) { return F.deleteDoc(F.doc(db, "groupinv", me.uid, "inbox", code)).catch(() => {}); },
+      // отозвать своё приглашение / проверить, ждёт ли оно ещё ответа
+      revoke(uid, code) { return F.deleteDoc(F.doc(db, "groupinv", uid, "inbox", code)); },
+      async invAlive(uid, code) { const s = await F.getDoc(F.doc(db, "groupinv", uid, "inbox", code)); return s.exists(); },
       watchInv(cb) {
         if (groupInvUnsub) groupInvUnsub();
         groupInvUnsub = F.onSnapshot(F.collection(db, "groupinv", me.uid, "inbox"),
@@ -1131,6 +1134,7 @@ async function main() {
       },
       async get(code) { const s = await F.getDoc(gref(code)); return s.exists() ? s.data() : null; },
       update(code, patch) { return F.updateDoc(gref(code), patch); },
+      remove(code) { return F.deleteDoc(gref(code)); }, // удалить группу — только создатель
       join(code) {
         return F.runTransaction(db, async (tx) => {
           const s = await tx.get(gref(code)); if (!s.exists()) return false;
