@@ -6334,14 +6334,14 @@ function meetDays(M){const d=(M.days||[]).slice().sort();return d.length===7?"к
 function meetState(){const M=G.meet;if(!M||!(M.days||[]).length)return null;
   const now=new Date(),dw=(now.getDay()+6)%7,[h,mi]=(M.time||"21:00").split(":").map(Number);
   if(M.days.includes(dw)){const st=new Date();st.setHours(h,mi||0,0,0);const df=(now-st)/6e4;
-    if(df>=-10&&df<=60)return {now:true,txt:"Созвон сейчас"};if(df<-10)return {txt:"Созвон сегодня в "+M.time}}
-  for(let i=1;i<=7;i++){const k=(dw+i)%7;if(M.days.includes(k))return {txt:"Созвон "+(i===1?"завтра":DOWN[k].toLowerCase())+" в "+M.time}}
+    if(df>=-10&&df<=60)return {now:true,txt:"Общение сейчас"};if(df<-10)return {txt:"Общение сегодня в "+M.time}}
+  for(let i=1;i<=7;i++){const k=(dw+i)%7;if(M.days.includes(k))return {txt:"Общение "+(i===1?"завтра":DOWN[k].toLowerCase())+" в "+M.time}}
   return null}
 function callHtml(){
   const L=callLive(),url=esc(roomUrl()||"#");
   if(L&&!(L.in||[]).includes("me"))return `<a class="rgcall2 ring" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Войти</a>`;
   if(L){const ins=L.in||[];return `<a class="rgcall2 live" href="${url}" target="_blank" rel="noopener" data-go="call"><span class="rgdot"></span>Звонок · ${ins.length}<span class="rgcallav">${ins.slice(0,4).map(id=>av(id)).join("")}</span></a>`}
-  const S=meetState();if(S&&S.now)return `<a class="rgcall2 ring" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Созвон сейчас</a>`;
+  const S=meetState();if(S&&S.now)return `<a class="rgcall2 ring" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Общение сейчас</a>`;
   return `<a class="rgcall2" href="${url}" target="_blank" rel="noopener" data-go="call">📞 Позвонить</a>`;
 }
 function callNote(){
@@ -6593,7 +6593,7 @@ function setup(edit){
         <li>Начните новую конференцию — галочка <b>«Использовать идентификатор персональной конференции»</b> должна стоять. Скопируйте ссылку приглашения и вставьте сюда.</li>
         <li>Когда заканчиваете, нажимайте <b>«Выйти из конференции»</b>, а не «Завершить конференцию для всех».</li></ol>
         <a href="https://zoom.us/profile" target="_blank" rel="noopener">Моя ссылка в Zoom ›</a></div></div>`}
-    <div class="rglbl">Созвоны <span style="font-weight:500;color:var(--muted)">— по желанию</span></div>
+    <div class="rglbl">Общение <span style="font-weight:500;color:var(--muted)">— по желанию</span></div>
     <div data-meet></div>
     <button class="rgbtn" type="button" data-make>${edit?"Сохранить":"Создать группу"}</button>
     ${edit?"":`<p class="rghint" style="text-align:center">Потом вы отправите друзьям ссылку — они просто присоединятся.</p>`}`,(el,close)=>{
@@ -6601,11 +6601,11 @@ function setup(edit){
     el.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=+b.dataset.sz;el.querySelectorAll("[data-sz]").forEach(x=>x.classList.toggle("on",x===b))});
     const MX=el.querySelector("[data-meet]");
     const drawMeet=()=>{
-      if(!meet){MX.innerHTML=`<button class="rgopt" type="button" data-mon><span>🗓</span><span><b>Созваниваться в определённое время</b><small>Например, по вторникам и четвергам в 21:00 — всем придёт напоминание</small></span><em>＋</em></button>`;return}
+      if(!meet){MX.innerHTML=`<button class="rgopt" type="button" data-mon><span>🗓</span><span><b>Общаться в определённое время</b><small>Например, по вторникам и четвергам в 21:00 — всем придёт напоминание</small></span><em>＋</em></button>`;return}
       MX.innerHTML=`<div class="rgbox"><div class="rgdays">${DOWN.map((d,i)=>`<button type="button" data-d="${i}" class="${meet.days.includes(i)?"on":""}">${d}</button>`).join("")}</div>
         <label class="rgtime">Во сколько <input type="time" id="rgMeetTime" value="${esc(meet.time)}"></label>
-        <p class="rghint">За 10 минут всем в группе придёт напоминание, а на карточке появится «📞 Созвон сейчас».</p>
-        <button class="rglink" type="button" data-moff>Без созвонов по расписанию</button></div>`;
+        <p class="rghint">За 10 минут всем в группе придёт напоминание, а на карточке появится «📞 Общение сейчас».</p>
+        <button class="rglink" type="button" data-moff>Без общения по расписанию</button></div>`;
       MX.querySelector("#rgMeetTime").onchange=e=>{meet.time=e.target.value||"21:00"}};
     drawMeet();
     MX.addEventListener("click",e=>{
@@ -6821,11 +6821,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611021410"></script>
-<script type="module" src="auth.js?v=202611021410"></script>
+<script src="globe.js?v=202611021450"></script>
+<script type="module" src="auth.js?v=202611021450"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261102141000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261102145000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
