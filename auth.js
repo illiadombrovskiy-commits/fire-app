@@ -1090,7 +1090,7 @@ async function main() {
   }
 
   /* ---------- жизненные группы: читать вместе (groups/{КОД}) ---------- */
-  let groupsUnsub = null;
+  let groupsUnsub = null, groupInvUnsub = null;
   function setupGroups() {
     if (!window.ogGroupsNet) return;
     const gref = (code) => F.doc(db, "groups", code);
@@ -1098,6 +1098,17 @@ async function main() {
     const net = {
       uid: me.uid, name: nm, photo: ph(),
       del: () => F.deleteField(),
+      // друзья из Огонька — чтобы позвать их в группу
+      friends: () => myFriends.map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "" })),
+      invite(uid, code, gname) {
+        return F.setDoc(F.doc(db, "groupinv", uid, "inbox", code), { from: me.uid, name: nm(), photo: ph(), group: code, gname: String(gname || "").slice(0, 60), at: Date.now() });
+      },
+      dropInvite(code) { return F.deleteDoc(F.doc(db, "groupinv", me.uid, "inbox", code)).catch(() => {}); },
+      watchInv(cb) {
+        if (groupInvUnsub) groupInvUnsub();
+        groupInvUnsub = F.onSnapshot(F.collection(db, "groupinv", me.uid, "inbox"),
+          (qs) => { const list = []; qs.forEach((d) => list.push(d.data())); cb(list); }, (e) => console.warn(e));
+      },
       watchMine(cb) {
         if (groupsUnsub) groupsUnsub();
         groupsUnsub = F.onSnapshot(F.query(F.collection(db, "groups"), F.where("members", "array-contains", me.uid)),
@@ -1152,7 +1163,7 @@ async function main() {
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
-    if (groupsUnsub) { groupsUnsub(); groupsUnsub = null; } if (window.ogGroupsNet) window.ogGroupsNet(null);
+    if (groupsUnsub) { groupsUnsub(); groupsUnsub = null; } if (groupInvUnsub) { groupInvUnsub(); groupInvUnsub = null; } if (window.ogGroupsNet) window.ogGroupsNet(null);
     if (!user) {
       closeUserMenu(); closeAll(); top.removeAttribute("aria-haspopup"); top.removeAttribute("aria-expanded"); top.title = "";
       if (window.OgonekGlobe) window.OgonekGlobe.close();
