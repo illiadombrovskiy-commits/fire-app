@@ -2098,6 +2098,10 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 .rgtips p{margin:0 0 4px}
 .rgtips ol{margin:0 0 6px;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .rgtips b{color:var(--ink);font-weight:700}
+.prow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.prow .pfield{min-width:0}.prow input{width:100%;min-width:0;box-sizing:border-box}
+.msdates[hidden]{display:none}
+.msdates{grid-template-columns:1fr;gap:14px}.msdates .pfield{max-width:260px}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -3919,7 +3923,7 @@ function openPlans(start,E){
     const nmRow=el("div","pnrow"),embNow=el("span","embnow");const drawNow=()=>{embNow.textContent="";embNow.append(icoEl(f.emb))};drawNow();
     nmRow.append(embNow,nm);nmf.append(nmh,nmRow,embPicker(()=>f.emb,v=>{f.emb=v;drawNow()}),nmMsg);
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
-    sheet.append(nmf,field("Дата начала",st));
+    const stF0=field("Дата начала",st);sheet.append(nmf);
     // что читать: включите Ветхий и/или Новый Завет, затем отметьте нужные книги (название раздела — выбрать весь раздел)
     f.books=new Set(E&&E.books||[]); f.tOn={ot:true,nt:true}; // видны все книги Библии, ни одна не выбрана
     const secBox=el("div","psecs");const cnt=el("span","pcnt");const lab=el("span","plab","Что читать ");lab.append(cnt);secBox.append(lab);
@@ -3956,7 +3960,7 @@ function openPlans(start,E){
     const endI=el("input");endI.type="date";endI.value=f.end;endI.addEventListener("change",()=>{f.end=endI.value;upd()});
     const amt=el("input");amt.type="number";amt.min="1";amt.max="500";amt.value=f.amount;amt.inputMode="numeric";amt.addEventListener("input",()=>{f.amount=Math.max(1,+amt.value||1);upd()});
     const paceRow=el("div","prow");
-    const drawPace=()=>{paceRow.textContent="";if(f.by==="end")paceRow.append(field("Закончить к дате",endI));else{amt.value=f.amount;paceRow.append(field(f.by==="verses"?"Стихов в день":"Глав в день",amt))}};
+    const drawPace=()=>{paceRow.textContent="";if(f.by==="end")paceRow.append(stF0,field("Закончить к дате",endI));else{amt.value=f.amount;paceRow.append(field(f.by==="verses"?"Стихов в день":"Глав в день",amt),stF0)}};
     paceBox.append(radio("pby",[["end","Закончить к дате"],["verses","Стихов в день"],["chapters","Глав в день"]],()=>f.by,v=>{f.by=v;if(v==="verses")f.amount=40;if(v==="chapters")f.amount=3;drawPace()}),paceRow);
     drawPace();sheet.append(paceBox);
     const prev=el("div","pprev");sheet.append(prev);
@@ -4060,10 +4064,10 @@ function openPlans(start,E){
     const ppdL=el("span","plab msh","Страниц в день"),ppdRow=el("div","mspw");
     const ppdBtns=[1,2,3,4,5,7,10].map(n=>{const b=el("button","pbook-c",String(n));b.type="button";b.style.setProperty("--c","var(--flame)");b.addEventListener("click",()=>{f.ppd=n;upd()});ppdRow.append(b);return [n,b]});
     const endI=el("input");endI.type="date";endI.addEventListener("change",()=>{f.end=endI.value;upd()});const endF=field("Закончить к дате",endI);endF.firstChild.className="msh";
-    paceBox.append(wdL,wdRow,wdHint,byL,byRow,paceL,pw,ppdL,ppdRow,endF);
+    const msDates=el("div","prow msdates");paceBox.append(wdL,wdRow,wdHint,byL,byRow,paceL,pw,ppdL,ppdRow,msDates);
     const pwBtns=[1,2,3,4,5,6,7].map(n=>{const b=el("button","pbook-c",String(n));b.type="button";b.style.setProperty("--c","var(--flame)");b.addEventListener("click",()=>{f.pw=n;upd()});pw.append(b);return b});
     const st=el("input");st.type="date";st.value=f.start;st.addEventListener("change",()=>{f.start=st.value||today();upd()});
-    const stF=field("Дата начала",st);stF.firstChild.className="msh";sheet.append(nmh,nmf,bookBox,fromF,papL,paceBox,stF);
+    const stF=field("Дата начала",st);stF.firstChild.className="msh";msDates.append(stF,endF);sheet.append(nmh,nmf,bookBox,fromF,papL,paceBox);
     const prev=el("div","pprev msprev");sheet.append(prev);
     const go=el("button","btn-main",E?"Сохранить изменения":"Создать и начать читать");go.type="button";if(window.__planPick)go.textContent="Готово — читаем это в группе";sheet.append(go);
     sheet.append(el("p","hint","Неделя — с понедельника по воскресенье. Дни чтения делятся между сообщениями по числу страниц; один день не захватывает два сообщения. В дни без чтения расписание отдыхает — серия от этого не прерывается, если в этот день читаете Библию."));
@@ -6821,11 +6825,20 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611021450"></script>
-<script type="module" src="auth.js?v=202611021450"></script>
+<script src="globe.js?v=202611031800"></script>
+<script type="module" src="auth.js?v=202611031800"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261102145000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261103180000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
+(function(){var later=null;
+ function field(a){if(!a||a===document.body)return false;var tg=a.tagName;return tg==="INPUT"&&!/^(checkbox|radio|button|submit|range|file|color)$/.test(a.type)||tg==="TEXTAREA"||a.isContentEditable}
+ function down(e){var a=document.activeElement;later=null;if(!field(a))return;var t=e.target;if(!t||!t.closest)return;
+  if(t.closest("input,textarea,select,label,[contenteditable]"))return;
+  if(t.closest("button,a,[role=button],summary")){later=a;return}
+  a.blur()}
+ document.addEventListener("touchstart",down,{passive:true,capture:true});document.addEventListener("mousedown",down,true);
+ document.addEventListener("click",function(){var a=later;later=null;if(a)setTimeout(function(){if(document.activeElement===a)a.blur()},0)},true)})();</script>
 </body>
 </html>
