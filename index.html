@@ -2102,6 +2102,30 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 .prow .pfield{min-width:0}.prow input{width:100%;min-width:0;box-sizing:border-box}
 .msdates[hidden]{display:none}
 .msdates{grid-template-columns:1fr;gap:14px}.msdates .pfield{max-width:260px}
+/* v25: карточка жизненной группы — одно окно, свой цвет (бирюза), отличается от расписаний */
+:root{--grp:#0e8f99;--grp-soft:#e1f5f6}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--grp:#3ccbd6;--grp-soft:#123a44}}
+:root[data-theme="dark"]{--grp:#3ccbd6;--grp-soft:#123a44}
+.grp{background:linear-gradient(180deg,color-mix(in srgb,var(--grp) 12%,var(--surface)),var(--surface) 70%);border:1.5px solid color-mix(in srgb,var(--grp) 50%,var(--line))}
+.grp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--grp)}
+.rgkind{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--grp);margin:-2px 0 6px}
+.rgkind::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--grp)}
+.rgtop2{align-items:center}
+.rgttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.rgttl h2{flex:none}
+.rgttl .rgbookln{margin-top:0;font-size:.8rem;font-weight:600;color:var(--muted);white-space:normal;line-height:1.3}
+.grp .rgtoday2{background:var(--grp-soft);border:1px solid color-mix(in srgb,var(--grp) 30%,transparent)}
+.grp .rgtoday2.done{background:color-mix(in srgb,var(--ok) 10%,var(--surface));border-color:transparent}
+.grp .rgmark{background:var(--grp);color:#fff}
+:root[data-theme="dark"] .grp .rgmark{color:#062a2e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .grp .rgmark{color:#062a2e}}
+.grp .rgmeetline{margin-top:8px}
+.rgnext{display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 10px;border-radius:12px;border:1.5px dashed color-mix(in srgb,var(--grp) 45%,var(--line))}
+.rgmark2{flex:none;border:1.5px solid var(--grp);background:none;color:var(--grp);font:inherit;font-weight:800;font-size:.76rem;padding:4px 10px;border-radius:99px;cursor:pointer}
+.rgtoday2,.rgnext{flex-wrap:wrap;row-gap:6px}
+.rgtoday2 .rglinks,.rgnext .rglinks{flex:1 1 auto}
+.rgtoday2 .rglink2,.rgnext .rglink2{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.rgdone,.rgmark,.rgmark2{margin-left:auto}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -6130,6 +6154,8 @@ window.ogPlanPreview=d=>{try{const S=buildSched(d);return {sum:schedSummary(S),f
 window.ogPlanToday=id=>{try{const S=xS(id);if(!S)return null;const refs=[],urls=[];let done=0,need=0;S.keys.forEach(k=>{const td=xToday(id,k);const p=td.length?td[0].p:xNext(id,k);if(p>=S.plan.length)return;const x=part2(S,k,p);if(!x.book)return;need++;if(td.length)done++;refs.push(refStr(x));urls.push(x.url?x.url:chapterUrl(x))});return {refs,urls,done:need>0&&done===need,any:done>0,rest:need===0}}catch(e){return null}};
 window.ogRefresh=()=>{try{render()}catch(e){}};
 window.ogPlanMark=id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{if(xToday(id,k).length)return;const p=xNext(id,k);if(p<S.plan.length&&part2(S,k,p).book)xMark(id,k,p)})};
+window.ogPlanNext=id=>{try{const S=xS(id);if(!S)return null;const refs=[],urls=[];S.keys.forEach(k=>{const p=xNext(id,k);if(p>=S.plan.length)return;const x=part2(S,k,p);if(!x.book)return;refs.push(refStr(x));urls.push(x.url?x.url:chapterUrl(x))});return refs.length?{refs,urls}:null}catch(e){return null}};
+window.ogPlanMarkNext=id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{const p=xNext(id,k);if(p<S.plan.length&&part2(S,k,p).book)xMark(id,k,p)})};
 window.ogPlanUndo=id=>{const S=xS(id);if(!S)return;S.keys.forEach(k=>{if(xToday(id,k).length)xUndo(id,k)})};
 window.ogChurchMark=()=>{KEYS.forEach(k=>{if(!(state[k].log||[]).some(l=>l.d===today())&&nextP(k)<DAYS)complete(k)})};
 window.ogChurchUndo=()=>{KEYS.forEach(k=>{(state[k].log||[]).filter(l=>l.d===today()).map(l=>l.p).forEach(p=>unmark(k,p))})};
@@ -6419,8 +6445,12 @@ function planRow(){
   const T=planToday();
   const links=T.refs.length?T.refs.map((r,i)=>`<a class="rglink2" href="${esc((T.urls||[])[i]||"#")}" target="_blank" rel="noopener">${esc(r)}</a>`).join(""):`<span class="rgnone">${T.rest?"сегодня отдых":"прочитано всё 🎉"}</span>`;
   const btn=!T.refs.length?"":T.any?`<span class="rgdone">✓ Прочитано<button class="rgundo" type="button" data-go="undo">Отмена</button></span>`:`<button class="rgmark" type="button" data-go="mark">Прочитал(а)</button>`;
-  return `<div class="rgtoday2 ${T.any?"done":""}"><span class="rglbl2">Сегодня</span><div class="rglinks">${links}</div>${btn}</div>`;
+  let nx="";
+  if(T.any&&G.plan&&G.plan.kind!=="church"&&window.ogPlanNext){const N=window.ogPlanNext(planId());
+    if(N)nx=`<div class="rgnext"><span class="rglbl2">Дальше</span><div class="rglinks">${N.refs.map((r,i)=>`<a class="rglink2" href="${esc(N.urls[i]||"#")}" target="_blank" rel="noopener">${esc(r)}</a>`).join("")}</div><button class="rgmark2" type="button" data-go="next">Прочитал(а)</button></div>`}
+  return `<div class="rgtoday2 ${T.any?"done":""}"><span class="rglbl2">Сегодня</span><div class="rglinks">${links}</div>${btn}</div>${nx}`;
 }
+function markNext(){try{window.ogPlanMarkNext(planId())}catch(e){}store();renderAll()}
 function markRead(){
   if(G.plan.kind==="church"){try{window.ogChurchMark()}catch(e){}}else{try{window.ogPlanMark(planId())}catch(e){}}
   G.myTime=hm();store();syncRead(G);renderAll();
@@ -6478,8 +6508,8 @@ function cardHtml(){
 
   maybeCelebrate(all,streak);
   return `
-   <div class="rgtop2">${campfire(n,Math.max(tot,1))}<h2>${esc(G.name)}</h2>${callHtml()}</div>
-   <div class="rgbookln">📖 ${esc(planBook(G.plan))}</div>
+   <div class="rgkind">Жизненная группа</div>
+   <div class="rgtop2">${campfire(n,Math.max(tot,1))}<div class="rgttl"><h2>${esc(G.name)}</h2><div class="rgbookln">📖 ${esc(planBook(G.plan))}</div></div>${callHtml()}</div>
    ${callNote()}
    ${G.inbox&&G.inbox.length&&!readOf(G.members.find(m=>m.id==="me")||{id:"me"})?G.inbox.map(x=>`<div class="rgcheerln">💬 <b>${esc(who(x.from).name)}:</b> «${esc(x.t)}»</div>`).join(""):""}
    ${planRow()}
@@ -6778,6 +6808,7 @@ $c.addEventListener("click",e=>{
   const g=b.dataset.go;
   if(g==="read")return goRead();
   if(g==="mark")return markRead();
+  if(g==="next")return markNext();
   if(g==="undo")return undoRead();
   if(g==="verse"){try{(window.ogAskVerse||function(){})()}catch(_){};return}
   if(g==="menu")return menu();
@@ -6828,11 +6859,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611031930"></script>
-<script type="module" src="auth.js?v=202611031930"></script>
+<script src="globe.js?v=202611031955"></script>
+<script type="module" src="auth.js?v=202611031955"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261103193000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261103195500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
