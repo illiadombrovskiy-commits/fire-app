@@ -2126,6 +2126,9 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 .rgtoday2 .rglinks,.rgnext .rglinks{flex:1 1 auto}
 .rgtoday2 .rglink2,.rgnext .rglink2{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .rgdone,.rgmark,.rgmark2{margin-left:auto}
+.schedno{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--link);margin:0 0 6px}
+.schedno::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.schedno.main{color:var(--flame)}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -4416,7 +4419,7 @@ function noReads(){
 function xDef(id){if(id==="spb")return {id:"spb"};return (state.myScheds||{})[id]||((state.plans||{})[id]||{}).def||null}
 function xOnMain(){return xOn().filter(id=>{const d=xDef(id);return d&&!d.ms&&String(id).indexOf("fire-")!==0})}
 /* основным стала книга служения или расписание группы, а церковь — дополнительным: вернуть церковь основной с её прогрессом */
-function churchRepair(){try{if(SCHED.spb||!(SCHED.ms||String(SCHED.id).indexOf("fire-")===0))return false;if(!tracks().spb||noPlan())return false;const ex=state.extra||{},sv=(state.plans||{}).spb;if(!ex.spb&&!sv)return false;let n=0;try{n=+sessionStorage.getItem("ogonek-church-fix")||0;sessionStorage.setItem("ogonek-church-fix",String(n+1))}catch(e){}if(n>=2)return false;state.extra=Object.assign({},ex);state.extra[SCHED.id]=true;delete state.extra.spb;switchPlan({id:"spb"});return true}catch(e){console.warn(e);return false}}
+function churchRepair(){try{if(SCHED.spb||!(SCHED.ms||String(SCHED.id).indexOf("fire-")===0))return false;if(!tracks().spb||noPlan())return false;const ex=state.extra||{},sv=(state.plans||{}).spb;if(!ex.spb&&!sv)return false;let n=0;try{n=+sessionStorage.getItem("ogonek-church-fix2")||0;sessionStorage.setItem("ogonek-church-fix2",String(n+1))}catch(e){}if(n>=2)return false;state.extra=Object.assign({},ex);state.extra[SCHED.id]=true;delete state.extra.spb;switchPlan({id:"spb"});return true}catch(e){console.warn(e);return false}}
 function xOn(){if(!tracks().spb||noPlan())return [];return Object.keys(state.extra||{}).filter(id=>state.extra[id]&&id!==SCHED.id&&xDef(id))}
 function xSt(id){state.plans=state.plans||{};let p=state.plans[id];if(!p)p=state.plans[id]={nt:{log:[],read:[]},ot:{log:[],read:[]},frzDays:[],def:xDef(id)};p.nt=p.nt||{log:[],read:[]};p.ot=p.ot||{log:[],read:[]};return p}
 function xS(id){const C=window.__xc||(window.__xc={}),d=xDef(id);if(!d)return null;const key=JSON.stringify(d);if(!C[id]||C[id].k!==key){try{C[id]={k:key,S:buildSched(d)}}catch(e){return null}}return C[id].S}
@@ -4452,7 +4455,9 @@ function renderExtras(){
   {let ph=$("primFin");const pf=!SCHED.spb&&(state.finished||[]).some(f=>f.id===SCHED.id&&!f.gone);
     if(pf&&!ph){const hd=tc.querySelector(".reading-head");if(hd){ph=el("p","xfinhint");ph.id="primFin";hd.after(ph)}}
     if(ph){ph.hidden=!pf;if(pf)ph.textContent="🎉 «"+SCHED.name+"» прочитано до конца! Сегодня ещё можно отменить отметку. Завтра расписание само уйдёт в «Архив» (вкладка «Библиотека»)."}}
-  ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");
+  const visX=ids.filter(i=>String(i).indexOf("fire-")!==0);
+  {let pn=$("primNo");if(!pn){const rh=tc.querySelector(".reading-head");if(rh){pn=el("div","schedno main","Главное расписание");pn.id="primNo";rh.before(pn)}}if(pn)pn.hidden=!visX.length||noPlan()||!tracks().spb}
+  ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");card.append(el("div","schedno","Расписание "+(visX.indexOf(id)+2)));
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km);if(dn===S.keys.length)hr.append(el("span","xst ok","готово ✓")); // счётчик «0 из 1» убран — показываем только «готово»
     hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);card.append(hd);
@@ -6180,7 +6185,7 @@ window.Ogonek={
     if(((state.schedDef&&state.schedDef.id)||"spb")!==SCHED.id){let n=0;try{n=+sessionStorage.getItem("ogonek-sched-reload")||0;sessionStorage.setItem("ogonek-sched-reload",String(n+1))}catch(e){}if(n<2){location.reload();return}}
     const u=applyFreezes();render();if(u)toast("Заморозка сохранила вашу серию");},
   setRemote(fn){remoteSave=fn},
-  progressLoaded(){window.__ogLoaded=true;try{applyNoPlan()}catch(e){}try{churchRepair()}catch(e){}},
+  progressLoaded(){window.__ogLoaded=true;try{applyNoPlan()}catch(e){}setTimeout(()=>{try{churchRepair()}catch(e){}},60)},
   openPlans:()=>openPlans(), openFinished:(list,who)=>openFinished(list,who), finishedCount:()=>(state.finished||[]).length, openPlanEditor:()=>openPlanEditor(), myPlansCount:()=>myPlanList().length, openBooks:(list,who)=>openBooks(list,who), booksCount:()=>booksSummary().length, planId:SCHED.id, planName:SCHED.name, keysAll:["nt","ot"],
   toast
 };
@@ -6859,11 +6864,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611031955"></script>
-<script type="module" src="auth.js?v=202611031955"></script>
+<script src="globe.js?v=202611032010"></script>
+<script type="module" src="auth.js?v=202611032010"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261103195500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261103201000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
