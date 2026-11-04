@@ -4804,7 +4804,7 @@ function summary(){
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
   // стихи, которые затронули: друзья видят их в профиле и на пути
-  out.notes=(Array.isArray(state.notes)?state.notes:[]).slice(0,10).map(n=>({d:n.d,v:String(n.v||"").slice(0,40),r:String(n.r||"").slice(0,80),w:String(n.w||"").slice(0,200)}));
+  out.notes=(Array.isArray(state.notes)?state.notes:[]).slice(0,10).map(n=>({d:n.d,v:String(n.v||"").slice(0,40),r:String(n.r||"").slice(0,80),w:String(n.w||"").slice(0,1000)}));
   {const np=noPlan();out.noPlan=np;out.chosen=!np} // оба флага явно: профиль сохраняется с merge, старый флаг иначе остаётся
   return out;
 }
@@ -5948,7 +5948,7 @@ try{pathFocusSoon();window.addEventListener('load',()=>setTimeout(()=>{const pb=
 /* ---------- «Какой стих затронул?»: после отметки «Прочитал» — короткий вопрос; друзья видят стих в профиле и на пути ----------
    state.notes = [{d:"2026-10-23", k:"nt", p:25, v:"Мф. 10:31", w:"пара слов"}] — новые сверху, не больше 60.
    Спрашиваем один раз в день: если сегодня стих уже записан или нажато «Пропустить» — больше не спрашиваем. */
-const NOTE_MAX=60, NOTE_W=200;
+const NOTE_MAX=60, NOTE_W=1000;
 function notesList(){if(!Array.isArray(state.notes))state.notes=[];return state.notes}
 function verseAskedToday(m){const t=today();return m?notesList().some(n=>n.d===t&&n.m)||state.msSkip===t:notesList().some(n=>n.d===t&&!n.m)||state.verseSkip===t}
 // стихи отрывка для кнопок (число стихов в главах — из BOOKS): «10:26–42», «9:35–10:5», «5:3», «7», «2–4»
@@ -6864,11 +6864,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611032010"></script>
-<script type="module" src="auth.js?v=202611032010"></script>
+<script src="globe.js?v=202611041200"></script>
+<script type="module" src="auth.js?v=202611041200"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261103201000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261104120000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;

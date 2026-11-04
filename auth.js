@@ -739,7 +739,7 @@ async function main() {
         try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
       });
       // слова к стиху видят только друзья (и я сам)
-      list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 200); });
+      list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
       G.setPeople(list);
       // кто ещё не прочитал ни одного отрывка (даже если не открывал новую версию) — на «Остров выбора»: смотрим их профили
       const check = list.filter((p) => p.rel !== "me" && p.b !== -2 && !friendData[p.id]).slice(0, 500);
