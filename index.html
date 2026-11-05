@@ -4545,14 +4545,20 @@ function xmapEl(id){
       else pr.append(el("span",null,"прочитано "),el("b",null,su.parts.filter(q=>q.done).length+" из "+su.parts.length),el("span",null," "+plural(su.parts.length,"части","частей","частей")));
       void pr;
       const nx=su.parts.find(q=>!q.done);
-      if(nx){const g=rng(nx),a=el("a","xmread","Читать "+(g.length?"стр. "+g[0]+(g.length>1?"–"+g[g.length-1]:""):refStr(nx.x)));a.href=chapterUrl(nx.x);a.target="_blank";a.rel="noopener";dt.append(a);
-        if(g.length>1){dt.append(el("div","xmhint","Отметьте страницы, которые прочитали:"));const pw=el("div","xmpages");const have=PG[nx.p]||[];
-          g.forEach(n=>{const on=have.includes(n),c=el("button","xmpgc"+(on?" on":""),String(n));c.type="button";
-            c.addEventListener("click",e=>{e.stopPropagation();const s2=xSt(id)[k];s2.pg=s2.pg||{};let cur=s2.pg[nx.p]||[];cur=on?cur.filter(v=>v!==n):[...cur,n];
-              if(g.every(v=>cur.includes(v))){delete s2.pg[nx.p];xMark(id,k,nx.p)}else{if(cur.length)s2.pg[nx.p]=cur;else delete s2.pg[nx.p];save();render()}});pw.append(c)});
-          const all=el("button","xmmark","Всё прочитал(а)");all.type="button";confirmTap(all,"Нажмите ещё раз",()=>{const s2=xSt(id)[k];if(s2.pg)delete s2.pg[nx.p];xMark(id,k,nx.p)});pw.append(all);dt.append(pw)}
-        else{const b=el("button","xmmark","Прочитал(а)");b.type="button";confirmTap(b,"Нажмите ещё раз",()=>xMark(id,k,nx.p));dt.append(b)}}
-      else dt.append(el("div","xmok","Глава "+su.n+" прочитана ✓"));
+      // все страницы сообщения: зелёные — прочитаны; нажатие отмечает страницу (любую, не по порядку)
+      if(nx){const g=rng(nx),a=el("a","xmread","Читать "+(g.length?"стр. "+g[0]+(g.length>1?"–"+g[g.length-1]:""):refStr(nx.x)));a.href=chapterUrl(nx.x);a.target="_blank";a.rel="noopener";dt.append(a)}
+      dt.append(el("div","xmhint",tot?plural(tot,"страница","страницы","страниц").replace(/^/,tot+" ")+" · прочитано "+rd+(nx?" — нажмите на прочитанные:":""):"Части сообщения:"));
+      const pw=el("div","xmpages");
+      su.parts.forEach(q=>{const g=rng(q),have=PG[q.p]||[];
+        const pages=g.length?g:[null];
+        pages.forEach(n=>{const on=q.done||(n!=null&&have.includes(n)),c=el("button","xmpgc"+(on?" on":""),n!=null?String(n):(q.x.ref||"ч."));c.type="button";
+          c.addEventListener("click",e=>{e.stopPropagation();if(q.done){toast("Эта страница уже отмечена");return}
+            if(n==null){xMark(id,k,q.p);return}
+            const s2=xSt(id)[k];s2.pg=s2.pg||{};let cur=s2.pg[q.p]||[];cur=cur.includes(n)?cur.filter(v=>v!==n):[...cur,n];
+            if(g.every(v=>cur.includes(v))){delete s2.pg[q.p];xMark(id,k,q.p)}else{if(cur.length)s2.pg[q.p]=cur;else delete s2.pg[q.p];save();render()}});pw.append(c)})});
+      if(nx){const all=el("button","xmmark","Всё прочитал(а)");all.type="button";confirmTap(all,"Нажмите ещё раз",()=>{const s2=xSt(id)[k];su.parts.filter(q=>!q.done).forEach((q,i,arr)=>{if(s2.pg)delete s2.pg[q.p];if(i<arr.length-1){const st=xSt(id)[k];st.log.push({d:today(),p:q.p});if(!st.read.includes(q.p))st.read.push(q.p)}else xMark(id,k,q.p)})});pw.append(all)}
+      dt.append(pw);
+      if(!nx)dt.append(el("div","xmok","Глава "+su.n+" прочитана ✓"));
       if(nx&&su.held)dt.append(el("div","xmhint","Отложена — прочитайте, когда будет время."));
       box.append(dt)}
     else box.append(el("div","xmhint","Нажмите на главу — откроются её страницы."));
@@ -7013,11 +7019,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611052100"></script>
-<script type="module" src="auth.js?v=202611052100"></script>
+<script src="globe.js?v=202611052200"></script>
+<script type="module" src="auth.js?v=202611052200"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261105210000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261105220000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
