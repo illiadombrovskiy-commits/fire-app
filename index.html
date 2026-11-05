@@ -4547,16 +4547,18 @@ function xmapEl(id){
       const nx=su.parts.find(q=>!q.done);
       // все страницы сообщения: зелёные — прочитаны; нажатие отмечает страницу (любую, не по порядку)
       if(nx){const g=rng(nx),a=el("a","xmread","Читать "+(g.length?"стр. "+g[0]+(g.length>1?"–"+g[g.length-1]:""):refStr(nx.x)));a.href=chapterUrl(nx.x);a.target="_blank";a.rel="noopener";dt.append(a)}
-      dt.append(el("div","xmhint",tot?plural(tot,"страница","страницы","страниц").replace(/^/,tot+" ")+" · прочитано "+rd+(nx?" — нажмите на прочитанные:":""):"Части сообщения:"));
+      dt.append(el("div","xmhint",tot?plural(tot,"страница","страницы","страниц").replace(/^/,tot+" ")+" · прочитано "+rd+" — нажмите на страницу, чтобы отметить или снять":"Части сообщения:"));
       const pw=el("div","xmpages");
       su.parts.forEach(q=>{const g=rng(q),have=PG[q.p]||[];
         const pages=g.length?g:[null];
         pages.forEach(n=>{const on=q.done||(n!=null&&have.includes(n)),c=el("button","xmpgc"+(on?" on":""),n!=null?String(n):(q.x.ref||"ч."));c.type="button";
-          c.addEventListener("click",e=>{e.stopPropagation();if(q.done){toast("Эта страница уже отмечена");return}
+          c.addEventListener("click",e=>{e.stopPropagation();
+            // снять отметку со страницы прочитанной части: часть снова «не прочитана», остальные её страницы остаются отмеченными
+            if(q.done){const s2=xSt(id)[k];s2.read=s2.read.filter(v=>v!==q.p);s2.log=s2.log.filter(x=>!(x.p===q.p&&x.d===today()));
+              s2.pg=s2.pg||{};const rest=g.filter(v=>v!==n);if(rest.length)s2.pg[q.p]=rest;else delete s2.pg[q.p];save();render();return}
             if(n==null){xMark(id,k,q.p);return}
             const s2=xSt(id)[k];s2.pg=s2.pg||{};let cur=s2.pg[q.p]||[];cur=cur.includes(n)?cur.filter(v=>v!==n):[...cur,n];
             if(g.every(v=>cur.includes(v))){delete s2.pg[q.p];xMark(id,k,q.p)}else{if(cur.length)s2.pg[q.p]=cur;else delete s2.pg[q.p];save();render()}});pw.append(c)})});
-      if(nx){const all=el("button","xmmark","Всё прочитал(а)");all.type="button";confirmTap(all,"Нажмите ещё раз",()=>{const s2=xSt(id)[k];su.parts.filter(q=>!q.done).forEach((q,i,arr)=>{if(s2.pg)delete s2.pg[q.p];if(i<arr.length-1){const st=xSt(id)[k];st.log.push({d:today(),p:q.p});if(!st.read.includes(q.p))st.read.push(q.p)}else xMark(id,k,q.p)})});pw.append(all)}
       dt.append(pw);
       if(!nx)dt.append(el("div","xmok","Глава "+su.n+" прочитана ✓"));
       if(nx&&su.held)dt.append(el("div","xmhint","Отложена — прочитайте, когда будет время."));
@@ -7019,11 +7021,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611052200"></script>
-<script type="module" src="auth.js?v=202611052200"></script>
+<script src="globe.js?v=202611052230"></script>
+<script type="module" src="auth.js?v=202611052230"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261105220000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261105223000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
