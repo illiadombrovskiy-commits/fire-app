@@ -1501,6 +1501,9 @@ body.fseg-conf #friendsCard,body.fseg-conf #friendsEmpty{display:none!important}
 .cpath .pname{font-size:11px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3px}.cpath .pname.small{font-size:9.5px}
 #challengesCard .chitem{flex-wrap:wrap}#challengesCard .chtx{flex:1 1 160px}#challengesCard .chtx b{white-space:nowrap}#challengesCard .chitem .cbtn.chgo{flex:1 1 100%}
 .scheck.past{opacity:.35;cursor:not-allowed}.sdone .scheck.locked{opacity:.75;cursor:default}
+#heroFlame.smolder{filter:grayscale(.85) brightness(.85);animation:smold 2.6s ease-in-out infinite!important}
+@keyframes smold{0%,100%{filter:grayscale(.9) brightness(.8)}50%{filter:grayscale(.55) brightness(.95) drop-shadow(0 0 6px rgba(255,120,40,.55))}}
+.srepair.srnew{border-style:solid;background:var(--surface)}
 .srepair{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--flame-soft);border:1.5px dashed var(--flame)}
 .srtx{flex:1 1 200px;display:flex;flex-direction:column;gap:2px}.srtx b{font-size:.92rem}.srtx span{font-size:.8rem;color:var(--muted);line-height:1.3}
 .srbtn{flex:none;padding:9px 14px;border-radius:12px;background:var(--flame);color:#fff;font-weight:800;box-shadow:0 3px 0 color-mix(in srgb,var(--flame) 60%,#000)}
@@ -2602,6 +2605,8 @@ function splitBooks(books,n,snap){
   });
   return out;
 }
+// «Глав в день»: ровно столько целых глав в каждый день (последний день книги может быть короче — книги не смешиваются)
+function chapParts(books,amt){amt=Math.max(1,Math.round(+amt||1));const out=[];books.forEach(b=>{for(let c=0;c<b.v.length;c+=amt){const z=Math.min(b.v.length,c+amt);out.push([b.a,z-c>1?(c+1)+"–"+z:String(c+1)])}});return out}
 function readingDates(start,n,wd){const out=[];let d=start;while(out.length<n){if(!wd||wd[sd.dow(d)])out.push(d);d=sd.add(d,1)}return out}
 function countDates(start,end,wd){if(end<start)return 0;let n=0,d=start;while(d<=end){if(!wd||wd[sd.dow(d)])n++;d=sd.add(d,1)}return n}
 function buildSched(def){
@@ -2626,11 +2631,11 @@ function buildSched(def){
     const ntc=[];ntB.forEach(b=>b.v.forEach((x,c)=>ntc.push([b.a,String(c+1)])));
     plan=ot.map((o,i)=>{const x=ntc[i%ntc.length];return [x[0],x[1],o[0],o[1]]});keys=["nt","ot"];
   }else if(d.mode==="par"&&otB.length&&ntB.length){
-    const a=splitBooks(ntB,n,snap), b=splitBooks(otB,n,snap), m=Math.max(a.length,b.length);
+    const byCh=d.by==="chapters",a=byCh?chapParts(ntB,d.amount):splitBooks(ntB,n,snap), b=byCh?chapParts(otB,d.amount):splitBooks(otB,n,snap), m=Math.max(a.length,b.length);
     plan=[];for(let i=0;i<m;i++){const x=a[Math.min(i,a.length-1)],y=b[Math.min(i,b.length-1)];plan.push([x[0],i<a.length?x[1]:"",y[0],i<b.length?y[1]:""])}
     keys=["nt","ot"];
   }else{
-    const parts=splitBooks(allB,n,snap), onlyNt=!otB.length;
+    const parts=d.by==="chapters"?chapParts(allB,d.amount):splitBooks(allB,n,snap), onlyNt=!otB.length;
     const k=onlyNt?"nt":"ot";keys=[k];
     plan=parts.map(x=>k==="nt"?[x[0],x[1],"",""]:["","",x[0],x[1]]);
     if(otB.length&&ntB.length){labels[k]="Библия";short[k]="Чтение"}
@@ -2726,7 +2731,33 @@ const datesOf=k=>new Set(state[k].log.map(x=>x.d));
 function keyHasPart(k,d){const i=planIdx(d);return i<0||!!part(k,Math.max(0,Math.min(i,DAYS-1))).book}
 function activeKeys(){const t=today();return KEYS.filter(k=>datesOf(k).has(t)||keyHasPart(k,t))}
 function bothSet(){const sets=KEYS.map(datesOf),all=new Set(sets.flatMap(x=>[...x]));return new Set([...all].filter(d=>KEYS.every((k,i)=>sets[i].has(d)||!keyHasPart(k,d))))}
-function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));
+/* Пропущенный день «закрывается» лишним прочитанным отрывком (сверх одного в день), но только в течение 7 дней
+   и если подряд пропущено не больше 7 дней. Иначе серия начинается заново (рекорд сохраняется). */
+const REPAIR_WIN=7,REPAIR_MAX=7;
+let _rpK="",_rpV=new Set();
+function repaidDays(){
+  const cnt={};const addLog=lg=>{const c={};(lg||[]).forEach(x=>{c[x.d]=(c[x.d]||0)+1});for(const d in c)cnt[d]=Math.max(cnt[d]||0,c[d])};
+  KEYS.forEach(k=>addLog(state[k].log));
+  try{Object.values(state.plans||{}).forEach(p=>["nt","ot"].forEach(k=>p&&p[k]&&addLog(p[k].log)))}catch(e){}
+  const t=today(),key=t+"|"+JSON.stringify(cnt)+"|"+(state.frzDays||[]).length+"|"+(state.hist||[]).length;if(key===_rpK)return _rpV;
+  const lit=new Set(Object.keys(cnt).concat(state.hist||[])),days=[...lit].sort();const paid=new Set();
+  if(days.length){const base=new Set(state.frzDays||[]);let q=[],run=[],dead=false,d=days[0];
+    while(d<=t){
+      const miss=!lit.has(d)&&d<t&&!base.has(d)&&!(WD&&isOffDay(d));
+      if(miss){run.push(d);if(run.length>REPAIR_MAX){dead=true;q=q.filter(x=>!run.includes(x))}else if(!dead)q.push(d)}
+      else if(!base.has(d)&&!(WD&&isOffDay(d))){run=[];dead=false}
+      if(lit.has(d)){const dn=dayNo(d);q=q.filter(x=>dn-dayNo(x)<=REPAIR_WIN);let extra=(cnt[d]||1)-1;while(extra>0&&q.length){paid.add(q.pop());extra--}}
+      d=add(d,1)}}
+  _rpK=key;_rpV=paid;return paid}
+// сколько пропущенных дней перед текущей серией ещё не закрыто (до 60 дней назад)
+function streakGap(){const s=withFrozen(anySet()),t=today();let cur=s.has(t)?t:add(t,-1),after=0;
+  while(s.has(cur)){after++;cur=add(cur,-1)}
+  const gap=[];while(!s.has(cur)&&gap.length<60){gap.push(cur);cur=add(cur,-1)}
+  if(!gap.length||!s.has(cur))return null;
+  let before=0;while(s.has(cur)){before++;cur=add(cur,-1)}
+  gap.reverse();const due=add(gap[0],REPAIR_WIN),ok=gap.length<=REPAIR_MAX&&due>=t;
+  return {gap,after,before,todayRead:s.has(t),ok,due}}
+function withFrozen(set){const s=new Set(set);state.frzDays.forEach(d=>s.add(d));try{repaidDays().forEach(d=>s.add(d))}catch(e){}
   if(WD){let d=PLAN_START<today()?PLAN_START:today();const t=today();while(d<=t){if(isOffDay(d))s.add(d);d=add(d,1)}} // выходные дни расписания не прерывают серию
   return s}
 function streakOf(set){let cur=today();if(!set.has(cur))cur=add(cur,-1);let n=0;while(set.has(cur)){n++;cur=add(cur,-1)}return n}
@@ -3902,7 +3933,7 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     // 6. что значат цифры
     d=sec("Что значат цифры и значки");
     const ul=el("ul","gkeys");
-    [[fl(false)+"","<b>Серия — дней подряд.</b> Каждый день, когда вы прочитали хотя бы один отрывок, огонёк горит и серия растёт. Прочитали оба завета — огонь горит в полную силу."],
+    [[fl(false)+"","<b>Серия — дней подряд.</b> Каждый день, когда вы прочитали хотя бы один отрывок, огонёк горит и серия растёт. Прочитали оба завета — огонь горит в полную силу. Пропустили день — огонёк тлеет: в течение 7 дней прочитайте по одному лишнему отрывку за каждый пропущенный день, и серия вернётся. Если пропущено больше 7 дней подряд или срок прошёл — серия начинается заново, рекорд сохраняется."],
      [fl(true),"<b>Маленький огонёк</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
      ['<span style="color:var(--ok)">+2</span>',"<b>Опережение.</b> НЗ и ВЗ — на сколько дней вы впереди плана (зелёным) или позади (красным). «По плану» — вы идёте точно в график."],
      [SNOW,"<b>Заморозки.</b> Если читаете вперёд графика по обоим заветам, копятся заморозки. Пропустили день — заморозка сохранит серию."],
@@ -6074,25 +6105,30 @@ function repairInfo(){
 /* 3) Пропустили вчера — серия возвращается сама, как только вчерашний отрывок прочитан (через «Догнать»).
    Без кнопки и без ограничения «раз в 30 дней». «Отпущенный» отрывок не считается прочитанным. */
 function autoRepair(){
-  const s=withFrozen(anySet()),t=today(),y=add(t,-1),y2=add(t,-2);
-  if(s.has(y)||!s.has(y2)||y<PLAN_START)return false;
-  const i=planIdx(y);if(i<0)return false;const p=Math.min(i,DAYS-1);
-  if(!KEYS.every(k=>!part(k,p).book||readSet(k).has(p)))return false;
-  state.frzDays=[...new Set(state.frzDays.concat([y]))].sort();state.best=Math.max(state.best||0,streak());save();
-  setTimeout(()=>{try{ignite($("heroFlame"),2)}catch(e){}toast("Серия восстановлена: "+streak()+" "+plural(streak(),"день","дня","дней")+" подряд!")},400);
-  return true;
+  const n=repaidDays().size,was=state.repN||0;if(n===was)return false;
+  state.repN=n;if(n>was){const st=streak();state.best=Math.max(state.best||0,st);
+    const g=streakGap();if(!g||!g.ok)setTimeout(()=>{try{ignite($("heroFlame"),2)}catch(e){}toast("Пропуск закрыт — серия снова "+st+" "+plural(st,"день","дня","дней")+" подряд!")},400)}
+  save();return false;
 }
 function renderRepair(){
   let box=$("streakRepair");const hero=$("heroFlame")&&$("heroFlame").closest(".card");if(!hero)return;
   if(!box){box=el("div","srepair");box.id="streakRepair";hero.append(box)}
-  const r=repairInfo();box.hidden=!r;if(!r)return;box.textContent="";
+  const g=streakGap(),hf=$("heroFlame");
+  if(hf)hf.classList.toggle("smolder",!!(g&&g.ok)); // огонёк тлеет, пока пропуск можно наверстать
   const fmt=d=>parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
-  const days=r.gap.length===1?fmt(r.gap[0]):fmt(r.gap[0])+" – "+fmt(r.gap[r.gap.length-1]);
-  const tx=el("div","srtx");tx.append(el("b",null,r.auto?"Вчера пропущено":"Серия прервалась: "+days),el("span",null,r.auto?"Прочитайте вчерашний отрывок («Догнать» на главной) — и серия вернётся сама.":r.ok?"Отрывки этих дней уже прочитаны — можно вернуть серию ("+(r.before+r.gap.length+(withFrozen(anySet()).has(today())?1:0))+" "+plural(r.before+r.gap.length,"день","дня","дней")+"). Раз в 30 дней.":"Прочитайте отрывки пропущенных дней («Догнать» на главной) — и серию можно будет вернуть. Раз в 30 дней."));
+  // наверстать уже нельзя: несколько дней после перерыва — спокойное «начнём снова» с рекордом
+  if(g&&!g.ok){const end=g.gap[g.gap.length-1],best=Math.max(state.best||0,streak());
+    if(dayNo(today())-dayNo(end)<=3&&best>1){box.hidden=false;box.textContent="";box.classList.add("srnew");
+      const tx=el("div","srtx");tx.append(el("b",null,"Начнём снова"),el("span",null,"Ваш рекорд — "+best+" "+plural(best,"день","дня","дней")+" подряд. Читайте каждый день — и огонь снова разгорится."));box.append(tx);return}
+    box.hidden=true;return}
+  box.classList.remove("srnew");
+  box.hidden=!g;if(!g)return;box.textContent="";
+  const n=g.gap.length,need=n+(g.todayRead?0:1),total=g.before+n+g.after+(g.todayRead?0:1);
+  const days=n===1?fmt(g.gap[0]):fmt(g.gap[0])+" – "+fmt(g.gap[n-1]);
+  const dueTxt=g.due===today()?"сегодня":parse(g.due).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});
+  const tx=el("div","srtx");tx.append(el("b",null,"Огонёк тлеет · пропущено: "+days),
+    el("span",null,"Наверстайте до "+(g.due===today()?"конца дня":dueTxt)+": прочитайте ещё "+need+" "+plural(need,"отрывок","отрывка","отрывков")+(g.todayRead?"":" (с сегодняшним)")+" — по одному за каждый пропущенный день — и серия вернётся: "+total+" "+plural(total,"день","дня","дней")+" подряд."));
   box.append(tx);
-  if(r.ok&&!r.auto){const b=el("button","srbtn","🔥 Вернуть серию");b.type="button";b.addEventListener("click",()=>{
-    state.frzDays=[...new Set(state.frzDays.concat(r.gap))].sort();state.repairs=(state.repairs||[]).concat([today()]).slice(-10);
-    state.best=Math.max(state.best||0,streak());save();render();ignite($("heroFlame"),2);toast("Серия возвращена: "+streak()+" "+plural(streak(),"день","дня","дней")+" подряд!")});box.append(b)}
 }
 
 // в последний день двухлетнего плана отрывка из Нового Завета нет (Откровение уже дочитано) — засчитываем его сам
@@ -7021,11 +7057,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611052230"></script>
-<script type="module" src="auth.js?v=202611052230"></script>
+<script src="globe.js?v=202611072200"></script>
+<script type="module" src="auth.js?v=202611072200"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261105223000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261107220000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
