@@ -453,32 +453,39 @@ async function main() {
   let myProfile = {};
   // своё фото: загруженное с телефона (profiles.photoX, маленький JPEG data:) или фото Google
   function myPhoto() { return (myProfile && myProfile.photoX) || (me && me.photoURL) || ""; }
-  // фото с телефона → квадрат 160×160, JPEG ≤ ~15 КБ
-  function shrinkPhoto(file) {
-    return new Promise((res, rej) => {
-      const url = URL.createObjectURL(file), img = new Image();
-      img.onload = () => {
-        try {
-          const S = 160, c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
-          const m = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - m) / 2, sy = (img.naturalHeight - m) / 2;
-          g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.drawImage(img, sx, sy, m, m, 0, 0, S, S);
-          let q = 0.82, d = c.toDataURL("image/jpeg", q); while (d.length > 15000 && q > 0.3) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
-          URL.revokeObjectURL(url); res(d);
-        } catch (e) { URL.revokeObjectURL(url); rej(e); }
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("не картинка")); };
-      img.src = url;
-    });
+  function myPhotoS() { return (myProfile && myProfile.photoX && myProfile.photoS) || (me && me.photoURL) || ""; }
+  function myPhotoHQ() { return (myProfile && myProfile.photoX && myProfile.photoHQ) || ""; }
+  // фото с телефона: квадрат size×size JPEG, не длиннее maxLen знаков
+  function loadImg(file) {
+    return new Promise((res, rej) => { const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => res({ img, url }); img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("не картинка")); }; img.src = url; });
   }
-  async function saveMyPhoto(data) {
-    myProfile = Object.assign({}, myProfile, { photoX: data || "" });
-    await F.setDoc(myRef, { photoX: data || "", photo: myPhoto() }, { merge: true });
+  function squareJpeg(img, S, q0, maxLen) {
+    const c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    const m = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - m) / 2, sy = (img.naturalHeight - m) / 2;
+    g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.drawImage(img, sx, sy, m, m, 0, 0, S, S);
+    let q = q0, d = c.toDataURL("image/jpeg", q); while (d.length > maxLen && q > 0.45) { q -= 0.07; d = c.toDataURL("image/jpeg", q); }
+    return d;
+  }
+  // три размера: 256 px — аватарки (чётко на экранах ×3), 1080 px — фото крупно, 112 px — глобус (правило ≤ 20 000)
+  async function shrinkPhoto(file) {
+    const { img, url } = await loadImg(file);
+    try {
+      const m = Math.min(img.naturalWidth, img.naturalHeight);
+      return { thumb: squareJpeg(img, Math.min(256, m), 0.9, 45000), big: squareJpeg(img, Math.min(1080, m), 0.9, 420000), small: squareJpeg(img, Math.min(112, m), 0.85, 19000) };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function saveMyPhoto(ph) {
+    ph = ph || { thumb: "", big: "", small: "" };
+    myProfile = Object.assign({}, myProfile, { photoX: ph.thumb, photoHQ: ph.big, photoS: ph.small });
+    await F.setDoc(myRef, { photoX: ph.thumb, photoHQ: ph.big, photoS: ph.small, photo: myPhoto() }, { merge: true });
     await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
     O().setMyPhoto(myPhoto()); publishSummary(); renderFriends();
   }
-  function avatarEl(name, photo, size) {
+  function avatarEl(name, photo, size, hq) {
     const av = el("div", "favatar");
-    if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; img.referrerPolicy = "no-referrer"; img.width = size; img.height = size; av.append(img); }
+    if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; img.referrerPolicy = "no-referrer"; img.width = size; img.height = size; if (hq) img.dataset.hq = hq; av.append(img); }
     else av.textContent = (name || "?").trim().charAt(0).toUpperCase();
     return av;
   }
@@ -502,7 +509,7 @@ async function main() {
     const head = el("div", "fhead"), ht = el("div");
     ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", (d.streak || 0) + " " + O().plural(d.streak || 0, "день подряд", "дня подряд", "дней подряд")));
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
-    head.append(avatarEl(d.name, d.photo, 64), ht, x);
+    head.append(avatarEl(d.name, d.photo, 64, isMe ? myPhotoHQ() : (d.photoHQ || "")), ht, x);
 
     const stats = el("div", "fstats");
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
@@ -531,7 +538,7 @@ async function main() {
       const phBtn = el("button", "btn phbtn"); phBtn.append(O().ico("camera"), el("span", null, "Сменить фото")); phBtn.type = "button"; phBtn.addEventListener("click", () => fin.click());
       const phBack = el("button", "linkbtn phback", "Вернуть фото Google"); phBack.type = "button"; phBack.hidden = !(myProfile && myProfile.photoX) || !me.photoURL;
       let phAvRef = phAv;
-      const updHead = () => { const h = document.querySelector(".fsheet .fhead .favatar"); if (h) h.replaceWith(avatarEl(myName(), myPhoto(), 64)); };
+      const updHead = () => { const h = document.querySelector(".fsheet .fhead .favatar"); if (h) h.replaceWith(avatarEl(myName(), myPhoto(), 64, myPhotoHQ())); };
       fin.addEventListener("change", async () => {
         const f = fin.files && fin.files[0]; fin.value = ""; if (!f) return;
         phBtn.disabled = true; phBtn.lastChild.textContent = "Загружаю…";
@@ -539,7 +546,7 @@ async function main() {
         catch (e) { console.warn(e); O().toast("Не удалось загрузить фото. Попробуйте другое."); }
         phBtn.disabled = false; phBtn.lastChild.textContent = "Сменить фото";
       });
-      phBack.addEventListener("click", async () => { try { await saveMyPhoto(""); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = true; O().toast("Вернули фото Google"); } catch (e) { console.warn(e); } });
+      phBack.addEventListener("click", async () => { try { await saveMyPhoto(null); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = true; O().toast("Вернули фото Google"); } catch (e) { console.warn(e); } });
       const phCol = el("div", "phcol"); phCol.append(phBtn, phBack); phRow.append(phAv, phCol, fin);
       aboutBox.prepend(el("span", "label", "Фото"), phRow, nameLbl, nameIn);
       const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "160px"; ta.rows = 6;
@@ -708,7 +715,7 @@ async function main() {
 
   /* ---------- глобус читателей ---------- */
   // globe/{uid}: имя, фото, книга, которую человек читает сейчас, огонёк и серия. Видят все вошедшие; можно скрыть себя.
-  function globeDoc(s) { return globeFrom(s, myName(), myPhoto(), myFriends.length); }
+  function globeDoc(s) { return globeFrom(s, myName(), myPhotoS(), myFriends.length); }
   // запись для глобуса из сводки (своей или друга из его профиля)
   // ещё не начал читать: новая версия пишет noPlan / chosen; у старой версии смотрим, что ничего не прочитано
   function stillChoosing(s) {

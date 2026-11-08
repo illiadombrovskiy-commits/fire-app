@@ -6188,7 +6188,7 @@ document.addEventListener("click",e=>{
   e.stopPropagation();e.preventDefault();
   const img=a.querySelector("img"),host=a.closest(".fhead")||a.parentElement;
   const nm=((host&&host.querySelector("h2,b"))||{}).textContent||"";
-  photoZoom(img&&img.getAttribute("src"),nm.replace(/\s*\(вы\)$/,""),getComputedStyle(a).backgroundColor,a.textContent);
+  photoZoom(img&&(img.dataset.hq||img.getAttribute("src")),nm.replace(/\s*\(вы\)$/,""),getComputedStyle(a).backgroundColor,a.textContent);
 },true);
 
 /* «Архив»: прочитанные расписания и прошедшие челленджи — открыть и посмотреть */
@@ -7276,11 +7276,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611081900"></script>
-<script type="module" src="auth.js?v=202611081900"></script>
+<script src="globe.js?v=202611082000"></script>
+<script type="module" src="auth.js?v=202611082000"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261108190000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261108200000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
