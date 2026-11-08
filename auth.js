@@ -113,9 +113,9 @@ async function main() {
       const fof = {};
       myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
       lastFof = JSON.stringify(fof);
-      F.setDoc(myRef, Object.assign(s, { fof, name: myName(), photo: me.photoURL || "", code: myCode, updated: F.serverTimestamp() }), { merge: true })
+      F.setDoc(myRef, Object.assign(s, { fof, name: myName(), photo: myPhoto(), code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
-      F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
+      F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
       publishGlobe(s);
     }, 1200);
   }
@@ -325,7 +325,7 @@ async function main() {
 
   async function sendMsg(uid, i, kind) {
     const K = KIND[kind], day = O().today();
-    const data = { from: me.uid, name: String(myName() || "Друг").slice(0, 60), photo: me.photoURL || "", msg: i, day, at: F.serverTimestamp() };
+    const data = { from: me.uid, name: String(myName() || "Друг").slice(0, 60), photo: myPhoto(), msg: i, day, at: F.serverTimestamp() };
     if (kind !== "cheer") data.kind = kind;
     const suffix = { invite: "_inv", conf: "_conf", confjoin: "_cjoin" }[kind] || "";
     try {
@@ -451,6 +451,31 @@ async function main() {
 
   /* ---------- profile screen ---------- */
   let myProfile = {};
+  // своё фото: загруженное с телефона (profiles.photoX, маленький JPEG data:) или фото Google
+  function myPhoto() { return (myProfile && myProfile.photoX) || (me && me.photoURL) || ""; }
+  // фото с телефона → квадрат 160×160, JPEG ≤ ~15 КБ
+  function shrinkPhoto(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        try {
+          const S = 160, c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
+          const m = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - m) / 2, sy = (img.naturalHeight - m) / 2;
+          g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.drawImage(img, sx, sy, m, m, 0, 0, S, S);
+          let q = 0.82, d = c.toDataURL("image/jpeg", q); while (d.length > 15000 && q > 0.3) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
+          URL.revokeObjectURL(url); res(d);
+        } catch (e) { URL.revokeObjectURL(url); rej(e); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("не картинка")); };
+      img.src = url;
+    });
+  }
+  async function saveMyPhoto(data) {
+    myProfile = Object.assign({}, myProfile, { photoX: data || "" });
+    await F.setDoc(myRef, { photoX: data || "", photo: myPhoto() }, { merge: true });
+    await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
+    O().setMyPhoto(myPhoto()); publishSummary(); renderFriends();
+  }
   function avatarEl(name, photo, size) {
     const av = el("div", "favatar");
     if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; img.referrerPolicy = "no-referrer"; img.width = size; img.height = size; av.append(img); }
@@ -463,7 +488,7 @@ async function main() {
   async function openProfile(id, edit) {
     if (!me) return;
     const isMe = id === "me" || id === me.uid;
-    let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: me.photoURL, about: myProfile.about || "", friends: myFriends }) : friendData[id];
+    let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: myPhoto(), about: myProfile.about || "", friends: myFriends }) : friendData[id];
     if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
       try { const sn = await F.getDoc(F.doc(db, "profiles", id)); d = sn.exists() ? sn.data() : null; } catch (e) { console.warn(e); }
       if (!d) { O().toast("Не удалось открыть профиль. Возможно, человек ещё не обновил Огонёк."); return; }
@@ -500,7 +525,23 @@ async function main() {
       nameIn.value = myName(); nameIn.placeholder = "Как вас называть, например: Илья"; nameIn.setAttribute("aria-label", "Имя");
       const nameLbl = el("span", "label", "Имя (его видят друзья)");
       aboutBox.querySelector(".label").textContent = "О себе";
-      aboutBox.prepend(nameLbl, nameIn);
+      // фото профиля: загрузить с телефона / вернуть фото Google
+      const phRow = el("div", "phrow"), phAv = avatarEl(myName(), myPhoto(), 64);
+      const fin = document.createElement("input"); fin.type = "file"; fin.accept = "image/*"; fin.hidden = true;
+      const phBtn = el("button", "btn phbtn", "📷 Сменить фото"); phBtn.type = "button"; phBtn.addEventListener("click", () => fin.click());
+      const phBack = el("button", "linkbtn phback", "Вернуть фото Google"); phBack.type = "button"; phBack.hidden = !(myProfile && myProfile.photoX) || !me.photoURL;
+      let phAvRef = phAv;
+      const updHead = () => { const h = document.querySelector(".fsheet .fhead .favatar"); if (h) h.replaceWith(avatarEl(myName(), myPhoto(), 64)); };
+      fin.addEventListener("change", async () => {
+        const f = fin.files && fin.files[0]; fin.value = ""; if (!f) return;
+        phBtn.disabled = true; phBtn.textContent = "Загружаю…";
+        try { const d = await shrinkPhoto(f); await saveMyPhoto(d); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = !me.photoURL; O().toast("Фото обновлено — его увидят друзья"); }
+        catch (e) { console.warn(e); O().toast("Не удалось загрузить фото. Попробуйте другое."); }
+        phBtn.disabled = false; phBtn.textContent = "📷 Сменить фото";
+      });
+      phBack.addEventListener("click", async () => { try { await saveMyPhoto(""); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = true; O().toast("Вернули фото Google"); } catch (e) { console.warn(e); } });
+      const phCol = el("div", "phcol"); phCol.append(phBtn, phBack); phRow.append(phAv, phCol, fin);
+      aboutBox.prepend(el("span", "label", "Фото"), phRow, nameLbl, nameIn);
       const ta = document.createElement("textarea"); ta.maxLength = 300; ta.value = d.about || ""; ta.placeholder = "Пара слов о себе: церковь, город, любимая книга Библии…"; ta.style.minHeight = "160px"; ta.rows = 6;
       const save = el("button", "btn btn-xp aboutsave", "Сохранить"); save.type = "button";
       const count = el("small", "hint", ta.value.length + " / 300"); count.style.margin = "0";
@@ -513,7 +554,7 @@ async function main() {
           if (nick.length < 2) { O().toast("Введите имя — его видят друзья"); nameIn.focus(); save.textContent = "Сохранить"; return; }
           myNick = nick && nick !== me.displayName ? nick : "";
           await F.setDoc(myRef, { about: ta.value.trim().slice(0, 300), nick: myNick, name: myName() }, { merge: true });
-          await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: me.photoURL || "" }).catch((e) => console.warn(e));
+          await F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
           myProfile = Object.assign({}, myProfile, { about: ta.value.trim().slice(0, 300), nick: myNick });
           nameIn.value = myName(); setTopName(); renderFriends();
           const h2 = document.querySelector(".fsheet .fhead h2"); if (h2) h2.textContent = myName() + " (вы)";
@@ -563,7 +604,7 @@ async function main() {
       // я тоже его друг — показываем себя первым, а в счётчике учитываем
       const meToo = myFriends.includes(id) || (d.friends || []).includes(me.uid), total = others.length + (meToo ? 1 : 0);
       fof.append(el("span", "label", "Друзья · " + total));
-      if (meToo) { const r = el("div", "ffrow ffme"); r.append(avatarEl(myName(), me.photoURL, 34), el("span", null, myName() + " (вы)")); const b = el("span", "hint", "Это вы"); b.style.flex = "none"; r.append(b); fof.append(r); }
+      if (meToo) { const r = el("div", "ffrow ffme"); r.append(avatarEl(myName(), myPhoto(), 34), el("span", null, myName() + " (вы)")); const b = el("span", "hint", "Это вы"); b.style.flex = "none"; r.append(b); fof.append(r); }
       if (!total) fof.append(el("span", "hint", "Друзей пока нет"));
       sheet.append(fof);
       others.slice(0, 50).forEach(async (u) => {
@@ -608,7 +649,7 @@ async function main() {
 
   let allOpen = false, allTab = "friends";
   function sortedRows() {
-    const mine = Object.assign(O().summary(), { name: myName(), photo: me.photoURL });
+    const mine = Object.assign(O().summary(), { name: myName(), photo: myPhoto() });
     const rows = [{ d: mine, me: true, uid: me.uid }].concat(myFriends.filter((u) => friendData[u]).map((u) => ({ d: friendData[u], me: false, uid: u })));
     return rows.sort((a, b) => (b.d.streak || 0) - (a.d.streak || 0));
   }
@@ -667,7 +708,7 @@ async function main() {
 
   /* ---------- глобус читателей ---------- */
   // globe/{uid}: имя, фото, книга, которую человек читает сейчас, огонёк и серия. Видят все вошедшие; можно скрыть себя.
-  function globeDoc(s) { return globeFrom(s, myName(), (me && me.photoURL) || "", myFriends.length); }
+  function globeDoc(s) { return globeFrom(s, myName(), myPhoto(), myFriends.length); }
   // запись для глобуса из сводки (своей или друга из его профиля)
   // ещё не начал читать: новая версия пишет noPlan / chosen; у старой версии смотрим, что ничего не прочитано
   function stillChoosing(s) {
@@ -710,7 +751,7 @@ async function main() {
     const ref = F.doc(db, "globe", me.uid);
     const doc = globeDoc(s);
     // если правила Firestore ещё не обновлены (нет полей note/nd) — сохраняем без стиха
-    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); delete d2.note; delete d2.nd; return F.setDoc(ref, d2); })).catch((e) => console.warn(e));
+    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); })).catch((e) => console.warn(e));
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
   async function openGlobe() {
@@ -1043,7 +1084,7 @@ async function main() {
     if (!window.confNet) return;
     const tref = (code) => F.doc(db, "teams", code);
     const net = {
-      uid: me.uid, name: () => myName(), photo: me.photoURL || "", code: () => myCode,
+      uid: me.uid, name: () => myName(), get photo() { return myPhoto(); }, code: () => myCode,
       cheer: (uid, i, join) => sendMsg(uid, i, join ? "confjoin" : "conf"),
       cheerLeft: () => left("conf"),
       cheerSent: (uid, join) => sentToday(uid, join ? "confjoin" : "conf"),
@@ -1094,7 +1135,7 @@ async function main() {
   function setupGroups() {
     if (!window.ogGroupsNet) return;
     const gref = (code) => F.doc(db, "groups", code);
-    const nm = () => String(myName() || "Читатель").slice(0, 40), ph = () => me.photoURL || "";
+    const nm = () => String(myName() || "Читатель").slice(0, 40), ph = () => myPhoto();
     const net = {
       uid: me.uid, name: nm, photo: ph(),
       del: () => F.deleteField(),
@@ -1217,7 +1258,7 @@ async function main() {
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
       myUnsub = F.onSnapshot(myRef, (snap) => {
-        myProfile = snap.exists() ? snap.data() : {};
+        const oldPh = myPhoto(); myProfile = snap.exists() ? snap.data() : {}; if (myPhoto() !== oldPh) O().setMyPhoto(myPhoto());
         myFollowers = myProfile.followers || []; myDeclined = myProfile.declined || [];
         if ((myProfile.nick || "") !== myNick) { myNick = myProfile.nick || ""; setTopName(); }
         if (!!myProfile.globeHide !== globeHide) { globeHide = !!myProfile.globeHide; if (window.OgonekGlobe) window.OgonekGlobe.setVisible(!globeHide); }

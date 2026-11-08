@@ -595,6 +595,8 @@ textarea{width:100%;min-height:90px;font:inherit;padding:12px;border:1px solid v
 @media (min-width:560px){.fsheet{border-radius:20px}}
 .fhead{display:flex;align-items:center;gap:14px}
 .fhead .favatar{width:64px;height:64px;font-size:1.6rem;flex:none}
+.phrow{display:flex;align-items:center;gap:14px;margin:4px 0 12px}.phrow .favatar{width:72px;height:72px;font-size:1.8rem;flex:none}.phrow .favatar img,.fhead .favatar img{width:100%;height:100%;object-fit:cover}
+.phcol{display:flex;flex-direction:column;align-items:flex-start;gap:6px}.phbtn{padding:9px 14px}
 .fhead h2{font-size:1.5rem;overflow-wrap:anywhere}
 .fclose{margin-left:auto;align-self:flex-start;width:36px;height:36px;border-radius:50%;background:var(--bg);color:var(--ink);font-size:1.3rem;flex:none}
 .fstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -966,14 +968,27 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .vheadrow{display:flex;align-items:center;gap:10px}
 .vref{color:var(--muted);font-weight:700;margin-top:2px}
 .vlab{font-size:.78rem;font-weight:700;color:var(--muted);margin-top:4px}
-.vchips{display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow-y:auto;padding:2px}
+.vchips{display:flex;flex-wrap:wrap;gap:8px;padding:2px}
+.vchips .vchip.on{background:#ff8a2b!important;border-color:#ff8a2b!important;color:#1a0d00!important;transform:scale(1.08);box-shadow:0 0 0 3px rgba(255,138,43,.3)}
 .vchap{flex-basis:100%;font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.vbtn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:5px 10px 5px 8px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.78rem;cursor:pointer;flex:none}
+.vbtn svg{width:16px;height:16px}.vbtn.on{border-color:#d9a520;color:#d9a520;background:rgba(217,165,32,.12)}
+.vprev{border-left:3px solid #d9a520;background:var(--bg);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.95rem;line-height:1.45}
+.vptop{display:flex;align-items:center;gap:6px;margin-bottom:6px}.vpout{border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700;font-size:.8rem;padding:5px 12px;border-radius:999px;cursor:pointer}
+.vpframe{display:block;width:100%;height:240px;border:0;border-radius:8px;background:#fff}.vpframe.tall{height:min(68vh,560px)}
+.vpref{font-weight:800;font-size:.8rem;color:var(--muted)}.vptext sup{font-size:.65em;color:var(--muted);margin-right:2px}.vptext a{color:var(--link,#3b82f6)}
+.vpopwrap{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.vpop{position:relative;width:min(520px,100%);background:var(--surface,#fff);color:var(--ink);border-radius:18px;padding:18px 16px 14px;box-shadow:0 20px 50px rgba(0,0,0,.35);margin-bottom:70px}
+.vpop .vprev{margin:0;font-size:1.02rem;padding:8px}.vpx{position:absolute;top:6px;right:8px;border:0;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:6px}
+.vlink{border:0;background:transparent;padding:0;font:inherit;font-weight:800;color:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
 .vchip{min-width:40px;height:36px;padding:0 8px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer}
 .vreact{gap:8px}.vchip.vrc{height:40px;padding:0 12px;font-weight:600}.vnote .vnr{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
 .vchip.on{border-color:var(--flame);background:color-mix(in srgb,var(--flame) 18%,var(--bg));color:var(--ink)}
 .vin,.vwords{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
 .vin:focus,.vwords:focus{outline:none;border-color:var(--xp);box-shadow:0 0 0 3px var(--xp-soft)}
-.vwords{resize:vertical;min-height:72px}
+.vwords{resize:vertical;min-height:84px;line-height:1.45;white-space:pre-wrap;transition:min-height .25s}.vwords:focus,.vwords.big{min-height:240px}
+.vpnav{border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:.85rem;min-width:46px;height:32px;border-radius:999px;cursor:pointer}.vpnav:disabled{opacity:.3}
+.vptop .vpref{flex:1;text-align:center;font-size:.9rem;color:var(--ink)}
 .vcnt{align-self:flex-end;margin:-4px 0 0}
 .vsheet .btn-main:disabled{opacity:.5}
 .vsheet .linkbtn{align-self:center}
@@ -982,7 +997,8 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .vnote{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:var(--bg);border-left:3px solid var(--flame)}
 .vntop{display:flex;align-items:baseline;gap:8px}
 .vntop small{color:var(--muted);margin-left:auto;white-space:nowrap}
-.vnote p{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.vnote p{margin:0;color:var(--ink);overflow-wrap:anywhere;white-space:pre-wrap}
+.rgpw,.gverse .gvw{white-space:pre-wrap}
 .pnote{cursor:pointer}
 .pnote circle{fill:var(--flame);stroke:var(--surface);stroke-width:2.5}
 .pnote text{font-size:12px;font-weight:900;fill:#fff;pointer-events:none}
@@ -2813,7 +2829,7 @@ function renderTestament(k){
     if(todays.length>8)mm.append(el("span","minimore","+"+(todays.length-8)));
     hb.append(mm);
   }
-  head.append(svg,hb);
+  head.append(svg,hb);try{if(x&&x.book)head.append(verseBtn(k,viewP,x))}catch(e){}
   // слева — сегодняшний отрывок, справа — следующий
   const cols=el("div","tcols"), left=el("div","tcol"), right=el("div","tcol");
   const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
@@ -4652,7 +4668,7 @@ function renderExtras(){
     S.keys.forEach(k=>{const tcd=el("div","tcard"),np=xNext(id,k),ti=dayNo(today())-dayNo(S.start),tod=xToday(id,k),done=tod.length>0;
       const th=el("div","thead");const hb=el("div","tht");hb.append(el("b",null,S.keys.length>1?S.labels[k]:"Сегодня"));th.append(hb);tcd.append(th);
       if(np>=S.plan.length&&!done){tcd.append(el("p","muted","Расписание пройдено 🎉"));tg.append(tcd);return}
-      const shown=done?tod[tod.length-1].p:np,x=part2(S,k,shown);
+      const shown=done?tod[tod.length-1].p:np,x=part2(S,k,shown);try{if(x&&x.book)th.append(verseBtn(k,shown,x,id))}catch(e){}
       const cols=el("div","tcols"),left=el("div","tcol"),right=el("div","tcol");
       const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
       a.append(el("span","label",done?"Прочитано сегодня":shown<ti?"Догнать":shown===ti?"Сегодня":"Заранее"),el("span","name",refStr(x)),...(x.title?[el("span","mst",x.title)]:[]),el("span","sub",xDate(S,shown)));
@@ -6161,31 +6177,35 @@ function verseChips(book,ref){
 }
 function normVerse(s,ch){s=String(s||"").replace(/\s+/g,"").replace(/-/g,"–");if(!s)return "";if(/^\d+(–\d+)?$/.test(s)&&ch)return ch+":"+s;return s.slice(0,20)}
 function msOf(id){try{const d=id?xDef(id):SCHED.def;return d&&d.ms?msBook(d.ms):null}catch(e){return null}}
-function askVerse(k,p,x0,xid){
+function keepText(v){return String(v||"").replace(/\r/g,"").replace(/^\s*\n/,"").replace(/\s+$/,"").slice(0,NOTE_W)}
+function askVerse(k,p,x0,xid,man){
   const x=x0||part(k,p);if(!x||!x.book)return;
-  if(x.url)return askMinistry(k,p,x,xid); // книги служения и Жизнеизучение — «Что затронуло?»
-  if(verseAskedToday()||document.querySelector(".fmodal"))return;
+  if(x.url)return askMinistry(k,p,x,xid,man); // книги служения и Жизнеизучение — «Что затронуло?»
+  if((!man&&verseAskedToday())||document.querySelector(".fmodal"))return;
   const ref=refStr(x), vc=verseChips(x.book,x.ref), multi=vc.groups.length>1, first=vc.groups[0]&&vc.groups[0].list[0];
   const modal=el("div","fmodal vmodal"),sheet=el("div","fsheet vsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Какой стих затронул?");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};
-  const skip=()=>{state.verseSkip=today();save();close()};
+  const skip=()=>{if(!man){state.verseSkip=today();save()}close()};
   const esc=e=>{if(e.key==="Escape")skip()};document.addEventListener("keydown",esc);
   modal.addEventListener("click",e=>{if(e.target===modal)skip()});
   const head=el("div","vhead");head.append(el("h2",null,"Какой стих затронул?"),el("div","vref",ref));
+  const prev=el("div","vprev");prev.hidden=true; // текст выбранного стиха
   const chips=el("div","vchips");let picked="";
   const inp=document.createElement("input");inp.type="text";inp.id="verseIn";inp.className="vin";inp.inputMode="text";inp.autocomplete="off";
   inp.placeholder="Стих, например "+(first||(vc.ch?vc.ch+":1":"3:16"));inp.setAttribute("aria-label","Стих");
   vc.groups.forEach(g=>{if(multi)chips.append(el("span","vchap","Глава "+g.c));
-    g.list.forEach(v=>{const b=el("button","vchip",v.split(":")[1]);b.type="button";b.title=x.book+" "+v;b.addEventListener("click",()=>{picked=v;inp.value=v;chips.querySelectorAll(".vchip").forEach(c=>c.classList.toggle("on",c===b));upd()});chips.append(b)})});
+    g.list.forEach(v=>{const b=el("button","vchip",v.split(":")[1]);b.type="button";b.title=x.book+" "+v;b.dataset.v=v;b.addEventListener("click",()=>pickV(v));chips.append(b)})});
+  // выбранный стих подсвечен; стрелками в окошке — к соседним стихам (подсветка идёт следом)
+  function pickV(v){picked=v;inp.value=v;chips.querySelectorAll(".vchip").forEach(c=>c.classList.toggle("on",c.dataset.v===v));upd();showVerseIn(prev,x.book,v,pickV)}
   inp.addEventListener("input",()=>{picked="";chips.querySelectorAll(".vchip").forEach(c=>c.classList.remove("on"));upd()});
-  const ta=document.createElement("textarea");ta.id="verseWords";ta.className="vwords";ta.maxLength=NOTE_W;ta.rows=3;ta.placeholder="Пара слов: чем коснулся этот стих (можно не писать)";ta.setAttribute("aria-label","Пара слов");
+  const ta=document.createElement("textarea");ta.id="verseWords";ta.className="vwords";ta.maxLength=NOTE_W;ta.rows=3;ta.addEventListener("blur",()=>ta.classList.toggle("big",!!ta.value.trim()));ta.placeholder="Пара слов: чем коснулся этот стих (можно не писать)";ta.setAttribute("aria-label","Пара слов");
   const cnt=el("small","hint vcnt","0 / "+NOTE_W);ta.addEventListener("input",()=>{cnt.textContent=ta.value.length+" / "+NOTE_W;upd()});
   const go=el("button","btn-main","Сохранить стих");go.type="button";
-  const no=el("button","linkbtn","Пропустить");no.type="button";no.addEventListener("click",skip);
+  const no=el("button","linkbtn",man?"Закрыть":"Пропустить");no.type="button";no.addEventListener("click",skip);
   function upd(){go.disabled=!inp.value.trim()}
   go.addEventListener("click",()=>{
     const v=normVerse(inp.value,vc.ch);if(!v){inp.focus();return}
-    const n={d:today(),k,p,v:x.book+" "+v,w:ta.value.replace(/\s+/g," ").trim().slice(0,NOTE_W)};
+    const n={d:today(),k,p,v:x.book+" "+v,w:keepText(ta.value)};
     notesList().unshift(n);state.notes=state.notes.slice(0,NOTE_MAX);save();close();
     try{renderPath()}catch(e){}
     const r=go.getBoundingClientRect();try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
@@ -6194,29 +6214,30 @@ function askVerse(k,p,x0,xid){
   upd();
   const lab=(t,id)=>{const l=el("label","vlab",t);if(id)l.htmlFor=id;return l};
   sheet.append(head);
-  if(vc.groups.length)sheet.append(lab("Нажмите на номер стиха"),chips);
-  sheet.append(lab(vc.groups.length?"или впишите сами":"Впишите стих","verseIn"),inp,lab("Пара слов","verseWords"),ta,cnt,go,el("small","hint vwho","Стих виден до конца дня — друзьям и всем на глобусе. Ваши слова — только друзьям."),no);
+  if(vc.groups.length)sheet.append(lab("Нажмите на номер стиха — он откроется ниже"),chips,prev);
+  if(!vc.groups.length)sheet.append(lab("Впишите стих","verseIn"),inp);
+  sheet.append(lab("Пара слов","verseWords"),ta,cnt,go,el("small","hint vwho","Стих виден до конца дня — друзьям и всем на глобусе. Ваши слова — только друзьям."),no);
   modal.append(sheet);document.body.append(modal);
 }
 const MS_REACT=[["🔥","Зажгло"],["💡","Открылось новое"],["❤️","Тронуло сердце"],["🙏","Помолился"]];
-function askMinistry(k,p,x,xid){
-  if(verseAskedToday(true)||document.querySelector(".fmodal"))return;
+function askMinistry(k,p,x,xid,man){
+  if((!man&&verseAskedToday(true))||document.querySelector(".fmodal"))return;
   const B=msOf(xid),bt=B?B.t:(xid?xName(xid):SCHED.name)||"Книга служения",unit=x.book.replace(/,$/,"");
   const modal=el("div","fmodal vmodal"),sheet=el("div","fsheet vsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Что затронуло?");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};
-  const skip=()=>{state.msSkip=today();save();close()};
+  const skip=()=>{if(!man){state.msSkip=today();save()}close()};
   const esc=e=>{if(e.key==="Escape")skip()};document.addEventListener("keydown",esc);
   modal.addEventListener("click",e=>{if(e.target===modal)skip()});
   const head=el("div","vhead");head.append(el("h2",null,"Что затронуло?"),el("div","vref",bt+" · "+unit+(x.title?" «"+x.title+"»":"")));
   const chips=el("div","vchips vreact");let picked=null;
   MS_REACT.forEach(r=>{const b=el("button","vchip vrc",r[0]+" "+r[1]);b.type="button";b.addEventListener("click",()=>{picked=picked===r?null:r;chips.querySelectorAll(".vchip").forEach(c=>c.classList.toggle("on",c===b&&!!picked));upd()});chips.append(b)});
-  const ta=document.createElement("textarea");ta.id="msWords";ta.className="vwords";ta.maxLength=NOTE_W;ta.rows=3;ta.placeholder="Мысль или фраза из чтения, которая затронула";ta.setAttribute("aria-label","Что затронуло");
+  const ta=document.createElement("textarea");ta.id="msWords";ta.className="vwords";ta.maxLength=NOTE_W;ta.rows=3;ta.addEventListener("blur",()=>ta.classList.toggle("big",!!ta.value.trim()));ta.placeholder="Мысль или фраза из чтения, которая затронула";ta.setAttribute("aria-label","Что затронуло");
   const cnt=el("small","hint vcnt","0 / "+NOTE_W);ta.addEventListener("input",()=>{cnt.textContent=ta.value.length+" / "+NOTE_W;upd()});
   const go=el("button","btn-main","Сохранить");go.type="button";
-  const no=el("button","linkbtn","Пропустить");no.type="button";no.addEventListener("click",skip);
+  const no=el("button","linkbtn",man?"Закрыть":"Пропустить");no.type="button";no.addEventListener("click",skip);
   function upd(){go.disabled=!picked&&!ta.value.trim()}
   go.addEventListener("click",()=>{
-    const t=ta.value.replace(/\s+/g," ").trim(),w=((picked?picked[0]+" "+picked[1]:"")+(picked&&t?" · ":"")+t).slice(0,NOTE_W);if(!w)return;
+    const t=keepText(ta.value),w=((picked?picked[0]+" "+picked[1]:"")+(picked&&t?" · ":"")+t).slice(0,NOTE_W);if(!w)return;
     const n={d:today(),k,p,m:1,v:bt,r:unit+(x.title?" «"+x.title+"»":""),w};
     notesList().unshift(n);state.notes=state.notes.slice(0,NOTE_MAX);save();close();
     try{renderPath()}catch(e){}try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
@@ -6229,15 +6250,46 @@ function askMinistry(k,p,x,xid){
 }
 // показать вопрос, когда на экране нет праздника, сундука и других окон
 function askVerseSoon(k,p,delay,x0,xid){
+  return; // 08.11: окно больше не всплывает после «Прочитал(а)» — стих отмечают кнопкой «❞ Стих» у отрывка
   const x=x0||part(k,p);if(!x||!x.book||verseAskedToday(!!x.url))return;let tries=0;
   const tick=()=>{if(++tries>80)return;
     const busy=!$("celebrate").hidden||($("chest")&&!$("chest").hidden)||document.querySelector(".fmodal,.bkcel,.celov");
     if(busy)return setTimeout(tick,400);askVerse(k,p,x0,xid)};
   setTimeout(tick,delay||1400);
 }
+// кнопка у отрывка: «❞ Стих» (книги служения — «❞ Мысль»); у сегодняшнего уже отмеченного — заполненная
+function verseBtn(k,p,x,xid){const ms=!!(x&&x.url),has=notesList().some(n=>n.d===today()&&(ms?n.m:!n.m)&&n.k===k&&n.p===p);
+  const b=el("button","vbtn"+(has?" on":""));b.type="button";b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7H6.5A2.5 2.5 0 0 0 4 9.5V13h4v4H4M20 7h-3.5A2.5 2.5 0 0 0 14 9.5V13h4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  b.append(el("span",null,ms?"Мысль":"Стих"));
+  b.addEventListener("click",e=>{e.stopPropagation();askVerse(k,p,x,xid,true)});return b}
+const RV={};
+function rvBook(book){const sl=SLUG[book];if(!sl)return Promise.reject(new Error("нет книги"));
+  if(!RV[sl])RV[sl]=fetch("rv/"+sl+".json",{cache:"force-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).catch(e=>{delete RV[sl];throw e});return RV[sl]}
+function rvText(book,cv){const m=/^(\d+):(\d+)(?:[–-](\d+))?$/.exec(String(cv||"").replace(/\s+/g,""));if(!m)return Promise.reject(new Error("ссылка"));
+  return rvBook(book).then(B=>{const ch=B[+m[1]-1]||[],a=+m[2],z=+(m[3]||m[2]),out=[];for(let v=a;v<=z&&v-a<30;v++)if(ch[v-1])out.push([v,ch[v-1]]);if(!out.length)throw new Error("нет стиха");return out})}
+// сайт Восстановительного перевода открывается прямо в окошке Огонька, на нужном стихе
+function verseUrl(book,cv){const sl=SLUG[book],m=/^(\d+):(\d+)/.exec(cv)||[];return sl?BIBLE+sl+"/"+(m[1]||1)+"/"+(m[2]||1):BIBLE}
+function verseNb(book,cv,d){const b=BOOKS.find(x=>x.a===book),vc=b&&b.v||[],m=/^(\d+):(\d+)/.exec(cv);if(!m)return null;let c=+m[1],v=+m[2]+d;
+  if(v<1){c--;if(c<1)return null;v=vc[c-1]||1}else if(v>(vc[c-1]||0)){c++;if(c>vc.length)return null;v=1}return c+":"+v}
+function fillVerse(box,book,cv,tall,onClose,onGo){box.hidden=false;box.textContent="";const u=verseUrl(book,cv);
+  const go=t=>{if(!t)return;if(onGo)onGo(t);else fillVerse(box,book,t,tall,onClose,onGo)};
+  const top=el("div","vptop");const pv=verseNb(book,cv,-1),nx=verseNb(book,cv,1);
+  const bp=el("button","vpnav","‹ "+(pv?pv.split(":")[1]:""));bp.type="button";bp.disabled=!pv;bp.setAttribute("aria-label","Предыдущий стих");bp.addEventListener("click",e=>{e.stopPropagation();go(pv)});
+  const bn=el("button","vpnav",(nx?nx.split(":")[1]:"")+" ›");bn.type="button";bn.disabled=!nx;bn.setAttribute("aria-label","Следующий стих");bn.addEventListener("click",e=>{e.stopPropagation();go(nx)});
+  top.append(bp,el("div","vpref",book+" "+cv),bn);const a=el("button","vpout","Закрыть ✕");a.type="button";
+  a.addEventListener("click",e=>{e.stopPropagation();if(onClose)onClose();else{box.hidden=true;box.textContent=""}});top.append(a);box.append(top);
+  const fr=document.createElement("iframe");fr.className="vpframe"+(tall?" tall":"");fr.src=u;fr.title=book+" "+cv;fr.loading="lazy";fr.referrerPolicy="no-referrer";box.append(fr)}
+function showVerseIn(box,book,cv,onGo){fillVerse(box,book,cv,false,()=>{box.hidden=true;box.textContent="";const sh=box.closest(".vsheet");if(sh)sh.querySelectorAll(".vchip.on").forEach(c=>c.classList.remove("on"))},onGo)}
+// окошко со стихом поверх Огонька (из списка стихов в профиле, на пути, у друзей)
+function openVerse(ref){const m=/^(.+?)\s+(\d+:\d+(?:[–-]\d+)?)$/.exec(String(ref||"").trim());if(!m)return;
+  const modal=el("div","vpopwrap"),box=el("div","vpop");box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");
+  const close=()=>modal.remove();
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});const body=el("div","vprev");box.append(body);modal.append(box);document.body.append(modal);fillVerse(body,m[1],m[2],true,close)}
 // список стихов — для профиля и для окна с пути
 function fmtNoteDay(d){const t=today();if(d===t)return "сегодня";if(d===add(t,-1))return "вчера";return parse(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}
-function noteItem(n){const li=el("div","vnote");const top=el("div","vntop");top.append(el("b",null,n.v),el("small",null,fmtNoteDay(n.d)));li.append(top);if(n.r)li.append(el("small","vnr",n.r));if(n.w)li.append(el("p",null,"«"+n.w+"»"));return li}
+function noteItem(n){const li=el("div","vnote");const top=el("div","vntop");
+  const vb=el(n.m?"b":"button",n.m?null:"vlink",n.v);if(!n.m){vb.type="button";vb.addEventListener("click",e=>{e.stopPropagation();openVerse(n.v)})}top.append(vb,el("small",null,fmtNoteDay(n.d)));li.append(top);if(n.r)li.append(el("small","vnr",n.r));if(n.w)li.append(el("p",null,"«"+n.w+"»"));return li}
 function notesEl(notes,isMe){
   const td=today();notes=Array.isArray(notes)?notes.filter(n=>n&&n.v&&n.d===td).slice(0,1):[]; // только сегодняшний, один — завтра исчезнет
   if(!notes.length&&!isMe)return null;
@@ -7057,11 +7109,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611072200"></script>
-<script type="module" src="auth.js?v=202611072200"></script>
+<script src="globe.js?v=202611081750"></script>
+<script type="module" src="auth.js?v=202611081750"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261107220000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261108175000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
