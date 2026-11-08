@@ -971,11 +971,17 @@ textarea.aboutok{animation:aboutglow 1s ease}
 .vchips{display:flex;flex-wrap:wrap;gap:8px;padding:2px}
 .vchips .vchip.on{background:#ff8a2b!important;border-color:#ff8a2b!important;color:#1a0d00!important;transform:scale(1.08);box-shadow:0 0 0 3px rgba(255,138,43,.3)}
 .vchap{flex-basis:100%;font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
-.vbtn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:5px 10px 5px 8px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.78rem;cursor:pointer;flex:none}
-.vbtn svg{width:16px;height:16px}.vbtn.on{border-color:#d9a520;color:#d9a520;background:rgba(217,165,32,.12)}
+.vbtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 5px;border-radius:999px;border:1.5px solid #ff8a1f;background:rgba(255,138,31,.2);color:#ffe2c4;font:inherit;font-weight:600;font-size:.84rem;cursor:pointer;flex:none}
+.vbtn{color:#9a4300}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vbtn:not(.on){color:#ffe2c4}}
+:root[data-theme="dark"] .vbtn:not(.on){color:#ffe2c4}
+.vbq{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#ffb020;color:#fff;font-weight:900;font-size:.8rem;line-height:1}
+.vbtn.on{background:#ff8a1f;color:#1a0d00}.vbtn.on .vbq{background:#fff;color:#ff8a1f}
 .vprev{border-left:3px solid #d9a520;background:var(--bg);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.95rem;line-height:1.45}
 .vptop{display:flex;align-items:center;gap:6px;margin-bottom:6px}.vpout{border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700;font-size:.8rem;padding:5px 12px;border-radius:999px;cursor:pointer}
-.vpframe{display:block;width:100%;height:240px;border:0;border-radius:8px;background:#fff}.vpframe.tall{height:min(68vh,560px)}
+.vpfw{position:relative;overflow:hidden;border-radius:8px;height:240px;background:#1b1b1b}.vpfw.tall{height:min(68vh,560px)}
+.vpframe{display:block;width:100%;border:0;position:absolute;left:0;top:-58px;height:calc(100% + 58px)}
+.vptop{justify-content:flex-end}
 .vpref{font-weight:800;font-size:.8rem;color:var(--muted)}.vptext sup{font-size:.65em;color:var(--muted);margin-right:2px}.vptext a{color:var(--link,#3b82f6)}
 .vpopwrap{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
 .vpop{position:relative;width:min(520px,100%);background:var(--surface,#fff);color:var(--ink);border-radius:18px;padding:18px 16px 14px;box-shadow:0 20px 50px rgba(0,0,0,.35);margin-bottom:70px}
@@ -6260,7 +6266,7 @@ function askVerseSoon(k,p,delay,x0,xid){
 // кнопка у отрывка: «❞ Стих» (книги служения — «❞ Мысль»); у сегодняшнего уже отмеченного — заполненная
 function verseBtn(k,p,x,xid){const ms=!!(x&&x.url),has=notesList().some(n=>n.d===today()&&(ms?n.m:!n.m)&&n.k===k&&n.p===p);
   const b=el("button","vbtn"+(has?" on":""));b.type="button";b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
-  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7H6.5A2.5 2.5 0 0 0 4 9.5V13h4v4H4M20 7h-3.5A2.5 2.5 0 0 0 14 9.5V13h4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  b.append(el("span","vbq","❞"));
   b.append(el("span",null,ms?"Мысль":"Стих"));
   b.addEventListener("click",e=>{e.stopPropagation();askVerse(k,p,x,xid,true)});return b}
 const RV={};
@@ -6277,9 +6283,11 @@ function fillVerse(box,book,cv,tall,onClose,onGo){box.hidden=false;box.textConte
   const top=el("div","vptop");const pv=verseNb(book,cv,-1),nx=verseNb(book,cv,1);
   const bp=el("button","vpnav","‹ "+(pv?pv.split(":")[1]:""));bp.type="button";bp.disabled=!pv;bp.setAttribute("aria-label","Предыдущий стих");bp.addEventListener("click",e=>{e.stopPropagation();go(pv)});
   const bn=el("button","vpnav",(nx?nx.split(":")[1]:"")+" ›");bn.type="button";bn.disabled=!nx;bn.setAttribute("aria-label","Следующий стих");bn.addEventListener("click",e=>{e.stopPropagation();go(nx)});
-  top.append(bp,el("div","vpref",book+" "+cv),bn);const a=el("button","vpout","Закрыть ✕");a.type="button";
+  void bp;void bn; // стрелки и подпись убраны по просьбе — сверху только «Закрыть»
+  const a=el("button","vpout","Закрыть ✕");a.type="button";
   a.addEventListener("click",e=>{e.stopPropagation();if(onClose)onClose();else{box.hidden=true;box.textContent=""}});top.append(a);box.append(top);
-  const fr=document.createElement("iframe");fr.className="vpframe"+(tall?" tall":"");fr.src=u;fr.title=book+" "+cv;fr.loading="lazy";fr.referrerPolicy="no-referrer";box.append(fr)}
+  // шапку сайта («Мф. 15», стрелки, поиск) прячем — фрейм сдвинут вверх внутри рамки
+  const fw=el("div","vpfw"+(tall?" tall":""));const fr=document.createElement("iframe");fr.className="vpframe";fr.src=u;fr.title=book+" "+cv;fr.loading="lazy";fr.referrerPolicy="no-referrer";fw.append(fr);box.append(fw)}
 function showVerseIn(box,book,cv,onGo){fillVerse(box,book,cv,false,()=>{box.hidden=true;box.textContent="";const sh=box.closest(".vsheet");if(sh)sh.querySelectorAll(".vchip.on").forEach(c=>c.classList.remove("on"))},onGo)}
 // окошко со стихом поверх Огонька (из списка стихов в профиле, на пути, у друзей)
 function openVerse(ref){const m=/^(.+?)\s+(\d+:\d+(?:[–-]\d+)?)$/.exec(String(ref||"").trim());if(!m)return;
@@ -7109,11 +7117,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611081750"></script>
-<script type="module" src="auth.js?v=202611081750"></script>
+<script src="globe.js?v=202611081800"></script>
+<script type="module" src="auth.js?v=202611081800"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261108175000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261108180000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
