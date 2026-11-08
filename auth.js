@@ -528,16 +528,16 @@ async function main() {
       // фото профиля: загрузить с телефона / вернуть фото Google
       const phRow = el("div", "phrow"), phAv = avatarEl(myName(), myPhoto(), 64);
       const fin = document.createElement("input"); fin.type = "file"; fin.accept = "image/*"; fin.hidden = true;
-      const phBtn = el("button", "btn phbtn", "📷 Сменить фото"); phBtn.type = "button"; phBtn.addEventListener("click", () => fin.click());
+      const phBtn = el("button", "btn phbtn"); phBtn.append(O().ico("camera"), el("span", null, "Сменить фото")); phBtn.type = "button"; phBtn.addEventListener("click", () => fin.click());
       const phBack = el("button", "linkbtn phback", "Вернуть фото Google"); phBack.type = "button"; phBack.hidden = !(myProfile && myProfile.photoX) || !me.photoURL;
       let phAvRef = phAv;
       const updHead = () => { const h = document.querySelector(".fsheet .fhead .favatar"); if (h) h.replaceWith(avatarEl(myName(), myPhoto(), 64)); };
       fin.addEventListener("change", async () => {
         const f = fin.files && fin.files[0]; fin.value = ""; if (!f) return;
-        phBtn.disabled = true; phBtn.textContent = "Загружаю…";
+        phBtn.disabled = true; phBtn.lastChild.textContent = "Загружаю…";
         try { const d = await shrinkPhoto(f); await saveMyPhoto(d); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = !me.photoURL; O().toast("Фото обновлено — его увидят друзья"); }
         catch (e) { console.warn(e); O().toast("Не удалось загрузить фото. Попробуйте другое."); }
-        phBtn.disabled = false; phBtn.textContent = "📷 Сменить фото";
+        phBtn.disabled = false; phBtn.lastChild.textContent = "Сменить фото";
       });
       phBack.addEventListener("click", async () => { try { await saveMyPhoto(""); phAvRef.replaceWith(phAvRef = avatarEl(myName(), myPhoto(), 64)); updHead(); phBack.hidden = true; O().toast("Вернули фото Google"); } catch (e) { console.warn(e); } });
       const phCol = el("div", "phcol"); phCol.append(phBtn, phBack); phRow.append(phAv, phCol, fin);
@@ -1203,6 +1203,19 @@ async function main() {
   }
 
   /* ---------- session ---------- */
+  // для «первого входа по шагам» (index.html openOnb)
+  window.ogSignIn = () => $("googleBtn").click();
+  window.ogSkipLogin = () => { lsSet(SKIP_KEY, "1"); $("auth").hidden = true; showLoginLink(); };
+  window.ogAuthInfo = () => ({ logged: !!me, name: me ? myName() : "", nameSet: myNameSet });
+  window.ogEnableReminder = () => enableReminder();
+  window.ogSaveNick = async (nick) => {
+    if (!me) return; nick = String(nick || "").replace(/\s+/g, " ").trim().slice(0, 40); if (nick.length < 2) return;
+    myNick = nick; myNameSet = true; setTopName();
+    if (!myRef) myRef = F.doc(db, "profiles", me.uid);
+    await F.setDoc(myRef, { nick, name: nick, nameSet: true }, { merge: true }).catch((e) => console.warn(e));
+    await F.setDoc(F.doc(db, "cards", me.uid), { name: nick, photo: myPhoto() }).catch((e) => console.warn(e));
+    try { publishSummary(); } catch (e) {}
+  };
   A.onAuthStateChanged(auth, async (user) => {
     Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
@@ -1244,12 +1257,13 @@ async function main() {
       else await F.setDoc(ref, local);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     if (O().progressLoaded) O().progressLoaded();
+    try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
 
     try {
       await ensureProfile(user);
-      if (!myNameSet) await askName(user);
+      if (!myNameSet && !window.__onbActive && !document.body.classList.contains("onbon")) await askName(user); // в «первом входе» имя спрашивается на своём шаге
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;
