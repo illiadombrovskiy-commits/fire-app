@@ -1201,6 +1201,7 @@ html,body{overflow-x:hidden;overscroll-behavior-x:none}
 .larch{display:flex;flex-direction:row;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;padding:13px 14px}
 .larch .libgo{margin-left:auto;font-size:1.6rem;color:var(--muted)}
 .archlab{margin-top:6px}
+.vbtn.off,.vbtn.off:not(.on){background:transparent;border-color:var(--line);color:var(--muted);cursor:default;opacity:.75}.vbtn.off .vbq{background:var(--off);color:var(--muted)}.vbtn.off.mine .vbq{background:var(--ok);color:#fff}
 </style>
 
 <style>
@@ -6346,6 +6347,7 @@ function keepText(v){return String(v||"").replace(/\r/g,"").replace(/^\s*\n/,"")
 function askVerse(k,p,x0,xid,man){
   const x=x0||part(k,p);if(!x||!x.book)return;
   if(x.url)return askMinistry(k,p,x,xid,man); // книги служения и Жизнеизучение — «Что затронуло?»
+  if(noteToday(k,p,false))return;
   if((!man&&verseAskedToday())||document.querySelector(".fmodal"))return;
   const ref=refStr(x), vc=verseChips(x.book,x.ref), multi=vc.groups.length>1, first=vc.groups[0]&&vc.groups[0].list[0];
   const modal=el("div","fmodal vmodal"),sheet=el("div","fsheet vsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Какой стих затронул?");
@@ -6372,7 +6374,7 @@ function askVerse(k,p,x0,xid,man){
     const v=normVerse(inp.value,vc.ch);if(!v){inp.focus();return}
     const n={d:today(),k,p,v:x.book+" "+v,w:keepText(ta.value)};
     notesList().unshift(n);state.notes=state.notes.slice(0,NOTE_MAX);save();close();
-    try{renderPath()}catch(e){}
+    try{render()}catch(e){}try{renderPath()}catch(e){}
     const r=go.getBoundingClientRect();try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
     toast("Стих сохранён — его увидят на пути, в профиле и на глобусе");
   });
@@ -6386,7 +6388,7 @@ function askVerse(k,p,x0,xid,man){
 }
 const MS_REACT=[["🔥","Зажгло"],["💡","Открылось новое"],["❤️","Тронуло сердце"],["🙏","Помолился"]];
 function askMinistry(k,p,x,xid,man){
-  if((!man&&verseAskedToday(true))||document.querySelector(".fmodal"))return;
+  if((!man&&verseAskedToday(true))||noteToday(k,p,true)||document.querySelector(".fmodal"))return;
   const B=msOf(xid),bt=B?B.t:(xid?xName(xid):SCHED.name)||"Книга служения",unit=x.book.replace(/,$/,"");
   const modal=el("div","fmodal vmodal"),sheet=el("div","fsheet vsheet");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Что затронуло?");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};
@@ -6405,7 +6407,7 @@ function askMinistry(k,p,x,xid,man){
     const t=keepText(ta.value),w=((picked?picked[0]+" "+picked[1]:"")+(picked&&t?" · ":"")+t).slice(0,NOTE_W);if(!w)return;
     const n={d:today(),k,p,m:1,v:bt,r:unit+(x.title?" «"+x.title+"»":""),w};
     notesList().unshift(n);state.notes=state.notes.slice(0,NOTE_MAX);save();close();
-    try{renderPath()}catch(e){}try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
+    try{render()}catch(e){}try{renderPath()}catch(e){}try{burst(innerWidth/2,innerHeight-160,40)}catch(e){}
     toast("Сохранено — друзья увидят, что вас затронуло");
   });
   upd();
@@ -6423,8 +6425,14 @@ function askVerseSoon(k,p,delay,x0,xid){
   setTimeout(tick,delay||1400);
 }
 // кнопка у отрывка: «❞ Стих» (книги служения — «❞ Мысль»); у сегодняшнего уже отмеченного — заполненная
-function verseBtn(k,p,x,xid){const ms=!!(x&&x.url),has=notesList().some(n=>n.d===today()&&(ms?n.m:!n.m)&&n.k===k&&n.p===p);
-  const b=el("button","vbtn"+(has?" on":""));b.type="button";b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
+function noteToday(){return notesList().some(n=>n&&n.d===today())} // 09.11: делимся одним — стих или мысль, один раз за день
+function verseBtn(k,p,x,xid){const ms=!!(x&&x.url),has=noteToday(k,p,ms);
+  // 09.11: стих или мысль — один раз в день; после сохранения кнопки серые и не нажимаются, у «своего» отрывка — «✓ Стих»
+  if(has){const mine=notesList().some(n=>n&&n.d===today()&&(ms?n.m:!n.m)&&n.k===k&&n.p===p);
+    const d=el("button","vbtn off"+(mine?" mine":""));d.type="button";d.disabled=true;d.title="Сегодня вы уже поделились";
+    d.setAttribute("aria-label","Сегодня вы уже поделились стихом или мыслью");
+    d.append(el("span","vbq",mine?"✓":"❞"),el("span",null,ms?"Мысль":"Стих"));return d}
+  const b=el("button","vbtn");b.type="button";b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
   b.append(el("span","vbq","❞"));
   b.append(el("span",null,ms?"Мысль":"Стих"));
   b.addEventListener("click",e=>{e.stopPropagation();askVerse(k,p,x,xid,true)});return b}
@@ -7276,11 +7284,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611082000"></script>
-<script type="module" src="auth.js?v=202611082000"></script>
+<script src="globe.js?v=202611090755"></script>
+<script type="module" src="auth.js?v=202611090755"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261108200000";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261109075500";function chk(){try{fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){var m=/var B="(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
