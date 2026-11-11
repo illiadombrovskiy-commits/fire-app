@@ -225,7 +225,7 @@
 
   function size() {
     if (!cv) return; const st = cv.parentElement;
-    W = st.clientWidth || 360; H = st.clientHeight || 360; dpr = window.devicePixelRatio || 1;
+    W = st.clientWidth || 360; H = st.clientHeight || 360; dpr = Math.min(2, window.devicePixelRatio || 1); // iPhone 3x → 2x: в 2,25 раза меньше точек на каждый кадр, глобус легче и меньше греет телефон
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   }
 
@@ -247,7 +247,9 @@
     [[0.12, 0.18, 0.55, "rgba(120,70,210,.20)"], [0.92, 0.88, 0.6, "rgba(255,110,60,.10)"]].forEach((n) => { const g = ctx.createRadialGradient(W * n[0], H * n[1], 0, W * n[0], H * n[1], W * n[2]); g.addColorStop(0, n[3]); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
     stars.forEach((s) => { const x = ((s.x * W + yaw * 25) % W + W) % W, y = ((s.y * H + pitch * 25) % H + H) % H; ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.4 * Math.sin(t * 1.5 + s.p) ** 2) + ")"; ctx.fillRect(x, y, s.r, s.r); });
     // размер окна меняется (карточка внизу появилась/скрылась) — глобус подстраивается плавно, без рывка
-    const cdv = root && root.querySelector(".gcard"), occ = cdv && !cdv.hidden ? Math.min(H * 0.5, cdv.offsetHeight + 6) : 0;
+    // высоту карточки меряем не каждый кадр (это заставляло браузер пересчитывать вёрстку 60 раз в секунду), а раз в 200 мс
+    if (!frame.oT || ts - frame.oT > 200) { frame.oT = ts; const cdv = root && root.querySelector(".gcard"); frame.occ = cdv && !cdv.hidden ? Math.min(H * 0.5, cdv.offsetHeight + 6) : 0; }
+    const occ = frame.occ || 0;
     OS += (occ - OS) * 0.12; if (Math.abs(occ - OS) < 0.5) OS = occ;
     const R = Math.min(W, H - OS) * 0.42 * zoom, cx = W / 2, cy = (H - OS) / 2, lx = cx + L[0] * R * 0.55, ly = cy - L[1] * R * 0.55;
     let g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.22); g.addColorStop(0, "rgba(90,160,255,.45)"); g.addColorStop(1, "rgba(90,160,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, TAU); ctx.fill();

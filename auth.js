@@ -761,6 +761,14 @@ async function main() {
     (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); })).catch((e) => console.warn(e));
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
+  // глобус: отношения (друг / заявка) пересчитываем, когда профиль догрузился или список друзей изменился
+  let globeList = null;
+  function globeRelSync() {
+    const G = window.OgonekGlobe; if (!globeList || !G || !G.isOpen()) return;
+    let ch = false;
+    globeList.forEach((p) => { if (p.rel === "me") return; const r = relOf(p.id); if (r !== p.rel) { p.rel = r; ch = true; } });
+    if (ch) G.setPeople(globeList);
+  }
   async function openGlobe() {
     const G = window.OgonekGlobe; if (!G || !me) return;
     const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
@@ -778,7 +786,7 @@ async function main() {
     try {
       // все, у кого есть запись на глобусе
       const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
-      const list = [mine], have = new Set([me.uid]);
+      const list = [mine], have = new Set([me.uid]); globeList = list;
       snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "", nd: typeof x.nd === "string" ? x.nd : "", rel: relOf(d.id) }); });
       // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
       for (let i = 0; i < 15 && myFriends.some((u) => !friendData[u]); i++) await new Promise((r) => setTimeout(r, 200));
@@ -786,6 +794,7 @@ async function main() {
         const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
         try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
       });
+      list.forEach((p) => { if (p.rel !== "me") p.rel = relOf(p.id); }); // друзья могли догрузиться, пока шёл запрос
       // слова к стиху видят только друзья (и я сам)
       list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
       G.setPeople(list);
@@ -1288,6 +1297,7 @@ async function main() {
         if (knownReq) pend.filter((u) => !knownReq.has(u)).forEach((u) => cardOf(u).then((c) => O().toast((c.name || "Читатель") + " хочет стать вашим другом")));
         knownReq = new Set(pend);
         syncFriendSubs(myProfile.friends || [], myProfile.following || []);
+        globeRelSync();
       });
       O().onPersonClick = (id) => openProfile(id);
       listenCheers();
