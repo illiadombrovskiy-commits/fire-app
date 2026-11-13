@@ -107,13 +107,62 @@ service cloud.firestore {
     }
 
     // профиль: любой вошедший пользователь может посмотреть (чтобы решить, добавлять ли в друзья)
+    // жизненные группы «читать вместе»: документ = 6-значный код. Открыть по коду может любой вошедший (для приглашения),
+    // список — только своих групп. Название, книгу, размер, ссылку и созвоны меняет только создатель.
+    match /groups/{code} {
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.auth.uid in resource.data.members;
+      allow create: if request.auth != null && code.matches('^[A-Z0-9]{6}$')
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.size in [2, 4, 6]
+        && (!('g' in request.resource.data) || request.resource.data.g in ['m', 'f']);
+      // создатель: всё, кроме состава (состав — только уйти самому, передав группу следующему)
+      allow update: if request.auth != null && request.auth.uid == resource.data.owner
+        && request.resource.data.size in [2, 4, 6]
+        && request.resource.data.get('g', '') == resource.data.get('g', '')
+        && request.resource.data.members.size() <= request.resource.data.size
+        && (request.resource.data.members == resource.data.members
+            || (request.resource.data.members.toSet() == resource.data.members.toSet().difference([request.auth.uid].toSet())
+                && request.resource.data.owner in request.resource.data.members));
+      // участник: отметки, стихи, «подбодрить», звонок, своё имя и фото; может уйти сам
+      allow update: if request.auth != null && request.auth.uid in resource.data.members
+        && request.auth.uid != resource.data.owner
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['day', 'reads', 'verses', 'cheers', 'live', 'names', 'photos', 'members'])
+        && (request.resource.data.members == resource.data.members
+            || request.resource.data.members.toSet() == resource.data.members.toSet().difference([request.auth.uid].toSet()));
+      // новичок по ссылке: только добавить себя, пока есть места; в новую группу (с полем g) — только своего пола
+      allow update: if request.auth != null && !(request.auth.uid in resource.data.members)
+        && resource.data.members.size() < resource.data.size
+        && (!('g' in resource.data) || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('gender', '') == resource.data.g)
+        && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'names', 'photos']);
+      // удалить группу: создатель или последний ушедший
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.owner || resource.data.members == [request.auth.uid]);
+    }
+
+    // приглашения в жизненную группу: позвать может друг, который сам в этой группе; читаю и удаляю я,
+    // а пригласивший может проверить своё приглашение и отозвать его
+    match /groupinv/{to}/inbox/{code} {
+      allow list: if request.auth != null && request.auth.uid == to;
+      allow get: if request.auth != null && (request.auth.uid == to || resource == null || resource.data.from == request.auth.uid);
+      allow delete: if request.auth != null && (request.auth.uid == to || resource.data.from == request.auth.uid);
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['from', 'name', 'photo', 'group', 'gname', 'at'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.group == code
+        && request.auth.uid in get(/databases/$(database)/documents/profiles/$(to)).data.get('friends', [])
+        && request.auth.uid in get(/databases/$(database)/documents/groups/$(code)).data.members;
+    }
+
     match /profiles/{uid} {
       allow get: if request.auth != null;
       // список всех профилей получить нельзя — только конкретный по ID
       allow list: if false;
       // владелец меняет свой профиль как угодно
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.get('about', '').size() <= 300;
+        && request.resource.data.get('about', '').size() <= 300
+        && (!('gender' in request.resource.data) || request.resource.data.gender in ['m', 'f']);
       // другой человек может только подписаться / отписаться (добавить или убрать СЕБЯ в followers)
       allow update: if request.auth != null && request.auth.uid != uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers'])

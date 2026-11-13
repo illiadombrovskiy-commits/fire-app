@@ -283,7 +283,11 @@ async function main() {
     b.addEventListener("keydown", (e) => e.stopPropagation());
     return b;
   }
+  // пол: братья — братьям, сёстры — сёстрам; пока кто-то не выбрал пол — как раньше
+  const myG = () => { try { return (window.ogGender && window.ogGender()) || ""; } catch (e) { return ""; } };
+  const sameSex = (d) => { const g = myG(), h = d && d.gender; return !g || !h || g === h; };
   function friendAction(uid, d) {
+    if (!sameSex(d)) return null;
     if (canCheer(d)) return actionButton(uid, d, "cheer");
     if (canInvite(d)) return actionButton(uid, d, "invite");
     return null;
@@ -1104,7 +1108,7 @@ async function main() {
       cheer: (uid, i, join) => sendMsg(uid, i, join ? "confjoin" : "conf"),
       cheerLeft: () => left("conf"),
       cheerSent: (uid, join) => sentToday(uid, join ? "confjoin" : "conf"),
-      friends: () => myFriends.map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "" })),
+      friends: () => myFriends.filter((u) => sameSex(friendData[u])).map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "", g: (friendData[u] && friendData[u].gender) || "" })),
       async create(data) {
         for (let i = 0; i < 6; i++) {
           const code = randomCode();
@@ -1156,7 +1160,7 @@ async function main() {
       uid: me.uid, name: nm, photo: ph(),
       del: () => F.deleteField(),
       // друзья из Огонька — чтобы позвать их в группу
-      friends: () => myFriends.map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "" })),
+      friends: () => myFriends.filter((u) => sameSex(friendData[u])).map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "", g: (friendData[u] && friendData[u].gender) || "" })),
       invite(uid, code, gname) {
         return F.setDoc(F.doc(db, "groupinv", uid, "inbox", code), { from: me.uid, name: nm(), photo: ph(), group: code, gname: String(gname || "").slice(0, 60), at: Date.now() });
       },
@@ -1287,8 +1291,15 @@ async function main() {
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
       O().onSave = () => { publishSummary(); renderFriends(); };
       publishSummary();
+      window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
+      let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
         const oldPh = myPhoto(); myProfile = snap.exists() ? snap.data() : {}; if (myPhoto() !== oldPh) O().setMyPhoto(myPhoto());
+        // пол: из профиля → на телефон; выбран на телефоне, а в профиле нет → в профиль; нигде нет → одно окно «Ваш пол»
+        { const pg = myProfile.gender, lg = myG();
+          if (pg === "m" || pg === "f") { if (pg !== lg && window.ogGenderLocal) window.ogGenderLocal(pg); }
+          else if (lg) window.ogSetGender(lg);
+          else if (snap.exists() && !genderAsked) { genderAsked = true; const ask = () => { if (document.body.classList.contains("onbon") || window.__onbActive) return setTimeout(ask, 2000); if (!myG() && window.ogAskGender) window.ogAskGender(); }; setTimeout(ask, 1500); } }
         myFollowers = myProfile.followers || []; myDeclined = myProfile.declined || [];
         if ((myProfile.nick || "") !== myNick) { myNick = myProfile.nick || ""; setTopName(); }
         if (!!myProfile.globeHide !== globeHide) { globeHide = !!myProfile.globeHide; if (window.OgonekGlobe) window.OgonekGlobe.setVisible(!globeHide); }
@@ -1300,6 +1311,7 @@ async function main() {
         globeRelSync();
       });
       O().onPersonClick = (id) => openProfile(id);
+      window.addEventListener("og-gender", () => { try { renderFriends(); } catch (e) {} });
       listenCheers();
       try { setupTeams(); } catch (e) { console.warn(e); }
       try { setupGroups(); } catch (e) { console.warn(e); }

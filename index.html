@@ -1202,6 +1202,20 @@ html,body{overflow-x:hidden;overscroll-behavior-x:none}
 .larch .libgo{margin-left:auto;font-size:1.6rem;color:var(--muted)}
 .archlab{margin-top:6px}
 .vbtn.off,.vbtn.off:not(.on){background:transparent;border-color:var(--line);color:var(--muted);cursor:default;opacity:.75}.vbtn.off .vbq{background:var(--off);color:var(--muted)}.vbtn.off.mine .vbq{background:var(--ok);color:#fff}
+
+/* пол */
+.onb .oglab{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,232,210,.6);margin-top:6px}
+.ogender{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.onb .ogsex{border:2px solid rgba(255,220,190,.22);background:rgba(255,255,255,.05);color:#fff3e6;font:inherit;font-weight:800;font-size:1.05rem;padding:14px;border-radius:16px;cursor:pointer}
+.onb .ogsex.on{border-color:#ff8a1f;background:rgba(255,138,31,.16)}
+.gmodal2{display:grid;place-items:center;padding:16px}
+.gsheet{max-width:360px;width:100%;gap:16px;text-align:center;border-radius:22px!important}
+.gsheet h2{font-size:1.5rem}
+.gsheet .ogsex{border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:800;font-size:1.08rem;padding:16px 10px;border-radius:16px;cursor:pointer}
+.gsheet .ogsex:active{border-color:var(--flame);background:var(--flame-soft)}
+.ogsex.arm{border-color:#ff8a1f!important;background:rgba(255,138,31,.22)!important;animation:armpulse 1s ease-in-out infinite}
+.gsheet .ogsex.arm{color:var(--ink)}
+.ogsex small{display:block;font-size:.72rem;font-weight:700;opacity:.85;margin-top:2px}
 </style>
 
 <style>
@@ -5114,9 +5128,14 @@ function openOnb(startStep){
       s.append(foot(g,btn("olink","Пока без входа — только на этом телефоне",()=>{try{window.ogSkipLogin&&window.ogSkipLogin()}catch(e){}to(4)})));return}
     const nm=(info().name||"").trim();s.append(el("h2",null,"Как вас зовут?"),el("p",null,"Так вас увидят друзья. Можно поправить."));
     const av=el("div","oav",(nm||"?").charAt(0).toUpperCase()),inp=document.createElement("input");inp.className="onamein";inp.value=nm;inp.maxLength=40;inp.autocomplete="given-name";inp.setAttribute("aria-label","Имя");
-    const go=btn("ogo","Дальше",async()=>{go.disabled=true;try{await (window.ogSaveNick&&window.ogSaveNick(S.name))}catch(e){console.warn(e)}go.disabled=false;to(3)});
-    const ok=()=>{S.name=inp.value.replace(/\s+/g," ").trim();go.disabled=S.name.length<2;av.textContent=(S.name||"?").charAt(0).toUpperCase()};
-    inp.addEventListener("input",ok);inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!go.disabled)go.click()});ok();s.append(av,inp,foot(go))}
+    const go=btn("ogo","Дальше",async()=>{go.disabled=true;setGender(S.g);try{await (window.ogSaveNick&&window.ogSaveNick(S.name))}catch(e){console.warn(e)}go.disabled=false;to(3)});
+    S.g=S.g||myGender();const gs=el("div","ogender");
+    [["m","Мужской"],["f","Женский"]].forEach(([g,t])=>{const b=btn("ogsex"+(S.g===g?" on":""),S.g===g?"✓ "+t:t,()=>{
+        if(S.g===g)return;
+        if(b.dataset.arm!=="1"){gs.querySelectorAll(".ogsex").forEach(c=>{c.dataset.arm="";c.classList.remove("arm");c.textContent=(c.classList.contains("on")?"✓ ":"")+c.dataset.t});b.dataset.arm="1";b.classList.add("arm");b.textContent=t;b.append(el("small",null,"нажмите ещё раз"));return}
+        S.g=g;gs.querySelectorAll(".ogsex").forEach(c=>{c.dataset.arm="";c.classList.remove("arm");c.classList.toggle("on",c===b);c.textContent=(c===b?"✓ ":"")+c.dataset.t});ok()});b.dataset.t=t;gs.append(b)});
+    const ok=()=>{S.name=inp.value.replace(/\s+/g," ").trim();go.disabled=S.name.length<2||!S.g;av.textContent=(S.name||"?").charAt(0).toUpperCase()};
+    inp.addEventListener("input",ok);inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!go.disabled)go.click()});ok();s.append(av,inp,el("div","oglab","Пол"),gs,foot(go))}
   // 3 — напоминание: разрешение спрашиваем только здесь и только по нажатию
   function d3(s){const b=el("div","obell");b.append(icoEl("bell"));s.append(b,el("h2",null,"Напомнить вечером?"),el("p",null,"Если день ещё не прочитан — короткое уведомление днём в 14:00 и вечером. Без спама."));
     const ts=el("div","otimes");[20,21,22].forEach(h=>{const t=btn("otime"+(h===S.time?" on":""),h+":00",()=>{S.time=h;onbLS.set("ogonek-onb-time",h);ts.querySelectorAll(".otime").forEach(c=>c.classList.toggle("on",c===t))});ts.append(t)});
@@ -5153,6 +5172,19 @@ function openOnb(startStep){
     setTimeout(onbCoach,500)}
   document.body.append(root);requestAnimationFrame(()=>to(startStep||0));
 }
+/* ---------- пол: «Мужской» / «Женский» ---------- */
+function myGender(){return state.gender==="m"||state.gender==="f"?state.gender:""}
+function setGender(g){if(g!=="m"&&g!=="f")return;state.gender=g;save();try{window.ogSetGender&&window.ogSetGender(g)}catch(e){}try{window.ogGroupRender&&window.ogGroupRender()}catch(e){}try{window.dispatchEvent(new Event("og-gender"))}catch(e){}}
+window.ogGender=myGender;
+// вошёл до обновления и пол не указан — одно короткое окно, без подробностей
+function askGender(){if(myGender()||document.querySelector(".gmodal2,.onb"))return;
+  const m=el("div","fmodal gmodal2"),sh=el("div","fsheet gsheet");sh.setAttribute("role","dialog");sh.setAttribute("aria-modal","true");sh.setAttribute("aria-label","Ваш пол");
+  sh.append(el("h2",null,"Ваш пол"));const row=el("div","ogender");
+  [["m","Мужской"],["f","Женский"]].forEach(([g,t])=>{const b=el("button","ogsex",t);b.type="button";b.dataset.t=t;b.addEventListener("click",()=>{
+      if(b.dataset.arm!=="1"){row.querySelectorAll(".ogsex").forEach(c=>{c.dataset.arm="";c.classList.remove("arm");c.textContent=c.dataset.t});b.dataset.arm="1";b.classList.add("arm");b.textContent=t;b.append(el("small",null,"нажмите ещё раз"));return}
+      setGender(g);m.remove()});row.append(b)});
+  sh.append(row);m.append(sh);document.body.append(m)}
+window.ogAskGender=askGender;window.ogGenderLocal=g=>{if((g==="m"||g==="f")&&state.gender!==g){state.gender=g;save();try{window.ogGroupRender&&window.ogGroupRender()}catch(e){}try{window.dispatchEvent(new Event("og-gender"))}catch(e){}}};window.__ogOpenOnb=n=>openOnb(n);window.__ogResetGender=()=>{delete state.gender;save();try{window.dispatchEvent(new Event("og-gender"))}catch(e){}};
 // после первого входа — одна подсказка на карточке чтения
 function onbCoach(){const card=$("testaments");if(!card)return;const box=card.closest(".card")||card;
   document.querySelectorAll(".coachtip").forEach(x=>x.remove());box.classList.add("coach");
@@ -6677,10 +6709,11 @@ const today=()=>O().today();
 const hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 const pl=(n,a,b,c)=>O().plural(n,a,b,c).replace(/^\d+\s*/,"");
 const FRIENDS=[
-  {id:"tolya",name:"Анатолий",c:"#2f9e6b"},
-  {id:"lada",name:"Лада",c:"#d05a8c"},
-  {id:"lusya",name:"Люся",c:"#c98a12"},
-  {id:"ruslan",name:"Руслан",c:"#3f7fd6"}
+  {id:"tolya",name:"Анатолий",c:"#2f9e6b",g:"m"},
+  {id:"lada",name:"Лада",c:"#d05a8c",g:"f"},
+  {id:"lusya",name:"Люся",c:"#c98a12",g:"f"},
+  {id:"ruslan",name:"Руслан",c:"#3f7fd6",g:"m"},
+  {id:"mark",name:"Марк",c:"#7a5cc4",g:"m"}
 ];
 const DEMO_READ={tolya:"07:12",lada:"08:40",lusya:"09:05",ruslan:null};
 const PHR=["Ждём тебя 🙂 Сегодня совсем короткий отрывок","Без тебя группа не в сборе 🔥","Помолился(лась) за тебя. Почитаем вместе?"];
@@ -7010,9 +7043,10 @@ const IK="ogonek-ginv";
 function invLoad(){try{return JSON.parse(localStorage.getItem(IK)||"{}")}catch(e){return {}}}
 function invSave(o){try{localStorage.setItem(IK,JSON.stringify(o))}catch(e){}}
 function ogFriends(){
-  if(DEMO)return FRIENDS.map(f=>({id:f.id,name:f.name}));
+  const mg=(window.ogGender&&window.ogGender())||"",same=f=>!mg||!f.g||f.g===mg; // только свой пол — остальных в списке просто нет
+  if(DEMO)return FRIENDS.filter(same).map(f=>({id:f.id,name:f.name}));
   let l=[];try{l=NET&&NET.friends?NET.friends():[]}catch(e){}
-  return l.map(f=>{NAMES[f.uid]=NAMES[f.uid]||f.name;if(f.photo&&!PHOTOS[f.uid])PHOTOS[f.uid]=f.photo;return {id:idOf(f.uid),name:f.name}});
+  return l.filter(same).map(f=>{NAMES[f.uid]=NAMES[f.uid]||f.name;if(f.photo&&!PHOTOS[f.uid])PHOTOS[f.uid]=f.photo;return {id:idOf(f.uid),name:f.name}});
 }
 function invite(){
   const F=G,sent=invLoad();
@@ -7145,7 +7179,7 @@ function setup(edit){
       if(!DEMO){
         if(!NET){O().toast("Войдите через Google, чтобы создать жизненную группу");return}
         mk.disabled=true;mk.textContent="Создаём…";
-        NET.create({name,size,meet:meet&&meet.days.length?meet:null,link,plan:{kind,def:Object.assign({},d,{id:""})},created:today()}).then(code=>{
+        NET.create(Object.assign({name,size,meet:meet&&meet.days.length?meet:null,link,plan:{kind,def:Object.assign({},d,{id:""})},created:today()},(window.ogGender&&window.ogGender())?{g:window.ogGender()}:{})).then(code=>{
           const dd=Object.assign({},d,{id:"fire-"+code});NET.update(code,{"plan.def.id":dd.id}).catch(()=>{});
           try{window.ogPlanAdd(dd)}catch(_){}
           close();try{window.ogSetPage&&window.ogSetPage("home")}catch(e){}
@@ -7194,6 +7228,10 @@ function joinReal(code,inv){
   NET.get(code).then(d=>{
     if(!d){if(inv){drop();return}O().toast("Группа не найдена — возможно, её удалили");return}
     if((d.members||[]).includes(MYUID)){if(inv){drop();return}O().toast("Вы уже в группе «"+d.name+"»");return}
+    // новая группа только для своего пола (у старых смешанных групп поля g нет — туда можно)
+    const mg=(window.ogGender&&window.ogGender())||"";
+    if(d.g&&!mg){const again=()=>{window.removeEventListener("og-gender",again);setTimeout(()=>joinReal(code,inv),300)};window.addEventListener("og-gender",again);try{window.ogAskGender&&window.ogAskGender()}catch(e){}return}
+    if(d.g&&d.g!==mg){drop();O().toast("Эта группа недоступна");return}
     Object.assign(NAMES,d.names||{});Object.assign(PHOTOS,d.photos||{});
     const full=(d.members||[]).length>=(d.size||4),k=G;G={plan:d.plan,code:d.code};const pv=d.plan&&d.plan.def&&window.ogPlanPreview?window.ogPlanPreview(Object.assign({},d.plan.def,{id:"fire-"+code})):null;G=k;
     sheet("Приглашение в жизненную группу",`
@@ -7317,11 +7355,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611131100"></script>
-<script type="module" src="auth.js?v=202611131100"></script>
+<script src="globe.js?v=202611131310"></script>
+<script type="module" src="auth.js?v=202611131310"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261113110000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261113131000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
