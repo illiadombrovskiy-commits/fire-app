@@ -2267,6 +2267,12 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 .vbtn.glow{animation:vbglow 2.8s ease-in-out infinite}
 .vbtn.glow .vbq{animation:vbqglow 2.8s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.vbtn.glow,.vbtn.glow .vbq{animation:none}.vbtn.glow{box-shadow:0 0 8px 1px rgba(255,138,31,.35)}}
+/* 13.11: подписи над карточками в «Мои расписания» и «Сделать главным» */
+.sllab{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 4px 6px}
+.sllab .slmainhint{font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);font-size:.74rem}
+.slmkmain{margin-left:auto;font:inherit;font-size:.74rem;font-weight:700;letter-spacing:0;text-transform:none;color:var(--flame);background:transparent;border:1.5px solid color-mix(in srgb,var(--flame) 55%,transparent);border-radius:999px;padding:4px 11px;cursor:pointer}
+.slmkmain.armed,.slmkmain[data-armed]{background:var(--flame);color:#fff}
+.reading-head:empty{display:none}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -2319,7 +2325,7 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 
   <section class="card">
     <div class="reading-head">
-      <h2>Чтение на сегодня</h2>
+      <!-- 13.11: заголовок «Чтение на сегодня» убран — на главной только чтение -->
     </div>
     <div class="tgrid" id="testaments"></div>
   </section>
@@ -4726,8 +4732,8 @@ function renderExtras(){
     const tsx=$("testaments");if(tsx)tsx.hidden=pOn;
     if(pOn&&hd){try{pm=churchMapEl();pm.id="primMap";hd.after(pm)}catch(e){console.warn(e)}}}
   const visX=ids.filter(i=>String(i).indexOf("fire-")!==0);
-  {let pn=$("primNo");if(!pn){const rh=tc.querySelector(".reading-head");if(rh){pn=el("div","schedno main","Главное расписание");pn.id="primNo";rh.before(pn)}}if(pn)pn.hidden=!visX.length||noPlan()||!tracks().spb}
-  ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");card.append(el("div","schedno","Расписание "+(visX.indexOf(id)+2)));
+  // 13.11: «Главное расписание» / «Расписание 2» на главной не пишем — только во вкладке «Мои расписания»
+  ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km);if(dn===S.keys.length)hr.append(el("span","xst ok","готово ✓")); // счётчик «0 из 1» убран — показываем только «готово»
     if(id!=="spb"&&S.ms)hr.append(xmapBtn(id));
@@ -4785,6 +4791,13 @@ function schedRemove(r){schedView="";
   state.tracks=Object.assign(tracks(),{spb:false});
   save();applyAppMode();render();toast(msg);
 }
+/* 13.11: сделать расписание главным (его чтение — первым на главной, по нему огонёк и «Где я»).
+   Главным может быть только расписание по Библии (церковь или своё), не книга служения и не группа. Бывшее главное становится вторым, прогресс не теряется. */
+function canMain(r){if(!r||r.primary||!r.on||r.kind==="conf")return false;const d=xDef(r.id);return !!d&&!d.ms&&String(r.id).indexOf("fire-")!==0}
+function makeMain(r){if(!canMain(r))return;const d=xDef(r.id);
+  state.extra=Object.assign({},state.extra||{});state.extra[SCHED.id]=true;delete state.extra[r.id];
+  if(SCHED.def&&SCHED.def.custom){state.myScheds=state.myScheds||{};state.myScheds[SCHED.id]=SCHED.def}
+  schedView="";switchPlan(d)}
 function schedSetOn(r,on){
   if(r.kind==="conf"){if(on){state.planChosen=true;confJoin();toast("Вы в челлендже! Он на главной")}else{state.tracks=Object.assign(tracks(),{conf:false});save();applyAppMode();toast("Челлендж на паузе. Прочитанное сохранено")}render();return}
   if(r.primary){
@@ -4879,7 +4892,13 @@ function renderSchedList(){
       b.append(ring(pct,col,icn),t,go);
       const open=()=>setSchedView(schedView===r.id?"":r.id);b.addEventListener("click",open);b.addEventListener("keydown",e=>{if(e.key==="Enter")open()});wrap.append(b,ft);return wrap};
     // группы: что читаю (на главной) и что на паузе
-    if(rows.length){L.append(el("div","slgrp","Читаю · "+rows.length));rows.forEach(r=>L.append(card(r)))}
+    if(rows.length){L.append(el("div","slgrp","Читаю · "+rows.length));let no=1;rows.forEach(r=>{
+      // 13.11: подписи «Главное» / «Расписание N» и «Сделать главным» — только здесь
+      if(rows.length>1&&r.kind!=="conf"){const lb=el("div","schedno sllab"+(r.primary?" main":""),r.primary?"Главное расписание":"Расписание "+(++no));
+        if(!r.primary&&canMain(r)){const mb=el("button","slmkmain","Сделать главным");mb.type="button";
+          mb.addEventListener("click",e=>e.stopPropagation());confirmTap(mb,"Нажмите ещё раз",()=>makeMain(r));lb.append(mb)}
+        L.append(lb)}
+      L.append(card(r))})}
     else L.append(el("p","sempty","Сейчас вы ничего не читаете. Добавьте расписание — своё, церкви или челлендж."));
     const ad=el("button","pnew pbig"+(msNew()?" newglow":""));ad.type="button";ad.append(el("b",null,"＋ Добавить расписание"),el("span",null,msNew()?"Новое: Жизнеизучение и книги служения":(confClosed()?"Библия или книги служения":"Библия, книги служения или челлендж")));if(msNew())ad.append(el("span","newbadge","Новое"));ad.addEventListener("click",()=>openPlans());L.append(ad);{const FL=window.ogFireList?window.ogFireList():[];const nb=el("button","pnew pbig rgfirenew2");nb.type="button";nb.append(el("b",null,"＋ Создать жизненную группу"),el("span",null,"Читать вместе с друзьями"));nb.addEventListener("click",()=>{try{window.ogFireNew()}catch(e){}});const row=el("div","rgaddrow");L.append(row);row.append(ad,nb);if(FL.length)L.append(el("div","slgrp rgtog","Мои жизненные группы · "+FL.length));FL.forEach(f=>{const fb=el("button","rgfirebtn");fb.type="button";fb.innerHTML='<svg class="rgfi" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(22 0) scale(.88)"><path d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z" fill="#ff7a1a"/><path d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z" fill="#ffc94a"/></g><g stroke-linecap="round"><path d="M14 90 L86 74" stroke="#8a5a32" stroke-width="10"/><path d="M14 74 L86 90" stroke="#6e4426" stroke-width="10"/></g></svg><span><b>'+f.name.replace(/[<>&]/g,"")+'</b><small>'+f.n+" из "+f.size+" · "+f.what.replace(/[<>&]/g,"")+'</small></span><em>'+(f.own?"Настроить":"Открыть")+'</em>';fb.addEventListener("click",()=>{try{window.ogFireMenu(f.code)}catch(e){}});L.append(fb)})}
     L.append(el("p","hint","Чтобы убрать расписание, подержите его тумблер секунду — прочитанное сохранится. Все расписания из списка — на главной, у каждого своя кнопка «Прочитал(а)»."));
@@ -7298,11 +7317,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611130030"></script>
-<script type="module" src="auth.js?v=202611130030"></script>
+<script src="globe.js?v=202611131100"></script>
+<script type="module" src="auth.js?v=202611131100"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261113003000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261113110000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
