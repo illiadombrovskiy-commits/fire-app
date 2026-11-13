@@ -4613,7 +4613,9 @@ function xSt(id){state.plans=state.plans||{};let p=state.plans[id];if(!p)p=state
 function xS(id){const C=window.__xc||(window.__xc={}),d=xDef(id);if(!d)return null;const key=JSON.stringify(d);if(!C[id]||C[id].k!==key){try{C[id]={k:key,S:buildSched(d)}}catch(e){return null}}return C[id].S}
 function xNext(id,k){const S=xS(id),st=xSt(id)[k],r=new Set(st.read),sk=new Set(st.skip||[]);let p=0;while(p<S.plan.length&&(r.has(p)||sk.has(p)||!part2(S,k,p).book))p++;return p}
 // отстал — пропускаю долг и читаю вместе с церковью; пропущенное остаётся «отложенным», его можно дочитать позже
-function xLateParts(id,k){const S=xS(id),st=xSt(id)[k],r=new Set(st.read),sk=new Set(st.skip||[]),ti=dayNo(today())-dayNo(S.start),out=[];for(let p=0;p<Math.min(ti,S.plan.length);p++){let x;try{x=part2(S,k,p)}catch(e){continue}if(x.book&&!r.has(p)&&!sk.has(p))out.push(p)}return out}
+// 13.11: книги служения «В неделю» — отставание считается только за прошедшие недели (с понедельника), а не по дням внутри недели
+function xCut(id,S){const ti=dayNo(today())-dayNo(S.start),d=xDef(id)||{};if(!S.ms||(d.by&&d.by!=="week"))return ti;const t=parse(today()),mon=dayNo(today())-((t.getDay()+6)%7);return Math.min(ti,mon-dayNo(S.start))}
+function xLateParts(id,k){const S=xS(id),st=xSt(id)[k],r=new Set(st.read),sk=new Set(st.skip||[]),ti=xCut(id,S),out=[];for(let p=0;p<Math.min(ti,S.plan.length);p++){let x;try{x=part2(S,k,p)}catch(e){continue}if(x.book&&!r.has(p)&&!sk.has(p))out.push(p)}return out}
 function xLateUnits(id,k){const S=xS(id),ps=xLateParts(id,k);return S.ms?new Set(ps.map(p=>S.plan[p][6]||p)).size:ps.length}
 function xJump(id,k){const st=xSt(id)[k];st.skip=[...new Set([...(st.skip||[]),...xLateParts(id,k)])];save();render();try{toast("Пропущенное отложено — читайте по расписанию")}catch(e){}}
 function xUnjump(id,k){const st=xSt(id)[k];st.skip=[];save();render()}
@@ -4652,7 +4654,7 @@ function xmapEl(id){
       u.parts.push({p,x,done:r.has(p)})});
     if(!U.length)return;
     const nowP=Math.min(Math.max(0,ti),S.plan.length-1);
-    let done=0,late=0,held=0;U.forEach(u=>{u.all=u.parts.every(q=>q.done);u.some=u.parts.some(q=>q.done||(PG[q.p]||[]).length);u.held=u.parts.some(q=>!q.done&&skp.has(q.p));u.late=u.parts.some(q=>!q.done&&q.p<ti&&!skp.has(q.p));if(u.held)held++;u.now=u.parts.some(q=>q.p===nowP)||(!U.some(v=>v.parts.some(q=>q.p===nowP))&&u.parts[0].p>nowP&&u===U.find(v=>v.parts[0].p>nowP));if(u.all)done++;if(u.late)late++});
+    const lc=xCut(id,S);let done=0,late=0,held=0;U.forEach(u=>{u.all=u.parts.every(q=>q.done);u.some=u.parts.some(q=>q.done||(PG[q.p]||[]).length);u.held=u.parts.some(q=>!q.done&&skp.has(q.p));u.late=u.parts.some(q=>!q.done&&q.p<lc&&!skp.has(q.p));if(u.held)held++;u.now=u.parts.some(q=>q.p===nowP)||(!U.some(v=>v.parts.some(q=>q.p===nowP))&&u.parts[0].p>nowP&&u===U.find(v=>v.parts[0].p>nowP));if(u.all)done++;if(u.late)late++});
     const unit=n=>S.ms?plural(n,"глава","главы","глав"):plural(n,"день","дня","дней");
     const sum=el("div","xmsum");
     if(late)sum.append(el("span","xmlate","отстаёте на "+late+" "+(S.ms?plural(late,"главу","главы","глав"):unit(late))));else if(ti>=0)sum.append(el("span","xmok","по плану ✓"));
@@ -4761,11 +4763,11 @@ function renderExtras(){
       const shown=done?tod[tod.length-1].p:np,x=part2(S,k,shown);try{if(x&&x.book)th.append(verseBtn(k,shown,x,id))}catch(e){}
       const cols=el("div","tcols"),left=el("div","tcol"),right=el("div","tcol");
       const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
-      a.append(el("span","label",done?"Прочитано сегодня":shown<ti?"Догнать":shown===ti?"Сегодня":"Заранее"),el("span","name",refStr(x)),...(x.title?[el("span","mst",x.title)]:[]),el("span","sub",xDate(S,shown)));
+      a.append(el("span","label",done?"Прочитано сегодня":shown<xCut(id,S)?"Догнать":shown<=ti?"Сегодня":"Заранее"),el("span","name",refStr(x)),...(x.title?[el("span","mst",x.title)]:[]),el("span","sub",xDate(S,shown)));
       const btn=el("button","tbtn");btn.type="button";
       if(done){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}else{btn.textContent="Прочитал(а)";btn.classList.add("nudge");confirmTap(btn,"Нажмите ещё раз",()=>xMark(id,k,np))}
       left.append(a,btn);
-      if(!done&&shown<ti&&id!=="spb"&&S.ms){const n=xLateUnits(id,k);if(n>1){const j=el("button","linkbtn xjump","Пропустить "+n+" и читать по расписанию");j.type="button";confirmTap(j,"Нажмите ещё раз",()=>xJump(id,k));left.append(j)}}
+      if(!done&&shown<xCut(id,S)&&id!=="spb"&&S.ms){const n=xLateUnits(id,k);if(n>1){const j=el("button","linkbtn xjump","Пропустить "+n+" и читать по расписанию");j.type="button";confirmTap(j,"Нажмите ещё раз",()=>xJump(id,k));left.append(j)}}
       if(done){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>xUndo(id,k));left.append(u)}
       const nx=done?np:np+1;
       if(nx<S.plan.length&&part2(S,k,nx).book){const y=part2(S,k,nx),a2=el("a","nextlink"+(done?"":" later"));a2.href=chapterUrl(y);a2.target="_blank";a2.rel="noopener";
@@ -7355,11 +7357,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611131310"></script>
-<script type="module" src="auth.js?v=202611131310"></script>
+<script src="globe.js?v=202611132245"></script>
+<script type="module" src="auth.js?v=202611132245"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261113131000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261113224500";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
