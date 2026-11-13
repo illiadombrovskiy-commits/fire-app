@@ -2261,6 +2261,12 @@ a.rgbtn{text-decoration:none;display:flex;align-items:center;justify-content:cen
 .botnav{-webkit-transform:translateZ(0);transform:translateZ(0)}
 .botnav .bn .bni,.botnav .bn:not(.on) .bni.ico,.botnav .ico svg{filter:none!important}
 .botnav .bn .bni.ico svg{-webkit-transform:translateZ(0);transform:translateZ(0)}
+/* 13.11: кнопка «❞ Стих» мягко светится, пока сегодня не отмечен ни один стих */
+@keyframes vbglow{0%,100%{box-shadow:0 0 0 0 rgba(255,138,31,0),0 0 0 0 rgba(255,176,32,0)}50%{box-shadow:0 0 10px 2px rgba(255,138,31,.45),0 0 18px 6px rgba(255,176,32,.18)}}
+@keyframes vbqglow{0%,100%{box-shadow:0 0 0 0 rgba(255,176,32,0)}50%{box-shadow:0 0 8px 2px rgba(255,176,32,.7)}}
+.vbtn.glow{animation:vbglow 2.8s ease-in-out infinite}
+.vbtn.glow .vbq{animation:vbqglow 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.vbtn.glow,.vbtn.glow .vbq{animation:none}.vbtn.glow{box-shadow:0 0 8px 1px rgba(255,138,31,.35)}}
 </style>
 <div class="app" id="app">
   <header class="top">
@@ -6439,7 +6445,8 @@ function verseBtn(k,p,x,xid){const ms=!!(x&&x.url),has=noteToday(k,p,ms);
     const d=el("button","vbtn off"+(mine?" mine":""));d.type="button";d.disabled=true;d.title="Сегодня вы уже поделились";
     d.setAttribute("aria-label","Сегодня вы уже поделились стихом или мыслью");
     d.append(el("span","vbq",mine?"✓":"❞"),el("span",null,ms?"Мысль":"Стих"));return d}
-  const b=el("button","vbtn");b.type="button";b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
+  const b=el("button","vbtn glow");b.type="button"; // 13.11: пока сегодня ничем не поделились — кнопка мягко светится
+  b.setAttribute("aria-label",ms?"Что затронуло в этом чтении":"Отметить стих, который затронул");
   b.append(el("span","vbq","❞"));
   b.append(el("span",null,ms?"Мысль":"Стих"));
   b.addEventListener("click",e=>{e.stopPropagation();askVerse(k,p,x,xid,true)});return b}
@@ -7291,11 +7298,11 @@ window.ogGroupRender=function(){
 load();if(DEMO&&location.hash.indexOf("call")>=0)setTimeout(demoRing,1800);if(DEMO&&location.hash.indexOf("join")>=0)setTimeout(()=>{if(!FIRES.some(f=>f.code==="J7PX2A"))join()},900);render();
 })();
 </script>
-<script src="globe.js?v=202611111800"></script>
-<script type="module" src="auth.js?v=202611111800"></script>
+<script src="globe.js?v=202611130030"></script>
+<script type="module" src="auth.js?v=202611130030"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
-(function(){var B="20261111180000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
+(function(){var B="20261113003000";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
 setTimeout(chk,1500);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <script>/* убрать клавиатуру: нажали мимо поля ввода (на кнопку — после её нажатия, чтобы нажатие не промахнулось) */
 (function(){var later=null;
