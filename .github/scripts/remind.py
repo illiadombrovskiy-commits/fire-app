@@ -31,7 +31,9 @@ def plural(n, one, few, many):
 
 def load_plan():
     try:
-        html = open(os.path.join(os.path.dirname(__file__), "..", "..", "index.html"), encoding="utf-8").read()
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "index.html")
+        with open(path, encoding="utf-8") as file:
+            html = file.read()
         m = re.search(r"const PLAN(?:_SPB)?=(\[.*?\]\]);", html, re.S)
         return json.loads(m.group(1)) if m else []
     except Exception:
