@@ -46,7 +46,7 @@
   const OTS = ["#cdb174", "#b39554", "#dcc792"], NTS = ["#5db078", "#43945e", "#7cc692"];
 
   /* ---------- карта: строится один раз ---------- */
-  let books = null, ANT = null, ICE = null, ISL_VS = null;
+  let books = null, ANT = null, ICE = null, ISL_VS = null, otherPlans = null;
   function build() {
     if (books) return;
     books = [];
@@ -94,6 +94,11 @@
     for (let la = 50.4; la <= 58.4; la += 0.45) for (let lo = -6.5; lo <= 2.5; lo += 0.6) if (pip(lo, la, up)) ICE.cells.push({ la, lo, v: vec(la, lo) });
     ICE.c = nrm(sum(ICE.cells.map((q) => q.v)));
     ICE.lat = Math.asin(ICE.c[1]); ICE.lon = Math.atan2(ICE.c[0], ICE.c[2]);
+    otherPlans = { name: "Другие расписания", cells: [], people: [], lat: 35 * D, lon: -42 * D };
+    otherPlans.c = vec(35, -42);
+    for (let la = 32; la <= 38; la++) {
+      for (let lo = -46; lo <= -38; lo++) otherPlans.cells.push({ v: vec(la, lo) });
+    }
   }
 
   // «Мф. 8:23–34» → номер книги (0–65), иначе −1
@@ -101,6 +106,18 @@
     ref = String(ref || "").trim().replace(/^Еф\./, "Эф.").replace(/^Есф\./, "Эсф.").replace(/^Еккл\./, "Эккл.").replace(/^Руф\./, "Руфь"); let best = -1, bl = 0;
     BOOKS.forEach((b, i) => { if ((ref === b[0] || ref.startsWith(b[0] + " ")) && b[0].length > bl) { bl = b[0].length; best = i; } });
     return best;
+  }
+
+  function schedulePosition(schedule, day) {
+    const passages = schedule && Array.isArray(schedule.passages) ? schedule.passages.filter((p) => p && typeof p.ref === "string").slice(0, 3) : [];
+    const spots = passages.map((p) => ({ b: bookIndex(p.ref), l: p.last === day })).filter((p) => p.b >= 0);
+    return {
+      b: spots.length ? spots[0].b : -1,
+      spots,
+      refs: passages.map((p) => ((p.label ? p.label + ": " : "") + (p.ref || "пройдено")).slice(0, 60)),
+      plan: String((schedule && schedule.name) || "").slice(0, 60),
+      lit: passages.length && passages.every((p) => p.last === day) ? day : "",
+    };
   }
 
   /* ---------- стили ---------- */
@@ -187,10 +204,10 @@
 
   // раскладываем людей по их книгам
   function placePeople() {
-    books.forEach((o) => { o.people = []; }); if (ICE) ICE.people = []; const iceN = people.filter((p) => p.b === -2).length;
+    books.forEach((o) => { o.people = []; }); ICE.people = []; otherPlans.people = []; const iceN = people.filter((p) => p.b === -2).length;
     const t0 = today();
     people.forEach((p, i) => {
-      const o = p.b === -2 ? ICE : books[p.b]; if (!o) { p.o = null; return; }
+      const o = p.b === -2 ? ICE : p.b === -1 && p.plan ? otherPlans : books[p.b]; if (!o) { p.o = null; return; }
       const k = o.people.length; o.people.push(p); p.o = o;
       const n = o.cells.length, st = o === ICE ? Math.max(1, Math.floor(n / Math.max(1, Math.min(n, iceN)))) : 2, q = o.cells[(k * st) % n];
       let v = q.v;
@@ -303,13 +320,26 @@
       ctx.globalAlpha = Math.min(1, ICE.z * 2) * (0.9 - ph * 0.7); ctx.strokeStyle = "#2fc4a8"; ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
       ctx.beginPath(); ctx.arc(ICE.sx, ICE.sy, rr, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
     }
+    if (otherPlans.people.length) {
+      const c = rot(otherPlans.c);
+      otherPlans.z = c[2]; otherPlans.sx = cx + c[0] * R; otherPlans.sy = cy - c[1] * R;
+      otherPlans.radius = Math.max(7, R * 0.085);
+      if (otherPlans.z > 0.1) {
+        ctx.strokeStyle = selB === otherPlans ? "#fff" : "rgba(160,205,255,.65)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(otherPlans.sx, otherPlans.sy, otherPlans.radius, 0, TAU); ctx.stroke();
+      }
+    }
     // названия книг
     ctx.textAlign = "center"; const fs = Math.round(11 + 1.2 * Math.min(zoom, 2)); ctx.font = "600 " + fs + "px system-ui,sans-serif";
     // подписи без наложения: сначала выбранная и крупные книги, мелкие — если есть место
     ctx.lineJoin = "round"; ctx.miterLimit = 2;
     const taken = [];
-    books.filter((o) => o.path && o.z > 0.35).concat(ICE.path && ICE.z > 0.35 ? [ICE] : []).sort((a, b) => (b === ICE) - (a === ICE) || (b === selB) - (a === selB) || b.cells.length - a.cells.length).forEach((o) => {
-      const oy = o === ICE ? o.sy + R * 0.055 : o.sy, w = ctx.measureText(o.name).width + 6, x0 = o.sx - w / 2, y0 = oy + 2, r = [x0, y0, x0 + w, y0 + fs + 4];
+    const named = books.filter((o) => o.path && o.z > 0.35);
+    if (ICE.path && ICE.z > 0.35) named.push(ICE);
+    if (otherPlans.people.length && otherPlans.z > 0.35) named.push(otherPlans);
+    named.sort((a, b) => (b === ICE) - (a === ICE) || (b === selB) - (a === selB) || b.cells.length - a.cells.length).forEach((o) => {
+      const oy = o === ICE || o === otherPlans ? o.sy + R * 0.085 : o.sy, w = ctx.measureText(o.name).width + 6, x0 = o.sx - w / 2, y0 = oy + 2, r = [x0, y0, x0 + w, y0 + fs + 4];
       if (taken.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
       taken.push(r);
       const a = Math.min(1, (o.z - 0.35) / 0.35); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(4,8,30," + (0.7 * a) + ")"; ctx.strokeText(o.name, o.sx, oy + fs + 2); ctx.fillStyle = o === ICE ? "rgba(191,243,232," + a + ")" : "rgba(240,244,255," + a + ")"; ctx.fillText(o.name, o.sx, oy + fs + 2);
@@ -380,6 +410,10 @@
     // костёр: приближаемся к нему; на самом близком расстоянии — список людей книги
     let bc = null, cd0 = 26; clusters.forEach((c) => { const d = Math.hypot(c.x + 6 - x, c.y - 2 - y); if (d < cd0) { cd0 = d; bc = c; } });
     if (bc) { const p = bc.lead; if (zoom < ZMAX * 0.7) { sel = selB = null; card(); return goTo(-p.lon, p.lat, Math.min(ZMAX, Math.max(zoom * 2.4, 2.2)), 700); } return pickB(p.o, zoom); }
+    if (otherPlans.people.length && otherPlans.z > 0.1 &&
+        Math.hypot(otherPlans.sx - x, otherPlans.sy - y) <= Math.max(12, otherPlans.radius)) {
+      return pickB(otherPlans, zoom);
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (ICE.path && ICE.z > -0.1 && ctx.isPointInPath(ICE.path, x * dpr, y * dpr)) return pickB(ICE);
     let bi = null; books.forEach((o) => { if (o.path && o.cont.path && o.z > -0.1 && ctx.isPointInPath(o.path, x * dpr, y * dpr) && ctx.isPointInPath(o.cont.path, x * dpr, y * dpr) && (!bi || o.z > bi.z)) bi = o; });
@@ -441,8 +475,8 @@
     }
     if (selB) {
       const o = selB, i = o.i + 1;
-      cd.append(el("div", "gname", i + ". " + o.name));
-      cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase()));
+      cd.append(el("div", "gname", o === otherPlans ? o.name : i + ". " + o.name));
+      if (o !== otherPlans) cd.append(el("p", "gmuted", o.ch + " " + chWord(o.ch) + " · " + o.cont.n + " — " + o.cont.sec.toLowerCase()));
       const box = el("div", "gppl");
       if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
       const rk = (p) => (p.rel === "friend" || p.rel === "me" ? 4 : 0) + (hasVerse(p) ? 2 : 0) + (p.fire ? 1 : 0);
@@ -466,6 +500,7 @@
     s.textContent = opts && opts.loading ? "Загружаю читателей…" : "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
     const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
     if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают: " + n; }
+    root.querySelector(".gother").hidden = !otherPlans.people.length;
   }
 
   /* ---------- открыть / закрыть ---------- */
@@ -497,6 +532,13 @@
       });
       chips.append(c);
     });
+    const other = el("button", "gchip gother", "Другие расписания");
+    other.type = "button";
+    other.addEventListener("click", () => {
+      filt = "all"; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === other));
+      pickB(otherPlans, 2);
+    });
+    chips.append(other);
     const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Выбирают"));
     ic.addEventListener("click", () => { filt = "all"; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE, 5); });
     topb.insertBefore(ic, x); // «Выбирают» — в строке заголовка, чтобы все кнопки фильтра помещались
@@ -560,5 +602,5 @@
   // стили кнопки на вкладке «Друзья» нужны сразу, а не только после первого открытия глобуса
   if (document.head) addCss(); else document.addEventListener("DOMContentLoaded", addCss);
 
-  window.OgonekGlobe = { open, close, setPeople, setVisible, bookIndex, isOpen: () => !!root };
+  window.OgonekGlobe = { open, close, setPeople, setVisible, bookIndex, schedulePosition, isOpen: () => !!root };
 })();

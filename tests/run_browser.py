@@ -15,12 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AppHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path != "/":
+        if self.path not in {"/", "/?restore=1"}:
             return super().do_GET()
 
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         html = html.replace("</head>", '<script src="/tests/setup.js"></script></head>', 1)
-        html = html.replace("</body>", '<script src="/tests/browser.js"></script></body>', 1)
+        if self.path == "/":
+            html = html.replace("</body>", '<script src="/tests/browser.js"></script></body>', 1)
         body = html.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
