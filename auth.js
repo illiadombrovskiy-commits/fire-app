@@ -746,6 +746,13 @@ async function main() {
     const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
     // ещё не выбрал расписание — стоит на «Острове выбора», без книги
     if (stillChoosing(s)) return { name: String(name || "Читатель").slice(0, 60), photo: photo || "", b: -2, refs: ["Ещё выбирает расписание"], plan: "", streak: s.streak || 0, lit: "", seen: t, fc: fc || 0, spots: [] };
+    if ("globeSchedule" in s && G && G.schedulePosition) {
+      return {
+        name: String(name || "Читатель").slice(0, 60), photo: photo || "",
+        streak: s.streak || 0, seen: t, fc: fc || 0,
+        ...G.schedulePosition(s.globeSchedule, t),
+      };
+    }
     let b = -1;
     if (G) for (const k of keys) { if (fDone(s, k)) continue; const i = G.bookIndex(fRef(s, k)); if (i >= 0) { b = i; break; } }
     return {

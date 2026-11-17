@@ -10,5 +10,7 @@ window.Date = class extends SystemDate {
   }
 };
 
-localStorage.setItem("ogonek-onb", "1");
-localStorage.setItem("ogonek-rv-year1", JSON.stringify({ v: 3, planChosen: true }));
+if (!new URLSearchParams(location.search).has("restore")) {
+  localStorage.setItem("ogonek-onb", "1");
+  localStorage.setItem("ogonek-rv-year1", JSON.stringify({ v: 3, planChosen: true }));
+}
