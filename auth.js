@@ -1313,8 +1313,11 @@ async function main() {
     try {
       const snap = await F.getDoc(ref);
       const local = O().getState(), remote = snap.exists() ? snap.data() : null;
-      if (remote && O().score(remote) >= O().score(local)) O().setState(remote);
-      else await F.setDoc(ref, local);
+      if (remote) {
+         // A higher local action count does not make its selected plan newer.
+         // Preserve the server's authoritative plan and progress on login.
+         O().setState(remote);
+       } else await F.setDoc(ref, local);
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     if (O().progressLoaded) O().progressLoaded();
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
