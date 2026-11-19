@@ -205,7 +205,19 @@ async function main() {
     list.forEach((uid) => {
       if (friendUnsubs[uid]) return;
       friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
-        (snap) => { if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid]; renderFriends(); if (fofChanged()) publishSummary(); },
+        (snap) => {
+          if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid];
+          renderFriends();
+          if (globeList && window.OgonekGlobe && window.OgonekGlobe.isOpen()) {
+            const d = friendData[uid], i = globeList.findIndex(p => p.id === uid);
+            if (d && !d.globeHide) {
+              const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: uid, rel: relOf(uid) });
+              if (i >= 0) globeList[i] = p; else globeList.push(p);
+            } else if (i >= 0) globeList.splice(i, 1);
+            window.OgonekGlobe.setPeople(globeList);
+          }
+          if (fofChanged()) publishSummary();
+        },
         () => { delete friendData[uid]; renderFriends(); });
     });
     renderFriends();
@@ -427,6 +439,11 @@ async function main() {
   const fRef = (d, k) => (typeof d[k + "Ref"] === "string" ? d[k + "Ref"] : O().refOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "—");
   const fUrl = (d, k) => d[k + "Url"] || O().urlOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "#";
   const fLit = (d, t) => fKeys(d).every((k) => d[k + "Last"] === t);
+  function friendPassages(d) {
+    const s = d && d.globeSchedule;
+    return s && Array.isArray(s.passages) && s.passages.length
+      ? s.passages.filter(p => p && typeof p.ref === "string").slice(0, 3) : null;
+  }
   function friendRow(d, isMe, uid) {
     const t = O().today(), row = el("div", "friend" + (isMe ? " me" : ""));
     const av = el("div", "favatar");
@@ -519,6 +536,16 @@ async function main() {
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
+    const passages = friendPassages(d);
+    if (passages) {
+      reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
+      passages.forEach((p) => {
+        const row = el("div", "frow"), left = el("div");
+        left.append(el("small", null, p.label || "Отрывок"), el("b", null, p.ref || "Пройдено"));
+        row.append(left, el("span", p.last === t ? "ok" : "hint", p.last === t ? "✓ сегодня" : "сегодня ещё нет"));
+        reading.append(row);
+      });
+    } else {
     if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
     fKeys(d).forEach((k) => {
       const done = fDone(d, k), readToday = d[k + "Last"] === t;
@@ -529,6 +556,7 @@ async function main() {
       row.append(left, el("span", readToday ? "ok" : "hint", readToday ? "✓ сегодня" : "сегодня ещё нет"));
       reading.append(row);
     });
+    }
 
     const aboutBox = el("div", "freading"); aboutBox.append(el("span", "label", "О себе"));
     if (isMe && edit) {
@@ -802,9 +830,14 @@ async function main() {
       // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
       for (let i = 0; i < 15 && myFriends.some((u) => !friendData[u]); i++) await new Promise((r) => setTimeout(r, 200));
       Object.keys(friendData).forEach((u) => {
-        const d = friendData[u]; if (have.has(u) || !d || d.globeHide) return;
-        try { list.push(Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) })); } catch (e) {}
-      });
+        const d = friendData[u]; if (!d) return;
+        const i = list.findIndex(p => p.id === u);
+        if (d.globeHide) { if (i >= 0) list.splice(i, 1); return; }
+        try {
+          const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) });
+          if (i >= 0) list[i] = p; else list.push(p);
+        } catch (e) {}
+      });;
       list.forEach((p) => { if (p.rel !== "me") p.rel = relOf(p.id); }); // друзья могли догрузиться, пока шёл запрос
       // слова к стиху видят только друзья (и я сам)
       list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
