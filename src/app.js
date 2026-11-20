@@ -23,6 +23,7 @@ const FULL=Object.fromEntries(BOOKS.map(b=>[b.a,b.n]));
    «gen» и «matt» подтверждены; остальные — по сокращениям Восстановительного перевода, поправьте здесь, если какой-то не открывается. */
 const SLUG=Object.fromEntries(BOOKS.map(b=>[b.a,b.u]));
 const BIBLE="https://bible.recoveryversion.ru/";
+const {verseChips,normVerse,verseUrl,verseNb}=window.OgonekBibleVerses.create(SLUG,BIBLE);
 const WEEKDAYS=["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
 const T={nt:{label:SCHED.labels.nt,short:SCHED.short.nt,bi:0,ri:1},ot:{label:SCHED.labels.ot,short:SCHED.short.ot,bi:2,ri:3}};
 const KEYS=SCHED.keys;
@@ -3581,7 +3582,6 @@ const NOTE_MAX=60, NOTE_W=1000;
 function notesList(){if(!Array.isArray(state.notes))state.notes=[];return state.notes}
 function verseAskedToday(m){const t=today();return m?notesList().some(n=>n.d===t&&n.m)||state.msSkip===t:notesList().some(n=>n.d===t&&!n.m)||state.verseSkip===t}
 // стихи отрывка для кнопок (число стихов в главах — из BOOKS): «10:26–42», «9:35–10:5», «5:3», «7», «2–4»
-const {verseChips,normVerse,verseUrl,verseNb}=window.OgonekBibleVerses.create(SLUG,BIBLE);
 function msOf(id){try{const d=id?xDef(id):SCHED.def;return d&&d.ms?msBook(d.ms):null}catch(e){return null}}
 function keepText(v){return String(v||"").replace(/\r/g,"").replace(/^\s*\n/,"").replace(/\s+$/,"").slice(0,NOTE_W)}
 function askVerse(k,p,x0,xid,man){
