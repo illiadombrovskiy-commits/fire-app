@@ -177,10 +177,7 @@ async function main() {
     return (cardCache[uid] = c);
   }
 
-  function flameSvg(lit) {
-    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
-  }
+  const flameSvg = window.OgonekProgressVisual.flameSvg;
   /* ---------- воодушевление и приглашение почитать вместе ---------- */
   const {CHEERS,INVITES,KIND,kindOf}=createEncouragementConfig();
   const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
