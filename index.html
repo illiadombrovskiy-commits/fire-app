@@ -4825,7 +4825,7 @@ function globeSchedule(){
     const units=confToday(),read=confReadWhen(),t=today();
     const passages=[...new Set(units.map(u=>u.b))].map(book=>{
       const group=units.filter(u=>u.b===book);
-      return {ref:confRefs(group)[0].text,label:"",last:group.every(u=>read[u.i]===t)?t:""};
+      return {ref:confRefs(group)[0].text,url:confRefs(group)[0].url,label:"",last:group.every(u=>read[u.i]===t)?t:""};
     });
     return {name:"Божья гора",passages};
   }
@@ -4842,6 +4842,7 @@ function globeSchedule(){
     });
     return {
       ref:next<0?"":refStr(part2(S,k,next)),
+      url:next<0?"":chapterUrl(part2(S,k,next)),
       label:S.keys.length>1?S.short[k]:"",
       last:log.reduce((last,x)=>x.d>last?x.d:last,""),
     };
@@ -6706,6 +6707,7 @@ window.Ogonek={
   refOf:(k,p)=>refStr(part(k,p)), urlOf:(k,p)=>chapterUrl(part(k,p)),
   // отрывок друга по его расписанию (если он на общем церковном или на том же, что и вы)
   refOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?refStr({book:d[T[k].bi],ref:d[T[k].ri]}):""},
+  urlOfRef:(ref)=>{const book=Object.keys(SLUG).sort((a,b)=>b.length-a.length).find(b=>ref.startsWith(b+" "));return book?chapterUrl({book,ref:ref.slice(book.length).trim()}):""},
   urlOfPlan:(id,k,p)=>{const P=id===SCHED.id?PLAN:id==="spb"?PLAN_SPB:null;if(!P)return "";const d=P[Math.max(0,Math.min(p,P.length-1))];return d[T[k].bi]?chapterUrl({book:d[T[k].bi],ref:d[T[k].ri]}):""},
   onSave:null,
   setPathPeople(list){pathPeople=list||[];renderPath();try{renderConfFriendsCard();renderChallenges()}catch(e){}},
