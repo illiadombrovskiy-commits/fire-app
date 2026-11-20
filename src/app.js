@@ -1938,7 +1938,18 @@ function globeSchedule(){
       last:log.reduce((last,x)=>x.d>last?x.d:last,""),
     };
   });
-  return {name:S.name,passages};
+  // Публикуем компактные исходные данные для текущего темпа: даты и
+  // количество прочитанного, а не только цифру на момент последнего входа.
+  // Только обычные библейские планы ежедневные; для книг служения
+  // расписание может содержать свободные дни.
+  const read=Object.fromEntries(S.keys.map(k=>{
+    const track=progress[k]||{},ids=new Set(track.read||[]);
+    const count=[...ids].filter(i=>Number.isInteger(i)&&i>=0&&i<S.plan.length
+      &&!!part2(S,k,i).book).length;
+    return [k,count];
+  }));
+  return {name:S.name,passages,pace:{asOf:today(),start:S.start,
+    total:S.plan.length,daily:!S.ms,read}};
 }
 function schedSetOn(r,on){
   if(r.kind==="conf"){if(on){state.planChosen=true;confJoin();toast("Вы в челлендже! Он на главной")}else{state.tracks=Object.assign(tracks(),{conf:false});save();applyAppMode();toast("Челлендж на паузе. Прочитанное сохранено")}render();return}
@@ -2369,6 +2380,7 @@ function summary(){
   out.gems=state.gems.n;
   // расписание: друзья видят, по какому плану вы читаете и какие у вас отрывки
   out.plan=SCHED.id; out.planName=SCHED.name; out.keys=KEYS.slice();
+  out.paceMeta={asOf:today(),start:PLAN_START,total:DAYS,daily:!SCHED.ms};
   out.plansDone=(state.finished||[]).map(f=>({n:f.name,d:f.days,f:f.end,e:f.emb||(f.id==="spb"?"flame":"book")}));
   // Firestore (Standard) rejects nested arrays. Keep the bookshelf's
   // internal [book, date, times] tuples, but publish maps to friends.
