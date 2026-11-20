@@ -551,7 +551,11 @@ async function main() {
       reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
       passages.forEach((p) => {
         const row = el("div", "frow"), left = el("div");
-        left.append(el("small", null, p.label || "Отрывок"));
+        const samePlan = d.globeSchedule.name === d.planName;
+        const matchingKey = samePlan ? fKeys(d).find(k => fRef(d,k) === p.ref && (!p.key || p.key === k)) : null;
+        const pace = Number.isFinite(p.ahead) ? p.ahead : matchingKey && Number.isFinite(d[matchingKey+"Ahead"]) ? d[matchingKey+"Ahead"] : null;
+        const label = p.label === "НЗ" ? "Новый Завет" : p.label === "ВЗ" ? "Ветхий Завет" : p.label || "Отрывок";
+        left.append(el("small", null, label + (pace === null ? " · нет данных о темпе" : " · " + fmtAhead(pace))));
         const safeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (_) { return ""; } };
         const matching = fKeys(d).find(k => fRef(d, k) === p.ref);
         const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
