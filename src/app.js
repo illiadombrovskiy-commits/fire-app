@@ -144,9 +144,18 @@ function render(){
   const litAny=nDone+xd>0||anySet().has(t);
   $("heroFlame").classList.toggle("off",!litAny);$("heroFlame").classList.toggle("half",litAny&&nDone+xd<AK.length+xt);
   $("heroSub").textContent="";
-  // огонёк горит не полностью — подскажем, что ещё осталось сегодня по Библии
-  if(litAny&&nDone+xd<AK.length+xt){const left=AK.filter(k=>!datesOf(k).has(t)).map(k=>(SCHED.spb?"":"«"+SCHED.name+"»: ")+T[k].label).concat((xCount.left||[]).map(n=>n.startsWith("челлендж")?n:"«"+n+"»"));
-    if(left.length)$("heroSub").textContent="Чтобы огонёк разгорелся полностью, сегодня осталось: "+left.join(", ")}
+  // Спокойная подсказка только о непрочитанных отрывках.
+  if(litAny&&nDone+xd<AK.length+xt){
+    const missing=AK.filter(k=>!datesOf(k).has(t));
+    const left=missing.map(k=>(SCHED.spb?"":"«"+SCHED.name+"»: ")+T[k].label)
+      .concat((xCount.left||[]).map(n=>n.startsWith("челлендж")?n:"«"+n+"»"));
+    if(left.length){
+      const oneTestament=SCHED.spb&&missing.length===1&&left.length===1;
+      $("heroSub").textContent=oneTestament
+        ?"Чтобы пламя разгорелось, прочитайте ещё отрывок из "+(missing[0]==="nt"?"Нового":"Ветхого")+" Завета."
+        :"Чтобы пламя разгорелось, прочитайте оставшиеся отрывки: "+left.join(", ")+".";
+    }
+  }
   const fz=freezesNow();$("freezeText").textContent="Заморозки: "+fz;$("freezeText").parentNode.title="Заморозка — день, прочитанный заранее. Если пропустите день, она сохранит серию.";
 
   const tg=$("testaments");tg.textContent="";KEYS.forEach(k=>tg.append(renderTestament(k)));
@@ -777,13 +786,9 @@ function complete(k,pp){
   else{const ms=document.querySelectorAll("#minis-"+k+" .mini");ignite(ms[ms.length-1],1)}
   if(bothNow){
     ignite($("heroFlame"),2);
-    $("celebNum").textContent=common;
-    $("celebText").textContent="Общий огонёк: "+plural(common,"день","дня","дней")+" подряд!";
-    const lines=["Оба завета прочитаны"];if(freezesNow()>frzBefore)lines.push("Заморозок: "+freezesNow());if(newAw>0)lines.push("Новая награда!");
-    $("celebSub").textContent=lines.join(" · ");
-    $("toast").hidden=true;$("celebrate").hidden=false;$("celebClose").focus();
-    const cf=document.querySelector("#celebrate .flame");cf.classList.remove("ignite");void cf.getBoundingClientRect();cf.classList.add("ignite");
-    burst(window.innerWidth/2,window.innerHeight/2-60,90);
+    // Без полноэкранного поздравления: пламя разгорается, остаётся возможность отменить отметку.
+    const msg="Оба отрывка прочитаны ✓"+(freezesNow()>frzBefore?" · +1 заморозка":"")+(newAw>0?" · Новая награда!":"");
+    toast(msg,{label:"Отменить",fn:undoLast});
   }else if(firstK){
     const s=streak(k);
     toast(T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
