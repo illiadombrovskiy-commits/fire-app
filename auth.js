@@ -1,11 +1,11 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
-import { createEncouragementService } from "./src/encouragement-service.js?v=refactor12";
+import { createEncouragementService } from "./src/encouragement-service.js?v=reading-sync-1";
 import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=refactor9";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=reading-sync-1";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -73,7 +73,7 @@ async function main() {
   function showLoginLink() { $("account").hidden = true; }
 
   /* ---------- friends ---------- */
-  let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false;
+  let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false, activeProfileId = null;
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
@@ -102,6 +102,7 @@ async function main() {
 
   let pubTimer = null;
   let lastFof = "";
+  let presenceRevision = 0, syncedRevision = 0;
   function fofChanged() {
     const fof = {};
     myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
@@ -119,10 +120,18 @@ async function main() {
       const fof = {};
       myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
       lastFof = JSON.stringify(fof);
-      F.setDoc(myRef, Object.assign(s, { flameDay: fLit(s, O().today()) ? O().today() : "", fof, name: myName(), photo: myPhoto(), code: myCode, updated: F.serverTimestamp() }), { merge: true })
-        .catch((e) => console.warn(e));
+      const profileUpdate = Object.assign(s, { flameDay: fLit(s, O().today()) ? O().today() : "", fof, name: myName(), photo: myPhoto(), updated: F.serverTimestamp() });
+      if (myCode) profileUpdate.code = myCode; // never erase codes when initialization fails
+      const revision = presenceRevision;
+      const profileWrite = F.setDoc(myRef, profileUpdate, { merge: true }).then(() => true, (e) => {
+        console.warn("Could not publish reading status", e);
+        O().toast("Чтение сохранено на телефоне, но пока не синхронизировано с друзьями.");
+        return false;
+      });
       F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
-      publishGlobe(s);
+      Promise.all([profileWrite, publishGlobe(s)]).then(([profileOk, globeOk]) => {
+        if (profileOk && globeOk && revision === presenceRevision) syncedRevision = revision;
+      });
     }, 1200);
   }
 
@@ -153,19 +162,22 @@ async function main() {
       if (friendUnsubs[uid]) return;
       friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
         (snap) => {
+          const before = friendData[uid];
           if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid];
           renderFriends();
-          if (globeList && window.OgonekGlobe && window.OgonekGlobe.isOpen()) {
-            const d = friendData[uid], i = globeList.findIndex(p => p.id === uid);
-            if (d && !d.globeHide) {
-              const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: uid, rel: relOf(uid) });
-              if (i >= 0) globeList[i] = p; else globeList.push(p);
-            } else if (i >= 0) globeList.splice(i, 1);
-            window.OgonekGlobe.setPeople(globeList);
+          // Refresh an open friend's profile instead of leaving a frozen snapshot.
+          if (activeProfileId === uid && JSON.stringify(before) !== JSON.stringify(friendData[uid]) && document.querySelector(".fmodal")) {
+            openProfile(uid, false, true);
           }
-          if (fofChanged()) publishSummary();
+          if (globeList && window.OgonekGlobe && window.OgonekGlobe.isOpen()) refreshGlobeList();
+          if (fofChanged() && myRef) {
+            const fof = {};
+            myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
+            lastFof = JSON.stringify(fof);
+            F.setDoc(myRef, { fof }, { merge: true }).catch((e) => console.warn(e));
+          }
         },
-        () => { delete friendData[uid]; renderFriends(); });
+        (e) => { console.warn("Friend subscription failed", e); delete friendData[uid]; renderFriends(); if (globeList) refreshGlobeList(); });
     });
     renderFriends();
   }
@@ -364,18 +376,36 @@ async function main() {
     else av.textContent = (name || "?").trim().charAt(0).toUpperCase();
     return av;
   }
-  function closeProfile() { const m = document.querySelector(".fmodal"); if (m) m.remove(); document.removeEventListener("keydown", escClose); }
+  function closeProfile() { const m = document.querySelector(".fmodal"); if (m) m.remove(); activeProfileId = null; document.removeEventListener("keydown", escClose); }
   function escClose(e) { if (e.key === "Escape") closeProfile(); }
 
-  async function openProfile(id, edit) {
+  async function openProfile(id, edit, skipRefresh) {
     if (!me) return;
     const isMe = id === "me" || id === me.uid;
     let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: myPhoto(), about: myProfile.about || "", friends: myFriends }) : friendData[id];
     if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
-      try { const sn = await F.getDoc(F.doc(db, "profiles", id)); d = sn.exists() ? sn.data() : null; } catch (e) { console.warn(e); }
-      if (!d) { O().toast("Не удалось открыть профиль. Возможно, человек ещё не обновил приложение «В Слове»."); return; }
+      try {
+        const ref = F.doc(db, "profiles", id);
+        const sn = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        d = sn.exists() ? sn.data() : null;
+      } catch (e) { console.warn(e); }
+      if (!d) { O().toast("Не удалось открыть профиль. Проверьте интернет и попробуйте ещё раз."); return; }
     }
     closeProfile();
+    activeProfileId = isMe ? me.uid : id;
+    // Show cached data instantly; revalidate it from the actual server.
+    if (!isMe && !skipRefresh && F.getDocFromServer) {
+      const shown = d;
+      F.getDocFromServer(F.doc(db, "profiles", id)).then((sn) => {
+        if (!sn.exists()) return;
+        const latest = sn.data();
+        friendData[id] = latest;
+        if (JSON.stringify(shown) !== JSON.stringify(latest)) {
+          renderFriends();
+          if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
+        }
+      }).catch((e) => console.warn("Could not refresh friend profile", e));
+    }
     const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
     sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
     modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
@@ -665,61 +695,96 @@ async function main() {
     const ref = F.doc(db, "globe", me.uid);
     const doc = globeDoc(s);
     // если правила Firestore ещё не обновлены (нет полей note/nd) — сохраняем без стиха
-    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); })).catch((e) => console.warn(e));
+    return (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); }))
+      .then(() => true, (e) => { console.warn("Could not publish globe presence", e); return false; });
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
-  // глобус: отношения (друг / заявка) пересчитываем, когда профиль догрузился или список друзей изменился
-  let globeList = null;
-  function globeRelSync() {
-    const G = window.OgonekGlobe; if (!globeList || !G || !G.isOpen()) return;
-    let ch = false;
-    globeList.forEach((p) => { if (p.rel === "me") return; const r = relOf(p.id); if (r !== p.rel) { p.rel = r; ch = true; } });
-    if (ch) G.setPeople(globeList);
+  // Live public globe documents are the source of truth for daily flames.
+  // Profile summaries are only a fallback for friends using an older version.
+  let globeList = null, globeDocs = [], globeUnsub = null;
+  function stopGlobeLive() {
+    if (globeUnsub) { globeUnsub(); globeUnsub = null; }
+    globeDocs = []; globeList = null;
   }
-  async function openGlobe() {
-    const G = window.OgonekGlobe; if (!G || !me) return;
+  function refreshGlobeList() {
+    const G = window.OgonekGlobe;
+    if (!me || !globeList || !G || !G.isOpen()) return;
     const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
+    const byId = new Map();
+    globeDocs.forEach((p) => { if (p.id !== me.uid) byId.set(p.id, Object.assign({}, p, { rel: relOf(p.id) })); });
+    Object.keys(friendData).forEach((uid) => {
+      const d = friendData[uid]; if (!d) return;
+      if (d.globeHide) { byId.delete(uid); return; }
+      // Do not overwrite a recent globe document with a stale cached profile.
+      if (!byId.has(uid)) {
+        try { byId.set(uid, Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: uid, rel: relOf(uid) })); }
+        catch (e) { console.warn(e); }
+      }
+    });
+    const list = [mine, ...byId.values()];
+    list.forEach((p) => {
+      if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return;
+      const d = p.rel === "me" ? O().summary() : friendData[p.id];
+      const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note);
+      if (n && n.w) p.w = String(n.w).slice(0, 1000);
+    });
+    globeList = list;
+    G.setPeople(list);
+  }
+  function globeRelSync() { refreshGlobeList(); }
+  function openGlobe() {
+    const G = window.OgonekGlobe; if (!G || !me) return;
+    stopGlobeLive();
+    const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
+    globeList = [mine];
     G.open({
-      people: [mine], visible: !globeHide, loading: true,
+      people: [mine], visible: !globeHide, loading: true, onClose: stopGlobeLive,
       onAdd: async (id) => { const ok = await addFriendUid(id); if (!ok) return false; return myFollowers.includes(id) ? "friend" : "pending"; },
       onProfile: (id) => openProfile(id === me.uid ? "me" : id),
       onToggle: async () => {
         globeHide = !globeHide;
-        try { await F.setDoc(myRef, { globeHide }, { merge: true }); publishGlobe(O().summary()); O().toast(globeHide ? "Вы скрыты с глобуса" : "Теперь вас видно на глобусе"); }
-        catch (e) { console.warn(e); globeHide = !globeHide; O().toast("Не удалось. Попробуйте позже."); }
+        try {
+          await F.setDoc(myRef, { globeHide }, { merge: true });
+          publishGlobe(O().summary());
+          O().toast(globeHide ? "Вы скрыты с глобуса" : "Теперь вас видно на глобусе");
+        } catch (e) { console.warn(e); globeHide = !globeHide; O().toast("Не удалось. Попробуйте позже."); }
         return !globeHide;
       }
     });
-    try {
-      // все, у кого есть запись на глобусе
-      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
-      const list = [mine], have = new Set([me.uid]); globeList = list;
-      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "", nd: typeof x.nd === "string" ? x.nd : "", rel: relOf(d.id) }); });
-      // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
-      for (let i = 0; i < 15 && myFriends.some((u) => !friendData[u]); i++) await new Promise((r) => setTimeout(r, 200));
-      Object.keys(friendData).forEach((u) => {
-        const d = friendData[u]; if (!d) return;
-        const i = list.findIndex(p => p.id === u);
-        if (d.globeHide) { if (i >= 0) list.splice(i, 1); return; }
-        try {
-          const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) });
-          if (i >= 0) list[i] = p; else list.push(p);
-        } catch (e) {}
+    // The previous getDocs call returned a one-time snapshot; live updates
+    // now arrive while the globe is open, including on other people's phones.
+    const q = F.query(F.collection(db, "globe"), F.limit(1000));
+    globeUnsub = F.onSnapshot(q, (snap) => {
+      globeDocs = [];
+      snap.forEach((d) => {
+        if (d.id === me.uid) return;
+        const x = d.data();
+        globeDocs.push({
+          id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "",
+          b: typeof x.b === "number" ? x.b : -1,
+          spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null,
+          refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [],
+          plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "",
+          fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "",
+          nd: typeof x.nd === "string" ? x.nd : ""
+        });
       });
-      list.forEach((p) => { if (p.rel !== "me") p.rel = relOf(p.id); }); // друзья могли догрузиться, пока шёл запрос
-      // слова к стиху видят только друзья (и я сам)
-      list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
-      G.setPeople(list);
-      // кто ещё не прочитал ни одного отрывка (даже если не открывал новую версию) — на «Остров выбора»: смотрим их профили
-      const check = list.filter((p) => p.rel !== "me" && p.b !== -2 && !friendData[p.id]).slice(0, 500);
-      let moved = 0;
-      await Promise.all(check.map(async (p) => {
-        try { const ps = await F.getDoc(F.doc(db, "profiles", p.id)); if (ps.exists() && stillChoosing(ps.data())) { toIce(p); moved++; } } catch (e) {}
-      }));
-      list.forEach((p) => { if (p.rel !== "me" && p.b !== -2 && friendData[p.id] && stillChoosing(friendData[p.id])) { toIce(p); moved++; } });
-      if (moved && G.isOpen()) G.setPeople(list);
-    } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); try { G.setPeople([mine]); } catch (e2) {} }
+      refreshGlobeList();
+    }, (e) => {
+      console.warn("Globe live updates failed", e);
+      O().toast("Не удалось обновить глобус. Проверьте интернет.");
+      refreshGlobeList();
+    });
   }
+  // Retry cloud publication on reconnect and when the app returns to the screen.
+  function republishPresence() {
+    if (!me || !myRef) return;
+    // Never overwrite reading from another device with stale local state.
+    if (presenceRevision > syncedRevision) publishSummary();
+    if (globeList) refreshGlobeList();
+  }
+  window.addEventListener("online", republishPresence);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) republishPresence(); });
   {
     // глобус открывается кнопкой в центре нижней панели; в «Друзьях» отдельной кнопки больше нет
     window.ogonekOpenGlobe = () => openGlobe();
@@ -1191,17 +1256,20 @@ async function main() {
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
+    // Register publishing before profile initialization, which may stall offline.
+    O().onSave = () => { presenceRevision++; publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
+    publishSummary();
 
     try {
-      await ensureProfile(user);
+      try { await ensureProfile(user); }
+      catch (e) { console.warn("Profile initialization failed; keep reading sync active", e); O().toast("Не удалось полностью загрузить профиль. Синхронизация продолжится при подключении."); }
       if (!myNameSet && !window.__onbActive && !document.body.classList.contains("onbon")) await askName(user); // в «первом входе» имя спрашивается на своём шаге
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      O().onSave = () => { publishSummary(); renderFriends(); };
-      publishSummary();
+      publishSummary(); // refresh the invitation code and display name after initialization
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {

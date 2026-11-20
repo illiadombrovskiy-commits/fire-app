@@ -24,6 +24,12 @@ try {
  await assertFails(getDoc(doc(c,path)));
  await assertSucceeds(getDoc(doc(b,path)));
  await assertSucceeds(deleteDoc(doc(b,path)));
+ // A completed reader must not be sent a stale encouragement, even by an old client.
+ await env.withSecurityRulesDisabled(async c=>{
+  await setDoc(doc(c.firestore(),"profiles/b"),{friends:["a"],heroFlameDay:day});
+ });
+ await assertFails(setDoc(doc(a,path),msg));
+ // The invitation kind is independent of this reading-presence check.
  await assertSucceeds(setDoc(doc(a,path+"_inv"),{...msg,kind:"invite"}));
  console.log("PASS Firestore emulator: ownership, globe sync, encouragement, invitation and inbox access");
 } finally {await env.cleanup()}

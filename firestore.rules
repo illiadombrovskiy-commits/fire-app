@@ -46,7 +46,8 @@ service cloud.firestore {
           || (id == request.auth.uid + '_' + request.resource.data.day + '_cjoin' && request.resource.data.get('kind', '') == 'confjoin')
         )
         && (('kind' in request.resource.data)
-          || (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('flameDay', '') == request.resource.data.day
+          || (get(/databases/$(database)/documents/profiles/$(to)).data.get('heroFlameDay', '') != request.resource.data.day
+              && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('flameDay', '') == request.resource.data.day
               && (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('globeHide', false)
                   || get(/databases/$(database)/documents/globe/$(request.auth.uid)).data.get('lit', '') == request.resource.data.day)))
         && request.resource.data.msg is int
