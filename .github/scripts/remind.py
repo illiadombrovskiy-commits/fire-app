@@ -31,7 +31,7 @@ def plural(n, one, few, many):
 
 def load_plan():
     try:
-        path = os.path.join(os.path.dirname(__file__), "..", "..", "index.html")
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "src", "bible-schedule.js")
         with open(path, encoding="utf-8") as file:
             html = file.read()
         m = re.search(r"const PLAN(?:_SPB)?=(\[.*?\]\]);", html, re.S)
