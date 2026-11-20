@@ -21,11 +21,17 @@ assert.equal(fProfileReadToday({heroFlameDay:"",globeSchedule:{passages:[{ref:"4
 assert.equal(fProfileReadToday({heroFlameDay:""},dayRead,""),false);
 assert.equal(fScheduleReadToday({ref:"4 Цар. 25",last:dayRead},dayRead),true);
 assert.equal(fScheduleReadToday(null,dayRead),false);
-let day="2026-11-20", lit=true, profile={}, fail=false, peerRead=false, peerUnavailable=false;
+// Old globe spots had no date check: yesterday's fire must go out today.
+const profileUnread={heroFlameDay:"",globeSchedule:{passages:[{ref:"4 Цар. 25",last:""}]}};
+assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:dayRead,seen:dayRead,spots:[{l:true}]}),true);
+assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:"",seen:dayRead,spots:[{l:true}]}),true);
+assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:"2026-11-19",seen:"2026-11-19",spots:[{l:true}]}),false);
+assert.equal(fScheduleReadToday(profileUnread.globeSchedule.passages[0],dayRead),false);
+let day="2026-11-20", lit=true, profile={}, fail=false, peerRead=false, peerUnavailable=false, peerGlobeRead=false, peerGlobeSpot=false;
 const writes=[], messages=[], storage=new Map();
 const O=()=>({today:()=>day,summary:()=>({lit:lit?day:""}),toast:m=>messages.push(m)});
-const F={doc:(_, ...p)=>p.join("/"),serverTimestamp:()=>123,setDoc:async(p,d,o)=>{if(fail&&p.startsWith("cheers/"))throw Object.assign(new Error("test rejection"),{code:"permission-denied"});writes.push([p,d,o])},updateDoc:async(p,d)=>writes.push([p,d]),arrayUnion:x=>["union",x],arrayRemove:x=>["remove",x],getDoc:async()=>({exists:()=>true,data:()=>({following:[]})}),getDocFromServer:async()=>{if(peerUnavailable)throw new Error("offline");return {exists:()=>true,data:()=>({lit:peerRead?day:""})}}};
-const s=createEncouragementService({KIND,lsGet:k=>storage.get(k),lsSet:(k,v)=>storage.set(k,v),O,F,db:null,fLit:(d,t)=>d.lit===t,getProfile:()=>profile,setProfile:v=>profile=v,getRef:()=>"profiles/a",getMe:()=>({uid:"a"}),myName:()=>"A",myPhoto:()=>""});
+const F={doc:(_, ...p)=>p.join("/"),serverTimestamp:()=>123,setDoc:async(p,d,o)=>{if(fail&&p.startsWith("cheers/"))throw Object.assign(new Error("test rejection"),{code:"permission-denied"});writes.push([p,d,o])},updateDoc:async(p,d)=>writes.push([p,d]),arrayUnion:x=>["union",x],arrayRemove:x=>["remove",x],getDoc:async()=>({exists:()=>true,data:()=>({following:[]})}),getDocFromServer:async(path)=>{if(peerUnavailable)throw new Error("offline");return {exists:()=>true,data:()=>path.startsWith("globe/")?{lit:peerGlobeRead?day:"",seen:day,spots:peerGlobeSpot?[{b:0,l:true}]:[]}:{lit:peerRead?day:""}}}};
+const s=createEncouragementService({KIND,lsGet:k=>storage.get(k),lsSet:(k,v)=>storage.set(k,v),O,F,db:null,fLit:(d,t)=>d.lit===t,getProfile:()=>profile,setProfile:v=>profile=v,getRef:()=>"profiles/a",getMe:()=>({uid:"a"}),myName:()=>"A",myPhoto:()=>"",fProfileReadToday});
 assert.equal(s.left("cheer"),2);
 assert.equal(await s.sendMsg("b",0,"cheer"),true);
 assert.deepEqual(writes[0],["profiles/a",{flameDay:day},{merge:true}]);
@@ -41,7 +47,12 @@ assert.equal(await s.sendMsg("b",0,"cheer"),false);
 assert.equal(s.sentToday("b","cheer"),false);
 peerRead=false;peerUnavailable=true;
 assert.equal(await s.sendMsg("b",0,"cheer"),false);
-peerUnavailable=false;
+peerUnavailable=false;peerGlobeRead=true;
+assert.equal(await s.sendMsg("b",0,"cheer"),false); // flame arrived before profile summary
+peerGlobeRead=false;peerGlobeSpot=true;
+assert.equal(await s.sendMsg("b",0,"cheer"),false); // legacy per-book flame, today's date
+assert.equal(s.sentToday("b","cheer"),false);
+peerGlobeSpot=false;
 lit=false;
 assert.equal(await s.sendMsg("b",0,"cheer"),false);
 assert.equal(s.sentToday("b","cheer"),false);
