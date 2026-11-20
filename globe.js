@@ -228,17 +228,8 @@
     ctx.stroke();
   }
   // «спящий» огонёк: человек сегодня ещё не читал — синий, неподвижный, чуть «дышит»
-  function sleepFlame(x, y, s, f) {
-    const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
-    ctx.fillStyle = "#6b7cb0"; ctx.beginPath(); ctx.moveTo(0, -h); ctx.bezierCurveTo(w * 0.9, -h * 0.45, w * 1.1, -h * 0.05, 0, 2 * s); ctx.bezierCurveTo(-w * 1.1, -h * 0.05, -w * 0.9, -h * 0.45, 0, -h); ctx.fill();
-    ctx.fillStyle = "#9fb0e0"; ctx.beginPath(); ctx.ellipse(0, -h * 0.2, w * 0.4, h * 0.24, 0, 0, TAU); ctx.fill(); ctx.restore();
-  }
-  function flame(x, y, s, f) {
-    const h = 15 * s * f, w = 6 * s; ctx.save(); ctx.translate(x, y);
-    const g = ctx.createLinearGradient(0, -h, 0, 2); g.addColorStop(0, "#fff3a0"); g.addColorStop(0.45, "#ffb020"); g.addColorStop(1, "#ff4a1a");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -h); ctx.bezierCurveTo(w * 0.9, -h * 0.45, w * 1.1, -h * 0.05, 0, 2 * s); ctx.bezierCurveTo(-w * 1.1, -h * 0.05, -w * 0.9, -h * 0.45, 0, -h); ctx.fill();
-    ctx.fillStyle = "rgba(255,250,220,.9)"; ctx.beginPath(); ctx.ellipse(0, -h * 0.2, w * 0.33, h * 0.2, 0, 0, TAU); ctx.fill(); ctx.restore();
-  }
+  function sleepFlame(x,y,s,f){window.OgonekProgressVisual.sleepFlame(ctx,x,y,s,f)}
+  function flame(x,y,s,f){window.OgonekProgressVisual.flame(ctx,x,y,s,f)}
 
   function size() {
     if (!cv) return; const st = cv.parentElement;
