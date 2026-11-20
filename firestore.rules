@@ -45,6 +45,10 @@ service cloud.firestore {
           || (id == request.auth.uid + '_' + request.resource.data.day + '_conf' && request.resource.data.get('kind', '') == 'conf')
           || (id == request.auth.uid + '_' + request.resource.data.day + '_cjoin' && request.resource.data.get('kind', '') == 'confjoin')
         )
+        && (('kind' in request.resource.data)
+          || (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('flameDay', '') == request.resource.data.day
+              && (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('globeHide', false)
+                  || get(/databases/$(database)/documents/globe/$(request.auth.uid)).data.get('lit', '') == request.resource.data.day)))
         && request.resource.data.msg is int
         && request.resource.data.msg >= 0 && request.resource.data.msg < 8
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
