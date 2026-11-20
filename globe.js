@@ -480,8 +480,25 @@
       const box = el("div", "gppl");
       if (!o.people.length) cd.append(el("p", "gmuted", "Сейчас здесь никто не читает."));
       const rk = (p) => (p.rel === "friend" || p.rel === "me" ? 4 : 0) + (hasVerse(p) ? 2 : 0) + (p.fire ? 1 : 0);
-      o.people.filter((p) => !p.twin || true).slice().sort((a, b) => rk(b) - rk(a)).slice(0, 40).forEach((p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
-      if (o.people.length > 40) box.append(el("span", "gmuted", "и ещё " + (o.people.length - 40)));
+      const readers = o.people.slice().sort((a, b) => rk(b) - rk(a));
+      const appendReader = (p) => { const b = btn(p.name || "Читатель"); b.prepend(stkEl(p.fire ? "flame" : "flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); };
+      readers.slice(0, 6).forEach(appendReader);
+      if (readers.length > 6) {
+        const more = btn("и ещё " + (readers.length - 6) + " ▾");
+        more.type = "button"; more.setAttribute("aria-expanded", "false");
+        more.addEventListener("click", () => {
+          const expanded = more.getAttribute("aria-expanded") === "true";
+          if (expanded) {
+            while (box.children.length > 6) box.lastElementChild.remove();
+          } else {
+            more.remove(); readers.slice(6).forEach(appendReader);
+          }
+          more.setAttribute("aria-expanded", String(!expanded));
+          more.textContent = expanded ? "и ещё " + (readers.length - 6) + " ▾" : "Свернуть ▴";
+          box.append(more);
+        });
+        box.append(more);
+      }
       cd.append(box); return;
     }
     cd.hidden = true; // пока ничего не выбрано — внизу пусто
