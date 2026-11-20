@@ -113,7 +113,7 @@ async function main() {
       const fof = {};
       myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
       lastFof = JSON.stringify(fof);
-      F.setDoc(myRef, Object.assign(s, { fof, name: myName(), photo: myPhoto(), code: myCode, updated: F.serverTimestamp() }), { merge: true })
+      F.setDoc(myRef, Object.assign(s, { flameDay: fLit(s, O().today()) ? O().today() : "", fof, name: myName(), photo: myPhoto(), code: myCode, updated: F.serverTimestamp() }), { merge: true })
         .catch((e) => console.warn(e));
       F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
       publishGlobe(s);
@@ -348,7 +348,7 @@ async function main() {
       if (kind === "cheer") {
         const s = O().summary();
         if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
-        await F.setDoc(myRef, Object.assign({}, s, { updated: F.serverTimestamp() }), { merge: true });
+        await F.setDoc(myRef, Object.assign({}, s, { flameDay: day, updated: F.serverTimestamp() }), { merge: true });
         if (!globeHide) await F.setDoc(F.doc(db, "globe", me.uid), globeDoc(s));
       }
       await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + suffix), data);
@@ -847,7 +847,7 @@ async function main() {
           const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) });
           if (i >= 0) list[i] = p; else list.push(p);
         } catch (e) {}
-      });;
+      });
       list.forEach((p) => { if (p.rel !== "me") p.rel = relOf(p.id); }); // друзья могли догрузиться, пока шёл запрос
       // слова к стиху видят только друзья (и я сам)
       list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
