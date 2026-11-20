@@ -1,5 +1,7 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
+import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
+import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
 import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=refactor9";
 
@@ -123,20 +125,7 @@ async function main() {
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
-  async function findFriendUid(input) {
-    const raw = (input || "").trim();
-    if (raw.includes("@")) {
-      const e = await F.getDoc(F.doc(db, "emails", raw.toLowerCase()));
-      return e.exists() ? e.data().uid : null;
-    }
-    const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (code.length === 6) {
-      const c = await F.getDoc(F.doc(db, "codes", code));
-      return c.exists() ? c.data().uid : null;
-    }
-    if (/^[A-Za-z0-9]{20,40}$/.test(raw)) return raw; // ID пользователя
-    return undefined;
-  }
+  const findFriendUid=createFriendLookup(F,db);
 
   async function addFriendByCode(input) {
     const raw = (input || "").trim();
@@ -237,34 +226,7 @@ async function main() {
     s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
   }
   /* ---------- воодушевление и приглашение почитать вместе ---------- */
-  const CHEERS = [
-    "Зажги свой огонёк — мы ждём тебя!",
-    "Не хватает твоего огня сегодня!",
-    "Мой огонёк уже горит — зажги и свой!",
-    "Духом пламенейте! Ждём тебя сегодня на чтении"
-  ];
-  const INVITES = [
-    "Давай почитаем вместе — зажжём огонь сегодня!",
-    "Я начинаю читать. Присоединяйся!",
-    "Почитаем Библию вместе? Сегодняшний отрывок ждёт нас",
-    "10 минут со Словом — давай прямо сейчас, вместе"
-  ];
-  const KIND = {
-    cheer: { list: CHEERS, limit: 2, key: "ogonek-cheers-sent", field: "cheer", title: "Воодушевить", verb: "воодушевляет вас",
-      done: "Вы воодушевили сегодня ✓", full: "Сегодня вы уже воодушевили двух друзей", btn: "Воодушевить",
-      rule: (left) => "Воодушевить можно только двух друзей в день. " + (left === 2 ? "Сегодня осталось: 2." : "Сегодня остался ещё один."),
-      sent: "Отправлено! Пусть огонёк разгорится", again: "Сегодня вы уже воодушевляли этого друга" },
-    invite: { list: INVITES, limit: 1, key: "ogonek-invite-sent", field: "invite", title: "Почитать вместе", verb: "зовёт почитать вместе",
-      done: "Приглашение отправлено ✓", full: "Сегодня вы уже позвали друга", btn: "Позвать читать вместе",
-      rule: () => "Позвать почитать вместе можно только одного друга в день — до того, как вы начнёте читать.",
-      sent: "Приглашение отправлено! Начинайте читать", again: "Сегодня вы уже звали этого друга" },
-    // челлендж «Божья гора»: воодушевить до 5 друзей в день; последнее сообщение — позвать в челлендж
-    conf: { list: (window.confCheers && window.confCheers.list) || ["Давай поднимемся на Синай!"], limit: 5, key: "ogonek-conf-cheers", field: "confCheer", title: "Челлендж «Божья гора»", verb: "зовёт на Синай",
-      done: "Воодушевили ✓", full: "Сегодня вы уже воодушевили пятерых", btn: "Воодушевить", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже писали этому другу" },
-    confjoin: { list: (window.confCheers && window.confCheers.list) || [], limit: 99, key: "ogonek-conf-join", field: "confJoin", title: "Челлендж «Божья гора»", verb: "зовёт в челлендж «Божья гора»",
-      done: "Позвали ✓", full: "", btn: "Позвать", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже звали этого друга" }
-  };
-  const kindOf = (c) => (c && (c.kind === "invite" || c.kind === "conf" || c.kind === "confjoin") ? c.kind : "cheer");
+  const {CHEERS,INVITES,KIND,kindOf}=createEncouragementConfig();
   const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
   // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
   function sentTodaySet(kind) {
