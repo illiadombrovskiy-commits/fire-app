@@ -102,6 +102,7 @@ async function main() {
 
   let pubTimer = null;
   let lastFof = "";
+  let presenceRevision = 0, syncedRevision = 0;
   function fofChanged() {
     const fof = {};
     myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
@@ -121,10 +122,16 @@ async function main() {
       lastFof = JSON.stringify(fof);
       const profileUpdate = Object.assign(s, { flameDay: fLit(s, O().today()) ? O().today() : "", fof, name: myName(), photo: myPhoto(), updated: F.serverTimestamp() });
       if (myCode) profileUpdate.code = myCode; // never erase codes when initialization fails
-      F.setDoc(myRef, profileUpdate, { merge: true })
-        .catch((e) => { console.warn("Could not publish reading status", e); O().toast("Чтение сохранено на телефоне, но пока не синхронизировано с друзьями."); });
+      const revision = presenceRevision;
+      const profileWrite = F.setDoc(myRef, profileUpdate, { merge: true }).then(() => true, (e) => {
+        console.warn("Could not publish reading status", e);
+        O().toast("Чтение сохранено на телефоне, но пока не синхронизировано с друзьями.");
+        return false;
+      });
       F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
-      publishGlobe(s);
+      Promise.all([profileWrite, publishGlobe(s)]).then(([profileOk, globeOk]) => {
+        if (profileOk && globeOk && revision === presenceRevision) syncedRevision = revision;
+      });
     }, 1200);
   }
 
@@ -163,7 +170,12 @@ async function main() {
             openProfile(uid, false, true);
           }
           if (globeList && window.OgonekGlobe && window.OgonekGlobe.isOpen()) refreshGlobeList();
-          if (fofChanged()) publishSummary();
+          if (fofChanged() && myRef) {
+            const fof = {};
+            myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
+            lastFof = JSON.stringify(fof);
+            F.setDoc(myRef, { fof }, { merge: true }).catch((e) => console.warn(e));
+          }
         },
         (e) => { console.warn("Friend subscription failed", e); delete friendData[uid]; renderFriends(); if (globeList) refreshGlobeList(); });
     });
@@ -683,7 +695,8 @@ async function main() {
     const ref = F.doc(db, "globe", me.uid);
     const doc = globeDoc(s);
     // если правила Firestore ещё не обновлены (нет полей note/nd) — сохраняем без стиха
-    (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); })).catch((e) => console.warn(e));
+    return (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); }))
+      .then(() => true, (e) => { console.warn("Could not publish globe presence", e); return false; });
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
   // Live public globe documents are the source of truth for daily flames.
@@ -766,7 +779,8 @@ async function main() {
   // Retry cloud publication on reconnect and when the app returns to the screen.
   function republishPresence() {
     if (!me || !myRef) return;
-    publishSummary();
+    // Never overwrite reading from another device with stale local state.
+    if (presenceRevision > syncedRevision) publishSummary();
     if (globeList) refreshGlobeList();
   }
   window.addEventListener("online", republishPresence);
@@ -1243,7 +1257,7 @@ async function main() {
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
     // Register publishing before profile initialization, which may stall offline.
-    O().onSave = () => { publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
+    O().onSave = () => { presenceRevision++; publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
 
     try {
