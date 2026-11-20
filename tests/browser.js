@@ -56,7 +56,7 @@
     equal(element("#testaments .tlink").href, "https://bible.recoveryversion.ru/matt/1/1");
   });
 
-  await run("Два нажатия отмечают чтение, общий огонёк и XP можно отменить", () => {
+  await run("Чтение двух заветов зажигает пламя без модального окна, XP можно отменить", () => {
     const button = element("#testaments .tcard .tbtn");
     button.click();
     equal(app.getState().nt.read, []);
@@ -69,12 +69,13 @@
     mark(2);
     equal(app.getState().ot.read, [0]);
     equal(app.getState().xp, 30);
-    equal(element("#celebrate").hidden, false);
+    equal(element("#celebrate").hidden, true);
+    equal(element("#toast").textContent.includes("Оба отрывка прочитаны"), true);
     const saved = JSON.parse(localStorage.getItem("ogonek-rv-year1"));
     equal(saved.ot.read, [0]);
     equal(saved.xp, 30);
 
-    element("#celebUndo").click();
+    element("#toast .toastbtn").click();
     equal(app.getState().nt.read, [0]);
     equal(app.getState().ot.read, []);
     equal(app.getState().xp, 10);
@@ -85,7 +86,6 @@
     equal(document.querySelectorAll("#quiz .qopt").length, 0);
     mark(1);
     mark(2);
-    element("#celebClose").click();
 
     const xp = app.getState().xp;
     const questions = window.QUIZ_D[0];
