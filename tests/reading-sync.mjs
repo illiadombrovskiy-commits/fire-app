@@ -127,8 +127,8 @@ const diagnosticStart=source.indexOf("  function nextPassagesFromState(state) {"
 const diagnosticEnd=source.indexOf("  function toggleUserMenu()",diagnosticStart);
 assert.ok(diagnosticStart>=0&&diagnosticEnd>diagnosticStart);
 const diagnostic=source.slice(diagnosticStart,diagnosticEnd);
-const helperEnd=diagnostic.indexOf("  function profilePassages(data) {");
-const helper=new Function("window",diagnostic.slice(0,helperEnd)+";return nextPassagesFromState")({
+const diagnosticsHelperEnd=diagnostic.indexOf("  function profilePassages(data) {");
+const helper=new Function("window",diagnostic.slice(0,diagnosticsHelperEnd)+";return nextPassagesFromState")({
   OgonekBibleSchedule:{buildSched:()=>({
     keys:["nt","ot"],plan:[
       ["Мф.","19:16–30","Быт.","50:1–26"],
