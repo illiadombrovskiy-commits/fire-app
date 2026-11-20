@@ -74,6 +74,7 @@ async function main() {
 
   /* ---------- friends ---------- */
   let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false, activeProfileId = null;
+  const serverVerifiedFriends = new Set();
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
@@ -180,6 +181,10 @@ async function main() {
       if (friendUnsubs[uid]) return;
       friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
         (snap) => {
+          // An older cached snapshot must not replace a profile already
+          // confirmed from Firestore's server on this phone.
+          if (snap.metadata && snap.metadata.fromCache && serverVerifiedFriends.has(uid)) return;
+          if (snap.metadata && !snap.metadata.fromCache) serverVerifiedFriends.add(uid);
           const before = friendData[uid];
           if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid];
           renderFriends();
@@ -423,6 +428,7 @@ async function main() {
         if (snap.exists()) {
           d = snap.data();
           friendData[id] = d;
+          serverVerifiedFriends.add(id);
           renderFriends();
         } else {
           O().toast("Профиль друга пока недоступен.");
@@ -869,7 +875,7 @@ async function main() {
         if (!me || me.uid !== uid) return;
         if (startedAt === presenceRevision && snap.exists()) O().setState(snap.data());
         progressVerified = true;
-        publishSummary();
+        publishSummary(true);
       }).catch((e) => console.warn("Reading progress recovery failed", e))
         .finally(() => { progressRecoveryBusy = false; });
     }
@@ -879,7 +885,7 @@ async function main() {
       ensureProfile(me).then(() => {
         if (!me || me.uid !== uid) return;
         profileReady = true;
-        publishSummary();
+        publishSummary(true);
       }).catch((e) => console.warn("Profile recovery failed", e))
         .finally(() => { profileRecoveryBusy = false; });
     }
@@ -1313,7 +1319,7 @@ async function main() {
     try { publishSummary(); } catch (e) {}
   };
   A.onAuthStateChanged(auth, async (user) => {
-    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; globeReadCache = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; serverVerifiedFriends.clear(); globeReadCache = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
@@ -1404,7 +1410,7 @@ async function main() {
         const hideChanged = !!myProfile.globeHide !== globeHide;
         if (hideChanged) { globeHide = !!myProfile.globeHide; if (window.OgonekGlobe) window.OgonekGlobe.setVisible(!globeHide); }
         // A server-confirmed profile snapshot also recovers the privacy choice.
-        if (!profileReady && snap.exists() && !snap.metadata.fromCache) { profileReady = true; publishSummary(); }
+        if (!profileReady && snap.exists() && !snap.metadata.fromCache) { profileReady = true; publishSummary(true); }
         else if (hideChanged && profileReady && progressVerified) publishSummary();
         // новая заявка — короткое уведомление
         const pend = pendingRequests();
