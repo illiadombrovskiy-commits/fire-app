@@ -410,20 +410,42 @@ async function main() {
 
   async function openProfile(id, edit, skipRefresh) {
     if (!me) return;
-    const isMe = id === "me" || id === me.uid;
+    const viewerUid = me.uid;
+    const isMe = id === "me" || id === viewerUid;
     let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: myPhoto(), about: myProfile.about || "", friends: myFriends }) : friendData[id];
-    if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
+    if (!isMe && !skipRefresh) {
+      // Friend's reading must come from the actual server before showing
+      // a chapter number. The local onSnapshot cache may be days behind.
+      try {
+        const ref = F.doc(db, "profiles", id);
+        const snap = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        if (!me || me.uid !== viewerUid) return;
+        if (snap.exists()) {
+          d = snap.data();
+          friendData[id] = d;
+          renderFriends();
+        } else {
+          O().toast("Профиль друга пока недоступен.");
+          return;
+        }
+      } catch (e) {
+        console.warn("Could not verify live friend profile", e);
+        O().toast("Не удалось обновить расписание друга с сервера. Проверьте интернет.");
+        if (!d) return;
+      }
+    } else if (!d) { // fallback for a profile outside the friends list
       try {
         const ref = F.doc(db, "profiles", id);
         const sn = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        if (!me || me.uid !== viewerUid) return;
         d = sn.exists() ? sn.data() : null;
       } catch (e) { console.warn(e); }
       if (!d) { O().toast("Не удалось открыть профиль. Проверьте интернет и попробуйте ещё раз."); return; }
     }
     closeProfile();
     activeProfileId = isMe ? me.uid : id;
-    // Show cached data instantly; revalidate both independently published
-    // Firestore sources so today's green badge matches the globe.
+    // Verify the independent globe flame too; the reading schedule above
+    // has already been read directly from the server.
     if (!isMe && !skipRefresh && F.getDocFromServer) {
       F.getDocFromServer(F.doc(db, "globe", id)).then((snap) => {
         const day = O().today(), person = friendData[id] || d;
@@ -439,16 +461,6 @@ async function main() {
           if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
         }
       }).catch((e) => console.warn("Could not verify globe day", e));
-      const shown = d;
-      F.getDocFromServer(F.doc(db, "profiles", id)).then((sn) => {
-        if (!sn.exists()) return;
-        const latest = sn.data();
-        friendData[id] = latest;
-        if (JSON.stringify(shown) !== JSON.stringify(latest)) {
-          renderFriends();
-          if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
-        }
-      }).catch((e) => console.warn("Could not refresh friend profile", e));
     }
     const t = O().today(), readToday = profileReadToday(d, isMe ? me.uid : id, t);
     const modal = el("div", "fmodal"), sheet = el("div", "fsheet");
