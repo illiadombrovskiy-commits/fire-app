@@ -74,6 +74,7 @@ async function main() {
 
   /* ---------- friends ---------- */
   let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false, activeProfileId = null;
+  const serverVerifiedFriends = new Set();
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
@@ -119,13 +120,13 @@ async function main() {
   // имя, которое видят друзья: своё (если задано) или из Google
   const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
-  function publishSummary() {
+  function publishSummary(immediate = false) {
     // A failed startup read must never replace a current cloud profile with
     // yesterday's locally cached progress, nor reveal a previously hidden globe.
     const sequence = ++presenceSequence;
     presencePending = true;
     clearTimeout(pubTimer);
-    pubTimer = setTimeout(() => {
+    const publish = () => {
       if (!me || !myRef || !progressVerified || !profileReady) return;
       const publisherUid = me.uid;
       const s = O().summary();
@@ -146,7 +147,11 @@ async function main() {
           presencePending = !(profileOk && globeOk);
         }
       });
-    }, 1200);
+    };
+    // iOS can suspend a PWA before a debounced timer runs. Start Firestore
+    // writes as part of the same save action, not after 1.2 seconds.
+    if (immediate) publish();
+    else pubTimer = setTimeout(publish, 1200);
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
@@ -176,6 +181,10 @@ async function main() {
       if (friendUnsubs[uid]) return;
       friendUnsubs[uid] = F.onSnapshot(F.doc(db, "profiles", uid),
         (snap) => {
+          // An older cached snapshot must not replace a profile already
+          // confirmed from Firestore's server on this phone.
+          if (snap.metadata && snap.metadata.fromCache && serverVerifiedFriends.has(uid)) return;
+          if (snap.metadata && !snap.metadata.fromCache) serverVerifiedFriends.add(uid);
           const before = friendData[uid];
           if (snap.exists()) friendData[uid] = snap.data(); else delete friendData[uid];
           renderFriends();
@@ -406,20 +415,43 @@ async function main() {
 
   async function openProfile(id, edit, skipRefresh) {
     if (!me) return;
-    const isMe = id === "me" || id === me.uid;
+    const viewerUid = me.uid;
+    const isMe = id === "me" || id === viewerUid;
     let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: myPhoto(), about: myProfile.about || "", friends: myFriends }) : friendData[id];
-    if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
+    if (!isMe && !skipRefresh) {
+      // Friend's reading must come from the actual server before showing
+      // a chapter number. The local onSnapshot cache may be days behind.
+      try {
+        const ref = F.doc(db, "profiles", id);
+        const snap = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        if (!me || me.uid !== viewerUid) return;
+        if (snap.exists()) {
+          d = snap.data();
+          friendData[id] = d;
+          serverVerifiedFriends.add(id);
+          renderFriends();
+        } else {
+          O().toast("Профиль друга пока недоступен.");
+          return;
+        }
+      } catch (e) {
+        console.warn("Could not verify live friend profile", e);
+        O().toast("Не удалось обновить расписание друга с сервера. Проверьте интернет.");
+        if (!d) return;
+      }
+    } else if (!d) { // fallback for a profile outside the friends list
       try {
         const ref = F.doc(db, "profiles", id);
         const sn = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        if (!me || me.uid !== viewerUid) return;
         d = sn.exists() ? sn.data() : null;
       } catch (e) { console.warn(e); }
       if (!d) { O().toast("Не удалось открыть профиль. Проверьте интернет и попробуйте ещё раз."); return; }
     }
     closeProfile();
     activeProfileId = isMe ? me.uid : id;
-    // Show cached data instantly; revalidate both independently published
-    // Firestore sources so today's green badge matches the globe.
+    // Verify the independent globe flame too; the reading schedule above
+    // has already been read directly from the server.
     if (!isMe && !skipRefresh && F.getDocFromServer) {
       F.getDocFromServer(F.doc(db, "globe", id)).then((snap) => {
         const day = O().today(), person = friendData[id] || d;
@@ -435,16 +467,6 @@ async function main() {
           if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
         }
       }).catch((e) => console.warn("Could not verify globe day", e));
-      const shown = d;
-      F.getDocFromServer(F.doc(db, "profiles", id)).then((sn) => {
-        if (!sn.exists()) return;
-        const latest = sn.data();
-        friendData[id] = latest;
-        if (JSON.stringify(shown) !== JSON.stringify(latest)) {
-          renderFriends();
-          if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
-        }
-      }).catch((e) => console.warn("Could not refresh friend profile", e));
     }
     const t = O().today(), readToday = profileReadToday(d, isMe ? me.uid : id, t);
     const modal = el("div", "fmodal"), sheet = el("div", "fsheet");
@@ -853,7 +875,7 @@ async function main() {
         if (!me || me.uid !== uid) return;
         if (startedAt === presenceRevision && snap.exists()) O().setState(snap.data());
         progressVerified = true;
-        publishSummary();
+        publishSummary(true);
       }).catch((e) => console.warn("Reading progress recovery failed", e))
         .finally(() => { progressRecoveryBusy = false; });
     }
@@ -863,11 +885,11 @@ async function main() {
       ensureProfile(me).then(() => {
         if (!me || me.uid !== uid) return;
         profileReady = true;
-        publishSummary();
+        publishSummary(true);
       }).catch((e) => console.warn("Profile recovery failed", e))
         .finally(() => { profileRecoveryBusy = false; });
     }
-    if (presencePending && progressVerified && profileReady) publishSummary();
+    if (presencePending && progressVerified && profileReady) publishSummary(true);
     if (globeList) refreshGlobeList();
   }
   window.addEventListener("online", republishPresence);
@@ -1297,7 +1319,7 @@ async function main() {
     try { publishSummary(); } catch (e) {}
   };
   A.onAuthStateChanged(auth, async (user) => {
-    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; globeReadCache = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; serverVerifiedFriends.clear(); globeReadCache = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
@@ -1357,12 +1379,12 @@ async function main() {
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
     // Register publishing before profile initialization, which may stall offline.
-    O().onSave = () => { presenceRevision++; publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
+    O().onSave = () => { presenceRevision++; publishSummary(true); renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
 
     try {
       profileRecoveryBusy = true;
-      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; if (progressVerified && presencePending) publishSummary(); }
+      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; if (progressVerified && presencePending) publishSummary(true); }
       catch (e) { console.warn("Profile initialization failed; keep reading sync active", e); O().toast("Не удалось полностью загрузить профиль. Синхронизация продолжится при подключении."); }
       finally { profileRecoveryBusy = false; }
       if (!me || me.uid !== user.uid) return;
@@ -1373,7 +1395,7 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      publishSummary(); // refresh the invitation code and display name after initialization
+      publishSummary(true); // publish the verified profile immediately after initialization
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
@@ -1388,7 +1410,7 @@ async function main() {
         const hideChanged = !!myProfile.globeHide !== globeHide;
         if (hideChanged) { globeHide = !!myProfile.globeHide; if (window.OgonekGlobe) window.OgonekGlobe.setVisible(!globeHide); }
         // A server-confirmed profile snapshot also recovers the privacy choice.
-        if (!profileReady && snap.exists() && !snap.metadata.fromCache) { profileReady = true; publishSummary(); }
+        if (!profileReady && snap.exists() && !snap.metadata.fromCache) { profileReady = true; publishSummary(true); }
         else if (hideChanged && profileReady && progressVerified) publishSummary();
         // новая заявка — короткое уведомление
         const pend = pendingRequests();
