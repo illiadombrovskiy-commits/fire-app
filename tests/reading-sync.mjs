@@ -121,4 +121,27 @@ assert.equal(choose(old,newState,"reader"),false,"Never overwrite newer cloud wi
 assert.equal(choose({...newState,schedDef:{id:"my-other"}},old,"reader"),false);
 storage.set("ogonek-reading-pending-reader","1");
 assert.equal(choose(newState,old,"reader"),true,"Retry known unsynced local progress");
+// Read-only self-check: diagnose if /users, /profiles or /globe still
+// reports Genesis when this device has already reached Exodus.
+const diagnosticStart=source.indexOf("  function nextPassagesFromState(state) {");
+const diagnosticEnd=source.indexOf("  function toggleUserMenu()",diagnosticStart);
+assert.ok(diagnosticStart>=0&&diagnosticEnd>diagnosticStart);
+const diagnostic=source.slice(diagnosticStart,diagnosticEnd);
+const diagnosticsHelperEnd=diagnostic.indexOf("  function profilePassages(data) {");
+const helper=new Function("window",diagnostic.slice(0,diagnosticsHelperEnd)+";return nextPassagesFromState")({
+  OgonekBibleSchedule:{buildSched:()=>({
+    keys:["nt","ot"],plan:[
+      ["Мф.","19:16–30","Быт.","50:1–26"],
+      ["Мф.","20:1–16","Исх.","1:1–22"]
+    ]
+  })}
+});
+const local={nt:{read:[0]},ot:{read:[0],skip:[]}};
+const oldCloud={nt:{read:[]},ot:{read:[],skip:[]}};
+assert.match(helper(local),/ВЗ: Исх\. 1:1–22 \(1 отметок\)/);
+assert.match(helper(oldCloud),/ВЗ: Быт\. 50:1–26 \(0 отметок\)/);
+assert.match(diagnostic,/F\.getDocFromServer\(F\.doc\(db,name,uid\)\)/);
+assert.doesNotMatch(diagnostic,/(?:F\.setDoc|F\.writeBatch|F\.deleteDoc)\(/,
+  "Sync diagnosis must never change user data");
+console.log("PASS read-only diagnosis compares Genesis/Exodus without changing progress");
 console.log("PASS atomic 3-way reading sync and recovery of locally newer passage");

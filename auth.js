@@ -110,6 +110,7 @@ async function main() {
   let pubTimer = null;
   let lastFof = "";
   let presenceRevision = 0, presenceSequence = 0, presencePending = false;
+  let lastReadingSyncError = "", lastReadingSyncAt = "";
   let progressVerified = false, profileReady = false;
   let progressRecoveryBusy = false, profileRecoveryBusy = false;
   function fofChanged() {
@@ -157,6 +158,8 @@ async function main() {
     };
     try {
       await commit(initial);
+      lastReadingSyncError = "";
+      lastReadingSyncAt = new Date().toLocaleTimeString("ru-RU");
       return true;
     } catch (first) {
       // Keep the existing backwards-compatible fallback if an old photo or
@@ -167,18 +170,26 @@ async function main() {
           reduced.photo = (me && me.photoURL || "").slice(0, 500);
         try {
           await commit(reduced);
+          lastReadingSyncError = "";
+          lastReadingSyncAt = new Date().toLocaleTimeString("ru-RU");
           return true;
         } catch (second) {
           delete reduced.note;
           delete reduced.nd;
           try {
             await commit(reduced);
+            lastReadingSyncError = "";
+            lastReadingSyncAt = new Date().toLocaleTimeString("ru-RU");
             return true;
           } catch (third) {
+            lastReadingSyncError = String((third && (third.code || third.message)) || "unknown").slice(0, 120);
             console.warn("Unable to commit profile and globe together", third);
           }
         }
-      } else console.warn("Unable to commit hidden profile and globe together", first);
+      } else {
+        lastReadingSyncError = String((first && (first.code || first.message)) || "unknown").slice(0, 120);
+        console.warn("Unable to commit hidden profile and globe together", first);
+      }
       if (me && me.uid === uid) O().toast("Отметка сохранена на телефоне, но не синхронизирована с друзьями. Проверьте интернет.");
       return false;
     }
@@ -191,7 +202,12 @@ async function main() {
     presencePending = true;
     clearTimeout(pubTimer);
     const publish = () => {
-      if (!me || !myRef || !progressVerified || !profileReady) return;
+      if (!me || !myRef || !progressVerified || !profileReady) {
+        lastReadingSyncError = !me ? "not-signed-in" :
+          !progressVerified ? "progress-not-loaded" :
+          !profileReady ? "profile-not-loaded" : "profile-ref-missing";
+        return Promise.resolve(false);
+      }
       const publisherUid = me.uid;
       const s = O().summary();
       // имена и фото моих друзей — чтобы мои друзья видели, кто у меня в друзьях
@@ -1218,6 +1234,95 @@ async function main() {
   function closeUserMenu() { const m = document.querySelector(".usermenu"); if (m) m.remove(); top.setAttribute("aria-expanded", "false"); document.removeEventListener("click", outsideMenu, true); document.removeEventListener("keydown", escMenu); }
   function outsideMenu(e) { const m = document.querySelector(".usermenu"); if (m && !m.contains(e.target) && e.target !== top) closeUserMenu(); }
   function escMenu(e) { if (e.key === "Escape") { closeUserMenu(); top.focus(); } }
+  // Read-only diagnostics, opened from the account menu. Never changes a
+  // reading mark, profile or globe: compare what this phone displays with
+  // actual Firestore documents to locate account-specific sync failures.
+  function nextPassagesFromState(state) {
+    if (!state || typeof state !== "object") return "нет данных";
+    try {
+      const schedule = window.OgonekBibleSchedule.buildSched(state.schedDef || { id: "spb" });
+      const plan = schedule.plan || [];
+      const one = (key, index) => {
+        if (!(schedule.keys || []).includes(key)) return "нет в расписании";
+        const track = state[key] || {}, marked = new Set(track.read || []),
+          skipped = new Set(track.skip || []);
+        const pos = plan.findIndex((_, i) => !marked.has(i) && !skipped.has(i) && plan[i][index]);
+        const count = marked.size;
+        return pos < 0 ? "завершено (" + count + " отметок)" :
+          String(plan[pos][index] || "") + " " + String(plan[pos][index + 1] || "") +
+          " (" + count + " отметок)";
+      };
+      return "НЗ: " + one("nt",0) + "\nВЗ: " + one("ot",2);
+    } catch (e) { return "Невозможно определить главу: " + String(e.message || e).slice(0, 70); }
+  }
+  function profilePassages(data) {
+    const ps = data && data.globeSchedule && data.globeSchedule.passages;
+    if (!Array.isArray(ps)) return "нет опубликованного расписания";
+    return ps.map(p => String(p.label || "Отрывок") + ": " +
+      String(p.ref || "завершено") + (p.last ? " (последняя отметка: " + String(p.last) + ")" : "")).join("\n")
+      || "нет отрывков";
+  }
+  function openSyncDiagnostics() {
+    if (!me) return;
+    closeUserMenu();
+    const uid = me.uid;
+    const old = document.querySelector(".ogsync-modal");
+    if (old) old.remove();
+    const modal = el("div","fmodal ogsync-modal"), sheet = el("div","fsheet");
+    sheet.setAttribute("role","dialog"); sheet.setAttribute("aria-modal","true");
+    sheet.setAttribute("aria-label","Проверка синхронизации чтения");
+    const heading = el("h2",null,"Проверка синхронизации");
+    const hint = el("p","hint","Сравнение данных этого телефона и Firebase. Ничего не меняет.");
+    const report = el("div","freading","Загрузка данных с сервера…");
+    report.style.whiteSpace = "pre-wrap";
+    report.style.overflowWrap = "anywhere";
+    report.style.fontSize = "14px";
+    const buttons = el("div","row");
+    buttons.style.display = "flex"; buttons.style.flexWrap = "wrap"; buttons.style.gap = "8px";
+    const check = el("button","btn-main","Проверить снова"), copy = el("button","btn-main","Копировать"), close = el("button","btn-main","Закрыть");
+    [check,copy,close].forEach(b => { b.type = "button"; buttons.append(b); });
+    close.addEventListener("click",()=>modal.remove());
+    modal.addEventListener("click",e=>{ if(e.target===modal)modal.remove(); });
+    let currentReport = "";
+    const fetchReport = async () => {
+      if (!me || me.uid !== uid) { report.textContent = "Вход в аккаунт изменился."; return; }
+      report.textContent = "Проверяю три документа Firebase…";
+      const names = ["users","profiles","globe"];
+      const result = await Promise.all(names.map(async name => {
+        try {
+          const snap = await F.getDocFromServer(F.doc(db,name,uid));
+          return snap.exists() ? {data:snap.data()} : {error:"документ отсутствует"};
+        } catch (e) { return {error:String((e && (e.code || e.message)) || e).slice(0,100)}; }
+      }));
+      if (!me || me.uid !== uid || !modal.isConnected) return;
+      const local = O().getState(), summary = O().summary();
+      const published = result[1].data || {}, globe = result[2].data || {};
+      const title = (name, value) => name + "\n" + value;
+      const sections = [
+        title("НА ТЕЛЕФОНЕ",nextPassagesFromState(local)),
+        title("FIREBASE · ПРОГРЕСС (users)",result[0].error || nextPassagesFromState(result[0].data)),
+        title("FIREBASE · ПРОФИЛЬ (profiles)",result[1].error || profilePassages(published)),
+        title("FIREBASE · ГЛОБУС (globe)",result[2].error || ((globe.refs || []).join("\n") || "нет отрывков")),
+        "Текущий локальный профиль:\n" + profilePassages(summary),
+        "Огонь на сервере: " + (globe.lit || "нет") + "; сегодня: " + O().today(),
+        "Готовность прогресса: " + (progressVerified?"да":"нет") +
+          "; готовность профиля: " + (profileReady?"да":"нет"),
+        "Незавершённая публикация: " + (presencePending?"да":"нет"),
+        "Последний успешный обмен: " + (lastReadingSyncAt || "нет данных"),
+        "Последняя ошибка: " + (lastReadingSyncError || "не зафиксирована"),
+        "Версия: 20261121010000"
+      ];
+      currentReport = sections.join("\n\n");
+      report.textContent = currentReport;
+    };
+    check.addEventListener("click",fetchReport);
+    copy.addEventListener("click",async()=>{
+      try { await navigator.clipboard.writeText(currentReport); O().toast("Диагностика скопирована"); }
+      catch(e) { O().toast("Сделайте скриншот проверки синхронизации"); }
+    });
+    sheet.append(heading,hint,report,buttons); modal.append(sheet); document.body.append(modal);
+    fetchReport();
+  }
   function toggleUserMenu() {
     if (document.querySelector(".usermenu")) { closeUserMenu(); return; }
     const m = el("div", "usermenu"); m.setAttribute("role", "menu");
@@ -1228,13 +1333,15 @@ async function main() {
     const bell = item("", "bell", "Уведомления");
     try { if (O().ntNew && O().ntNew()) bell.append(el("span", "newbadge", "Новое")); } catch (e) {}
     bell.addEventListener("click", () => { closeUserMenu(); openNotifySettings(); });
+    const diag = item("", "book", "Проверить синхронизацию");
+    diag.addEventListener("click", openSyncDiagnostics);
     const out = item(" danger", "exit", "Выйти"), outT = out.querySelector(".umt");
     out.addEventListener("click", () => {
       if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
       out.dataset.armed = "1"; outT.textContent = "Нажмите ещё раз, чтобы выйти";
       setTimeout(() => { delete out.dataset.armed; outT.textContent = "Выйти"; }, 3000);
     });
-    m.append(who, about, bell, out);
+    m.append(who, about, bell, diag, out);
     const r = top.getBoundingClientRect();
     m.style.top = (r.bottom + window.scrollY + 6) + "px";
     m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + "px";
