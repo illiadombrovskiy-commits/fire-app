@@ -1,0 +1,22 @@
+name: Modular regression tests
+on:
+  push:
+    branches: [refactor/modular-architecture]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          for f in src/*.js auth.js globe.js; do
+            node --input-type=module --check < "$f" || exit 1
+          done
+      - name: Browser regression
+        run: python3 tests/run_browser.py
+      - name: Reminder regression
+        if: always()
+        run: python3 tests/test_remind.py
