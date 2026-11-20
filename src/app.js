@@ -1953,7 +1953,19 @@ function todayReadings(){
     list.push({day:t,plan:String(plan||"").slice(0,60),label:String(label||"").slice(0,40),
       ref:String(ref).slice(0,80),url:String(url||"").slice(0,240),ahead});
   };
-  schedRows().forEach(row=>{
+  const rows=schedRows();
+  // Completing a short schedule (for example Jude, one chapter) removes it
+  // from schedRows immediately. Keep its actual reading visible for today.
+  const included=new Set(rows.map(row=>row.id));
+  Object.keys(state.plans||{}).forEach(id=>{
+    if(included.has(id) || id===SCHED.id || !xDef(id))return;
+    const saved=state.plans[id]||{};
+    if(["nt","ot"].some(k=>(saved[k]&&saved[k].log||[]).some(x=>x&&x.d===t))){
+      rows.push({id,kind:"my",primary:false});
+      included.add(id);
+    }
+  });
+  rows.forEach(row=>{
     if(row.kind==="conf"){
       const reads=confReadWhen(),units=confToday();
       units.filter(u=>reads[u.i]===t).forEach(u=>{
