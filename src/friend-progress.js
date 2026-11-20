@@ -19,5 +19,12 @@ const O=()=>window.Ogonek;
   // Present a single day-level status without marking the *next* passage read.
   const fProfileReadToday = (d, day, globeLit) => fLit(d, day) || globeLit === day;
   const fScheduleReadToday = (passage, day) => !!passage && passage.last === day;
+  // readRef identifies the completed passage; ref always identifies NEXT.
+  const fExactReadToday = (passage, day) =>
+    passage && passage.last === day && typeof passage.readRef === "string" ? passage.readRef : "";
+  const fTodayReadings = (profile, day) =>
+    profile && Array.isArray(profile.todayReadings)
+      ? profile.todayReadings.filter(r => r && r.day === day && typeof r.ref === "string" && !!r.ref).slice(-8)
+      : [];
 
-export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday};
+export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday,fExactReadToday,fTodayReadings};
