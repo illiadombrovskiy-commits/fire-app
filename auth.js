@@ -5,7 +5,7 @@ import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday } from "./src/friend-progress.js?v=restore-classic-1";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday,fLiveAhead } from "./src/friend-progress.js?v=live-pace-1";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -428,7 +428,7 @@ async function main() {
     return b;
   }
 
-  function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
+  function fmtAhead(n) { return !Number.isFinite(n) ? "нет свежих данных" : n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
   function shortPassageLabel(label) {
     return ({"Новый Завет":"НЗ","Ветхий Завет":"ВЗ"})[label] || label || "Отрывок";
   }
@@ -463,7 +463,7 @@ async function main() {
       mid.append(line);
     });
     const right = el("div", "fstreak");
-    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(d[k + "Ahead"]))));
+    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(fLiveAhead(d, k, t)))));
     row.append(av, mid, right);
     const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
     row.tabIndex = 0; row.setAttribute("role", "button");
@@ -574,7 +574,7 @@ async function main() {
         const row = el("div", "frow"), left = el("div");
         const samePlan = d.globeSchedule.name === d.planName;
         const matchingKey = samePlan ? fKeys(d).find(k => fRef(d,k) === p.ref && (!p.key || p.key === k)) : null;
-        const pace = Number.isFinite(p.ahead) ? p.ahead : matchingKey && Number.isFinite(d[matchingKey+"Ahead"]) ? d[matchingKey+"Ahead"] : null;
+        const pace = fLiveAhead(d, p.key || matchingKey, t, p);
         const label = p.label === "НЗ" ? "Новый Завет" : p.label === "ВЗ" ? "Ветхий Завет" : p.label || "Отрывок";
         left.append(el("small", null, label + (pace === null ? " · нет данных о темпе" : " · " + fmtAhead(pace))));
         const safeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (_) { return ""; } };
@@ -593,7 +593,7 @@ async function main() {
     fKeys(d).forEach((k) => {
       const done = fDone(d, k), planReadToday = d[k + "Last"] === t;
       const row = el("div", "frow"), left = el("div");
-      left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
+      left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(fLiveAhead(d, k, t))));
       if (done) left.append(el("b", null, "Пройдено"));
       else { const a = el("a", null, fRef(d, k)); a.href = fUrl(d, k); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
       row.append(left, el("span", planReadToday ? "ok" : "hint", planReadToday ? "✓" : "следующий отрывок"));
