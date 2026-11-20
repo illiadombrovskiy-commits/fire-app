@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 async function load(name){return import("data:text/javascript;base64,"+Buffer.from(await readFile(new URL("../src/"+name+".js",import.meta.url))).toString("base64"))}
 globalThis.window={Ogonek:{planId:"spb",DAYS:364}};
-const {fLit,fProfileReadToday,fScheduleReadToday}=await load("friend-progress");
+const {fLit,fProfileReadToday,fScheduleReadToday,fLiveAhead}=await load("friend-progress");
 const {createEncouragementConfig}=await load("encouragement-config");
 const {createEncouragementService}=await load("encouragement-service");
 const {createFriendActions}=await load("friend-actions");
@@ -21,6 +21,36 @@ assert.equal(fProfileReadToday({heroFlameDay:"",globeSchedule:{passages:[{ref:"4
 assert.equal(fProfileReadToday({heroFlameDay:""},dayRead,""),false);
 assert.equal(fScheduleReadToday({ref:"4 Цар. 25",last:dayRead},dayRead),true);
 assert.equal(fScheduleReadToday(null,dayRead),false);
+// Реальный случай: друг завершил Бытие, но в профиле остались вчерашние +9/+12.
+// 101 прочитанный отрывок на 20 ноября не может означать опережение
+// по обоим заветам при общем плане, начавшемся 28 сентября.
+window.OgonekBibleSchedule={SPB_START:"2026-09-28"};
+const ivan={plan:"spb",planName:"Церковь в Санкт-Петербурге",
+  ntRead:50,otRead:51,ntDays:728,otDays:728,ntAhead:9,otAhead:12};
+assert.equal(fLiveAhead(ivan,"nt","2026-11-20"),-3);
+assert.equal(fLiveAhead(ivan,"ot","2026-11-20"),-2);
+assert.equal(fLiveAhead(ivan,"nt","2026-11-21"),-4);
+assert.equal(fLiveAhead(ivan,"ot","2026-11-21"),-3);
+// Сегодняшний непрочитанный отрывок не считается просроченным до завтра.
+assert.equal(fLiveAhead({...ivan,ntRead:53},"nt","2026-11-20"),0);
+assert.equal(fLiveAhead({...ivan,ntRead:55},"nt","2026-11-20"),1);
+// Старые опубликованные числа в главном профиле не должны перебивать календарь.
+ivan.globeSchedule={name:ivan.planName,passages:[{key:"nt",ahead:9},{key:"ot",ahead:12}]};
+assert.equal(fLiveAhead(ivan,"nt","2026-11-20",ivan.globeSchedule.passages[0]),-3);
+// Для других ежедневных расписаний календарь и объём читаются из профиля.
+const own={plan:"custom",ntRead:4,paceMeta:{asOf:"2026-11-18",start:"2026-11-18",total:20,daily:true}};
+assert.equal(fLiveAhead(own,"nt","2026-11-20"),1);
+const secondary={plan:"spb",planName:"Церковь",globeSchedule:{name:"Мой план",
+  pace:{asOf:"2026-11-18",start:"2026-11-18",total:20,daily:true,read:{nt:4}},
+  passages:[{key:"nt",ahead:3}]}};
+assert.equal(fLiveAhead(secondary,"nt","2026-11-20",secondary.globeSchedule.passages[0]),1);
+// У неежедневных или старых чужих планов не выдумываем опережение.
+const unusual={plan:"custom",planName:"Книга служения",globeSchedule:{name:"Книга служения",
+  pace:{asOf:"2026-11-19",start:"2026-11-01",total:30,daily:false,read:{nt:12}},
+  passages:[{key:"nt",ahead:5}]}};
+assert.equal(fLiveAhead(unusual,"nt","2026-11-20",unusual.globeSchedule.passages[0]),null);
+assert.equal(fLiveAhead(unusual,"nt","2026-11-19",unusual.globeSchedule.passages[0]),5);
+assert.equal(fLiveAhead({plan:"custom",ntAhead:9},"nt","2026-11-20"),null);
 // Old globe spots had no date check: yesterday's fire must go out today.
 const profileUnread={heroFlameDay:"",globeSchedule:{passages:[{ref:"4 Цар. 25",last:""}]}};
 assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:dayRead,seen:dayRead,spots:[{l:true}]}),true);
