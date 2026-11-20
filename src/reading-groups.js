@@ -194,11 +194,11 @@ function callNote(){
   if(L&&L.by!=="me"&&!(L.in||[]).includes("me"))return `<div class="rgring"><span class="rgdot"></span><b>${esc(who(L.by).name)} зовёт читать вместе</b><span>сейчас</span></div>`;
   const S=meetState();return S&&!L?`<div class="rgmeetline">🗓 ${esc(S.txt)} · ${esc(meetDays(G.meet))}</div>`:"";
 }
-/* что видит друг, когда ему звонят: уведомление на телефоне + окно в Огоньке */
+/* что видит друг, когда ему звонят: уведомление на телефоне + окно в приложении «В Слове» */
 function incoming(F,by){
   const k=G;G=F;const T=planToday(),url=roomUrl();G=k;
   const n=document.createElement("div");n.className="rgpush";
-  n.innerHTML=`<span class="rgpico">${miniFlame(true)}</span><div><b>Огонёк · ${esc(F.name)}</b><span>📞 ${esc(who(by).name)} зовёт читать вместе — присоединяйтесь</span></div><small>сейчас</small>`;
+  n.innerHTML=`<span class="rgpico">${miniFlame(true)}</span><div><b>В Слове · ${esc(F.name)}</b><span>📞 ${esc(who(by).name)} зовёт читать вместе — присоединяйтесь</span></div><small>сейчас</small>`;
   document.body.appendChild(n);setTimeout(()=>n.classList.add("in"),30);
   const open=()=>{n.remove();
     sheet("",`<div class="rgincall">${av(by)}<h3>${esc(who(by).name)} зовёт читать вместе</h3><p>Жизненная группа «${esc(F.name)}»${T.refs.length?" · сегодня "+esc(T.refs.join(", ")):""}</p>
@@ -215,7 +215,7 @@ function startCall(){
     if(!G.link){O().toast(G.owner==="me"?"Добавьте ссылку на звонок: «Расписания» → ваша группа → «Настроить группу»":"Создатель группы ещё не добавил ссылку на звонок");return}
     const L=callLive();
     if(L){if(!L.in.includes("me"))put({"live.in":(L.in.concat("me")).map(uidOf)})}
-    else{put({live:{by:MYUID,t:Date.now(),in:[MYUID]}});try{O().toast("Друзья в группе увидят «📞 Войти» у себя в Огоньке")}catch(e){}}
+    else{put({live:{by:MYUID,t:Date.now(),in:[MYUID]}});try{O().toast("Друзья в группе увидят «📞 Войти» у себя в приложении «В Слове»")}catch(e){}}
     return}
   const L=callLive();
   if(L){if(!(L.in||[]).includes("me"))L.in=(L.in||[]).concat("me");store();setTimeout(render,300);return}
@@ -231,7 +231,7 @@ function demoRing(){
   const by=F.members.find(m=>m.id!=="me"&&m.st==="in");const id=by?by.id:"tolya";
   F.live={by:id,t:Date.now(),in:[id]};store();render();incoming(F,id);
 }
-/* ---------- чтение костра = обычное расписание Огонька ---------- */
+/* ---------- чтение костра = обычное расписание «В Слове» ---------- */
 function planId(){return G.plan&&G.plan.kind!=="church"?"fire-"+G.code:"spb"}
 function planToday(){
   if(!G.plan||G.plan.kind==="church"){const r=window.ogChurchToday?window.ogChurchToday():null;return r||{refs:[],urls:[],any:myRead()}}
@@ -378,18 +378,18 @@ function invite(){
   const saveSent=()=>{sent[F.code]=pend.slice();invSave(sent)};
   sheet("Позвать друзей",`
     <p class="rghint" data-free></p>
-    <div class="rglbl">Друзья в Огоньке</div>
+    <div class="rglbl">Друзья в «В Слове»</div>
     <div class="rgpick" data-list></div>
     <div class="rglbl">Или отправьте ссылку</div>
     <button class="rgbtn sec" type="button" data-copy>🔗 Скопировать ссылку на группу</button>
     ${!DEMO&&navigator.share?`<button class="rgbtn sec" type="button" data-share>📤 Отправить через…</button>`:""}
-    <p class="rghint">Друг откроет ссылку, нажмёт «Присоединиться» — и чтение группы появится у него в Огоньке.</p>
+    <p class="rghint">Друг откроет ссылку, нажмёт «Присоединиться» — и чтение группы появится у него в приложении «В Слове».</p>
     <button class="rgbtn" type="button" data-done>Готово</button>`,(el,close)=>{
     const draw=()=>{G=F;const fr_=free(),P=pending();
       el.querySelector("[data-free]").textContent=(fr_>0?`Свободно ${fr_} ${pl(fr_,"место","места","мест")} из ${MAX()-1}.`:fr_<0?`Приглашений больше, чем мест — отзовите лишние.`:P.length?`Все места разобраны приглашениями. Отзовите приглашение, чтобы позвать другого.`:`Все места заняты — в группе ${MAX()} ${pl(MAX(),"человек","человека","человек")}.`)
         +(P.length?` Ждём ответа: ${P.length}.`:"");
       const fr=ogFriends(),L=el.querySelector("[data-list]");
-      if(!fr.length){L.innerHTML=`<p class="rghint">Пока нет друзей в Огоньке. Добавьте их во вкладке «Друзья» — и они появятся здесь.</p>`;return}
+      if(!fr.length){L.innerHTML=`<p class="rghint">Пока нет друзей в приложении «В Слове». Добавьте их во вкладке «Друзья» — и они появятся здесь.</p>`;return}
       L.innerHTML=fr.map(f=>{const m=F.members.find(x=>x.id===f.id&&x.st==="in"),was=P.includes(f.id);
         const b=m?`<span class="rgok">в группе</span>`:was?`<span class="rgwait">приглашён</span><button class="rgre" type="button" data-un="${esc(f.id)}">Отозвать</button>`:(fr_>0?`<button class="rgre" type="button" data-inv="${esc(f.id)}">Пригласить</button>`:`<span class="rgok" style="color:var(--muted)">нет мест</span>`);
         return `<div class="rgli2">${av(f.id)}<span>${esc(who(f.id).name)}</span>${b}</div>`}).join("");
@@ -401,7 +401,7 @@ function invite(){
       const i=e.target.closest("[data-inv]"),u=e.target.closest("[data-un]");G=F;
       if(i&&free()>0){const id=i.dataset.inv;
         if(!DEMO){i.disabled=true;i.textContent="…";
-          NET.invite(uidOf(id),F.code,F.name).then(()=>{if(!pend.includes(id))pend.push(id);saveSent();draw();try{O().toast(`${who(id).name} увидит приглашение в Огоньке`)}catch(_){}})
+          NET.invite(uidOf(id),F.code,F.name).then(()=>{if(!pend.includes(id))pend.push(id);saveSent();draw();try{O().toast(`${who(id).name} увидит приглашение в приложении «В Слове»`)}catch(_){}})
             .catch(err=>{console.warn(err);i.disabled=false;i.textContent="Пригласить";O().toast("Не удалось отправить приглашение. Проверьте интернет.")});return}
         F.members.push({id,st:"inv",read:DEMO_READ[id],react:{fire:[],pray:[]}});store();draw();render();
         /* демо: друг принимает через 6 с (если приглашение не отозвали) */
@@ -414,7 +414,7 @@ function invite(){
     });
     const url=location.origin+location.pathname+"?group="+F.code, gname=F.name;
     el.querySelector("[data-copy]").onclick=e=>{try{navigator.clipboard.writeText(url).catch(()=>{})}catch(_){}e.target.textContent="✓ Ссылка скопирована"};
-    const sh=el.querySelector("[data-share]");if(sh)sh.onclick=()=>{try{navigator.share({title:"Огонёк · "+gname,text:"Читаем Библию вместе в жизненной группе «"+gname+"». Присоединяйся:",url}).catch(()=>{})}catch(_){}};
+    const sh=el.querySelector("[data-share]");if(sh)sh.onclick=()=>{try{navigator.share({title:"В Слове · "+gname,text:"Читаем Библию вместе в жизненной группе «"+gname+"». Присоединяйся:",url}).catch(()=>{})}catch(_){}};
     el.querySelector("[data-done]").onclick=close;
   });
 }
@@ -665,7 +665,7 @@ window.ogGroupsNet=function(net,joinCode){
     render();try{window.ogRefresh&&window.ogRefresh()}catch(e){}
   });
   if(joinCode)setTimeout(()=>joinReal(joinCode),600);
-  /* приглашения от друзей из Огонька */
+  /* приглашения от друзей из «В Слове» */
   if(net.watchInv){const shown={};net.watchInv(list=>{
     /* приглашение отозвали — закрыть его окно, если открыто */
     const have=new Set(list.map(i=>i&&i.group));Object.keys(shown).forEach(c=>{if(!have.has(c)){delete shown[c];document.querySelectorAll(`.rgmodal[data-inv="${c}"]`).forEach(m=>m.remove())}});
