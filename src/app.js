@@ -6,8 +6,8 @@ const icoEl=k=>{const s=el("span","ico");s.innerHTML=ICO[k]||"";return s};
 function embPicker(get,set){const w=el("div","embs");w.setAttribute("role","radiogroup");w.setAttribute("aria-label","Значок");
   const draw=()=>{w.textContent="";EMBLEMS.forEach(k=>{const b=el("button","emb"+(get()===k?" on":""));b.type="button";b.setAttribute("role","radio");b.setAttribute("aria-checked",String(get()===k));b.append(icoEl(k));b.addEventListener("click",()=>{set(k);draw()});w.append(b)})};draw();return w}
 function myEmb(d){return d&&d.emb&&ICO[d.emb]?d.emb:"book"}
-const ABBR_FIX={"Еф.":"Эф.","Есф.":"Эсф.","Еккл.":"Эккл.","Руф.":"Руфь"};
-function fixAbbr(s){if(Array.isArray(s))return s.map(fixAbbr);if(s&&typeof s==="object"){for(const k in s)s[k]=fixAbbr(s[k]);return s}return typeof s==="string"&&ABBR_FIX[s]?ABBR_FIX[s]:s}
+const {iso,parse,add,today,dayNo,plural,daysWord}=window.OgonekDates;
+const {fixAbbr}=window.OgonekStateSchema;
 const SCHED=(()=>{let s=null;try{s=fixAbbr(JSON.parse(localStorage.getItem(STORE_KEY)))}catch(e){}
   try{return buildSched(s&&s.schedDef)}catch(e){console.warn(e);return buildSched({id:"spb"})}})();
 
@@ -51,29 +51,10 @@ const BOOKSTARTS=[];KEYS.forEach(k=>PLAN.forEach((d,i)=>{if(!i||PLAN[i-1][T[k].b
 const QUESTIONS=["Что в сегодняшнем чтении больше всего коснулось вас?","Что этот отрывок открывает о Боге?","Какой стих вы хотели бы запомнить сегодня? Почему?","Есть ли здесь обещание, которое можно взять для себя?","Что вы узнали о человеке и его отношениях с Богом?","За что из прочитанного можно поблагодарить Господа?","Какой вопрос возник у вас при чтении?","Есть ли в отрывке пример, которому стоит последовать?","Как прочитанное связано с вашим сегодняшним днём?","Как связаны сегодняшние отрывки из Нового и Ветхого Завета?","О чём вы хотите помолиться после этого чтения?","Что в тексте показывает Христа?","Чему этот отрывок учит о жизни церкви?","Какую одну мысль вы расскажете сегодня другому человеку?"];
 
 /* ---------- dates ---------- */
-function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function parse(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
-function add(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}
-const today=()=>iso(new Date());
-function dayNo(s){return Math.round(parse(s).getTime()/864e5)}
-function plural(n,one,few,many){const a=n%10,b=n%100;if(a===1&&b!==11)return one;if(a>=2&&a<=4&&(b<12||b>14))return few;return many}
-const daysWord=n=>plural(n,"день","дня","дней");
 
 /* ---------- state ---------- */
 const KEY=STORE_KEY;
-function fresh(){return {v:3,start:today(),nt:{log:[],read:[]},ot:{log:[],read:[]},xp:0,frz:0,frzDays:[],best:0,answers:{},quiz:{},gems:{n:0,step:0,used:[],tests:0,perfect:0}}}
-function migrate(s){
-  if(!s||typeof s!=="object")return fresh();
-  s=fixAbbr(s);
-  if(s.v===3){const f=Object.assign(fresh(),s);f.gems=Object.assign(fresh().gems,s.gems||{});return f}
-  if(s.v===2){const f=Object.assign(fresh(),s);f.v=3;KEYS.forEach(k=>{const log=(s[k]&&s[k].log)||[];f[k]={log,read:[...new Set(log.map(x=>x.p))]}});return f}
-  if(s.v===1){ // old format: one mark per day for both testaments
-    const log=(s.comp||[]).map(c=>({d:c.d,p:c.p}));
-    const read=log.map(x=>x.p);
-    return Object.assign(fresh(),{start:s.start||today(),nt:{log:log.slice(),read:read.slice()},ot:{log:log.slice(),read:read.slice()},xp:s.xp||0,frz:s.frz||0,frzDays:s.frzDays||[],best:s.best||0});
-  }
-  return fresh();
-}
+const {fresh,migrate}=window.OgonekStateSchema.create(KEYS);
 function score(s){s=migrate(s);return confScore(s)+s.nt.read.length+s.ot.read.length+Object.values(s.plans||{}).reduce((a,x)=>a+((x.nt&&x.nt.read)||[]).length+((x.ot&&x.ot.read)||[]).length,0)+Object.keys(s.answers).length+Object.keys(s.quiz||{}).length+((s.gems&&s.gems.used)||[]).length}
 const readSet=k=>new Set(state[k].read);
 function nextP(k){const r=readSet(k);let p=0;while(p<DAYS&&r.has(p))p++;return p}
