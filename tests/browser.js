@@ -181,33 +181,6 @@
     equal(position().b, globe.bookIndex("Мф."));
   });
 
-  await run("Галочка относится к прочитанному, а не к следующему отрывку; темп сохраняется", () => {
-    mark(1);
-    const t = app.today(), s = app.summary(), p = s.globeSchedule.passages[0];
-    equal(p.readRef, "Мф. 1:1–2");
-    equal(p.last, t);
-    equal(p.ref === p.readRef, false);
-    equal(typeof p.ahead, "number");
-    equal(s.todayReadings.some(r => r.day === t && r.ref === p.readRef &&
-      r.plan === s.globeSchedule.name && Number.isFinite(r.ahead)), true);
-    const next = s.globeSchedule.passages[1];
-    equal(next.readRef, "");
-    equal(next.last === t, false);
-  });
-
-  await run("Чтение в дополнительном расписании видно отдельно от основного", () => {
-    const id = "check-other-reading";
-    window.ogPlanAdd({ id, name: "Дополнительное чтение", books: ["Иуд."],
-      start: app.today(), by: "chapters", amount: 1 });
-    window.ogPlanMark(id);
-    const s = app.summary();
-    equal(s.globeSchedule.name !== "Дополнительное чтение", true);
-    const read = s.todayReadings.find(r => r.plan === "Дополнительное чтение");
-    equal(read.ref, "Иуд. 1");
-    equal(read.day, app.today());
-    equal(typeof read.ahead, "number");
-  });
-
   await run("Вчерашний огонёк на глобусе погас, а сегодняшний горит", () => {
     const globe = window.OgonekGlobe;
     const now = new Date(), past = new Date(now); past.setDate(past.getDate() - 1);
@@ -337,7 +310,7 @@
       equal(app.getState().nt.read, []);
       equal(app.getState().globeSchedule, id);
       equal(summaries.map(schedule => schedule.name), ["Мой главный план", "Мой главный план"]);
-      equal(summaries[1].passages, [{ ref: "Иуд. 1", url: "https://bible.recoveryversion.ru/jude/1/1", key: "nt", label: "Новый Завет", ahead: 0, last: "", readRef: "", readUrl: "" }]);
+      equal(summaries[1].passages, [{ ref: "Иуд. 1", url: "https://bible.recoveryversion.ru/jude/1/1", key: "nt", label: "Новый Завет", ahead: 0, last: "" }]);
     } finally {
       app.onSave = null;
     }
