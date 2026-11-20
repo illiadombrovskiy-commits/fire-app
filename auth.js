@@ -348,15 +348,16 @@ async function main() {
       if (kind === "cheer") {
         const s = O().summary();
         if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
-        await F.setDoc(myRef, Object.assign({}, s, { flameDay: day, updated: F.serverTimestamp() }), { merge: true });
-        if (!globeHide) await F.setDoc(F.doc(db, "globe", me.uid), globeDoc(s));
+        // The normal reading sync owns the globe and full profile.
+        // Only refresh the day marker required by newer cheer rules.
+        await F.setDoc(myRef, { flameDay: day }, { merge: true });
       }
       await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + suffix), data);
       markSent(uid, kind); O().toast(K.sent); return true;
     } catch (e) {
       console.warn(e);
       if (e && e.code === "permission-denied") { O().toast("Отправка не подтверждена сервером."); return false; }
-      O().toast("Не удалось отправить. Проверьте интернет."); return false;
+      O().toast("Не удалось отправить: " + (e && e.code ? e.code : "ошибка приложения")); return false;
     }
   }
 
