@@ -16,4 +16,16 @@ const O=()=>window.Ogonek;
     return fKeys(d).some(k => d[k + "Last"] === t);
   };
 
-export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit};
+  // Globe and profile are written separately and can briefly disagree.
+  // A freshly published public flame proves that the user read today,
+  // even if their profile's per-schedule dates are not yet synchronized.
+  const fDayRead = (profile, globe, day) =>
+    fLit(profile, day) || !!(globe &&
+      (globe.lit === day ||
+       (globe.seen === day && Array.isArray(globe.spots) && globe.spots.some(p => p && p.l === true))));
+  // For one passage the daily check mark can reflect the public reading
+  // status. Multiple passages retain independent, exact check marks.
+  const fPassageRead = (p, passages, profile, globe, day) =>
+    !!p && (p.last === day || ((passages || []).length === 1 && fDayRead(profile, globe, day)));
+
+export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fDayRead,fPassageRead};
