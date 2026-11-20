@@ -5,7 +5,7 @@ import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=reading-sync-1";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday } from "./src/friend-progress.js?v=profile-day-1";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -351,6 +351,8 @@ async function main() {
     else av.textContent = (d.name || "?").trim().charAt(0).toUpperCase();
     const mid = el("div"); mid.style.minWidth = "0";
     mid.append(el("div", "fname", isMe ? "Вы" : (d.name || "Читатель")));
+    const lit = profileReadToday(d, isMe ? me.uid : uid, t);
+    if (lit) mid.append(el("span", "freadtoday on", "✓ Прочитано сегодня"));
     fKeys(d).forEach((k) => {
       const line = el("div", "fline");
       const readToday = d[k + "Last"] === t;
@@ -359,7 +361,6 @@ async function main() {
       mid.append(line);
     });
     const right = el("div", "fstreak");
-    const lit = fLit(d, t);
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(d[k + "Ahead"]))));
     row.append(av, mid, right);
     const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
@@ -420,13 +421,16 @@ async function main() {
         }
       }).catch((e) => console.warn("Could not refresh friend profile", e));
     }
-    const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
+    const t = O().today(), readToday = profileReadToday(d, isMe ? me.uid : id, t);
+    const modal = el("div", "fmodal"), sheet = el("div", "fsheet");
+    modal.dataset.readToday = String(readToday);
     sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
     modal.addEventListener("click", (e) => { if (e.target === modal) closeProfile(); });
     document.addEventListener("keydown", escClose);
 
     const head = el("div", "fhead"), ht = el("div");
     ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", (d.streak || 0) + " " + O().plural(d.streak || 0, "день подряд", "дня подряд", "дней подряд")));
+    ht.append(el("div", "freadtoday" + (readToday ? " on" : ""), readToday ? "✓ Прочитано сегодня" : "Сегодня ещё нет отметки"));
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64, isMe ? myPhotoHQ() : (d.photoHQ || "")), ht, x);
 
@@ -449,18 +453,21 @@ async function main() {
         const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
         if (url) { const a = el("a", null, p.ref); a.href = url; a.target = "_blank"; a.rel = "noopener"; left.append(a); }
         else left.append(el("b", null, p.ref || "Пройдено"));
-        row.append(left, el("span", p.last === t ? "ok" : "hint", p.last === t ? "✓ сегодня" : "сегодня ещё нет"));
+        // The reference is the NEXT passage; its completion must not be inferred
+        // from a flame earned on another schedule or from the previous passage.
+        const readOnPlan = fScheduleReadToday(p, t);
+        row.append(left, el("span", readOnPlan ? "ok" : "hint", readOnPlan ? "✓ сегодня по плану" : "следующий отрывок"));
         reading.append(row);
       });
     } else {
     if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
     fKeys(d).forEach((k) => {
-      const done = fDone(d, k), readToday = d[k + "Last"] === t;
+      const done = fDone(d, k), planReadToday = d[k + "Last"] === t;
       const row = el("div", "frow"), left = el("div");
       left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
       if (done) left.append(el("b", null, "Пройдено"));
       else { const a = el("a", null, fRef(d, k)); a.href = fUrl(d, k); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
-      row.append(left, el("span", readToday ? "ok" : "hint", readToday ? "✓ сегодня" : "сегодня ещё нет"));
+      row.append(left, el("span", planReadToday ? "ok" : "hint", planReadToday ? "✓ сегодня по плану" : "следующий отрывок"));
       reading.append(row);
     });
     }
@@ -716,6 +723,10 @@ async function main() {
   // Live public globe documents are the source of truth for daily flames.
   // Profile summaries are only a fallback for friends using an older version.
   let globeList = null, globeDocs = [], globeUnsub = null;
+  function profileReadToday(profile, uid, day) {
+    const live = globeDocs.find((p) => p.id === uid);
+    return fProfileReadToday(profile, day, live && live.lit);
+  }
   function stopGlobeLive() {
     if (globeUnsub) { globeUnsub(); globeUnsub = null; }
     globeDocs = []; globeList = null;
@@ -744,6 +755,15 @@ async function main() {
     });
     globeList = list;
     G.setPeople(list);
+    // A live flame might arrive before Firestore updates a friend's profile.
+    // Keep an open profile in sync with the globe's authoritative day marker.
+    if (activeProfileId && activeProfileId !== me.uid) {
+      const shown = document.querySelector(".fmodal");
+      const person = friendData[activeProfileId];
+      if (shown && person && shown.dataset.readToday !== String(profileReadToday(person, activeProfileId, O().today()))) {
+        openProfile(activeProfileId, false, true);
+      }
+    }
   }
   function globeRelSync() { refreshGlobeList(); }
   function openGlobe() {
