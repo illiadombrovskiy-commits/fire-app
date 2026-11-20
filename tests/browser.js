@@ -181,6 +181,27 @@
     equal(position().b, globe.bookIndex("Мф."));
   });
 
+  await run("Вчерашний огонёк на глобусе не считается сегодняшним", () => {
+    const globe = window.OgonekGlobe, now = new Date(), yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const iso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const today = iso(now), oldDay = iso(yesterday), book = globe.bookIndex("4 Цар.");
+    const person = {
+      id: "regression-sergei", name: "Sergei", b: book, plan: "Моё расписание",
+      refs: ["4 Цар. 25"], streak: 1, lit: oldDay, seen: oldDay,
+      spots: [{ b: book, l: true }]
+    };
+    globe.open({ people: [person] });
+    try {
+      equal(element(".gstat").textContent.includes("горят сегодня: 0"), true);
+      globe.setPeople([{ ...person, lit: today, seen: today }]);
+      equal(element(".gstat").textContent.includes("горят сегодня: 1"), true);
+      // A leftover spot from yesterday must remain off even if lit is empty.
+      globe.setPeople([{ ...person, lit: "", seen: oldDay }]);
+      equal(element(".gstat").textContent.includes("горят сегодня: 0"), true);
+    } finally { globe.close(); }
+  });
+
   await run("Книга служения отображается на глобусе среди других расписаний", () => {
     const id = "test-ministry";
     const name = "Читаю служение";
