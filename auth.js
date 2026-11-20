@@ -122,13 +122,17 @@ async function main() {
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
   // Publish the friend profile and the public globe as ONE Firestore commit.
   // Otherwise the flame can show today while the friend still sees Genesis.
-  async function commitReadingPresence(s, profileUpdate) {
+  async function commitReadingPresence(s, profileUpdate, progressState) {
     const uid = me && me.uid;
     if (!uid || !myRef) return false;
-    const profileRef = myRef, globeRef = F.doc(db, "globe", uid);
+    const profileRef = myRef, globeRef = F.doc(db, "globe", uid), progressRef = F.doc(db, "users", uid);
     const visible = !globeHide, initial = globeDoc(s);
     const commit = (globeData) => {
       const batch = F.writeBatch(db);
+      // Persist the actual private progress and its public representations as
+      // one Firestore transaction. Previously /users could stay on Genesis
+      // while /profiles or /globe had already advanced to Exodus.
+      if (progressState) batch.set(progressRef, progressState);
       batch.set(profileRef, profileUpdate, { merge: true });
       if (visible) batch.set(globeRef, globeData);
       else batch.delete(globeRef);
@@ -163,7 +167,7 @@ async function main() {
     }
   }
 
-  function publishSummary(immediate = false) {
+  function publishSummary(immediate = false, progressState = null) {
     // A failed startup read must never replace a current cloud profile with
     // yesterday's locally cached progress, nor reveal a previously hidden globe.
     const sequence = ++presenceSequence;
@@ -181,18 +185,18 @@ async function main() {
       if (myCode) profileUpdate.code = myCode; // never erase codes when initialization fails
       // A single atomic batch prevents today's globe flame from getting ahead
       // of yesterday's reading chapters in the friend-facing profile.
-      const commitPending = commitReadingPresence(s, profileUpdate);
+      const commitPending = commitReadingPresence(s, profileUpdate, progressState);
       F.setDoc(F.doc(db, "cards", publisherUid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
-      commitPending.then((ok) => {
+      return commitPending.then((ok) => {
         if (me && me.uid === publisherUid && sequence === presenceSequence) {
           presencePending = !ok;
         }
+        return ok;
       });
     };
-    // iOS can suspend a PWA before a debounced timer runs. Start Firestore
-    // writes as part of the same save action, not after 1.2 seconds.
-    if (immediate) publish();
-    else pubTimer = setTimeout(publish, 1200);
+    // Persist the event immediately so iOS does not suspend a pending timer.
+    if (immediate) return publish();
+    pubTimer = setTimeout(publish, 1200);
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
@@ -1417,10 +1421,14 @@ async function main() {
     if (!me || me.uid !== user.uid) return;
     if (O().progressLoaded) O().progressLoaded();
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
-    let chain = Promise.resolve();
-    O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
-    // Register publishing before profile initialization, which may stall offline.
-    O().onSave = () => { presenceRevision++; publishSummary(true); renderFriends(); if (globeList) refreshGlobeList(); };
+    // One save action must never send /users on a different queue from
+    // /profiles and /globe: an older queued write used to restore Genesis 50.
+    O().setRemote((progressSnapshot) => {
+      presenceRevision++;
+      const pending = publishSummary(true, progressSnapshot);
+      return pending || Promise.resolve(false);
+    });
+    O().onSave = () => { renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
 
     try {
@@ -1436,7 +1444,7 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      publishSummary(true); // publish the verified profile immediately after initialization
+      publishSummary(true, O().getState()); // reconcile all 3 cloud docs on login
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
