@@ -41,6 +41,15 @@
     button.click();
   }
 
+  await run("Модули новой архитектуры загружены", () => {
+    for (const name of ["OgonekBibleSchedule","OgonekIcons","OgonekDates","OgonekStateSchema","OgonekSounds","OgonekProgressVisual","OgonekAwardVisual","OgonekBibleVerses","OgonekReadingProgress"]) {
+      equal(typeof window[name], "object");
+    }
+    equal(typeof window.OgonekProgressVisual.ignite, "function");
+    equal(window.OgonekStateSchema.create(["nt","ot"]).fresh().v, 3);
+    equal(window.OgonekBibleSchedule.buildSched({id:"spb"}).id, "spb");
+  });
+
   await run("Церковный план открывает нужные отрывки", () => {
     equal(app.planId, "spb");
     equal(window.ogChurchToday().refs, ["Мф. 1:1–2", "Быт. 1:1–5"]);
@@ -160,13 +169,13 @@
     window.ogSetPage("plan");
     element('button[aria-label="Сделать главным: Мой план"]').click();
     equal(element("#schedList .sllab.main + .slwrap .stl b").textContent, "Мой план");
-    equal(position().refs, ["Иуд. 1"]);
+    equal(position().refs, ["Новый Завет: Иуд. 1"]);
     equal(position().spots, [{ b: globe.bookIndex("Иуд."), l: false }]);
     equal(app.getState().ot.read, [0]);
     equal(JSON.parse(localStorage.getItem("ogonek-rv-year1")).globeSchedule, id);
 
     window.ogPlanMark(id);
-    equal(position().refs, ["Откр. 1"]);
+    equal(position().refs, ["Новый Завет: Откр. 1"]);
     equal(position().spots, [{ b: globe.bookIndex("Откр."), l: true }]);
     window.ogPlanRemove(id);
     equal(position().b, globe.bookIndex("Мф."));
@@ -256,7 +265,7 @@
       const globe = restored.OgonekGlobe;
       const position = globe.schedulePosition(reopenedApp.summary().globeSchedule, reopenedApp.today());
       equal(position.plan, "Мой сохранённый план");
-      equal(position.refs, ["Откр. 1"]);
+      equal(position.refs, ["Новый Завет: Откр. 1"]);
       equal(position.spots, [{ b: globe.bookIndex("Откр."), l: true }]);
       equal(reopenedApp.getState().ot.read, [0]);
       equal(restored.document.querySelector("#schedList .sllab.main + .slwrap .stl b").textContent,
@@ -284,7 +293,7 @@
       equal(app.getState().nt.read, []);
       equal(app.getState().globeSchedule, id);
       equal(summaries.map(schedule => schedule.name), ["Мой главный план", "Мой главный план"]);
-      equal(summaries[1].passages, [{ ref: "Иуд. 1", label: "", last: "" }]);
+      equal(summaries[1].passages, [{ ref: "Иуд. 1", url: "https://bible.recoveryversion.ru/jude/1/1", key: "nt", label: "Новый Завет", ahead: 0, last: "" }]);
     } finally {
       app.onSave = null;
     }

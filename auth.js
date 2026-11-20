@@ -1,5 +1,11 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
+import { createEncouragementService } from "./src/encouragement-service.js?v=refactor12";
+import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
+import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
+import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
+import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=refactor9";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -121,20 +127,7 @@ async function main() {
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
-  async function findFriendUid(input) {
-    const raw = (input || "").trim();
-    if (raw.includes("@")) {
-      const e = await F.getDoc(F.doc(db, "emails", raw.toLowerCase()));
-      return e.exists() ? e.data().uid : null;
-    }
-    const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (code.length === 6) {
-      const c = await F.getDoc(F.doc(db, "codes", code));
-      return c.exists() ? c.data().uid : null;
-    }
-    if (/^[A-Za-z0-9]{20,40}$/.test(raw)) return raw; // ID пользователя
-    return undefined;
-  }
+  const findFriendUid=createFriendLookup(F,db);
 
   async function addFriendByCode(input) {
     const raw = (input || "").trim();
@@ -149,53 +142,7 @@ async function main() {
     } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
   }
 
-  // заявка в друзья: я подписываюсь на человека; дружба — когда он примет заявку (или если он уже подписан на меня)
-  async function addFriendUid(fuid) {
-    if (fuid === me.uid) { O().toast("Это вы сами"); return false; }
-    if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return false; }
-    const ref = F.doc(db, "profiles", fuid), already = myFollowing.includes(fuid);
-    try {
-      await F.updateDoc(ref, { followers: F.arrayUnion(me.uid) });
-      await F.updateDoc(myRef, { following: F.arrayUnion(fuid) });
-      let their = {}; try { const sn = await F.getDoc(ref); their = sn.exists() ? sn.data() : {}; } catch (e) {}
-      if ((their.following || []).includes(me.uid)) {          // он уже звал меня — сразу друзья
-        await F.updateDoc(ref, { friends: F.arrayUnion(me.uid) });
-        await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
-        O().toast("Вы теперь друзья!");
-      } else if (already) O().toast("Заявка уже отправлена — ждём, когда друг её примет");
-      else O().toast("Заявка отправлена. Пока друг её не примет, вы подписаны на него");
-      return true;
-    } catch (e) { console.warn(e); O().toast("Не удалось отправить заявку. Попробуйте позже."); return false; }
-  }
-
-  async function acceptRequest(uid) {
-    try {
-      await F.updateDoc(myRef, { friends: F.arrayUnion(uid), following: F.arrayUnion(uid), declined: F.arrayRemove(uid) });
-      await F.updateDoc(F.doc(db, "profiles", uid), { friends: F.arrayUnion(me.uid) });
-      await F.updateDoc(F.doc(db, "profiles", uid), { followers: F.arrayUnion(me.uid) }).catch(() => {});
-      O().toast("Заявка принята — теперь вы друзья!"); if (O().vibrate) O().vibrate([30, 40, 30]);
-    } catch (e) { console.warn(e); O().toast("Не удалось принять заявку. Попробуйте позже."); }
-  }
-  async function declineRequest(uid) {
-    try { await F.updateDoc(myRef, { declined: F.arrayUnion(uid) }); O().toast("Заявка отклонена — человек останется подписчиком"); }
-    catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
-  }
-
-  async function removeFriend(fuid) {
-    try {
-      await F.updateDoc(myRef, { friends: F.arrayRemove(fuid), following: F.arrayRemove(fuid) });
-      await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayRemove(me.uid) }).catch(() => {});
-      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
-      O().toast("Друг удалён");
-    } catch (e) { console.warn(e); O().toast("Не удалось удалить. Попробуйте позже."); }
-  }
-  async function unfollow(fuid) {
-    try {
-      await F.updateDoc(myRef, { following: F.arrayRemove(fuid) });
-      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
-      O().toast("Вы отписались");
-    } catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
-  }
+  const {addFriendUid,acceptRequest,declineRequest,removeFriend,unfollow}=createFriendActions({F,db,O,getContext:()=>({me,myRef,myFriends,myFollowing})});
 
   // подписка на профили: друзья и те, на кого я подписан
   function syncFriendSubs(friends, following) {
@@ -230,61 +177,10 @@ async function main() {
     return (cardCache[uid] = c);
   }
 
-  function flameSvg(lit) {
-    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    s.setAttribute("viewBox", "0 0 64 80"); s.setAttribute("class", "flame" + (lit ? "" : " off")); s.innerHTML = O().FLAME; return s;
-  }
+  const flameSvg = window.OgonekProgressVisual.flameSvg;
   /* ---------- воодушевление и приглашение почитать вместе ---------- */
-  const CHEERS = [
-    "Зажги свой огонёк — мы ждём тебя!",
-    "Не хватает твоего огня сегодня!",
-    "Мой огонёк уже горит — зажги и свой!",
-    "Духом пламенейте! Ждём тебя сегодня на чтении"
-  ];
-  const INVITES = [
-    "Давай почитаем вместе — зажжём огонь сегодня!",
-    "Я начинаю читать. Присоединяйся!",
-    "Почитаем Библию вместе? Сегодняшний отрывок ждёт нас",
-    "10 минут со Словом — давай прямо сейчас, вместе"
-  ];
-  const KIND = {
-    cheer: { list: CHEERS, limit: 2, key: "ogonek-cheers-sent", field: "cheer", title: "Воодушевить", verb: "воодушевляет вас",
-      done: "Вы воодушевили сегодня ✓", full: "Сегодня вы уже воодушевили двух друзей", btn: "Воодушевить",
-      rule: (left) => "Воодушевить можно только двух друзей в день. " + (left === 2 ? "Сегодня осталось: 2." : "Сегодня остался ещё один."),
-      sent: "Отправлено! Пусть огонёк разгорится", again: "Сегодня вы уже воодушевляли этого друга" },
-    invite: { list: INVITES, limit: 1, key: "ogonek-invite-sent", field: "invite", title: "Почитать вместе", verb: "зовёт почитать вместе",
-      done: "Приглашение отправлено ✓", full: "Сегодня вы уже позвали друга", btn: "Позвать читать вместе",
-      rule: () => "Позвать почитать вместе можно только одного друга в день — до того, как вы начнёте читать.",
-      sent: "Приглашение отправлено! Начинайте читать", again: "Сегодня вы уже звали этого друга" },
-    // челлендж «Божья гора»: воодушевить до 5 друзей в день; последнее сообщение — позвать в челлендж
-    conf: { list: (window.confCheers && window.confCheers.list) || ["Давай поднимемся на Синай!"], limit: 5, key: "ogonek-conf-cheers", field: "confCheer", title: "Челлендж «Божья гора»", verb: "зовёт на Синай",
-      done: "Воодушевили ✓", full: "Сегодня вы уже воодушевили пятерых", btn: "Воодушевить", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже писали этому другу" },
-    confjoin: { list: (window.confCheers && window.confCheers.list) || [], limit: 99, key: "ogonek-conf-join", field: "confJoin", title: "Челлендж «Божья гора»", verb: "зовёт в челлендж «Божья гора»",
-      done: "Позвали ✓", full: "", btn: "Позвать", rule: () => "", sent: "Отправлено!", again: "Сегодня вы уже звали этого друга" }
-  };
-  const kindOf = (c) => (c && (c.kind === "invite" || c.kind === "conf" || c.kind === "confjoin") ? c.kind : "cheer");
-  const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
-  // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
-  function sentTodaySet(kind) {
-    const t = O().today(), m = sentMap(kind), set = new Set(Object.keys(m).filter((k) => m[k] === t));
-    const c = myProfile && myProfile[KIND[kind].field]; if (c && c.d === t) (c.u || []).forEach((u) => set.add(u));
-    return set;
-  }
-  const sentToday = (uid, kind) => sentTodaySet(kind).has(uid);
-  const left = (kind) => Math.max(0, KIND[kind].limit - sentTodaySet(kind).size);
-  function markSent(uid, kind) {
-    const K = KIND[kind], m = sentMap(kind), t = O().today();
-    Object.keys(m).forEach((k) => { if (m[k] !== t) delete m[k]; }); m[uid] = t; lsSet(K.key, JSON.stringify(m));
-    const u = [...sentTodaySet(kind)], patch = {}; patch[K.field] = { d: t, u };
-    myProfile = Object.assign({}, myProfile, patch);
-    F.setDoc(myRef, patch, { merge: true }).catch((e) => console.warn(e));
-  }
-  const litToday = (d) => !!d && fLit(d, O().today());
-  const readAnyToday = (d) => d && (d.ntLast === O().today() || d.otLast === O().today());
-  // воодушевлять: мой огонёк сегодня горит, а у друга ещё нет
-  const canCheer = (d) => litToday(O().summary()) && !litToday(d);
-  // звать почитать вместе: я сегодня ещё не начинал читать, и друг тоже
-  const canInvite = (d) => !readAnyToday(O().summary()) && !readAnyToday(d);
+  const {CHEERS,INVITES,KIND,kindOf}=createEncouragementConfig();
+  const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
 
   function actionButton(uid, d, kind) {
     const K = KIND[kind], b = el("button", "cheerbtn" + (kind === "invite" ? " invitebtn" : "")); b.type = "button";
@@ -337,28 +233,6 @@ async function main() {
     const note = el("p", "hint", K.rule(left(kind))); note.style.margin = "0";
     sheet.append(head, note, el("span", "label", "Выберите слова"), list);
     modal.append(sheet); document.body.append(modal); list.querySelector("button").focus();
-  }
-
-  async function sendMsg(uid, i, kind) {
-    const K = KIND[kind], day = O().today();
-    const data = { from: me.uid, name: String(myName() || "Друг").slice(0, 60), photo: myPhoto(), msg: i, day, at: F.serverTimestamp() };
-    if (kind !== "cheer") data.kind = kind;
-    const suffix = { invite: "_inv", conf: "_conf", confjoin: "_cjoin" }[kind] || "";
-    try {
-      if (kind === "cheer") {
-        const s = O().summary();
-        if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
-        // The normal reading sync owns the globe and full profile.
-        // Only refresh the day marker required by newer cheer rules.
-        await F.setDoc(myRef, { flameDay: day }, { merge: true });
-      }
-      await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + suffix), data);
-      markSent(uid, kind); O().toast(K.sent); return true;
-    } catch (e) {
-      console.warn(e);
-      if (e && e.code === "permission-denied") { O().toast("Отправка не подтверждена сервером."); return false; }
-      O().toast("Не удалось отправить: " + (e && e.code ? e.code : "ошибка приложения")); return false;
-    }
   }
 
   // входящие: показываем по одному
@@ -439,17 +313,6 @@ async function main() {
   function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
 
   // расписание друга: у каждого может быть своё — показываем его собственные отрывки
-  const fKeys = (d) => (Array.isArray(d.keys) && d.keys.length ? d.keys : ["nt", "ot"]);
-  const fLabel = (d, k) => d[k + "Label"] || (k === "nt" ? "Новый Завет" : "Ветхий Завет");
-  const fShort = (d, k) => ({ "Новый Завет": "НЗ", "Ветхий Завет": "ВЗ" })[fLabel(d, k)] || fLabel(d, k);
-  const fDone = (d, k) => (d[k + "Next"] || 0) >= (d[k + "Days"] || ((d.plan || "spb") === O().planId ? O().DAYS : 364));
-  const fRef = (d, k) => (typeof d[k + "Ref"] === "string" ? d[k + "Ref"] : O().refOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "—");
-  const fUrl = (d, k) => d[k + "Url"] || O().urlOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "#";
-  const fLit = (d, t) => {
-    const p = d.globeSchedule && d.globeSchedule.passages;
-    if (Array.isArray(p) && p.length) return p.every(x => x && x.last === t);
-    return fKeys(d).every(k => d[k + "Last"] === t);
-  };
   function friendPassages(d) {
     const s = d && d.globeSchedule;
     return s && Array.isArray(s.passages) && s.passages.length
@@ -488,26 +351,6 @@ async function main() {
   function myPhotoS() { return (myProfile && myProfile.photoX && myProfile.photoS) || (me && me.photoURL) || ""; }
   function myPhotoHQ() { return (myProfile && myProfile.photoX && myProfile.photoHQ) || ""; }
   // фото с телефона: квадрат size×size JPEG, не длиннее maxLen знаков
-  function loadImg(file) {
-    return new Promise((res, rej) => { const url = URL.createObjectURL(file), img = new Image();
-      img.onload = () => res({ img, url }); img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("не картинка")); }; img.src = url; });
-  }
-  function squareJpeg(img, S, q0, maxLen) {
-    const c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
-    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
-    const m = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - m) / 2, sy = (img.naturalHeight - m) / 2;
-    g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.drawImage(img, sx, sy, m, m, 0, 0, S, S);
-    let q = q0, d = c.toDataURL("image/jpeg", q); while (d.length > maxLen && q > 0.45) { q -= 0.07; d = c.toDataURL("image/jpeg", q); }
-    return d;
-  }
-  // три размера: 256 px — аватарки (чётко на экранах ×3), 1080 px — фото крупно, 112 px — глобус (правило ≤ 20 000)
-  async function shrinkPhoto(file) {
-    const { img, url } = await loadImg(file);
-    try {
-      const m = Math.min(img.naturalWidth, img.naturalHeight);
-      return { thumb: squareJpeg(img, Math.min(256, m), 0.9, 45000), big: squareJpeg(img, Math.min(1080, m), 0.9, 420000), small: squareJpeg(img, Math.min(112, m), 0.85, 19000) };
-    } finally { URL.revokeObjectURL(url); }
-  }
   async function saveMyPhoto(ph) {
     ph = ph || { thumb: "", big: "", small: "" };
     myProfile = Object.assign({}, myProfile, { photoX: ph.thumb, photoHQ: ph.big, photoS: ph.small });
