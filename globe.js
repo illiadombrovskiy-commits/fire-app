@@ -514,9 +514,12 @@
 
   /* ---------- открыть / закрыть ---------- */
   function close() {
-    if (!root) return; cancelAnimationFrame(raf); raf = 0; if (ro) { ro.disconnect(); ro = null; }
+    if (!root) return;
+    const onClose = opts && opts.onClose;
+    cancelAnimationFrame(raf); raf = 0; if (ro) { ro.disconnect(); ro = null; }
     window.removeEventListener("resize", size); document.removeEventListener("keydown", esc);
     root.remove(); root = cv = ctx = null; sel = selB = null;
+    if (typeof onClose === "function") { try { onClose(); } catch (e) { console.warn(e); } }
   }
   function esc(e) { if (e.key === "Escape" && !document.querySelector(".fmodal")) close(); }
 
