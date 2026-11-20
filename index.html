@@ -4843,7 +4843,15 @@ function globeSchedule(){
     return {
       ref:next<0?"":refStr(part2(S,k,next)),
       url:next<0?"":chapterUrl(part2(S,k,next)),
-      label:S.keys.length>1?S.short[k]:"",
+      key:k,
+      label:S.labels[k]||S.short[k]||"Отрывок",
+      ahead:row.primary?paceSeries()[k].slice(-1)[0]:(()=>{
+        const elapsed=Math.max(0,dayNo(today())-dayNo(S.start));
+        const due=n=>S.plan.slice(0,n).filter((_,i)=>!!part2(S,k,i).book).length;
+        const count=[...read].filter(i=>Number.isInteger(i)&&i>=0&&i<S.plan.length&&part2(S,k,i).book).length;
+        const delta=count-due(elapsed+1);
+        return delta<0?Math.min(0,count-due(elapsed)):delta;
+      })(),
       last:log.reduce((last,x)=>x.d>last?x.d:last,""),
     };
   });
