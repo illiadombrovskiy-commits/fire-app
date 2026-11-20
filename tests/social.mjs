@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 async function load(name){return import("data:text/javascript;base64,"+Buffer.from(await readFile(new URL("../src/"+name+".js",import.meta.url))).toString("base64"))}
 globalThis.window={Ogonek:{planId:"spb",DAYS:364}};
-const {fLit}=await load("friend-progress");
+const {fLit,fProfileReadToday,fScheduleReadToday}=await load("friend-progress");
 const {createEncouragementConfig}=await load("encouragement-config");
 const {createEncouragementService}=await load("encouragement-service");
 const {createFriendActions}=await load("friend-actions");
@@ -11,6 +11,16 @@ assert.equal(fLit({heroFlameDay:"2026-11-20",globeSchedule:{passages:[{last:"202
 assert.equal(fLit({heroFlameDay:"",globeSchedule:{passages:[{last:"2026-11-20"}]}},"2026-11-20"),false);
 assert.equal(fLit({globeSchedule:{passages:[{last:"2026-11-20"},{last:""}]}},"2026-11-20"),true);
 assert.equal(fLit({ntLast:"2026-11-20",otLast:""},"2026-11-20"),true);
+// A reader can read a different plan, so the globe is lit although the
+// currently selected schedule still points to its next unread passage.
+const dayRead="2026-11-20";
+const otherPlanRead={heroFlameDay:dayRead,globeSchedule:{passages:[{ref:"4 Цар. 25",last:""}]}};
+assert.equal(fProfileReadToday(otherPlanRead,dayRead,""),true);
+assert.equal(fScheduleReadToday(otherPlanRead.globeSchedule.passages[0],dayRead),false);
+assert.equal(fProfileReadToday({heroFlameDay:"",globeSchedule:{passages:[{ref:"4 Цар. 25",last:""}]}},dayRead,dayRead),true); // globe event arrives first
+assert.equal(fProfileReadToday({heroFlameDay:""},dayRead,""),false);
+assert.equal(fScheduleReadToday({ref:"4 Цар. 25",last:dayRead},dayRead),true);
+assert.equal(fScheduleReadToday(null,dayRead),false);
 let day="2026-11-20", lit=true, profile={}, fail=false, peerRead=false, peerUnavailable=false;
 const writes=[], messages=[], storage=new Map();
 const O=()=>({today:()=>day,summary:()=>({lit:lit?day:""}),toast:m=>messages.push(m)});
