@@ -117,6 +117,23 @@ async function main() {
     myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
     return JSON.stringify(fof) !== lastFof;
   }
+  // A locally completed Exodus passage may still be newer than an older
+  // /users cloud snapshot after interrupted sync. Do not erase that reading
+  // on next login, especially when an iPhone went to the background.
+  const progressPendingKey = uid => "ogonek-reading-pending-" + uid;
+  function preferLocalProgress(local, remote, uid) {
+    if (!local || !remote) return false;
+    const plan = x => String((x.schedDef && x.schedDef.id) || x.sched || "spb");
+    if (plan(local) !== plan(remote)) return false;
+    if (lsGet(progressPendingKey(uid)) === "1") return true;
+    const keys = ["nt", "ot"];
+    const set = (s,k) => new Set((s[k] && s[k].read) || []);
+    const ahead = keys.every(k => [...set(remote,k)].every(p => set(local,k).has(p)))
+      && keys.some(k => set(local,k).size > set(remote,k).size);
+    const recent = keys.some(k => ((local[k] && local[k].log) || [])
+      .some(l => l && l.d === O().today() && !set(remote,k).has(l.p)));
+    return ahead && recent;
+  }
   // имя, которое видят друзья: своё (если задано) или из Google
   const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
@@ -1411,10 +1428,15 @@ async function main() {
       if (!me || me.uid !== user.uid) return; // an older login cannot replace the next user's progress
       const local = O().getState(), remote = snap.exists() ? snap.data() : null;
       if (remote) {
-         // A higher local action count does not make its selected plan newer.
-         // Preserve the server's authoritative plan and progress on login.
-         O().setState(remote);
-       } else await F.setDoc(ref, local);
+        if (preferLocalProgress(local, remote, user.uid)) {
+          // Publish the locally completed reading to all three documents
+          // once the profile's visibility and invitation fields are loaded.
+          console.info("Recovering locally completed reading absent from the cloud");
+          presencePending = true;
+        } else O().setState(remote);
+      } else {
+        presencePending = true;
+      }
       progressVerified = true;
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     finally { progressRecoveryBusy = false; }
@@ -1424,9 +1446,14 @@ async function main() {
     // One save action must never send /users on a different queue from
     // /profiles and /globe: an older queued write used to restore Genesis 50.
     O().setRemote((progressSnapshot) => {
-      presenceRevision++;
+      const uid = me && me.uid, revision = ++presenceRevision;
+      if (uid) lsSet(progressPendingKey(uid), "1");
       const pending = publishSummary(true, progressSnapshot);
-      return pending || Promise.resolve(false);
+      return (pending || Promise.resolve(false)).then(ok => {
+        if (ok && uid && me && me.uid === uid && revision === presenceRevision)
+          lsSet(progressPendingKey(uid), null);
+        return ok;
+      });
     });
     O().onSave = () => { renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
@@ -1444,7 +1471,12 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      publishSummary(true, O().getState()); // reconcile all 3 cloud docs on login
+      // Reconcile previously mismatched private reading and public presence.
+      const uid = me.uid, revision = presenceRevision;
+      publishSummary(true, O().getState()).then(ok => {
+        if (ok && me && me.uid === uid && revision === presenceRevision)
+          lsSet(progressPendingKey(uid), null);
+      });
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
