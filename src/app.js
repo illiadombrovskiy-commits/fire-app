@@ -998,7 +998,7 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
   if(isIOS||isAndroid)show();
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;show()});
   const installed=()=>{lss(INST,"1");card.hidden=true;link.hidden=true};
-  window.addEventListener("appinstalled",()=>{installed();toast("Огонёк добавлен на экран!")});
+  window.addEventListener("appinstalled",()=>{installed();toast("«В Слове» добавлено на экран!")});
   // Android/Chrome умеет сказать, что приложение уже установлено
   if(navigator.getInstalledRelatedApps)navigator.getInstalledRelatedApps().then(a=>{if(a&&a.length)installed()}).catch(()=>{});
   $("installHide").addEventListener("click",()=>{card.hidden=true;lss(HIDE,today())});
@@ -1013,18 +1013,18 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
   const host=location.host||"bible-fire.ru";
   const STEPS={
     ios:[
-      ["Откройте Огонёк в браузере <b>Safari</b> (синий компас). В других браузерах на iPhone так не получится.",'<div class="url">'+'<span>🔒</span><b>'+host+'</b></div>'],
+      ["Откройте «В Слове» в браузере <b>Safari</b> (синий компас). В других браузерах на iPhone так не получится.",'<div class="url">'+'<span>🔒</span><b>'+host+'</b></div>'],
       ["Внизу экрана нажмите кнопку <b>«Поделиться»</b> — квадрат со стрелкой вверх.",'<div class="bar"><span>‹</span><span>›</span><span class="hl">'+SHARE+'</span><span>📖</span><span>⧉</span></div>'],
       ["В появившемся списке пролистайте вниз и нажмите <b>«На экран „Домой“»</b>.",'<div class="menu"><div>Скопировать <span>⧉</span></div><div>Добавить в закладки <span>📖</span></div><div class="hl">На экран «Домой» <span>'+PLUS+'</span></div></div>'],
       ["Справа вверху нажмите <b>«Добавить»</b>.",'<div class="addhdr"><span>Отменить</span><span class="hl">Добавить</span></div>'],
-      ["Готово! На экране телефона появился значок Огонька — нажимайте на него, как на приложение.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>Огонёк</b></em><em></em></div>']
+      ["Готово! На экране телефона появился значок «В Слове» — нажимайте на него, как на приложение.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>В Слове</b></em><em></em></div>']
     ],
     android:[
-      ["Откройте Огонёк в браузере <b>Chrome</b> (цветной круг).",'<div class="url"><span>🔒</span><b>'+host+'</b><span>'+DOTS+'</span></div>'],
+      ["Откройте «В Слове» в браузере <b>Chrome</b> (цветной круг).",'<div class="url"><span>🔒</span><b>'+host+'</b><span>'+DOTS+'</span></div>'],
       ["Справа вверху нажмите <b>три точки ⋮</b>.",'<div class="url"><span>🔒</span><b>'+host+'</b><span class="hl" style="border-radius:50%;padding:4px">'+DOTS+'</span></div>'],
       ["В меню нажмите <b>«Добавить на главный экран»</b> (или <b>«Установить приложение»</b>).",'<div class="menu"><div>Новая вкладка</div><div>История</div><div class="hl">Добавить на главный экран <span>'+PLUS+'</span></div></div>'],
       ["Нажмите <b>«Установить»</b> или <b>«Добавить»</b>.",'<div class="addhdr"><span>Отмена</span><span class="hl">Установить</span></div>'],
-      ["Готово! Значок Огонька появится на экране телефона.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>Огонёк</b></em><em></em></div>']
+      ["Готово! Значок «В Слове» появится на экране телефона.",'<div class="home"><i></i><i></i><span>'+ico+'</span><i></i><em></em><em></em><em><b>В Слове</b></em><em></em></div>']
     ]
   };
   function openGuide(){
@@ -1034,7 +1034,7 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
     const draw=()=>{
       sheet.textContent="";
-      const head=el("div","fhead"),h=el("h2",null,"Огонёк на экран телефона");const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);head.append(h,x);
+      const head=el("div","fhead"),h=el("h2",null,"«В Слове» на экран телефона");const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);head.append(h,x);
       const tabs=el("div","itabs");[["ios","iPhone"],["android","Android"]].forEach(([k,t])=>{const b=el("button","itab"+(tab===k?" on":""),t);b.type="button";b.addEventListener("click",()=>{tab=k;draw()});tabs.append(b)});
       const ol=el("ol","isteps");STEPS[tab].forEach(([txt,mock])=>{const li=el("li"),p=el("p");p.innerHTML="<span>"+txt+"</span>";const m=el("div","mock");m.innerHTML=mock;li.append(p,m);ol.append(li)});
       const ok=el("button","btn-main","Понятно");ok.type="button";ok.addEventListener("click",close);
@@ -1098,10 +1098,10 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     // 4. как читать ссылку
     d=sec("Как читать «Мф. 3:7–17»");
     const r=el("div","gref");r.innerHTML='<div class="r1"><span class="rbig">Мф.</span><span class="rlab">книга<br>(Евангелие по Матфею)</span></div><div class="r2"><span class="rbig">3</span><span class="rlab">глава</span></div><span class="rsep">:</span><div class="r3"><span class="rbig">7–17</span><span class="rlab">стихи<br>с 7-го по 17-й</span></div>';
-    const n1=el("p","gnote");n1.innerHTML="Каждая книга разделена на <b>главы</b>, а глава — на короткие пронумерованные <b>стихи</b>. Так любое место легко найти. Если отрывок переходит в следующую главу, пишут так: <b>Быт. 2:19–3:6</b> — с 19-го стиха 2-й главы по 6-й стих 3-й главы. В Огоньке на номер отрывка можно просто нажать — текст откроется сам.";
+    const n1=el("p","gnote");n1.innerHTML="Каждая книга разделена на <b>главы</b>, а глава — на короткие пронумерованные <b>стихи</b>. Так любое место легко найти. Если отрывок переходит в следующую главу, пишут так: <b>Быт. 2:19–3:6</b> — с 19-го стиха 2-й главы по 6-й стих 3-й главы. В приложении «В Слове» на номер отрывка можно просто нажать — текст откроется сам.";
     d.append(r,n1);
     // 5. как читает Огонёк
-    d=sec("Как читаем в Огоньке");
+    d=sec("Как читаем в приложении «В Слове»");
     const p5=el("p");
     if(SCHED.spb)p5.innerHTML="Читаем по Восстановительному переводу: <b>вся Библия за 2 года</b>, примерно <b>10 минут в день</b>. Каждый день — <b>два коротких отрывка</b> (в среднем около 40 стихов): один из Нового Завета и один из Ветхого. Читаем книги по порядку, без пропусков. Все начали 28 сентября и идут по одному пути.";
     else p5.innerHTML="Ваше расписание — <b>«"+SCHED.name+"»</b>: "+DAYS+" "+plural(DAYS,"день","дня","дней")+" чтения, с "+parse(PLAN_START).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})+" по "+parse(planDate(DAYS-1)).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})+". Сменить его можно в разделе «Расписание».";
@@ -1337,7 +1337,7 @@ function openPlans(start,E){
     // с какого сообщения
     const fromSel=el("select","msfrom");fromSel.setAttribute("aria-label","С какого сообщения начать");
     fromSel.addEventListener("change",()=>{f.from=+fromSel.value||1;upd()});
-    // уже прочитанное до Огонька (например, в бумажной книге) — сразу на книжную полку
+    // уже прочитанное до знакомства с «В Слове» (например, в бумажной книге) — сразу на книжную полку
     const papL=el("label","pradio mspaper"),papI=el("input"),papT=el("span");papI.type="checkbox";papI.checked=f.paper;papI.addEventListener("change",()=>{f.paper=papI.checked});papL.append(papI,papT);
     function drawFrom(){fromSel.textContent="";const B=msBook(f.ms);msUnits(B).forEach(u=>{const o=el("option",null,u.n+". "+u.title);o.value=u.n;if(u.n===f.from)o.selected=true;fromSel.append(o)})}
     const fromF=el("label","pfield");const fromL=el("span","msh","Начать с");fromF.append(fromL,fromSel);
@@ -2113,7 +2113,7 @@ function openWelcome(auto){
   sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label","Выбор расписания");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
   modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
-  const hd=el("div","fhead");hd.append(el("h2",null,"Добро пожаловать в Огонёк"));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);hd.append(x);
+  const hd=el("div","fhead");hd.append(el("h2",null,"Добро пожаловать в «В Слове»"));const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);hd.append(x);
   sheet.append(hd,el("p","wsub","Читайте Библию каждый день — понемногу и вместе с друзьями. С чего начнём?"));
   const opt=(cls,ic,tag,tagc,title,desc,fn)=>{const b=el("button","wopt "+cls);b.type="button";b.append(icoEl(ic));const t=el("span","ptxt");if(tag)t.append(el("span","wtag "+tagc,tag));t.append(el("b",null,title),el("span",null,desc));b.append(t);b.addEventListener("click",()=>{if(fn.confirm){fn.confirm();return}close();fn()});return b};
   // челлендж и церковь — сначала короткое описание и «Начать читать», чтобы не выбрать случайно
@@ -2223,7 +2223,7 @@ function openOnb(startStep){
   if(document.querySelector(".onb"))return;
   window.__onbActive=true;document.body.classList.add("onbon");onbLS.set("ogonek-welcome","1");
   const S={step:0,plan:onbLS.get("ogonek-onb-plan")||"spb",time:+(onbLS.get("ogonek-onb-time")||22),name:""};
-  const root=el("div","onb");root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");root.setAttribute("aria-label","Первый вход в Огонёк");
+  const root=el("div","onb");root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");root.setAttribute("aria-label","Первый вход в «В Слове»");
   const bar=el("div","obar"),back=el("button","oback","‹"),dots=el("div","odots");back.type="button";back.setAttribute("aria-label","Назад");
   bar.append(back,dots,el("span","oskip"));const stage=el("div","ostage");root.append(bar,stage);
   const steps=[0,1,2,3,4].map(()=>el("div","ostep"));steps.forEach(s=>stage.append(s));for(let i=0;i<5;i++)dots.append(el("i"));
@@ -2232,8 +2232,8 @@ function openOnb(startStep){
   const btn=(cls,t,fn)=>{const b=el("button",cls,t);b.type="button";b.addEventListener("click",fn);return b};
   const hero=()=>{const h=el("div","ohero");h.innerHTML=ONB_FL;return h};
   // 0 — приветствие
-  function d0(s){s.append(hero(),el("h1",null,"Огонёк"),el("p",null,"Немного Библии каждый день — и огонёк разгорается. Читайте вместе с друзьями и церковью."),
-    foot(btn("ogo","Начать",()=>to(1)),btn("olink","Я уже читаю в Огоньке — войти",()=>{onbLS.set("ogonek-onb-step","login");signIn()})))}
+  function d0(s){s.append(hero(),el("h1",null,"В Слове"),el("p",null,"Немного Библии каждый день — и огонёк разгорается. Читайте вместе с друзьями и церковью."),
+    foot(btn("ogo","Начать",()=>to(1)),btn("olink","Я уже читаю в приложении «В Слове» — войти",()=>{onbLS.set("ogonek-onb-step","login");signIn()})))}
   // 1 — что читать
   function d1(s){s.append(el("h2",null,"Что будем читать?"),el("p",null,"Выберите одно — потом можно добавить ещё или поменять."));
     const cs=el("div","ocards");
@@ -2748,7 +2748,7 @@ function openConf(tab,teamCode){
     const sec=el("div","tonline");sec.append(el("div","tsech"));sec.lastChild.innerHTML="<span>⛰️</span><div><b>Восхождение на Синай</b><i>Вместе с 1–2 друзьями, каждый со своего телефона. Общая цель — 12 ступеней к вершине, итог общий.</i></div>";
     if(!NET){
       const login=$("loginTop"),can=login&&!login.hidden;
-      sec.append(el("p","cnote",can?"Войдите, чтобы пригласить друга и восходить вместе.":"Восхождение с друзьями работает на сайте Огонька после входа через Google."));
+      sec.append(el("p","cnote",can?"Войдите, чтобы пригласить друга и восходить вместе.":"Восхождение с друзьями работает в приложении «В Слове» после входа через Google."));
       if(can){const b=el("button","cbtn","Войти и пригласить друга");b.type="button";b.addEventListener("click",()=>{close();login.click()});sec.append(b)}
       body.append(sec);return;
     }
@@ -2799,7 +2799,7 @@ function openConf(tab,teamCode){
     // позвать друзей
     if(mem.length<3){const fr=NET.friends().filter(f=>!mem.includes(f.uid));const inv=el("details","pacetable tinvite");inv.open=mem.length<2;
       inv.append(el("summary",null,mem.length<2?"Пригласить друга":"Пригласить ещё одного друга"));
-      if(!fr.length)inv.append(el("p","cnote","Пока некого позвать из друзей Огонька. Отправьте другу приглашение — кнопка «Код … · скопировать приглашение» выше."));
+      if(!fr.length)inv.append(el("p","cnote","Пока некого позвать из друзей из «В Слове». Отправьте другу приглашение — кнопка «Код … · скопировать приглашение» выше."));
       fr.forEach(f=>{const r=el("div","tfr");r.append(el("span",null,f.name));const b=el("button","btn","Позвать");b.type="button";
         b.addEventListener("click",()=>{b.disabled=true;NET.invite(f.uid,code,d.name).then(()=>{b.textContent="Позвали ✓";teamPost(code,"✉️ Позвал(а) "+f.name.split(" ")[0],1)}).catch(e=>{console.warn(e);b.disabled=false;toast("Не получилось позвать")})});r.append(b);inv.append(r)});
       body.append(inv)}
@@ -3158,7 +3158,7 @@ function confFriendsList(L,full){
   if(NET&&need.length){const n=Math.min(need.length,cheerLeft());const ab=el("button","cbtn cheerall",n?"💪 Воодушевить всех, кто ещё не читал ("+n+")":"Лимит на сегодня исчерпан");ab.type="button";ab.disabled=!n;
     ab.addEventListener("click",()=>cheerPicker(need.slice(0,n),redraw));head.append(ab)}
   L.append(head);
-  if(!inC.length)L.append(el("p","hint",NET?"Пока никто из друзей не в челлендже. Позовите их!":"Друзей видно на сайте Огонька после входа через Google."));
+  if(!inC.length)L.append(el("p","hint",NET?"Пока никто из друзей не в челлендже. Позовите их!":"Друзей видно в приложении «В Слове» после входа через Google."));
   inC.forEach(f=>{const row=el("div","cprow");const read=f.c.d===t,sent=cheerSent(f.id);
     row.append(confFlame("flame"+(read?"":" off")),el("b",null,f.name),el("span",null,(f.c.pct||0)+"% · "+(cpNode(f.c.u||0)>=MEM_SETS.length?"всё прочитано":MEM_SETS[cpNode(f.c.u||0)].title)+" · "+(read?"сегодня читал(а)":"сегодня ещё нет")));
     const b=el("button","cheerb"+(sent?" sent":""),read?"🔥":sent?"Воодушевили ✓":"💪 Воодушевить");b.type="button";b.disabled=read||sent||!NET||(!sent&&cheerLeft()===0);
@@ -3170,7 +3170,7 @@ function confFriendsList(L,full){
       const b=el("button","cheerb"+(sent?" sent":""),sent?"Позвали ✓":"⛰️ Позвать");b.type="button";b.disabled=sent;
       if(!sent)b.addEventListener("click",async e=>{e.stopPropagation();b.disabled=true;if(await NET.cheer(f.id,CONF_JOIN_MSG,true)){b.textContent="Позвали ✓";b.classList.add("sent");toast("Приглашение отправлено")}else b.disabled=false});
       row.append(b);row.addEventListener("click",()=>window.Ogonek&&window.Ogonek.onPersonClick&&window.Ogonek.onPersonClick(f.id));L.append(row)})}
-  const share=el("div","cshare");share.append(el("b",null,"Пригласить в челлендж по ссылке"),el("span",null,"Друг откроет Огонёк сразу с челленджем «Божья гора» и станет вашим другом."));
+  const share=el("div","cshare");share.append(el("b",null,"Пригласить в челлендж по ссылке"),el("span",null,"Друг откроет «В Слове» сразу с челленджем «Божья гора» и станет вашим другом."));
   const sb=el("button","cbtn",NET?"Скопировать приглашение":"Войдите, чтобы пригласить");sb.type="button";sb.disabled=!NET;
   sb.addEventListener("click",async()=>{const txt=confInviteText(NET.code());let ok=false;
     try{if(navigator.share){await navigator.share({text:txt});ok=true}}catch(e){if(e&&e.name==="AbortError")return}
@@ -3180,7 +3180,7 @@ function confFriendsList(L,full){
   share.append(sb);L.append(share);
 }
 function confInviteUrl(code){return location.origin+location.pathname.replace(/[^/]*$/,"")+"sinai.html"+(code?"?add="+code:"")}
-function confInviteText(code){return "Присоединяйся к челленджу «Божья гора» в Огоньке! ⛰️\nК конференции школьников (29 октября – 1 ноября) читаем Исход 19–20 и Псалом 119 — понемногу каждый день до 28 октября. Вопросы, игры и восхождение на Синай вместе с друзьями."+(code?"\nМой код: "+code:"")+"\n"+confInviteUrl(code)}
+function confInviteText(code){return "Присоединяйся к челленджу «Божья гора» в приложении «В Слове»! ⛰️\nК конференции школьников (29 октября – 1 ноября) читаем Исход 19–20 и Псалом 119 — понемногу каждый день до 28 октября. Вопросы, игры и восхождение на Синай вместе с друзьями."+(code?"\nМой код: "+code:"")+"\n"+confInviteUrl(code)}
 window.confInviteText=code=>{const t=tracks();return t.conf&&!t.spb&&!confClosed()?confInviteText(code):null};
 window.confGo=join=>{if(join&&!tracks().conf){confJoin();setTrack("conf",true)}if(tracks().conf){try{localStorage.setItem("ogonek-app-mode","conf")}catch(e){}applyAppMode();setPage("home")}};
 window.confCheers={list:CONF_CHEERS.concat(["⛰️ Присоединяйся к челленджу «Божья гора»! Читаем вместе к конференции"])};
@@ -3330,12 +3330,12 @@ function openNotify(opts){
   let saveT=0;const save=()=>{try{localStorage.setItem("ogonek-notify",JSON.stringify(c))}catch(e){}clearTimeout(saveT);saveT=setTimeout(()=>{Promise.resolve(opts.save&&opts.save(c,ntHours(c))).then(()=>toast(ntHours(c).length?"Сохранено · напомню в "+ntText(c):"Напоминания выключены")).catch(()=>toast("Не удалось сохранить. Проверьте интернет."))},500)};
   function draw(){
     sh.textContent="";
-    const hd=el("div","fhead");const ic=el("span","ntbell");ic.append(icoEl("bell"));const tt=el("div");tt.append(el("h2",null,"Уведомления"),el("div","hint","Огонёк напомнит, только если сегодня вы ещё не читали"));
+    const hd=el("div","fhead");const ic=el("span","ntbell");ic.append(icoEl("bell"));const tt=el("div");tt.append(el("h2",null,"Уведомления"),el("div","hint","«В Слове» напомнит, только если сегодня вы ещё не читали"));
     const x=el("button","fclose","×");x.type="button";x.setAttribute("aria-label","Закрыть");x.addEventListener("click",close);hd.append(ic,tt,x);sh.append(hd);
     // разрешение на телефоне
     const st=opts.status?opts.status():"granted";
     if(st!=="granted"){const b=el("div","ntperm");
-      b.append(el("p",null,st==="unsupported"?"Этот браузер не присылает уведомления. На iPhone — добавьте Огонёк на экран «Домой» и откройте оттуда.":st==="denied"?"Уведомления запрещены в настройках телефона. Разрешите их для Огонька — и напоминания заработают.":"Чтобы напоминания приходили, разрешите уведомления на этом телефоне."));
+      b.append(el("p",null,st==="unsupported"?"Этот браузер не присылает уведомления. На iPhone — добавьте «В Слове» на экран «Домой» и откройте оттуда.":st==="denied"?"Уведомления запрещены в настройках телефона. Разрешите их для приложения «В Слове» — и напоминания заработают.":"Чтобы напоминания приходили, разрешите уведомления на этом телефоне."));
       if(st==="default"){const go=el("button","btn-main","Разрешить уведомления");go.type="button";go.addEventListener("click",async()=>{try{await (opts.ask&&opts.ask())}catch(e){}draw()});b.append(go)}
       sh.append(b)}
     // главный выключатель
@@ -3428,7 +3428,7 @@ function libLayout(){
   // путеводитель
   {const gb=go.querySelector(".gbshelf");if(gb)gb.replaceWith(tile("lguide","📖"));const t=go.querySelector(".gbt");if(t)t.textContent="Что это за книга и как читать ссылки вроде «Мф. 3:7–17»"}
   // как это работает
-  {const h=hw.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lhow","💡"),two("Как работает Огонёк","Огонёк, серия дней и заморозки"))}}
+  {const h=hw.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lhow","💡"),two("Как работает «В Слове»","Огонёк, серия дней и заморозки"))}}
 }
 function applyPage(){
   pagesSetup();
@@ -3437,10 +3437,10 @@ function applyPage(){
 
   document.querySelectorAll(".app>[data-page]").forEach(n=>n.classList.toggle("pg-off",n.dataset.page!==curPage));
   document.body.dataset.page=curPage;
-  const ph=$("pageHead");const it=list.find(x=>x[0]===curPage);ph.hidden=true;const h1=document.querySelector(".app>.top .brand h1");if(h1)h1.textContent=curPage==="home"?"Огонёк":it[2];
+  const ph=$("pageHead");const it=list.find(x=>x[0]===curPage);ph.hidden=true;const h1=document.querySelector(".app>.top .brand h1");if(h1)h1.textContent=curPage==="home"?"В Слове":it[2];
   // друзья: если вход не выполнен — подсказка вместо пустоты
   const fe=$("friendsEmpty");if(fe){let was=false;try{was=!!localStorage.getItem("ogonek-owner")}catch(e){}const has=!$("friendsCard").hidden||was;fe.hidden=has;const login=$("loginTop"),can=login&&!login.hidden;
-    fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на пути и воодушевлять друг друга.":"Друзья доступны на сайте Огонька после входа через Google."}
+    fe.querySelector("p").textContent=can?"Войдите через Google (кнопка вверху), чтобы добавлять друзей, видеть их на пути и воодушевлять друг друга.":"Друзья доступны в приложении «В Слове» после входа через Google."}
   try{renderConfFriendsCard()}catch(e){console.warn(e)}
   const nav=$("botNav");if(!nav)return;nav.textContent="";
   list.forEach(([p,icon,label,short])=>{const b=el("button","bn"+(p===curPage?" on":""));b.type="button";b.setAttribute("aria-label",label);if(p===curPage)b.setAttribute("aria-current","page");
