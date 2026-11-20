@@ -550,7 +550,7 @@
     chips.append(other);
     const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Выбирают"));
     ic.addEventListener("click", () => { filt = "all"; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE, 5); });
-    topb.insertBefore(ic, x); // «Выбирают» — в строке заголовка, чтобы все кнопки фильтра помещались
+    topb.append(ic); // «Выбирают» — в строке заголовка, чтобы все кнопки фильтра помещались
     const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
     const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
     zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");
