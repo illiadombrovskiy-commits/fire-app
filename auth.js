@@ -119,13 +119,13 @@ async function main() {
   // имя, которое видят друзья: своё (если задано) или из Google
   const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
-  function publishSummary() {
+  function publishSummary(immediate = false) {
     // A failed startup read must never replace a current cloud profile with
     // yesterday's locally cached progress, nor reveal a previously hidden globe.
     const sequence = ++presenceSequence;
     presencePending = true;
     clearTimeout(pubTimer);
-    pubTimer = setTimeout(() => {
+    const publish = () => {
       if (!me || !myRef || !progressVerified || !profileReady) return;
       const publisherUid = me.uid;
       const s = O().summary();
@@ -146,7 +146,11 @@ async function main() {
           presencePending = !(profileOk && globeOk);
         }
       });
-    }, 1200);
+    };
+    // iOS can suspend a PWA before a debounced timer runs. Start Firestore
+    // writes as part of the same save action, not after 1.2 seconds.
+    if (immediate) publish();
+    else pubTimer = setTimeout(publish, 1200);
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
@@ -867,7 +871,7 @@ async function main() {
       }).catch((e) => console.warn("Profile recovery failed", e))
         .finally(() => { profileRecoveryBusy = false; });
     }
-    if (presencePending && progressVerified && profileReady) publishSummary();
+    if (presencePending && progressVerified && profileReady) publishSummary(true);
     if (globeList) refreshGlobeList();
   }
   window.addEventListener("online", republishPresence);
@@ -1357,12 +1361,12 @@ async function main() {
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
     // Register publishing before profile initialization, which may stall offline.
-    O().onSave = () => { presenceRevision++; publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
+    O().onSave = () => { presenceRevision++; publishSummary(true); renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
 
     try {
       profileRecoveryBusy = true;
-      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; if (progressVerified && presencePending) publishSummary(); }
+      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; if (progressVerified && presencePending) publishSummary(true); }
       catch (e) { console.warn("Profile initialization failed; keep reading sync active", e); O().toast("Не удалось полностью загрузить профиль. Синхронизация продолжится при подключении."); }
       finally { profileRecoveryBusy = false; }
       if (!me || me.uid !== user.uid) return;
@@ -1373,7 +1377,7 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      publishSummary(); // refresh the invitation code and display name after initialization
+      publishSummary(true); // publish the verified profile immediately after initialization
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
