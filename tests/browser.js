@@ -181,21 +181,31 @@
     equal(position().b, globe.bookIndex("Мф."));
   });
 
-  await run("Вчерашний огонёк на глобусе погас, а сегодняшний горит", () => {
-    const globe = window.OgonekGlobe;
-    const now = new Date(), past = new Date(now); past.setDate(past.getDate() - 1);
-    const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    const today = iso(now), yesterday = iso(past), book = globe.bookIndex("4 Цар.");
-    const user = {id:"regression",name:"Sergei",b:book,plan:"Моё расписание",refs:["4 Цар. 25"],streak:1,
-      lit:yesterday,seen:yesterday,spots:[{b:book,l:true}]};
-    globe.open({people:[user]});
-    try {
-      equal(element(".gstat").textContent.includes("горят сегодня: 0"),true);
-      globe.setPeople([{...user,lit:today,seen:today}]);
-      equal(element(".gstat").textContent.includes("горят сегодня: 1"),true);
-      globe.setPeople([{...user,lit:"",seen:yesterday}]);
-      equal(element(".gstat").textContent.includes("горят сегодня: 0"),true);
-    } finally {globe.close();}
+  await run("Галочка относится к прочитанному, а не к следующему отрывку; темп сохраняется", () => {
+    mark(1);
+    const t = app.today(), s = app.summary(), p = s.globeSchedule.passages[0];
+    equal(p.readRef, "Мф. 1:1–2");
+    equal(p.last, t);
+    equal(p.ref === p.readRef, false);
+    equal(typeof p.ahead, "number");
+    equal(s.todayReadings.some(r => r.day === t && r.ref === p.readRef &&
+      r.plan === s.globeSchedule.name && Number.isFinite(r.ahead)), true);
+    const next = s.globeSchedule.passages[1];
+    equal(next.readRef, "");
+    equal(next.last === t, false);
+  });
+
+  await run("Чтение в дополнительном расписании видно отдельно от основного", () => {
+    const id = "check-other-reading";
+    window.ogPlanAdd({ id, name: "Дополнительное чтение", books: ["Иуд."],
+      start: app.today(), by: "chapters", amount: 1 });
+    window.ogPlanMark(id);
+    const s = app.summary();
+    equal(s.globeSchedule.name !== "Дополнительное чтение", true);
+    const read = s.todayReadings.find(r => r.plan === "Дополнительное чтение");
+    equal(read.ref, "Иуд. 1");
+    equal(read.day, app.today());
+    equal(typeof read.ahead, "number");
   });
 
   await run("Книга служения отображается на глобусе среди других расписаний", () => {
