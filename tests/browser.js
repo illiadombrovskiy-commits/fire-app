@@ -198,6 +198,23 @@
     } finally {globe.close();}
   });
 
+  await run("Галочка относится к действительно прочитанному тексту, а не следующему", () => {
+    const before = app.summary().globeSchedule.passages[0];
+    const firstRef = before.ref;
+    equal(before.readRef, undefined);
+    mark(1);
+    const after = app.summary().globeSchedule.passages[0];
+    equal(after.last, app.today());
+    equal(after.readRef, firstRef);
+    equal(after.ref === after.readRef, false);
+    equal(app.summary().ntReadRef, firstRef);
+    window.ogSetPage("home");
+    element("#testaments .tcard:first-child .undolink").click();
+    const undone = app.summary().globeSchedule.passages[0];
+    equal(undone.readRef, undefined);
+    equal(app.summary().ntReadRef, "");
+  });
+
   await run("Книга служения отображается на глобусе среди других расписаний", () => {
     const id = "test-ministry";
     const name = "Читаю служение";
