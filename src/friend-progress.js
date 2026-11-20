@@ -27,7 +27,7 @@ const O=()=>window.Ogonek;
   // Отставание от календаря меняется каждый день, даже когда друг не открывает приложение.
   // Не показываем вчерашний сохранённый "+9" как сегодняшнее опережение.
   const dayNumber = value => {
-    if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return NaN;
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
     const t = Date.parse(value + "T00:00:00Z");
     return Number.isFinite(t) ? Math.floor(t / 86400000) : NaN;
   };
