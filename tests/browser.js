@@ -41,6 +41,15 @@
     button.click();
   }
 
+  await run("Модули новой архитектуры загружены", () => {
+    for (const name of ["OgonekBibleSchedule","OgonekIcons","OgonekDates","OgonekStateSchema","OgonekSounds","OgonekProgressVisual","OgonekAwardVisual","OgonekBibleVerses","OgonekReadingProgress"]) {
+      equal(typeof window[name], "object");
+    }
+    equal(typeof window.OgonekProgressVisual.ignite, "function");
+    equal(window.OgonekStateSchema.create(["nt","ot"]).fresh().v, 3);
+    equal(window.OgonekBibleSchedule.buildSched({id:"spb"}).id, "spb");
+  });
+
   await run("Церковный план открывает нужные отрывки", () => {
     equal(app.planId, "spb");
     equal(window.ogChurchToday().refs, ["Мф. 1:1–2", "Быт. 1:1–5"]);
