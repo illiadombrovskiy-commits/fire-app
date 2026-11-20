@@ -1904,7 +1904,8 @@ function globeSchedule(){
     const units=confToday(),read=confReadWhen(),t=today();
     const passages=[...new Set(units.map(u=>u.b))].map(book=>{
       const group=units.filter(u=>u.b===book);
-      return {ref:confRefs(group)[0].text,url:confRefs(group)[0].url,label:"",last:group.every(u=>read[u.i]===t)?t:""};
+      const verse=confRefs(group)[0],done=group.every(u=>read[u.i]===t);
+      return {ref:verse.text,url:verse.url,label:"",last:done?t:"",readRef:done?verse.text:"",readUrl:done?verse.url:""};
     });
     return {name:"Божья гора",passages};
   }
@@ -1914,6 +1915,9 @@ function globeSchedule(){
   const passages=S.keys.map(k=>{
     const track=progress[k]||{}, read=new Set(track.read||[]), skip=new Set(track.skip||[]);
     const log=track.log||[];
+    // The next-unread excerpt is not the one just marked as completed.
+    const todayLog=log.filter(x=>x && x.d===today() && Number.isInteger(x.p) && x.p>=0 && x.p<S.plan.length);
+    const lastRead=todayLog.length?part2(S,k,todayLog[todayLog.length-1].p):null;
     const next=S.plan.findIndex((_,p)=>{
       if(read.has(p)||skip.has(p))return false;
       const x=part2(S,k,p);
@@ -1932,9 +1936,63 @@ function globeSchedule(){
         return delta<0?Math.min(0,count-due(elapsed)):delta;
       })(),
       last:log.reduce((last,x)=>x.d>last?x.d:last,""),
+      readRef:lastRead && lastRead.book?refStr(lastRead):"",
+      readUrl:lastRead && lastRead.book?chapterUrl(lastRead):"",
     };
   });
   return {name:S.name,passages};
+}
+// The exact excerpts marked today (even when reading a secondary schedule).
+// A flame alone never proves that the NEXT passage was read.
+function todayReadings(){
+  const t=today(),list=[],keys=new Set();
+  const push=(plan,label,ref,url,ahead)=>{
+    if(!ref)return;
+    const id=plan+"|"+label+"|"+ref;
+    if(keys.has(id))return;keys.add(id);
+    list.push({day:t,plan:String(plan||"").slice(0,60),label:String(label||"").slice(0,40),
+      ref:String(ref).slice(0,80),url:String(url||"").slice(0,240),ahead});
+  };
+  const rows=schedRows();
+  // Completing a short schedule (for example Jude, one chapter) removes it
+  // from schedRows immediately. Keep its actual reading visible for today.
+  const included=new Set(rows.map(row=>row.id));
+  Object.keys(state.plans||{}).forEach(id=>{
+    if(included.has(id) || id===SCHED.id || !xDef(id))return;
+    const saved=state.plans[id]||{};
+    if(["nt","ot"].some(k=>(saved[k]&&saved[k].log||[]).some(x=>x&&x.d===t))){
+      rows.push({id,kind:"my",primary:false});
+      included.add(id);
+    }
+  });
+  rows.forEach(row=>{
+    if(row.kind==="conf"){
+      const reads=confReadWhen(),units=confToday();
+      units.filter(u=>reads[u.i]===t).forEach(u=>{
+        const verse=confRefs([u])[0];
+        if(verse)push("Божья гора","",verse.text,verse.url,null);
+      });
+      return;
+    }
+    const S=row.primary?SCHED:xS(row.id);
+    if(!S)return;
+    const progress=row.primary?state:(state.plans||{})[row.id]||{};
+    S.keys.forEach(k=>{
+      const track=progress[k]||{},log=track.log||[];
+      const elapsed=Math.max(0,dayNo(t)-dayNo(S.start));
+      const due=n=>S.plan.slice(0,n).filter((_,i)=>!!part2(S,k,i).book).length;
+      const read=new Set(track.read||[]);
+      const count=[...read].filter(i=>Number.isInteger(i)&&i>=0&&i<S.plan.length&&part2(S,k,i).book).length;
+      const delta=count-due(elapsed+1);
+      const ahead=row.primary?paceSeries()[k].slice(-1)[0]:delta<0?Math.min(0,count-due(elapsed)):delta;
+      log.filter(x=>x && x.d===t && Number.isInteger(x.p) && x.p>=0 && x.p<S.plan.length)
+        .forEach(x=>{
+          const piece=part2(S,k,x.p);
+          if(piece&&piece.book)push(S.name,S.labels[k]||S.short[k]||"",refStr(piece),chapterUrl(piece),ahead);
+        });
+    });
+  });
+  return list.slice(-8);
 }
 function schedSetOn(r,on){
   if(r.kind==="conf"){if(on){state.planChosen=true;confJoin();toast("Вы в челлендже! Он на главной")}else{state.tracks=Object.assign(tracks(),{conf:false});save();applyAppMode();toast("Челлендж на паузе. Прочитанное сохранено")}render();return}
@@ -2373,6 +2431,7 @@ function summary(){
   // стихи, которые затронули: друзья видят их в профиле и на пути
   out.notes=(Array.isArray(state.notes)?state.notes:[]).slice(0,10).map(n=>({d:n.d,v:String(n.v||"").slice(0,40),r:String(n.r||"").slice(0,80),w:String(n.w||"").slice(0,1000)}));
   out.globeSchedule=globeSchedule();
+  out.todayReadings=todayReadings();
   {let xd=0;try{xd=xCount(true)[0]}catch(e){}
    out.heroFlameDay=(activeKeys().some(k=>datesOf(k).has(today()))||xd>0||anySet().has(today()))?today():"";}
   {const np=noPlan();out.noPlan=np;out.chosen=!np} // оба флага явно: профиль сохраняется с merge, старый флаг иначе остаётся
