@@ -3448,7 +3448,7 @@ function applyPage(){
     b.addEventListener("click",()=>{const G=window.OgonekGlobe;if(G&&G.isOpen&&G.isOpen())G.close();setPage(p)});nav.append(b);
     // глобус читателей — в центре нижней панели, открывается поверх любой страницы
     if(p==="friends"){const gb=el("button","bn bnglobe");gb.type="button";gb.setAttribute("aria-label","Глобус читателей");const gi=icoEl("globe");gi.classList.add("bni");gb.append(gi,el("span","bnl","Глобус"));
-      gb.addEventListener("click",()=>{const G=window.OgonekGlobe;if(G&&G.isOpen&&G.isOpen()){G.close();return}if(window.ogonekOpenGlobe)window.ogonekOpenGlobe();else toast("Глобус читателей откроется после входа через Google")});nav.append(gb)}});
+      gb.addEventListener("click",()=>{const G=window.OgonekGlobe;if(G&&G.isOpen&&G.isOpen())return;if(window.ogonekOpenGlobe)window.ogonekOpenGlobe();else toast("Глобус читателей откроется после входа через Google")});nav.append(gb)}});
   globeWatch();
   try{applyNoPlan()}catch(e){}
   // iPhone: принудительная перерисовка иконок панели после смены вкладки
