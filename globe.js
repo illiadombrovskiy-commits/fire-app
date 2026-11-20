@@ -459,7 +459,7 @@
     }
     if (selB === ICE) {
       cd.append(el("div", "gname", "🏝 Остров выбора"));
-      cd.append(el("p", "gmuted", ICE.people.length ? "Здесь те, кто уже в Огоньке, но ещё не выбрал расписание. Позовите их читать вместе!" : "Сейчас здесь никого нет — все уже выбрали расписание."));
+      cd.append(el("p", "gmuted", ICE.people.length ? "Здесь те, кто уже в приложении «В Слове», но ещё не выбрал расписание. Позовите их читать вместе!" : "Сейчас здесь никого нет — все уже выбрали расписание."));
       const box = el("div", "gppl");
       ICE.people.filter((p) => !p.twin).slice(0, 40).forEach((p) => { const b = btn(p.rel === "me" ? (p.name || "Вы") + " (вы)" : (p.name || "Читатель")); b.prepend(stkEl("flameOff", 16)); b.addEventListener("click", () => pick(p)); box.append(b); });
       cd.append(box); return;
@@ -506,7 +506,7 @@
     const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set(), t0 = today();
     // считаем всех читателей, даже тех, кого пока некуда поставить на карте (иначе число «прыгало» по мере загрузки)
     people.forEach((p) => { ids.add(p.id); if (p.o ? p.fire : p.lit === t0) lit.add(p.id); });
-    s.textContent = opts && opts.loading ? "Загружаю читателей…" : "В Огоньке: " + ids.size + " · горят сегодня: " + lit.size;
+    s.textContent = opts && opts.loading ? "Загружаю читателей…" : "Читателей «В Слове»: " + ids.size + " · горят сегодня: " + lit.size;
     const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
     if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают: " + n; }
     root.querySelector(".gother").hidden = !otherPlans.people.length;
