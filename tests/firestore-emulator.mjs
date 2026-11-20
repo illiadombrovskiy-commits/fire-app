@@ -32,14 +32,23 @@ try {
  // Private chapter, friend-visible chapter, and globe flame MUST change together.
  const triple=writeBatch(a);
  triple.set(doc(a,"users/a"),{v:3,ot:{read:[0,1],log:[{p:1,d:day}]}});
+ // Old books:[["Быт.",date,1]] became nonempty when Genesis was
+ // completed. Firestore rejects arrays containing arrays (invalid-argument).
+ await assert.rejects(
+   Promise.resolve().then(()=>setDoc(doc(a,"profiles/a"),
+     {books:[["Быт.",day,1]]},{merge:true})),
+   err=>err&&err.code==="invalid-argument");
+ const finishedBooks=[{a:"Быт.",d:day,n:1}];
  triple.set(doc(a,"profiles/a"),{globeSchedule:{name:"Церковь",passages:[
-   {ref:"Исх. 2:1–25",label:"Ветхий Завет",last:day}]},heroFlameDay:day}, {merge:true});
+   {ref:"Исх. 2:1–25",label:"Ветхий Завет",last:day}]},heroFlameDay:day,
+   books:finishedBooks}, {merge:true});
  triple.set(doc(a,"globe/a"),{...globe,refs:["Ветхий Завет: Исх. 2:1–25"]});
  await assertSucceeds(triple.commit());
  const publicProfile=await assertSucceeds(getDoc(doc(b,"profiles/a")));
  const publicGlobe=await assertSucceeds(getDoc(doc(b,"globe/a")));
  const privateUser=await assertSucceeds(getDoc(doc(a,"users/a")));
  assert.equal(publicProfile.data().globeSchedule.passages[0].ref,"Исх. 2:1–25");
+ assert.deepEqual(publicProfile.data().books,[{a:"Быт.",d:day,n:1}]);
  assert.equal(publicGlobe.data().refs[0],"Ветхий Завет: Исх. 2:1–25");
  assert.deepEqual(privateUser.data().ot.read,[0,1]);
  await assertFails(getDoc(doc(b,"users/a")));

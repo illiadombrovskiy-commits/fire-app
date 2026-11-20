@@ -82,6 +82,28 @@
     equal(element("#celebrate").hidden, true);
   });
 
+  await run("После завершения Бытия профиль публикует книжную полку без вложенных массивов", () => {
+    const church=window.OgonekBibleSchedule.buildSched({id:"spb"});
+    const genesis=church.plan.flatMap((part,i)=>part[2]==="Быт."?[i]:[]);
+    equal(genesis.length>0,true);
+    const completed={read:genesis,log:genesis.map(p=>({p,d:app.today()}))};
+    app.setState({...app.fresh(),planChosen:true,ot:completed});
+    const summary=app.summary();
+    const book=summary.books.find(x=>x.a==="Быт.");
+    equal(!!book,true);
+    equal(book.d,app.today());
+    equal(book.n,1);
+    equal(summary.books.some(Array.isArray),false);
+    // Friend-facing data can still be rendered by the old bookshelf UI.
+    app.openBooks(summary.books,"Друг");
+    try {
+      equal(!!document.querySelector(".bshelf.lib"),true);
+      equal(document.querySelector(".bshelf.lib .libsum").textContent.includes("1"),true);
+    } finally {
+      document.querySelector(".bshelf.lib .fclose").click();
+    }
+  });
+
   await run("Викторина открывается после чтения и даёт XP за первую попытку", async () => {
     equal(document.querySelectorAll("#quiz .qopt").length, 0);
     mark(1);
