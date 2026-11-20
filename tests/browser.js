@@ -337,7 +337,7 @@
       equal(app.getState().nt.read, []);
       equal(app.getState().globeSchedule, id);
       equal(summaries.map(schedule => schedule.name), ["Мой главный план", "Мой главный план"]);
-      equal(summaries[1].passages, [{ ref: "Иуд. 1", url: "https://bible.recoveryversion.ru/jude/1/1", key: "nt", label: "Новый Завет", ahead: 0, last: "" }]);
+      equal(summaries[1].passages, [{ ref: "Иуд. 1", url: "https://bible.recoveryversion.ru/jude/1/1", key: "nt", label: "Новый Завет", ahead: 0, last: "", readRef: "", readUrl: "" }]);
     } finally {
       app.onSave = null;
     }
