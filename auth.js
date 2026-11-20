@@ -78,9 +78,13 @@ async function main() {
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
   async function ensureProfile(user) {
+    // Use the immutable user UID, not a mutable "myRef" which may change
+    // if the user switches accounts while a server request is in flight.
+    const profileRef = F.doc(db, "profiles", user.uid);
     // Cloud state is required before deciding whether the reader opted out
     // of the public globe. Cached data may describe an old privacy choice.
-    const snap = await F.getDocFromServer(myRef);
+    const snap = await F.getDocFromServer(profileRef);
+    if (!me || me.uid !== user.uid) return;
     const data = snap.exists() ? snap.data() : null;
     globeHide = !!(data && data.globeHide);
     myNick = (data && data.nick) || ""; myNameSet = !!(data && (data.nameSet || data.nick));
@@ -95,7 +99,7 @@ async function main() {
       }).catch(() => false);
       if (ok) {
         myCode = code;
-        await F.setDoc(myRef, { code, friends: (data && data.friends) || [], name: user.displayName || "Читатель", photo: user.photoURL || "" }, { merge: true });
+        await F.setDoc(profileRef, { code, friends: (data && data.friends) || [], name: user.displayName || "Читатель", photo: user.photoURL || "" }, { merge: true });
         return;
       }
     }
@@ -1287,6 +1291,7 @@ async function main() {
       // getDoc may return a stale cached snapshot after a failed connection.
       // Publish reading to friends only after checking the server itself.
       const snap = await F.getDocFromServer(ref);
+      if (!me || me.uid !== user.uid) return; // an older login cannot replace the next user's progress
       const local = O().getState(), remote = snap.exists() ? snap.data() : null;
       if (remote) {
          // A higher local action count does not make its selected plan newer.
@@ -1307,11 +1312,12 @@ async function main() {
 
     try {
       profileRecoveryBusy = true;
-      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; }
+      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; if (progressVerified && presencePending) publishSummary(); }
       catch (e) { console.warn("Profile initialization failed; keep reading sync active", e); O().toast("Не удалось полностью загрузить профиль. Синхронизация продолжится при подключении."); }
       finally { profileRecoveryBusy = false; }
       if (!me || me.uid !== user.uid) return;
       if (!myNameSet && !window.__onbActive && !document.body.classList.contains("onbon")) await askName(user); // в «первом входе» имя спрашивается на своём шаге
+      if (!me || me.uid !== user.uid) return;
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
       $("myId").textContent = user.uid;
