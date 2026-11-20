@@ -24,5 +24,48 @@ const O=()=>window.Ogonek;
   };
   const fProfileReadToday = (d, day, globe) => fLit(d, day) || fGlobeReadToday(globe, day);
   const fScheduleReadToday = (passage, day) => !!passage && passage.last === day;
+  // Отставание от календаря меняется каждый день, даже когда друг не открывает приложение.
+  // Не показываем вчерашний сохранённый "+9" как сегодняшнее опережение.
+  const dayNumber = value => {
+    if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return NaN;
+    const t = Date.parse(value + "T00:00:00Z");
+    return Number.isFinite(t) ? Math.floor(t / 86400000) : NaN;
+  };
+  const paceByCount = (read, start, total, today) => {
+    const startDay = dayNumber(start), currentDay = dayNumber(today);
+    if (!Number.isInteger(read) || read < 0 || !Number.isInteger(total) || total <= 0
+        || !Number.isFinite(startDay) || !Number.isFinite(currentDay)) return null;
+    const elapsed = currentDay - startDay;
+    const due = Math.max(0, Math.min(total, elapsed + 1));
+    // Текущий непрочитанный отрывок станет просроченным только завтра.
+    const dueYesterday = Math.max(0, Math.min(total, elapsed));
+    return read - (read < due ? dueYesterday : due);
+  };
+  const fLiveAhead = (d, k, today, passage = null) => {
+    if (!d || !k) return null;
+    if (passage) {
+      const meta = d.globeSchedule && d.globeSchedule.pace;
+      if (meta && meta.daily === true && meta.read && Number.isInteger(meta.read[k])) {
+        return paceByCount(meta.read[k], meta.start, meta.total, today);
+      }
+      // Для нестандартного графика не угадываем число пропущенных рабочих дней.
+      if (meta && meta.asOf === today && Number.isFinite(passage.ahead)) return passage.ahead;
+      const primary = (d.plan || "spb") === "spb"
+        && d.globeSchedule && (!d.planName || d.globeSchedule.name === d.planName)
+        && (!passage.key || passage.key === k);
+      return primary ? fLiveAhead(d, k, today) : null;
+    }
+    const meta = d.paceMeta;
+    if (meta && meta.daily === true)
+      return paceByCount(d[k + "Read"], meta.start, meta.total, today);
+    // Старые профили общего плана ещё не имеют paceMeta. Исправляем их сразу,
+    // используя уже опубликованное число уникальных прочитанных отрывков.
+    if ((d.plan || "spb") === "spb" && Number.isInteger(d[k + "Read"])) {
+      const start = window.OgonekBibleSchedule && window.OgonekBibleSchedule.SPB_START;
+      return paceByCount(d[k + "Read"], start, d[k + "Days"] || 728, today);
+    }
+    if (meta && meta.asOf === today && Number.isFinite(d[k + "Ahead"])) return d[k + "Ahead"];
+    return null;
+  };
 
-export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fGlobeReadToday,fProfileReadToday,fScheduleReadToday};
+export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fGlobeReadToday,fProfileReadToday,fScheduleReadToday,fLiveAhead};
