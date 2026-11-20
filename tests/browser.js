@@ -208,6 +208,23 @@
     equal(typeof read.ahead, "number");
   });
 
+  await run("Вчерашний огонёк на глобусе погас, а сегодняшний горит", () => {
+    const globe = window.OgonekGlobe;
+    const now = new Date(), past = new Date(now); past.setDate(past.getDate() - 1);
+    const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const today = iso(now), yesterday = iso(past), book = globe.bookIndex("4 Цар.");
+    const user = {id:"regression",name:"Sergei",b:book,plan:"Моё расписание",refs:["4 Цар. 25"],streak:1,
+      lit:yesterday,seen:yesterday,spots:[{b:book,l:true}]};
+    globe.open({people:[user]});
+    try {
+      equal(element(".gstat").textContent.includes("горят сегодня: 0"),true);
+      globe.setPeople([{...user,lit:today,seen:today}]);
+      equal(element(".gstat").textContent.includes("горят сегодня: 1"),true);
+      globe.setPeople([{...user,lit:"",seen:yesterday}]);
+      equal(element(".gstat").textContent.includes("горят сегодня: 0"),true);
+    } finally {globe.close();}
+  });
+
   await run("Книга служения отображается на глобусе среди других расписаний", () => {
     const id = "test-ministry";
     const name = "Читаю служение";
