@@ -787,7 +787,12 @@ async function main() {
     return n ? { note: String(n.v).slice(0, 40), nd: n.d } : {};
   }
   function globeFrom(s, name, photo, fc) {
-    return Object.assign(globeFrom0(s, name, photo, fc), verseOf(s));
+    const doc = Object.assign(globeFrom0(s, name, photo, fc), verseOf(s));
+    if (typeof s.heroFlameDay === "string") {
+      doc.lit = s.heroFlameDay === O().today() ? O().today() : "";
+      if (Array.isArray(doc.spots)) doc.spots = doc.spots.map(p => Object.assign({}, p, {l: !!doc.lit}));
+    }
+    return doc;
   }
   function globeFrom0(s, name, photo, fc) {
     const t = O().today(), keys = fKeys(s), G = window.OgonekGlobe;
