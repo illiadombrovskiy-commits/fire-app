@@ -1950,7 +1950,7 @@ function todayReadings(){
     if(!ref)return;
     const id=plan+"|"+label+"|"+ref;
     if(keys.has(id))return;keys.add(id);
-    list.push({plan:String(plan||"").slice(0,60),label:String(label||"").slice(0,40),
+    list.push({day:t,plan:String(plan||"").slice(0,60),label:String(label||"").slice(0,40),
       ref:String(ref).slice(0,80),url:String(url||"").slice(0,240),ahead});
   };
   schedRows().forEach(row=>{
