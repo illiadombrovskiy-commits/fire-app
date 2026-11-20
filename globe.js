@@ -509,8 +509,8 @@
     people.forEach((p) => { ids.add(p.id); if (p.o ? p.fire : p.lit === t0) lit.add(p.id); });
     s.textContent = opts && opts.loading ? "Загружаю читателей…" : "Читателей «В Слове»: " + ids.size + " · горят сегодня: " + lit.size;
     const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
-    if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают: " + n; }
-    root.querySelector(".gother").hidden = !otherPlans.people.length;
+    if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Остров выбора · " + n; }
+    // Другие расписания доступны прямо на карте, без отдельной кнопки сверху.
   }
 
   /* ---------- открыть / закрыть ---------- */
@@ -545,16 +545,9 @@
       });
       chips.append(c);
     });
-    const other = el("button", "gchip gother", "Другие расписания");
-    other.type = "button";
-    other.addEventListener("click", () => {
-      filt = "all"; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === other));
-      pickB(otherPlans, 2);
-    });
-    chips.append(other);
-    const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Выбирают"));
+    const ic = el("button", "gchip gisl"); ic.type = "button"; ic.hidden = true; ic.append(el("span", null, "🏝"), el("span", null, "Остров выбора"));
     ic.addEventListener("click", () => { filt = "all"; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === ic)); pickB(ICE, 5); });
-    topb.append(ic); // «Выбирают» — в строке заголовка, чтобы все кнопки фильтра помещались
+    chips.append(ic); // «Остров выбора» рядом с «Горят», без «Другие расписания»
     const stage = el("div", "gstage"); cv = document.createElement("canvas"); stage.append(cv);
     const zm = el("div", "gzoom"), zi = el("button", null, "+"), zo = el("button", null, "−");
     zi.type = zo.type = "button"; zi.setAttribute("aria-label", "Приблизить"); zo.setAttribute("aria-label", "Отдалить");
