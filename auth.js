@@ -1242,6 +1242,9 @@ async function main() {
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
     let chain = Promise.resolve();
     O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
+    // Register publishing before profile initialization, which may stall offline.
+    O().onSave = () => { publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
+    publishSummary();
 
     try {
       try { await ensureProfile(user); }
@@ -1252,8 +1255,7 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      O().onSave = () => { publishSummary(); renderFriends(); if (globeList) refreshGlobeList(); };
-      publishSummary();
+      publishSummary(); // refresh the invitation code and display name after initialization
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
