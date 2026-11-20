@@ -1457,7 +1457,11 @@ function msShelf(){
 function openBooks(list,who){
   const mine=!list; list=list||booksSummary();
   if(mine&&!state.libSeen){state.libSeen=true;save();try{applyPtr()}catch(e){}}
-  const read=new Map(list.map(x=>[x[0],x]));
+  // Shared profiles use Firestore-safe objects; tolerate legacy tuples.
+  // The bookshelf below still works with its original tuple representation.
+  const rows=list.map(x=>Array.isArray(x)?x:[x&&x.a,x&&x.d,x&&x.n])
+    .filter(x=>typeof x[0]==="string"&&x[0]);
+  const read=new Map(rows.map(x=>[x[0],x]));
   const modal=el("div","fmodal"),sheet=el("div","fsheet bshelf lib");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label",mine?"Моя библиотека":"Библиотека");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
   modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
@@ -2366,7 +2370,10 @@ function summary(){
   // расписание: друзья видят, по какому плану вы читаете и какие у вас отрывки
   out.plan=SCHED.id; out.planName=SCHED.name; out.keys=KEYS.slice();
   out.plansDone=(state.finished||[]).map(f=>({n:f.name,d:f.days,f:f.end,e:f.emb||(f.id==="spb"?"flame":"book")}));
-  try{out.books=booksSummary()}catch(e){out.books=[]}
+  // Firestore (Standard) rejects nested arrays. Keep the bookshelf's
+  // internal [book, date, times] tuples, but publish maps to friends.
+  // After completing Genesis this used to make the whole reading batch fail.
+  try{out.books=booksSummary().map(([a,d,n])=>({a,d,n}))}catch(e){out.books=[]}
   KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
