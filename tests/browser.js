@@ -220,7 +220,7 @@
     } finally {globe.close();}
   });
 
-  await run("Книга служения отображается на глобусе среди других расписаний", () => {
+  await run("Остров выбора рядом с Горят, без кнопки Другие расписания", () => {
     const id = "test-ministry";
     const name = "Читаю служение";
     window.ogPlanAdd({ id, name, ms: 559, start: app.today(), by: "pages", amount: 1 });
@@ -232,12 +232,20 @@
     equal(position.b, -1);
     equal(position.spots, []);
 
-    globe.open({ people: [{ ...position, id: "test", name: "Руслан", rel: "me" }] });
+    globe.open({ people: [
+      { ...position, id: "test", name: "Руслан", rel: "me" },
+      { id: "choosing", name: "Новичок", b: -2, plan: "", rel: "" }
+    ] });
     try {
-      equal(element(".gother").hidden, false);
-      element(".gother").click();
-      equal(element(".gcard .gname").textContent, "Другие расписания");
-      element(".gcard .gppl button").click();
+      equal(document.querySelector(".gother"), null);
+      equal(element(".gisl").parentElement.classList.contains("gchips"), true);
+      equal(element(".gisl").hidden, false);
+      element(".gisl").click();
+      equal(element(".gcard .gname").textContent, "🏝 Остров выбора");
+      element(".gchip").click(); // Все
+      element(".gchip").nextElementSibling.click(); // Горят
+      const me = [...document.querySelectorAll(".gchip")].find(b => b.textContent.trim() === "Я");
+      me.click(); // Пользователь с иным расписанием по-прежнему доступен
       equal(element(".gcard .gname").textContent, "Руслан (вы)");
       equal(element(".gcard .gline:last-child").textContent, name);
     } finally {
