@@ -39,10 +39,7 @@
 
   <section class="card">
     <div class="hero withpace">
-      <svg class="flame" id="heroFlame" viewBox="0 0 64 80" aria-hidden="true">
-        <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
-        <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
-      </svg>
+      <svg class="flame" id="heroFlame" viewBox="0 0 64 80" aria-hidden="true" data-progress-visual=""></svg>
       <div>
         <div class="streakline"><span class="streak-num" id="streak">0</span><span class="streak-word" id="streakWord">дней подряд</span></div>
       </div>
@@ -211,10 +208,7 @@
 </div>
 <div class="auth" id="auth" hidden>
   <div class="auth-card">
-    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
-      <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
-      <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
-    </svg>
+    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true" data-progress-visual=""></svg>
     <h1>Огонёк</h1>
     <p class="muted" style="margin:0">Читайте Библию каждый день вместе с друзьями. Войдите через Google, чтобы прогресс сохранялся на всех устройствах и друзья видели, где вы читаете.</p>
     <button class="gbtn" id="googleBtn" type="button">
@@ -229,10 +223,7 @@
 <nav class="botnav" id="botNav" aria-label="Разделы"></nav>
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-live="polite">
   <div class="box">
-    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true">
-      <path class="f1" d="M33 2c3 15 19 24 19 46a20 20 0 0 1-40 0c0-11 6-17 10-21 0 8 4 13 9 13-3-13-1-26 2-38z"/>
-      <path class="f2" d="M32 40c4 8 10 11 10 21a10 10 0 0 1-20 0c0-6 3-9 6-12 0 4 2 7 5 7-2-5-2-11-1-16z"/>
-    </svg>
+    <svg class="flame" viewBox="0 0 64 80" aria-hidden="true" data-progress-visual=""></svg>
     <div class="big" id="celebNum">1</div>
     <div style="font-weight:700;font-size:1.1rem" id="celebText">день подряд!</div>
     <div class="muted" id="celebSub"></div>
@@ -280,14 +271,14 @@
 <script src="src/dates.js?v=refactor4"></script>
 <script src="src/state-schema.js?v=refactor4"></script>
 <script src="src/sounds.js?v=refactor5"></script>
-<script src="src/progress-visual.js?v=refactor5"></script>
+<script src="src/progress-visual.js?v=refactor13"></script>
 <script src="src/award-visual.js?v=refactor6"></script>
 <script src="src/bible-verses.js?v=refactor7"></script>
 <script src="src/reading-progress.js?v=refactor8"></script>
 <script src="src/app.js?v=refactor8"></script>
 <script src="src/reading-groups.js?v=refactor1"></script>
-<script src="globe.js?v=20261117"></script>
-<script type="module" src="auth.js?v=refactor12"></script>
+<script src="globe.js?v=refactor13"></script>
+<script type="module" src="auth.js?v=refactor13"></script>
 
 <script>/* автообновление: если на сайте вышла новая версия, а браузер показал старую из кэша — перезагрузить */
 (function(){var B="20261113224500";function chk(){try{/* сначала крошечный version.json (≈30 байт), если его нет — как раньше, весь index.html */fetch("version.json?b="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()}).catch(function(){return fetch("index.html?b="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""})}).then(function(t){var m=/(?:var B=|"B":)\s*"(\d+)"/.exec(t);if(m&&m[1]>B){try{if(sessionStorage.getItem("ogonek-upd")===m[1])return;sessionStorage.setItem("ogonek-upd",m[1])}catch(e){}location.reload()}}).catch(function(){})}catch(e){}}
