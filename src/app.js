@@ -1459,9 +1459,9 @@ function openBooks(list,who){
   if(mine&&!state.libSeen){state.libSeen=true;save();try{applyPtr()}catch(e){}}
   // Shared profiles use Firestore-safe objects; tolerate legacy tuples.
   // The bookshelf below still works with its original tuple representation.
-  const rows=list.map(x=>Array.isArray(x)?x:[x&&x.a,x&&x.d,x&&x.n])
+  list=list.map(x=>Array.isArray(x)?x:[x&&x.a,x&&x.d,x&&x.n])
     .filter(x=>typeof x[0]==="string"&&x[0]);
-  const read=new Map(rows.map(x=>[x[0],x]));
+  const read=new Map(list.map(x=>[x[0],x]));
   const modal=el("div","fmodal"),sheet=el("div","fsheet bshelf lib");sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");sheet.setAttribute("aria-label",mine?"Моя библиотека":"Библиотека");
   const close=()=>{modal.remove();document.removeEventListener("keydown",esc)};const esc=e=>{if(e.key==="Escape")close()};
   modal.addEventListener("click",e=>{if(e.target===modal)close()});document.addEventListener("keydown",esc);
