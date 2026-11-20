@@ -279,7 +279,7 @@ async function main() {
     myProfile = Object.assign({}, myProfile, patch);
     F.setDoc(myRef, patch, { merge: true }).catch((e) => console.warn(e));
   }
-  const litToday = (d) => d && d.ntLast === O().today() && d.otLast === O().today();
+  const litToday = (d) => !!d && fLit(d, O().today());
   const readAnyToday = (d) => d && (d.ntLast === O().today() || d.otLast === O().today());
   // воодушевлять: мой огонёк сегодня горит, а у друга ещё нет
   const canCheer = (d) => litToday(O().summary()) && !litToday(d);
@@ -345,11 +345,17 @@ async function main() {
     if (kind !== "cheer") data.kind = kind;
     const suffix = { invite: "_inv", conf: "_conf", confjoin: "_cjoin" }[kind] || "";
     try {
+      if (kind === "cheer") {
+        const s = O().summary();
+        if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
+        await F.setDoc(myRef, Object.assign({}, s, { updated: F.serverTimestamp() }), { merge: true });
+        if (!globeHide) await F.setDoc(F.doc(db, "globe", me.uid), globeDoc(s));
+      }
       await F.setDoc(F.doc(db, "cheers", uid, "inbox", me.uid + "_" + day + suffix), data);
       markSent(uid, kind); O().toast(K.sent); return true;
     } catch (e) {
       console.warn(e);
-      if (e && e.code === "permission-denied") { markSent(uid, kind); O().toast(K.again); return true; }
+      if (e && e.code === "permission-denied") { O().toast("Отправка не подтверждена сервером."); return false; }
       O().toast("Не удалось отправить. Проверьте интернет."); return false;
     }
   }
@@ -438,7 +444,11 @@ async function main() {
   const fDone = (d, k) => (d[k + "Next"] || 0) >= (d[k + "Days"] || ((d.plan || "spb") === O().planId ? O().DAYS : 364));
   const fRef = (d, k) => (typeof d[k + "Ref"] === "string" ? d[k + "Ref"] : O().refOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "—");
   const fUrl = (d, k) => d[k + "Url"] || O().urlOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "#";
-  const fLit = (d, t) => fKeys(d).every((k) => d[k + "Last"] === t);
+  const fLit = (d, t) => {
+    const p = d.globeSchedule && d.globeSchedule.passages;
+    if (Array.isArray(p) && p.length) return p.every(x => x && x.last === t);
+    return fKeys(d).every(k => d[k + "Last"] === t);
+  };
   function friendPassages(d) {
     const s = d && d.globeSchedule;
     return s && Array.isArray(s.passages) && s.passages.length
