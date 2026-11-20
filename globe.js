@@ -486,6 +486,7 @@
       if (readers.length > 6) {
         const more = btn("и ещё " + (readers.length - 6) + " ▾");
         more.type = "button"; more.setAttribute("aria-expanded", "false");
+        more.style.background = "#203b65"; more.style.color = "#9dcbff"; more.style.borderColor = "#568fe3"; more.style.width = "100%";
         more.addEventListener("click", () => {
           const expanded = more.getAttribute("aria-expanded") === "true";
           if (expanded) {
