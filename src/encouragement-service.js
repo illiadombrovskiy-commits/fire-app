@@ -1,4 +1,4 @@
-export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile,setProfile,getRef,getMe,myName,myPhoto}){
+export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fDayRead,getProfile,setProfile,getRef,getMe,myName,myPhoto}){
   const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
   // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
   function sentTodaySet(kind) {
@@ -47,6 +47,22 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProf
           return false;
         }
         if (litToday(peer.data())) {
+          O().toast("Друг сегодня уже прочитал — воодушевление не требуется.");
+          return false;
+        }
+        // The profile and public globe are separate Firestore documents.
+        // If publication of the profile was delayed, the globe may already
+        // show a flame. Recheck both before sending a needless cheer.
+        let globe;
+        try {
+          const globeRef = F.doc(db, "globe", uid);
+          globe = await (F.getDocFromServer ? F.getDocFromServer(globeRef) : F.getDoc(globeRef));
+        } catch (e) {
+          console.warn("Could not verify friend's globe reading", e);
+          O().toast("Не удалось проверить огонёк друга. Попробуйте позже.");
+          return false;
+        }
+        if (globe && globe.exists() && fDayRead(peer.data(), globe.data(), day)) {
           O().toast("Друг сегодня уже прочитал — воодушевление не требуется.");
           return false;
         }
