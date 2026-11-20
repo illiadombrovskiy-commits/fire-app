@@ -1904,7 +1904,8 @@ function globeSchedule(){
     const units=confToday(),read=confReadWhen(),t=today();
     const passages=[...new Set(units.map(u=>u.b))].map(book=>{
       const group=units.filter(u=>u.b===book);
-      return {ref:confRefs(group)[0].text,url:confRefs(group)[0].url,label:"",last:group.every(u=>read[u.i]===t)?t:""};
+      const x=confRefs(group)[0],done=group.every(u=>read[u.i]===t);
+      return {ref:x.text,url:x.url,label:"",last:done?t:"",...(done?{readRef:x.text,readUrl:x.url}:{})};
     });
     return {name:"Божья гора",passages};
   }
@@ -1914,12 +1915,17 @@ function globeSchedule(){
   const passages=S.keys.map(k=>{
     const track=progress[k]||{}, read=new Set(track.read||[]), skip=new Set(track.skip||[]);
     const log=track.log||[];
+    // A marked passage is not the next unread passage. Share its real ref
+    // so friends see the check beside the text that was actually read.
+    const lastMark=log.filter(x=>x && x.d===today() && Number.isInteger(x.p) && x.p>=0 && x.p<S.plan.length).slice(-1)[0];
+    const markedPart=lastMark?part2(S,k,lastMark.p):null;
     const next=S.plan.findIndex((_,p)=>{
       if(read.has(p)||skip.has(p))return false;
       const x=part2(S,k,p);
       return !!(x.book&&x.ref);
     });
     return {
+      ...(markedPart && markedPart.book && markedPart.ref ? {readRef:refStr(markedPart),readUrl:chapterUrl(markedPart)} : {}),
       ref:next<0?"":refStr(part2(S,k,next)),
       url:next<0?"":chapterUrl(part2(S,k,next)),
       key:k,
@@ -2367,7 +2373,13 @@ function summary(){
   out.plan=SCHED.id; out.planName=SCHED.name; out.keys=KEYS.slice();
   out.plansDone=(state.finished||[]).map(f=>({n:f.name,d:f.days,f:f.end,e:f.emb||(f.id==="spb"?"flame":"book")}));
   try{out.books=booksSummary()}catch(e){out.books=[]}
-  KEYS.forEach(k=>{const p=Math.min(out[k+"Next"],DAYS-1);out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS});
+  KEYS.forEach(k=>{
+    const p=Math.min(out[k+"Next"],DAYS-1);
+    out[k+"Ref"]=out[k+"Next"]>=DAYS?"":refStr(part(k,p));out[k+"Url"]=chapterUrl(part(k,p));out[k+"Label"]=T[k].label;out[k+"Days"]=DAYS;
+    const lastMark=(state[k].log||[]).filter(x=>x && x.d===today() && Number.isInteger(x.p) && x.p>=0 && x.p<DAYS).slice(-1)[0];
+    if(lastMark){const passage=part(k,lastMark.p);out[k+"ReadRef"]=refStr(passage);out[k+"ReadUrl"]=chapterUrl(passage)}
+    else{out[k+"ReadRef"]="";out[k+"ReadUrl"]=""}
+  });
   ["nt","ot"].forEach(k=>{if(!KEYS.includes(k)){const o=KEYS[0];["Streak","Next","Read","Last","Ahead"].forEach(f=>out[k+f]=out[o+f])}}); // для старых версий у друзей
   try{out.conf=confSummary()}catch(e){}
   // стихи, которые затронули: друзья видят их в профиле и на пути
