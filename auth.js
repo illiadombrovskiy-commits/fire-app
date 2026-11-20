@@ -78,7 +78,9 @@ async function main() {
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
   async function ensureProfile(user) {
-    const snap = await F.getDoc(myRef);
+    // Cloud state is required before deciding whether the reader opted out
+    // of the public globe. Cached data may describe an old privacy choice.
+    const snap = await F.getDocFromServer(myRef);
     const data = snap.exists() ? snap.data() : null;
     globeHide = !!(data && data.globeHide);
     myNick = (data && data.nick) || ""; myNameSet = !!(data && (data.nameSet || data.nick));
@@ -1251,6 +1253,7 @@ async function main() {
       if (window.OgonekGlobe) window.OgonekGlobe.close();
       clearTimeout(pubTimer); presenceSequence++; presencePending = false;
       progressVerified = false; profileReady = false;
+      progressRecoveryBusy = false; profileRecoveryBusy = false;
       me = null; O().setRemote(null); O().onSave = null; O().onPersonClick = null; O().setPathPeople([]); closeProfile();
       $("friendsCard").hidden = true; $("inviteCard").hidden = true;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = false; }
@@ -1262,6 +1265,7 @@ async function main() {
     }
     clearTimeout(pubTimer); presenceSequence++; presencePending = false;
     progressVerified = false; profileReady = false; presenceRevision = 0;
+    progressRecoveryBusy = false; profileRecoveryBusy = false;
     me = user; lsSet(SKIP_KEY, null); O().setMyPhoto(user.photoURL);
     top.textContent = (myNick || user.displayName || user.email || "Аккаунт").split(" ")[0]; top.classList.add("user");
     top.title = "Вы вошли как " + (user.displayName || user.email || "");
