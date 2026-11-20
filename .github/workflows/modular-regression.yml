@@ -22,3 +22,6 @@ jobs:
       - name: Reminder regression
         if: always()
         run: python3 tests/test_remind.py
+      - name: Social service regression (mock Firebase)
+        if: always()
+        run: node tests/social.mjs
