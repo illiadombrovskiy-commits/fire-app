@@ -25,6 +25,9 @@ jobs:
       - name: Social service regression (mock Firebase)
         if: always()
         run: node tests/social.mjs
+      - name: Live reading profile publication regression
+        if: always()
+        run: node tests/reading-sync.mjs
   firestore:
     runs-on: ubuntu-latest
     timeout-minutes: 15
