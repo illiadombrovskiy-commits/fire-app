@@ -352,12 +352,12 @@ async function main() {
     const mid = el("div"); mid.style.minWidth = "0";
     mid.append(el("div", "fname", isMe ? "Вы" : (d.name || "Читатель")));
     const lit = profileReadToday(d, isMe ? me.uid : uid, t);
-    if (lit) mid.append(el("span", "freadtoday on", "✓ Прочитано сегодня"));
+    // Read status belongs beside the actual passage, never under the name.
     fKeys(d).forEach((k) => {
       const line = el("div", "fline");
-      const readToday = d[k + "Last"] === t;
-      line.append(el("span", null, fShort(d, k) + ": " + (fDone(d, k) ? "пройден" : fRef(d, k))));
-      const st = el("span", readToday ? "ok" : null, readToday ? "✓" : "—"); st.title = readToday ? "Прочитано сегодня" : "Сегодня ещё не читал(а)"; line.append(st);
+      const readRef = d[k + "Last"] === t && typeof d[k+"ReadRef"] === "string" ? d[k+"ReadRef"] : "";
+      line.append(el("span", readRef ? "ok" : null, fShort(d, k) + ": " + (readRef || (fDone(d, k) ? "пройден" : fRef(d, k)))));
+      if(readRef){const mark=el("span", "ok", " ✓");mark.title="Этот отрывок прочитан сегодня";line.append(mark)}
       mid.append(line);
     });
     const right = el("div", "fstreak");
@@ -445,7 +445,8 @@ async function main() {
 
     const head = el("div", "fhead"), ht = el("div");
     ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", (d.streak || 0) + " " + O().plural(d.streak || 0, "день подряд", "дня подряд", "дней подряд")));
-    ht.append(el("div", "freadtoday" + (readToday ? " on" : ""), readToday ? "✓ Прочитано сегодня" : "Сегодня ещё нет отметки"));
+    // Day-level status still controls the globe and encouragements, but is
+    // not shown as a separate banner in the reader's profile.
     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64, isMe ? myPhotoHQ() : (d.photoHQ || "")), ht, x);
 
@@ -464,25 +465,52 @@ async function main() {
         const label = p.label === "НЗ" ? "Новый Завет" : p.label === "ВЗ" ? "Ветхий Завет" : p.label || "Отрывок";
         left.append(el("small", null, label + (pace === null ? " · нет данных о темпе" : " · " + fmtAhead(pace))));
         const safeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (_) { return ""; } };
-        const matching = fKeys(d).find(k => fRef(d, k) === p.ref);
-        const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
-        if (url) { const a = el("a", null, p.ref); a.href = url; a.target = "_blank"; a.rel = "noopener"; left.append(a); }
-        else left.append(el("b", null, p.ref || "Пройдено"));
-        // The reference is the NEXT passage; its completion must not be inferred
-        // from a flame earned on another schedule or from the previous passage.
-        const readOnPlan = fScheduleReadToday(p, t);
-        row.append(left, el("span", readOnPlan ? "ok" : "hint", readOnPlan ? "✓ сегодня по плану" : "следующий отрывок"));
+        const addRef = (parent, ref, href) => {
+          const url = safeUrl(href) || (O().urlOfRef && safeUrl(O().urlOfRef(ref)));
+          if (url) { const a = el("a", null, ref); a.href=url; a.target="_blank"; a.rel="noopener"; parent.append(a); }
+          else parent.append(el("b", null, ref));
+        };
+        // A daily flame can come from another schedule: it must not put a
+        // check beside the *next* unread reference.
+        const readRef = fScheduleReadToday(p, t) && typeof p.readRef === "string" ? p.readRef : "";
+        if (readRef) {
+          const finished = el("div", "fpassage-read");
+          const check = el("span", "ok", "✓"); check.title="Этот отрывок прочитан сегодня";
+          finished.append(check);
+          addRef(finished, readRef, p.readUrl);
+          left.append(finished);
+        }
+        if (p.ref && p.ref !== readRef) {
+          const nextLine=el("div", "fpassage-next");
+          if (readRef) nextLine.append(el("small", "hint", "Следующий отрывок"));
+          const matching = fKeys(d).find(k => fRef(d, k) === p.ref);
+          addRef(nextLine, p.ref, safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))));
+          left.append(nextLine);
+        }
+        row.append(left);
         reading.append(row);
       });
     } else {
     if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
     fKeys(d).forEach((k) => {
-      const done = fDone(d, k), planReadToday = d[k + "Last"] === t;
+      const done = fDone(d, k);
+      const readRef = d[k+"Last"] === t && typeof d[k+"ReadRef"] === "string" ? d[k+"ReadRef"] : "";
       const row = el("div", "frow"), left = el("div");
-      left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
-      if (done) left.append(el("b", null, "Пройдено"));
-      else { const a = el("a", null, fRef(d, k)); a.href = fUrl(d, k); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
-      row.append(left, el("span", planReadToday ? "ok" : "hint", planReadToday ? "✓ сегодня по плану" : "следующий отрывок"));
+      left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k+"Ahead"])));
+      if (readRef) {
+        const finished=el("div", "fpassage-read");
+        const mark=el("span", "ok", "✓");mark.title="Этот отрывок прочитан сегодня";
+        finished.append(mark);
+        const a=el("a", null, readRef);a.href=d[k+"ReadUrl"] || (O().urlOfRef && O().urlOfRef(readRef)) || "#";a.target="_blank";a.rel="noopener";finished.append(a);
+        left.append(finished);
+      }
+      if (done) { if (!readRef) left.append(el("b", null, "Пройдено")); }
+      else if (fRef(d,k) !== readRef) {
+        const next=el("div", "fpassage-next");
+        if (readRef) next.append(el("small", "hint", "Следующий отрывок"));
+        const a=el("a", null, fRef(d,k));a.href=fUrl(d,k);a.target="_blank";a.rel="noopener";next.append(a);left.append(next);
+      }
+      row.append(left);
       reading.append(row);
     });
     }
