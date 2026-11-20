@@ -135,7 +135,7 @@ async function main() {
     try {
       const fuid = await findFriendUid(raw);
       if (fuid === undefined) { O().toast("Введите код из 6 знаков, почту Google или ID друга"); return; }
-      if (!fuid) { O().toast(raw.includes("@") ? "Человек с такой почтой ещё не входил в Огонёк" : "Код не найден. Проверьте его ещё раз."); return; }
+      if (!fuid) { O().toast(raw.includes("@") ? "Человек с такой почтой ещё не входил в приложение «В Слове»" : "Код не найден. Проверьте его ещё раз."); return; }
       if (fuid === me.uid) { O().toast("Это вы сами"); return; }
       $("friendCode").value = "";
       openProfile(fuid); // сначала профиль — решите, добавлять ли
@@ -373,7 +373,7 @@ async function main() {
     let d = isMe ? Object.assign(O().summary(), { name: myName(), photo: myPhoto(), about: myProfile.about || "", friends: myFriends }) : friendData[id];
     if (!d) { // профиль любого пользователя можно посмотреть, прежде чем подписываться
       try { const sn = await F.getDoc(F.doc(db, "profiles", id)); d = sn.exists() ? sn.data() : null; } catch (e) { console.warn(e); }
-      if (!d) { O().toast("Не удалось открыть профиль. Возможно, человек ещё не обновил Огонёк."); return; }
+      if (!d) { O().toast("Не удалось открыть профиль. Возможно, человек ещё не обновил приложение «В Слове»."); return; }
     }
     closeProfile();
     const t = O().today(), modal = el("div", "fmodal"), sheet = el("div", "fsheet");
@@ -518,7 +518,7 @@ async function main() {
         row.append(avatarEl(nm, ph, 34), el("span", null, nm || "Читатель"));
         row.style.cursor = "pointer"; row.title = "Открыть профиль";
         row.addEventListener("click", (e) => { if (!e.target.closest("button")) openProfile(u); });
-        if (!nm) { const h = el("small", "hint", "имя появится, когда он откроет Огонёк"); h.style.margin = "0"; row.querySelector("span").append(document.createElement("br"), h); }
+        if (!nm) { const h = el("small", "hint", "имя появится, когда он откроет «В Слове»"); h.style.margin = "0"; row.querySelector("span").append(document.createElement("br"), h); }
         if (myFriends.includes(u) || myFollowing.includes(u)) { const b = el("span", "hint", myFriends.includes(u) ? "Уже друзья" : "Заявка отправлена"); b.style.flex = "none"; row.append(b); }
         else {
           const b = el("button", "btn btn-xp", "Добавить"); b.type = "button";
@@ -725,7 +725,7 @@ async function main() {
     window.ogonekOpenGlobe = () => openGlobe();
   }
 
-  /* ---------- поиск друзей: по имени среди друзей, подписчиков и всех читателей Огонька; код или почта — сразу профиль ---------- */
+  /* ---------- поиск друзей: по имени среди друзей, подписчиков и всех читателей «В Слове»; код или почта — сразу профиль ---------- */
   let fsReaders = null, fsReadersAt = 0, fsTimer = 0;
   const fsNorm = (s) => String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
   async function fsLoadReaders() {
@@ -794,13 +794,13 @@ async function main() {
       res.append(el("span", "label", "Ваши друзья и подписки"));
       mine.sort((a, b) => a.name.localeCompare(b.name, "ru")).forEach((p) => res.append(fsPerson(p.uid, p.name, p.photo, rel(p.uid))));
     }
-    const wait = el("p", "hint fshint", "Ищу среди читателей Огонька…"); res.append(wait);
+    const wait = el("p", "hint fshint", "Ищу среди читателей «В Слове»…"); res.append(wait);
     const all = await fsLoadReaders();
     if (fsNorm($("fsInput") && $("fsInput").value) !== nq) return;
     wait.remove();
     const others = all.filter((p) => !seen.has(p.uid) && p.name && hit(p.name)).sort((a, b) => a.name.localeCompare(b.name, "ru"));
     if (others.length) {
-      res.append(el("span", "label", "Читатели Огонька · " + others.length));
+      res.append(el("span", "label", "Читатели «В Слове» · " + others.length));
       others.slice(0, 30).forEach((p) => res.append(fsPerson(p.uid, p.name, p.photo, "")));
       if (others.length > 30) res.append(el("p", "hint fshint", "Показаны первые 30 — уточните имя"));
     }
@@ -867,7 +867,7 @@ async function main() {
   $("copyInvite").addEventListener("click", async () => {
     const btn = $("copyInvite");
     const link = location.origin + location.pathname + "?add=" + myCode;
-    const text = (window.confInviteText && window.confInviteText(myCode)) || ("Мой код в «Огоньке»: " + myCode + "\n" + link);
+    const text = (window.confInviteText && window.confInviteText(myCode)) || ("Мой код в «В Слове»: " + myCode + "\n" + link);
     const ok = await copyText(text);
     if (ok) {
       btn.classList.remove("copied"); void btn.offsetWidth; btn.classList.add("copied"); btn.textContent = "Скопировано ✓";
@@ -945,7 +945,7 @@ async function main() {
       },
       test: async () => {
         if (notifyStatus() !== "granted") { O().toast("Сначала разрешите уведомления"); return; }
-        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("Огонёк", { body: "Так будет выглядеть напоминание: огонёк сегодня ещё не горит 🙏", icon: "icon-192.png", tag: "ogonek-test" }); }
+        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("В Слове", { body: "Так будет выглядеть напоминание: огонёк сегодня ещё не горит 🙏", icon: "icon-192.png", tag: "ogonek-test" }); }
         catch (e) { console.warn(e); O().toast("Не получилось показать уведомление"); }
       }
     });
@@ -953,17 +953,17 @@ async function main() {
   async function enableReminder() {
     if (!me) return;
     if (!pushCapable()) {
-      if (isIOS()) { O().toast("На iPhone напоминания работают, когда Огонёк добавлен на экран «Домой». Откройте его оттуда и включите снова."); const l = $("installLink"); if (l && !l.hidden) l.click(); }
+      if (isIOS()) { O().toast("На iPhone напоминания работают, когда приложение «В Слове» добавлено на экран «Домой». Откройте его оттуда и включите снова."); const l = $("installLink"); if (l && !l.hidden) l.click(); }
       else O().toast("Этот браузер не умеет присылать уведомления. Попробуйте Chrome.");
       return;
     }
     let perm = Notification.permission;
     if (perm === "default") { try { perm = await Notification.requestPermission(); } catch (e) {} }
-    if (perm !== "granted") { O().toast("Уведомления запрещены. Разрешите их для Огонька в настройках браузера или телефона."); return; }
+    if (perm !== "granted") { O().toast("Уведомления запрещены. Разрешите их для приложения «В Слове» в настройках браузера или телефона."); return; }
     try {
       const t = await pushToken(); await savePush(t, true);
       lsSet(REMIND_KEY, "1"); lsSet(REMIND_HIDE, null);
-      { let tx = "22:00"; try { tx = O().ntText(O().ntLoad()); } catch (e) {} O().toast("Готово! Если не прочитаете, Огонёк напомнит: " + tx); }
+      { let tx = "22:00"; try { tx = O().ntText(O().ntLoad()); } catch (e) {} O().toast("Готово! Если не прочитаете, «В Слове» напомнит: " + tx); }
     } catch (e) { console.warn(e); O().toast("Не получилось включить напоминание. Проверьте интернет и попробуйте ещё раз."); }
   }
   async function disableReminder() {
@@ -1067,7 +1067,7 @@ async function main() {
     const net = {
       uid: me.uid, name: nm, photo: ph(),
       del: () => F.deleteField(),
-      // друзья из Огонька — чтобы позвать их в группу
+      // друзья из «В Слове» — чтобы позвать их в группу
       friends: () => myFriends.filter((u) => sameSex(friendData[u])).map((u) => ({ uid: u, name: (friendData[u] && friendData[u].name) || "Друг", photo: (friendData[u] && friendData[u].photo) || "", g: (friendData[u] && friendData[u].gender) || "" })),
       invite(uid, code, gname) {
         return F.setDoc(F.doc(db, "groupinv", uid, "inbox", code), { from: me.uid, name: nm(), photo: ph(), group: code, gname: String(gname || "").slice(0, 60), at: Date.now() });
