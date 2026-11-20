@@ -213,7 +213,8 @@
       let v = q.v;
       if (k * 2 >= n) { const j = Math.floor(k * 2 / n), a = k * 2.4; v = nrm([v[0] + Math.cos(a) * 0.012 * j, v[1] + Math.sin(a) * 0.012 * j, v[2] + Math.sin(a + 1) * 0.012 * j]); }
       p.v = v; p.lat = Math.asin(v[1]); p.lon = Math.atan2(v[0], v[2]); p.ph = i * 1.3; p.col = COL[i % 7];
-      p.fire = p.spotLit !== undefined ? p.spotLit : p.lit === t0;
+      // A book's spotLit flag must expire with its Firestore publication day.
+      p.fire = p.spotLit !== undefined ? (p.spotLit === true && p.seen === t0) : p.lit === t0;
     });
   }
 

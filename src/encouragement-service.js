@@ -1,4 +1,4 @@
-export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile,setProfile,getRef,getMe,myName,myPhoto}){
+export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fProfileReadToday,getProfile,setProfile,getRef,getMe,myName,myPhoto}){
   const sentMap = (kind) => { try { return JSON.parse(lsGet(KIND[kind].key) || "{}"); } catch (e) { return {}; } };
   // кому я отправил сегодня: этот браузер + профиль (чтобы лимит работал на всех устройствах)
   function sentTodaySet(kind) {
@@ -47,6 +47,21 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProf
           return false;
         }
         if (litToday(peer.data())) {
+          O().toast("Друг сегодня уже прочитал — воодушевление не требуется.");
+          return false;
+        }
+        // A separate globe write can arrive before the profile summary.
+        // Verify the current public flame server-side to avoid bothering readers.
+        let globe;
+        try {
+          const ref = F.doc(db, "globe", uid);
+          globe = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
+        } catch (e) {
+          console.warn("Could not verify friend's globe", e);
+          O().toast("Не удалось проверить огонёк друга. Попробуйте позже.");
+          return false;
+        }
+        if (globe && globe.exists() && fProfileReadToday(peer.data(), day, globe.data())) {
           O().toast("Друг сегодня уже прочитал — воодушевление не требуется.");
           return false;
         }
