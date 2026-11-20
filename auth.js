@@ -1,5 +1,7 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
+import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=refactor9";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -439,17 +441,6 @@ async function main() {
   function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
 
   // расписание друга: у каждого может быть своё — показываем его собственные отрывки
-  const fKeys = (d) => (Array.isArray(d.keys) && d.keys.length ? d.keys : ["nt", "ot"]);
-  const fLabel = (d, k) => d[k + "Label"] || (k === "nt" ? "Новый Завет" : "Ветхий Завет");
-  const fShort = (d, k) => ({ "Новый Завет": "НЗ", "Ветхий Завет": "ВЗ" })[fLabel(d, k)] || fLabel(d, k);
-  const fDone = (d, k) => (d[k + "Next"] || 0) >= (d[k + "Days"] || ((d.plan || "spb") === O().planId ? O().DAYS : 364));
-  const fRef = (d, k) => (typeof d[k + "Ref"] === "string" ? d[k + "Ref"] : O().refOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "—");
-  const fUrl = (d, k) => d[k + "Url"] || O().urlOfPlan(d.plan || "spb", k, d[k + "Next"] || 0) || "#";
-  const fLit = (d, t) => {
-    const p = d.globeSchedule && d.globeSchedule.passages;
-    if (Array.isArray(p) && p.length) return p.every(x => x && x.last === t);
-    return fKeys(d).every(k => d[k + "Last"] === t);
-  };
   function friendPassages(d) {
     const s = d && d.globeSchedule;
     return s && Array.isArray(s.passages) && s.passages.length
@@ -488,26 +479,6 @@ async function main() {
   function myPhotoS() { return (myProfile && myProfile.photoX && myProfile.photoS) || (me && me.photoURL) || ""; }
   function myPhotoHQ() { return (myProfile && myProfile.photoX && myProfile.photoHQ) || ""; }
   // фото с телефона: квадрат size×size JPEG, не длиннее maxLen знаков
-  function loadImg(file) {
-    return new Promise((res, rej) => { const url = URL.createObjectURL(file), img = new Image();
-      img.onload = () => res({ img, url }); img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("не картинка")); }; img.src = url; });
-  }
-  function squareJpeg(img, S, q0, maxLen) {
-    const c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
-    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
-    const m = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - m) / 2, sy = (img.naturalHeight - m) / 2;
-    g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.drawImage(img, sx, sy, m, m, 0, 0, S, S);
-    let q = q0, d = c.toDataURL("image/jpeg", q); while (d.length > maxLen && q > 0.45) { q -= 0.07; d = c.toDataURL("image/jpeg", q); }
-    return d;
-  }
-  // три размера: 256 px — аватарки (чётко на экранах ×3), 1080 px — фото крупно, 112 px — глобус (правило ≤ 20 000)
-  async function shrinkPhoto(file) {
-    const { img, url } = await loadImg(file);
-    try {
-      const m = Math.min(img.naturalWidth, img.naturalHeight);
-      return { thumb: squareJpeg(img, Math.min(256, m), 0.9, 45000), big: squareJpeg(img, Math.min(1080, m), 0.9, 420000), small: squareJpeg(img, Math.min(112, m), 0.85, 19000) };
-    } finally { URL.revokeObjectURL(url); }
-  }
   async function saveMyPhoto(ph) {
     ph = ph || { thumb: "", big: "", small: "" };
     myProfile = Object.assign({}, myProfile, { photoX: ph.thumb, photoHQ: ph.big, photoS: ph.small });
