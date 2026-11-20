@@ -1,11 +1,11 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
-import { createEncouragementService } from "./src/encouragement-service.js?v=reading-sync-1";
+import { createEncouragementService } from "./src/encouragement-service.js?v=globe-day-2";
 import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday } from "./src/friend-progress.js?v=profile-day-1";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday } from "./src/friend-progress.js?v=globe-day-2";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -206,7 +206,7 @@ async function main() {
   const flameSvg = window.OgonekProgressVisual.flameSvg;
   /* ---------- воодушевление и приглашение почитать вместе ---------- */
   const {CHEERS,INVITES,KIND,kindOf}=createEncouragementConfig();
-  const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
+  const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fProfileReadToday,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
 
   function actionButton(uid, d, kind) {
     const K = KIND[kind], b = el("button", "cheerbtn" + (kind === "invite" ? " invitebtn" : "")); b.type = "button";
@@ -221,7 +221,7 @@ async function main() {
   const myG = () => { try { return (window.ogGender && window.ogGender()) || ""; } catch (e) { return ""; } };
   const sameSex = (d) => { const g = myG(), h = d && d.gender; return !g || !h || g === h; };
   function friendAction(uid, d) {
-    if (!sameSex(d)) return null;
+    if (!sameSex(d) || profileReadToday(d, uid, O().today())) return null;
     if (canCheer(d)) return actionButton(uid, d, "cheer");
     if (canInvite(d)) return actionButton(uid, d, "invite");
     return null;
@@ -408,8 +408,23 @@ async function main() {
     }
     closeProfile();
     activeProfileId = isMe ? me.uid : id;
-    // Show cached data instantly; revalidate it from the actual server.
+    // Show cached data instantly; revalidate both independently published
+    // Firestore sources so today's green badge matches the globe.
     if (!isMe && !skipRefresh && F.getDocFromServer) {
+      F.getDocFromServer(F.doc(db, "globe", id)).then((snap) => {
+        const day = O().today(), person = friendData[id] || d;
+        const oldStatus = profileReadToday(person, id, day);
+        if (snap.exists()) {
+          const publicData = snap.data();
+          globeReadCache[id] = { lit: publicData.lit || "", seen: publicData.seen || "",
+            spots: Array.isArray(publicData.spots) ? publicData.spots : [] };
+        } else delete globeReadCache[id];
+        const newStatus = profileReadToday(person, id, day);
+        if (oldStatus !== newStatus) {
+          renderFriends();
+          if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
+        }
+      }).catch((e) => console.warn("Could not verify globe day", e));
       const shown = d;
       F.getDocFromServer(F.doc(db, "profiles", id)).then((sn) => {
         if (!sn.exists()) return;
@@ -723,9 +738,10 @@ async function main() {
   // Live public globe documents are the source of truth for daily flames.
   // Profile summaries are only a fallback for friends using an older version.
   let globeList = null, globeDocs = [], globeUnsub = null;
+  let globeReadCache = Object.create(null);
   function profileReadToday(profile, uid, day) {
-    const live = globeDocs.find((p) => p.id === uid);
-    return fProfileReadToday(profile, day, live && live.lit);
+    const live = globeDocs.find((p) => p.id === uid) || globeReadCache[uid];
+    return fProfileReadToday(profile, day, live || null);
   }
   function stopGlobeLive() {
     if (globeUnsub) { globeUnsub(); globeUnsub = null; }
@@ -789,6 +805,7 @@ async function main() {
     // now arrive while the globe is open, including on other people's phones.
     const q = F.query(F.collection(db, "globe"), F.limit(1000));
     globeUnsub = F.onSnapshot(q, (snap) => {
+      const previousIds = new Set(globeDocs.map(p => p.id));
       globeDocs = [];
       snap.forEach((d) => {
         if (d.id === me.uid) return;
@@ -800,10 +817,14 @@ async function main() {
           refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [],
           plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "",
           fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "",
-          nd: typeof x.nd === "string" ? x.nd : ""
+          nd: typeof x.nd === "string" ? x.nd : "", seen: x.seen || ""
         });
       });
+      const ids = new Set(globeDocs.map(p => p.id));
+      previousIds.forEach(id => { if (!ids.has(id)) delete globeReadCache[id]; });
+      globeDocs.forEach(p => { globeReadCache[p.id] = p; });
       refreshGlobeList();
+      renderFriends();
     }, (e) => {
       console.warn("Globe live updates failed", e);
       O().toast("Не удалось обновить глобус. Проверьте интернет.");
@@ -1267,7 +1288,7 @@ async function main() {
     try { publishSummary(); } catch (e) {}
   };
   A.onAuthStateChanged(auth, async (user) => {
-    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; globeReadCache = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
