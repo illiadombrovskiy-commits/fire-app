@@ -1,11 +1,11 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
-import { firebaseConfig } from "./firebase-config.js?v=202610031821";
-import { createEncouragementService } from "./src/encouragement-service.js?v=refactor12";
-import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
-import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
-import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
-import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=refactor9";
+import { firebaseConfig } from "../firebase-config.js?v=202610031821";
+import { createEncouragementService } from "./encouragement-service.js?v=refactor12";
+import { createFriendActions } from "./friend-actions.js?v=refactor11";
+import { createEncouragementConfig } from "./encouragement-config.js?v=refactor10";
+import { createFriendLookup } from "./friend-lookup.js?v=refactor10";
+import { shrinkPhoto } from "./profile-photo.js?v=refactor9";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./friend-progress.js?v=refactor9";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
