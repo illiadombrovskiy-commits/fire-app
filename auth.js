@@ -182,7 +182,12 @@ async function main() {
             lastReadingSyncAt = new Date().toLocaleTimeString("ru-RU");
             return true;
           } catch (third) {
-            lastReadingSyncError = String((third && (third.code || third.message)) || "unknown").slice(0, 120);
+            // Include a short SDK explanation in the user's read-only sync
+            // diagnostics; a bare "invalid-argument" hid unsupported fields.
+            lastReadingSyncError = (
+              String((third && third.code) || "unknown") + ": " +
+              String((third && third.message) || "")
+            ).slice(0, 250);
             console.warn("Unable to commit profile and globe together", third);
           }
         }
