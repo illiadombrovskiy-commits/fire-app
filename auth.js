@@ -1338,15 +1338,13 @@ async function main() {
     const bell = item("", "bell", "Уведомления");
     try { if (O().ntNew && O().ntNew()) bell.append(el("span", "newbadge", "Новое")); } catch (e) {}
     bell.addEventListener("click", () => { closeUserMenu(); openNotifySettings(); });
-    const diag = item("", "book", "Проверить синхронизацию");
-    diag.addEventListener("click", openSyncDiagnostics);
     const out = item(" danger", "exit", "Выйти"), outT = out.querySelector(".umt");
     out.addEventListener("click", () => {
       if (out.dataset.armed) { closeUserMenu(); O().setRemote(null); O().onSave = null; A.signOut(auth); return; }
       out.dataset.armed = "1"; outT.textContent = "Нажмите ещё раз, чтобы выйти";
       setTimeout(() => { delete out.dataset.armed; outT.textContent = "Выйти"; }, 3000);
     });
-    m.append(who, about, bell, diag, out);
+    m.append(who, about, bell, out);
     const r = top.getBoundingClientRect();
     m.style.top = (r.bottom + window.scrollY + 6) + "px";
     m.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + "px";
