@@ -220,7 +220,7 @@
     } finally {globe.close();}
   });
 
-  await run("Остров выбора рядом с Горят, без кнопки Другие расписания", () => {
+  await run("Выбирают рядом с заголовком глобуса без кнопки Другие расписания", () => {
     const id = "test-ministry";
     const name = "Читаю служение";
     window.ogPlanAdd({ id, name, ms: 559, start: app.today(), by: "pages", amount: 1 });
@@ -238,10 +238,12 @@
     ] });
     try {
       equal(document.querySelector(".gother"), null);
-      equal(element(".gisl").parentElement.classList.contains("gchips"), true);
+      equal(element(".gisl").parentElement.classList.contains("gtop"), true);
       equal(element(".gisl").hidden, false);
+      equal(element(".gisl").textContent.includes("Выбирают"), true);
+      equal(element(".gisl").textContent.includes("1"), true);
       element(".gisl").click();
-      equal(element(".gcard .gname").textContent, "🏝 Остров выбора");
+      equal(element(".gcard .gname").textContent, "🏝 Выбирают");
       element(".gchip").click(); // Все
       element(".gchip").nextElementSibling.click(); // Горят
       const me = [...document.querySelectorAll(".gchip")].find(b => b.textContent.trim() === "Я");
