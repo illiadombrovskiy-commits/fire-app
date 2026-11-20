@@ -1,5 +1,6 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
+import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
@@ -140,53 +141,7 @@ async function main() {
     } catch (e) { console.warn(e); O().toast("Не удалось добавить друга. Проверьте код или почту."); }
   }
 
-  // заявка в друзья: я подписываюсь на человека; дружба — когда он примет заявку (или если он уже подписан на меня)
-  async function addFriendUid(fuid) {
-    if (fuid === me.uid) { O().toast("Это вы сами"); return false; }
-    if (myFriends.includes(fuid)) { O().toast("Вы уже друзья"); return false; }
-    const ref = F.doc(db, "profiles", fuid), already = myFollowing.includes(fuid);
-    try {
-      await F.updateDoc(ref, { followers: F.arrayUnion(me.uid) });
-      await F.updateDoc(myRef, { following: F.arrayUnion(fuid) });
-      let their = {}; try { const sn = await F.getDoc(ref); their = sn.exists() ? sn.data() : {}; } catch (e) {}
-      if ((their.following || []).includes(me.uid)) {          // он уже звал меня — сразу друзья
-        await F.updateDoc(ref, { friends: F.arrayUnion(me.uid) });
-        await F.updateDoc(myRef, { friends: F.arrayUnion(fuid) });
-        O().toast("Вы теперь друзья!");
-      } else if (already) O().toast("Заявка уже отправлена — ждём, когда друг её примет");
-      else O().toast("Заявка отправлена. Пока друг её не примет, вы подписаны на него");
-      return true;
-    } catch (e) { console.warn(e); O().toast("Не удалось отправить заявку. Попробуйте позже."); return false; }
-  }
-
-  async function acceptRequest(uid) {
-    try {
-      await F.updateDoc(myRef, { friends: F.arrayUnion(uid), following: F.arrayUnion(uid), declined: F.arrayRemove(uid) });
-      await F.updateDoc(F.doc(db, "profiles", uid), { friends: F.arrayUnion(me.uid) });
-      await F.updateDoc(F.doc(db, "profiles", uid), { followers: F.arrayUnion(me.uid) }).catch(() => {});
-      O().toast("Заявка принята — теперь вы друзья!"); if (O().vibrate) O().vibrate([30, 40, 30]);
-    } catch (e) { console.warn(e); O().toast("Не удалось принять заявку. Попробуйте позже."); }
-  }
-  async function declineRequest(uid) {
-    try { await F.updateDoc(myRef, { declined: F.arrayUnion(uid) }); O().toast("Заявка отклонена — человек останется подписчиком"); }
-    catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
-  }
-
-  async function removeFriend(fuid) {
-    try {
-      await F.updateDoc(myRef, { friends: F.arrayRemove(fuid), following: F.arrayRemove(fuid) });
-      await F.updateDoc(F.doc(db, "profiles", fuid), { friends: F.arrayRemove(me.uid) }).catch(() => {});
-      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
-      O().toast("Друг удалён");
-    } catch (e) { console.warn(e); O().toast("Не удалось удалить. Попробуйте позже."); }
-  }
-  async function unfollow(fuid) {
-    try {
-      await F.updateDoc(myRef, { following: F.arrayRemove(fuid) });
-      await F.updateDoc(F.doc(db, "profiles", fuid), { followers: F.arrayRemove(me.uid) }).catch(() => {});
-      O().toast("Вы отписались");
-    } catch (e) { console.warn(e); O().toast("Не удалось. Попробуйте позже."); }
-  }
+  const {addFriendUid,acceptRequest,declineRequest,removeFriend,unfollow}=createFriendActions({F,db,O,getContext:()=>({me,myRef,myFriends,myFollowing})});
 
   // подписка на профили: друзья и те, на кого я подписан
   function syncFriendSubs(friends, following) {
