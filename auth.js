@@ -551,7 +551,12 @@ async function main() {
       reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
       passages.forEach((p) => {
         const row = el("div", "frow"), left = el("div");
-        left.append(el("small", null, p.label || "Отрывок"), el("b", null, p.ref || "Пройдено"));
+        left.append(el("small", null, p.label || "Отрывок"));
+        const safeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (_) { return ""; } };
+        const matching = fKeys(d).find(k => fRef(d, k) === p.ref);
+        const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
+        if (url) { const a = el("a", null, p.ref); a.href = url; a.target = "_blank"; a.rel = "noopener"; left.append(a); }
+        else left.append(el("b", null, p.ref || "Пройдено"));
         row.append(left, el("span", p.last === t ? "ok" : "hint", p.last === t ? "✓ сегодня" : "сегодня ещё нет"));
         reading.append(row);
       });
