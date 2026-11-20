@@ -17,7 +17,12 @@ const O=()=>window.Ogonek;
   };
   // The globe's live flame can arrive before the profile's reading summary.
   // Present a single day-level status without marking the *next* passage read.
-  const fProfileReadToday = (d, day, globeLit) => fLit(d, day) || globeLit === day;
+  const fGlobeReadToday = (globe, day) => {
+    if (typeof globe === "string") return globe === day; // old callers
+    return !!(globe && (globe.lit === day ||
+      (globe.seen === day && Array.isArray(globe.spots) && globe.spots.some(p => p && p.l === true))));
+  };
+  const fProfileReadToday = (d, day, globe) => fLit(d, day) || fGlobeReadToday(globe, day);
   const fScheduleReadToday = (passage, day) => !!passage && passage.last === day;
 
-export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday};
+export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fGlobeReadToday,fProfileReadToday,fScheduleReadToday};
