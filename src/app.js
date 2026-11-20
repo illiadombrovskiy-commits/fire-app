@@ -3581,21 +3581,7 @@ const NOTE_MAX=60, NOTE_W=1000;
 function notesList(){if(!Array.isArray(state.notes))state.notes=[];return state.notes}
 function verseAskedToday(m){const t=today();return m?notesList().some(n=>n.d===t&&n.m)||state.msSkip===t:notesList().some(n=>n.d===t&&!n.m)||state.verseSkip===t}
 // стихи отрывка для кнопок (число стихов в главах — из BOOKS): «10:26–42», «9:35–10:5», «5:3», «7», «2–4»
-function verseChips(book,ref){
-  const b=BOOKS.find(x=>x.a===book), vc=b&&b.v||[], n=c=>vc[c-1]||0;
-  let c1,v1,c2,v2,m;ref=String(ref||"").replace(/\s+/g,"").replace(/[—−‒-]/g,"–");
-  if(m=/^(\d+):(\d+)[–-](\d+):(\d+)$/.exec(ref)){c1=+m[1];v1=+m[2];c2=+m[3];v2=+m[4]}
-  else if(m=/^(\d+):(\d+)[–-](\d+)$/.exec(ref)){c1=c2=+m[1];v1=+m[2];v2=+m[3]}
-  else if(m=/^(\d+):(\d+)$/.exec(ref)){c1=c2=+m[1];v1=v2=+m[2]}
-  else if(m=/^(\d+)[–-](\d+)$/.exec(ref)){c1=+m[1];c2=+m[2];v1=1;v2=n(c2)}
-  else if(m=/^(\d+)$/.exec(ref)){c1=c2=+m[1];v1=1;v2=n(c1)}
-  else return {ch:null,groups:[]};
-  const groups=[];let total=0;
-  for(let c=c1;c<=c2&&c-c1<6;c++){const a=c===c1?v1:1,z=c===c2?v2:n(c);if(!z||z<a)continue;const list=[];for(let v=a;v<=z;v++)list.push(c+":"+v);total+=list.length;groups.push({c,list})}
-  if(total>150)return {ch:c1,groups:[]};
-  return {ch:c1,groups};
-}
-function normVerse(s,ch){s=String(s||"").replace(/\s+/g,"").replace(/-/g,"–");if(!s)return "";if(/^\d+(–\d+)?$/.test(s)&&ch)return ch+":"+s;return s.slice(0,20)}
+const {verseChips,normVerse,verseUrl,verseNb}=window.OgonekBibleVerses.create(SLUG,BIBLE);
 function msOf(id){try{const d=id?xDef(id):SCHED.def;return d&&d.ms?msBook(d.ms):null}catch(e){return null}}
 function keepText(v){return String(v||"").replace(/\r/g,"").replace(/^\s*\n/,"").replace(/\s+$/,"").slice(0,NOTE_W)}
 function askVerse(k,p,x0,xid,man){
@@ -3697,9 +3683,6 @@ function rvBook(book){const sl=SLUG[book];if(!sl)return Promise.reject(new Error
 function rvText(book,cv){const m=/^(\d+):(\d+)(?:[–-](\d+))?$/.exec(String(cv||"").replace(/\s+/g,""));if(!m)return Promise.reject(new Error("ссылка"));
   return rvBook(book).then(B=>{const ch=B[+m[1]-1]||[],a=+m[2],z=+(m[3]||m[2]),out=[];for(let v=a;v<=z&&v-a<30;v++)if(ch[v-1])out.push([v,ch[v-1]]);if(!out.length)throw new Error("нет стиха");return out})}
 // сайт Восстановительного перевода открывается прямо в окошке Огонька, на нужном стихе
-function verseUrl(book,cv){const sl=SLUG[book],m=/^(\d+):(\d+)/.exec(cv)||[];return sl?BIBLE+sl+"/"+(m[1]||1)+"/"+(m[2]||1):BIBLE}
-function verseNb(book,cv,d){const b=BOOKS.find(x=>x.a===book),vc=b&&b.v||[],m=/^(\d+):(\d+)/.exec(cv);if(!m)return null;let c=+m[1],v=+m[2]+d;
-  if(v<1){c--;if(c<1)return null;v=vc[c-1]||1}else if(v>(vc[c-1]||0)){c++;if(c>vc.length)return null;v=1}return c+":"+v}
 function fillVerse(box,book,cv,tall,onClose,onGo){box.hidden=false;box.textContent="";const u=verseUrl(book,cv);
   const go=t=>{if(!t)return;if(onGo)onGo(t);else fillVerse(box,book,t,tall,onClose,onGo)};
   const top=el("div","vptop");const pv=verseNb(book,cv,-1),nx=verseNb(book,cv,1);
