@@ -117,18 +117,39 @@ async function main() {
     myFriends.forEach((u) => { const f = friendData[u]; if (f) fof[u] = { n: String(f.name || "").slice(0, 60), p: f.photo || "" }; });
     return JSON.stringify(fof) !== lastFof;
   }
+  // A locally completed Exodus passage may still be newer than an older
+  // /users cloud snapshot after interrupted sync. Do not erase that reading
+  // on next login, especially when an iPhone went to the background.
+  const progressPendingKey = uid => "ogonek-reading-pending-" + uid;
+  function preferLocalProgress(local, remote, uid) {
+    if (!local || !remote) return false;
+    const plan = x => String((x.schedDef && x.schedDef.id) || x.sched || "spb");
+    if (plan(local) !== plan(remote)) return false;
+    if (lsGet(progressPendingKey(uid)) === "1") return true;
+    const keys = ["nt", "ot"];
+    const set = (s,k) => new Set((s[k] && s[k].read) || []);
+    const ahead = keys.every(k => [...set(remote,k)].every(p => set(local,k).has(p)))
+      && keys.some(k => set(local,k).size > set(remote,k).size);
+    const recent = keys.some(k => ((local[k] && local[k].log) || [])
+      .some(l => l && l.d === O().today() && !set(remote,k).has(l.p)));
+    return ahead && recent;
+  }
   // имя, которое видят друзья: своё (если задано) или из Google
   const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
   // Publish the friend profile and the public globe as ONE Firestore commit.
   // Otherwise the flame can show today while the friend still sees Genesis.
-  async function commitReadingPresence(s, profileUpdate) {
+  async function commitReadingPresence(s, profileUpdate, progressState) {
     const uid = me && me.uid;
     if (!uid || !myRef) return false;
-    const profileRef = myRef, globeRef = F.doc(db, "globe", uid);
+    const profileRef = myRef, globeRef = F.doc(db, "globe", uid), progressRef = F.doc(db, "users", uid);
     const visible = !globeHide, initial = globeDoc(s);
     const commit = (globeData) => {
       const batch = F.writeBatch(db);
+      // Persist the actual private progress and its public representations as
+      // one Firestore transaction. Previously /users could stay on Genesis
+      // while /profiles or /globe had already advanced to Exodus.
+      if (progressState) batch.set(progressRef, progressState);
       batch.set(profileRef, profileUpdate, { merge: true });
       if (visible) batch.set(globeRef, globeData);
       else batch.delete(globeRef);
@@ -163,7 +184,7 @@ async function main() {
     }
   }
 
-  function publishSummary(immediate = false) {
+  function publishSummary(immediate = false, progressState = null) {
     // A failed startup read must never replace a current cloud profile with
     // yesterday's locally cached progress, nor reveal a previously hidden globe.
     const sequence = ++presenceSequence;
@@ -181,18 +202,18 @@ async function main() {
       if (myCode) profileUpdate.code = myCode; // never erase codes when initialization fails
       // A single atomic batch prevents today's globe flame from getting ahead
       // of yesterday's reading chapters in the friend-facing profile.
-      const commitPending = commitReadingPresence(s, profileUpdate);
+      const commitPending = commitReadingPresence(s, profileUpdate, progressState);
       F.setDoc(F.doc(db, "cards", publisherUid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
-      commitPending.then((ok) => {
+      return commitPending.then((ok) => {
         if (me && me.uid === publisherUid && sequence === presenceSequence) {
           presencePending = !ok;
         }
+        return ok;
       });
     };
-    // iOS can suspend a PWA before a debounced timer runs. Start Firestore
-    // writes as part of the same save action, not after 1.2 seconds.
-    if (immediate) publish();
-    else pubTimer = setTimeout(publish, 1200);
+    // Persist the event immediately so iOS does not suspend a pending timer.
+    if (immediate) return publish();
+    pubTimer = setTimeout(publish, 1200);
   }
 
   // друг ищется по коду (6 знаков), по почте Google или по ID
@@ -1407,20 +1428,34 @@ async function main() {
       if (!me || me.uid !== user.uid) return; // an older login cannot replace the next user's progress
       const local = O().getState(), remote = snap.exists() ? snap.data() : null;
       if (remote) {
-         // A higher local action count does not make its selected plan newer.
-         // Preserve the server's authoritative plan and progress on login.
-         O().setState(remote);
-       } else await F.setDoc(ref, local);
+        if (preferLocalProgress(local, remote, user.uid)) {
+          // Publish the locally completed reading to all three documents
+          // once the profile's visibility and invitation fields are loaded.
+          console.info("Recovering locally completed reading absent from the cloud");
+          presencePending = true;
+        } else O().setState(remote);
+      } else {
+        presencePending = true;
+      }
       progressVerified = true;
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
     finally { progressRecoveryBusy = false; }
     if (!me || me.uid !== user.uid) return;
     if (O().progressLoaded) O().progressLoaded();
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
-    let chain = Promise.resolve();
-    O().setRemote((s) => { chain = chain.then(() => F.setDoc(ref, s)).catch((e) => { console.warn(e); O().toast("Не удалось сохранить на сервере. Попробуем при следующей отметке."); }); return chain; });
-    // Register publishing before profile initialization, which may stall offline.
-    O().onSave = () => { presenceRevision++; publishSummary(true); renderFriends(); if (globeList) refreshGlobeList(); };
+    // One save action must never send /users on a different queue from
+    // /profiles and /globe: an older queued write used to restore Genesis 50.
+    O().setRemote((progressSnapshot) => {
+      const uid = me && me.uid, revision = ++presenceRevision;
+      if (uid) lsSet(progressPendingKey(uid), "1");
+      const pending = publishSummary(true, progressSnapshot);
+      return (pending || Promise.resolve(false)).then(ok => {
+        if (ok && uid && me && me.uid === uid && revision === presenceRevision)
+          lsSet(progressPendingKey(uid), null);
+        return ok;
+      });
+    });
+    O().onSave = () => { renderFriends(); if (globeList) refreshGlobeList(); };
     publishSummary();
 
     try {
@@ -1436,7 +1471,12 @@ async function main() {
       $("myId").textContent = user.uid;
       $("friendsCard").hidden = false; $("inviteCard").hidden = false;
       { const fe = $("friendsEmpty"); if (fe) fe.hidden = true; } // подсказка «Войдите через Google» не нужна
-      publishSummary(true); // publish the verified profile immediately after initialization
+      // Reconcile previously mismatched private reading and public presence.
+      const uid = me.uid, revision = presenceRevision;
+      publishSummary(true, O().getState()).then(ok => {
+        if (ok && me && me.uid === uid && revision === presenceRevision)
+          lsSet(progressPendingKey(uid), null);
+      });
       window.ogSetGender = (g) => { if (g !== "m" && g !== "f") return; if (myProfile.gender === g) return; myProfile = Object.assign({}, myProfile, { gender: g }); F.setDoc(myRef, { gender: g }, { merge: true }).catch((e) => console.warn(e)); renderFriends(); };
       let genderAsked = false;
       myUnsub = F.onSnapshot(myRef, (snap) => {
