@@ -1,11 +1,11 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
-import { createEncouragementService } from "./src/encouragement-service.js?v=reading-sync-1";
+import { createEncouragementService } from "./src/encouragement-service.js?v=profile-globe-1";
 import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit } from "./src/friend-progress.js?v=reading-sync-1";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fDayRead,fPassageRead } from "./src/friend-progress.js?v=profile-globe-1";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -74,6 +74,9 @@ async function main() {
 
   /* ---------- friends ---------- */
   let me = null, myRef = null, myCode = "", myNick = "", myNameSet = false, friendUnsubs = {}, friendData = {}, myUnsub = null, myFriends = [], myFollowing = [], myFollowers = [], myDeclined = [], knownReq = null, globeHide = false, activeProfileId = null;
+  let publicGlobe = Object.create(null);
+  function knownGlobe(uid) { return publicGlobe[uid] || null; }
+  const friendReadToday = (uid, profile, day) => fDayRead(profile, knownGlobe(uid), day);
 
   function randomCode() { let s = ""; const a = new Uint32Array(6); crypto.getRandomValues(a); a.forEach((n) => { s += CODE_ABC[n % CODE_ABC.length]; }); return s; }
 
@@ -206,7 +209,7 @@ async function main() {
   const flameSvg = window.OgonekProgressVisual.flameSvg;
   /* ---------- воодушевление и приглашение почитать вместе ---------- */
   const {CHEERS,INVITES,KIND,kindOf}=createEncouragementConfig();
-  const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
+  const {sentTodaySet,sentToday,left,markSent,litToday,readAnyToday,canCheer,canInvite,sendMsg}=createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fDayRead,getProfile:()=>myProfile,setProfile:v=>{myProfile=v},getRef:()=>myRef,getMe:()=>me,myName,myPhoto});
 
   function actionButton(uid, d, kind) {
     const K = KIND[kind], b = el("button", "cheerbtn" + (kind === "invite" ? " invitebtn" : "")); b.type = "button";
@@ -221,7 +224,7 @@ async function main() {
   const myG = () => { try { return (window.ogGender && window.ogGender()) || ""; } catch (e) { return ""; } };
   const sameSex = (d) => { const g = myG(), h = d && d.gender; return !g || !h || g === h; };
   function friendAction(uid, d) {
-    if (!sameSex(d)) return null;
+    if (!sameSex(d) || friendReadToday(uid, d, O().today())) return null;
     if (canCheer(d)) return actionButton(uid, d, "cheer");
     if (canInvite(d)) return actionButton(uid, d, "invite");
     return null;
@@ -359,7 +362,7 @@ async function main() {
       mid.append(line);
     });
     const right = el("div", "fstreak");
-    const lit = fLit(d, t);
+    const lit = isMe ? fLit(d, t) : friendReadToday(uid, d, t);
     right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(d[k + "Ahead"]))));
     row.append(av, mid, right);
     const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
@@ -407,8 +410,20 @@ async function main() {
     }
     closeProfile();
     activeProfileId = isMe ? me.uid : id;
-    // Show cached data instantly; revalidate it from the actual server.
+    // Show cached data instantly; revalidate it from both server sources.
     if (!isMe && !skipRefresh && F.getDocFromServer) {
+      F.getDocFromServer(F.doc(db, "globe", id)).then((sn) => {
+        const previous = friendReadToday(id, friendData[id] || d, O().today());
+        if (sn.exists()) {
+          const x = sn.data();
+          publicGlobe[id] = { lit: x.lit || "", seen: x.seen || "", spots: Array.isArray(x.spots) ? x.spots : [] };
+        } else delete publicGlobe[id];
+        const current = friendReadToday(id, friendData[id] || d, O().today());
+        if (previous !== current) {
+          renderFriends();
+          if (activeProfileId === id && document.querySelector(".fmodal")) openProfile(id, false, true);
+        }
+      }).catch((e) => console.warn("Could not refresh friend's globe flame", e));
       const shown = d;
       F.getDocFromServer(F.doc(db, "profiles", id)).then((sn) => {
         if (!sn.exists()) return;
@@ -434,6 +449,8 @@ async function main() {
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
+    const dayRead = isMe ? fLit(d, t) : friendReadToday(id, d, t);
+    reading.append(el("div", dayRead ? "ok" : "hint", dayRead ? "✓ Сегодня читал(а)" : "Сегодня ещё не читал(а)"));
     const passages = friendPassages(d);
     if (passages) {
       reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
@@ -449,13 +466,16 @@ async function main() {
         const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
         if (url) { const a = el("a", null, p.ref); a.href = url; a.target = "_blank"; a.rel = "noopener"; left.append(a); }
         else left.append(el("b", null, p.ref || "Пройдено"));
-        row.append(left, el("span", p.last === t ? "ok" : "hint", p.last === t ? "✓ сегодня" : "сегодня ещё нет"));
+        const exact = p.last === t;
+        const readToday = fPassageRead(p, passages, d, isMe ? null : knownGlobe(id), t);
+        row.append(left, el("span", readToday ? "ok" : "hint",
+          exact ? "✓ сегодня" : readToday ? "✓ читал(а) сегодня" : "сегодня ещё нет"));
         reading.append(row);
       });
     } else {
     if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
     fKeys(d).forEach((k) => {
-      const done = fDone(d, k), readToday = d[k + "Last"] === t;
+      const done = fDone(d, k), readToday = d[k + "Last"] === t || (fKeys(d).length === 1 && dayRead);
       const row = el("div", "frow"), left = el("div");
       left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
       if (done) left.append(el("b", null, "Пройдено"));
@@ -769,6 +789,9 @@ async function main() {
     // now arrive while the globe is open, including on other people's phones.
     const q = F.query(F.collection(db, "globe"), F.limit(1000));
     globeUnsub = F.onSnapshot(q, (snap) => {
+      const priorDocs = globeDocs;
+      const activeId = activeProfileId;
+      const before = activeId && friendData[activeId] ? friendReadToday(activeId, friendData[activeId], O().today()) : null;
       globeDocs = [];
       snap.forEach((d) => {
         if (d.id === me.uid) return;
@@ -780,10 +803,16 @@ async function main() {
           refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [],
           plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "",
           fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "",
-          nd: typeof x.nd === "string" ? x.nd : ""
+          nd: typeof x.nd === "string" ? x.nd : "", seen: x.seen || ""
         });
       });
+      const activeIds = new Set(globeDocs.map(p => p.id));
+      priorDocs.forEach(p => { if (!activeIds.has(p.id)) delete publicGlobe[p.id]; });
+      globeDocs.forEach(p => { publicGlobe[p.id] = p; });
       refreshGlobeList();
+      renderFriends();
+      const after = activeId && friendData[activeId] ? friendReadToday(activeId, friendData[activeId], O().today()) : null;
+      if (before !== after && activeId === activeProfileId && document.querySelector(".fmodal")) openProfile(activeId, false, true);
     }, (e) => {
       console.warn("Globe live updates failed", e);
       O().toast("Не удалось обновить глобус. Проверьте интернет.");
@@ -1247,7 +1276,7 @@ async function main() {
     try { publishSummary(); } catch (e) {}
   };
   A.onAuthStateChanged(auth, async (user) => {
-    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
+    Object.values(friendUnsubs).forEach((u) => u()); friendUnsubs = {}; friendData = {}; publicGlobe = Object.create(null); myFriends = []; myFollowing = []; myFollowers = []; myDeclined = []; knownReq = null;
     if (myUnsub) { myUnsub(); myUnsub = null; }
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; } cheerQueue = []; seenCheers.clear();
     if (teamInvUnsub) { teamInvUnsub(); teamInvUnsub = null; } if (window.confNet) window.confNet(null);
