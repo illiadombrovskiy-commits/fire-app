@@ -525,7 +525,7 @@
     opts = o || {}; people = expand(opts.people); filt = "all"; newIdx = -1;
     root = el("div", "gmodal"); root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "Глобус читателей");
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
-    const x = el("button", "gx", "✕"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", close); topb.append(x);
+
     const chips = el("div", "gchips");
     [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["verse", "Стихи", ""], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
       const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(ic ? stkEl(ic, 20) : el("span", "gvchip", "❞"), el("span", null, txt));
