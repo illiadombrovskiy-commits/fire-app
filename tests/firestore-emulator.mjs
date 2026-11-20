@@ -1,5 +1,5 @@
 import {initializeTestEnvironment,assertSucceeds,assertFails} from "@firebase/rules-unit-testing";
-import {doc,setDoc,getDoc,deleteDoc,serverTimestamp,onSnapshot,query,collection,limit} from "firebase/firestore";
+import {doc,setDoc,getDoc,deleteDoc,serverTimestamp,onSnapshot} from "firebase/firestore";
 import {readFileSync} from "node:fs";
 const env=await initializeTestEnvironment({projectId:"demo-v-slove",firestore:{rules:readFileSync("firestore.rules","utf8")}});
 try {
@@ -18,9 +18,8 @@ try {
  const changed = new Promise((resolve,reject) => {
   let unsubscribe = () => {};
   const timer = setTimeout(() => { unsubscribe(); reject(new Error("Globe update was not delivered in real time")); }, 10000);
-  unsubscribe = onSnapshot(query(collection(b,"globe"),limit(1000)), snapshot => {
-   const reader = snapshot.docs.find(d => d.id === "a");
-   if (reader && reader.data().lit === "2026-11-21") {
+  unsubscribe = onSnapshot(doc(b,"globe/a"), reader => {
+   if (reader.exists() && reader.data().lit === "2026-11-21") {
     clearTimeout(timer); unsubscribe(); resolve();
    }
   }, err => { clearTimeout(timer); unsubscribe(); reject(err); });
