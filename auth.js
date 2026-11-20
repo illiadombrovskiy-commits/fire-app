@@ -686,58 +686,91 @@ async function main() {
     (globeHide ? F.deleteDoc(ref) : F.setDoc(ref, doc).catch(() => { const d2 = Object.assign({}, doc); if (String(d2.photo || "").length > 500) d2.photo = (me.photoURL || "").slice(0, 500); return F.setDoc(ref, d2).catch(() => { delete d2.note; delete d2.nd; return F.setDoc(ref, d2); }); })).catch((e) => console.warn(e));
   }
   const relOf = (u) => myFriends.includes(u) ? "friend" : myFollowing.includes(u) ? "pending" : myFollowers.includes(u) && !myDeclined.includes(u) ? "req" : "";
-  // глобус: отношения (друг / заявка) пересчитываем, когда профиль догрузился или список друзей изменился
-  let globeList = null;
-  function globeRelSync() {
-    const G = window.OgonekGlobe; if (!globeList || !G || !G.isOpen()) return;
-    let ch = false;
-    globeList.forEach((p) => { if (p.rel === "me") return; const r = relOf(p.id); if (r !== p.rel) { p.rel = r; ch = true; } });
-    if (ch) G.setPeople(globeList);
+  // Live public globe documents are the source of truth for daily flames.
+  // Profile summaries are only a fallback for friends using an older version.
+  let globeList = null, globeDocs = [], globeUnsub = null;
+  function stopGlobeLive() {
+    if (globeUnsub) { globeUnsub(); globeUnsub = null; }
+    globeDocs = []; globeList = null;
   }
-  async function openGlobe() {
-    const G = window.OgonekGlobe; if (!G || !me) return;
+  function refreshGlobeList() {
+    const G = window.OgonekGlobe;
+    if (!me || !globeList || !G || !G.isOpen()) return;
     const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
+    const byId = new Map();
+    globeDocs.forEach((p) => { if (p.id !== me.uid) byId.set(p.id, Object.assign({}, p, { rel: relOf(p.id) })); });
+    Object.keys(friendData).forEach((uid) => {
+      const d = friendData[uid]; if (!d) return;
+      if (d.globeHide) { byId.delete(uid); return; }
+      // Do not overwrite a recent globe document with a stale cached profile.
+      if (!byId.has(uid)) {
+        try { byId.set(uid, Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: uid, rel: relOf(uid) })); }
+        catch (e) { console.warn(e); }
+      }
+    });
+    const list = [mine, ...byId.values()];
+    list.forEach((p) => {
+      if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return;
+      const d = p.rel === "me" ? O().summary() : friendData[p.id];
+      const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note);
+      if (n && n.w) p.w = String(n.w).slice(0, 1000);
+    });
+    globeList = list;
+    G.setPeople(list);
+  }
+  function globeRelSync() { refreshGlobeList(); }
+  function openGlobe() {
+    const G = window.OgonekGlobe; if (!G || !me) return;
+    stopGlobeLive();
+    const mine = Object.assign(globeDoc(O().summary()), { id: me.uid, rel: "me" });
+    globeList = [mine];
     G.open({
-      people: [mine], visible: !globeHide, loading: true,
+      people: [mine], visible: !globeHide, loading: true, onClose: stopGlobeLive,
       onAdd: async (id) => { const ok = await addFriendUid(id); if (!ok) return false; return myFollowers.includes(id) ? "friend" : "pending"; },
       onProfile: (id) => openProfile(id === me.uid ? "me" : id),
       onToggle: async () => {
         globeHide = !globeHide;
-        try { await F.setDoc(myRef, { globeHide }, { merge: true }); publishGlobe(O().summary()); O().toast(globeHide ? "Вы скрыты с глобуса" : "Теперь вас видно на глобусе"); }
-        catch (e) { console.warn(e); globeHide = !globeHide; O().toast("Не удалось. Попробуйте позже."); }
+        try {
+          await F.setDoc(myRef, { globeHide }, { merge: true });
+          publishGlobe(O().summary());
+          O().toast(globeHide ? "Вы скрыты с глобуса" : "Теперь вас видно на глобусе");
+        } catch (e) { console.warn(e); globeHide = !globeHide; O().toast("Не удалось. Попробуйте позже."); }
         return !globeHide;
       }
     });
-    try {
-      // все, у кого есть запись на глобусе
-      const snap = await F.getDocs(F.query(F.collection(db, "globe"), F.limit(1000)));
-      const list = [mine], have = new Set([me.uid]); globeList = list;
-      snap.forEach((d) => { if (d.id === me.uid) return; have.add(d.id); const x = d.data(); list.push({ id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "", b: typeof x.b === "number" ? x.b : -1, spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null, refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [], plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "", fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "", nd: typeof x.nd === "string" ? x.nd : "", rel: relOf(d.id) }); });
-      // друзья и подписки, которые ещё не открывали новую версию: берём их из профилей, которые и так загружены
-      for (let i = 0; i < 15 && myFriends.some((u) => !friendData[u]); i++) await new Promise((r) => setTimeout(r, 200));
-      Object.keys(friendData).forEach((u) => {
-        const d = friendData[u]; if (!d) return;
-        const i = list.findIndex(p => p.id === u);
-        if (d.globeHide) { if (i >= 0) list.splice(i, 1); return; }
-        try {
-          const p = Object.assign(globeFrom(d, d.name, d.photo, (d.friends || []).length), { id: u, rel: relOf(u) });
-          if (i >= 0) list[i] = p; else list.push(p);
-        } catch (e) {}
+    // The previous getDocs call returned a one-time snapshot; live updates
+    // now arrive while the globe is open, including on other people's phones.
+    const q = F.query(F.collection(db, "globe"), F.limit(1000));
+    globeUnsub = F.onSnapshot(q, (snap) => {
+      globeDocs = [];
+      snap.forEach((d) => {
+        if (d.id === me.uid) return;
+        const x = d.data();
+        globeDocs.push({
+          id: d.id, name: String(x.name || "Читатель").slice(0, 60), photo: x.photo || "",
+          b: typeof x.b === "number" ? x.b : -1,
+          spots: Array.isArray(x.spots) ? x.spots.slice(0, 3) : null,
+          refs: Array.isArray(x.refs) ? x.refs.slice(0, 3).map(String) : [],
+          plan: String(x.plan || ""), streak: x.streak || 0, lit: x.lit || "",
+          fc: x.fc || 0, note: typeof x.note === "string" ? x.note.slice(0, 40) : "",
+          nd: typeof x.nd === "string" ? x.nd : ""
+        });
       });
-      list.forEach((p) => { if (p.rel !== "me") p.rel = relOf(p.id); }); // друзья могли догрузиться, пока шёл запрос
-      // слова к стиху видят только друзья (и я сам)
-      list.forEach((p) => { if (!p.note || (p.rel !== "me" && p.rel !== "friend")) return; const d = p.rel === "me" ? O().summary() : friendData[p.id]; const n = (d && Array.isArray(d.notes) ? d.notes : []).find((z) => z && z.v === p.note); if (n && n.w) p.w = String(n.w).slice(0, 1000); });
-      G.setPeople(list);
-      // кто ещё не прочитал ни одного отрывка (даже если не открывал новую версию) — на «Остров выбора»: смотрим их профили
-      const check = list.filter((p) => p.rel !== "me" && p.b !== -2 && !friendData[p.id]).slice(0, 500);
-      let moved = 0;
-      await Promise.all(check.map(async (p) => {
-        try { const ps = await F.getDoc(F.doc(db, "profiles", p.id)); if (ps.exists() && stillChoosing(ps.data())) { toIce(p); moved++; } } catch (e) {}
-      }));
-      list.forEach((p) => { if (p.rel !== "me" && p.b !== -2 && friendData[p.id] && stillChoosing(friendData[p.id])) { toIce(p); moved++; } });
-      if (moved && G.isOpen()) G.setPeople(list);
-    } catch (e) { console.warn(e); O().toast("Не удалось загрузить глобус. Проверьте интернет."); try { G.setPeople([mine]); } catch (e2) {} }
+      refreshGlobeList();
+    }, (e) => {
+      console.warn("Globe live updates failed", e);
+      O().toast("Не удалось обновить глобус. Проверьте интернет.");
+      refreshGlobeList();
+    });
   }
+  // Retry cloud publication on reconnect and when the app returns to the screen.
+  function republishPresence() {
+    if (!me || !myRef) return;
+    publishSummary();
+    if (globeList) refreshGlobeList();
+  }
+  window.addEventListener("online", republishPresence);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) republishPresence(); });
   {
     // глобус открывается кнопкой в центре нижней панели; в «Друзьях» отдельной кнопки больше нет
     window.ogonekOpenGlobe = () => openGlobe();
