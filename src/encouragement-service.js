@@ -16,7 +16,7 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProf
     F.setDoc(getRef(), patch, { merge: true }).catch((e) => console.warn(e));
   }
   const litToday = (d) => !!d && fLit(d, O().today());
-  const readAnyToday = (d) => d && (d.ntLast === O().today() || d.otLast === O().today());
+  const readAnyToday = (d) => litToday(d) || !!(d && (d.ntLast === O().today() || d.otLast === O().today()));
   // воодушевлять: мой огонёк сегодня горит, а у друга ещё нет
   const canCheer = (d) => litToday(O().summary()) && !litToday(d);
   // звать почитать вместе: я сегодня ещё не начинал читать, и друг тоже
@@ -31,8 +31,26 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,getProf
       if (kind === "cheer") {
         const s = O().summary();
         if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
+        // A friend's cached profile can be hours old. Never send a cheer
+        // without checking the recipient's latest reading on the server.
+        let peer;
+        try {
+          const peerRef = F.doc(db, "profiles", uid);
+          peer = await (F.getDocFromServer ? F.getDocFromServer(peerRef) : F.getDoc(peerRef));
+        } catch (e) {
+          console.warn("Could not check friend's reading status", e);
+          O().toast("Не удалось проверить чтение друга. Проверьте интернет.");
+          return false;
+        }
+        if (!peer || !peer.exists()) {
+          O().toast("Не удалось проверить чтение друга.");
+          return false;
+        }
+        if (litToday(peer.data())) {
+          O().toast("Друг сегодня уже прочитал — воодушевление не требуется.");
+          return false;
+        }
         // The normal reading sync owns the globe and full profile.
-        // Only refresh the day marker required by newer cheer rules.
         await F.setDoc(getRef(), { flameDay: day }, { merge: true });
       }
       await F.setDoc(F.doc(db, "cheers", uid, "inbox", getMe().uid + "_" + day + suffix), data);
