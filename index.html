@@ -5294,6 +5294,8 @@ function summary(){
   // стихи, которые затронули: друзья видят их в профиле и на пути
   out.notes=(Array.isArray(state.notes)?state.notes:[]).slice(0,10).map(n=>({d:n.d,v:String(n.v||"").slice(0,40),r:String(n.r||"").slice(0,80),w:String(n.w||"").slice(0,1000)}));
   out.globeSchedule=globeSchedule();
+  {let xd=0;try{xd=xCount(true)[0]}catch(e){}
+   out.heroFlameDay=(activeKeys().some(k=>datesOf(k).has(today()))||xd>0||anySet().has(today()))?today():"";}
   {const np=noPlan();out.noPlan=np;out.chosen=!np} // оба флага явно: профиль сохраняется с merge, старый флаг иначе остаётся
   return out;
 }
