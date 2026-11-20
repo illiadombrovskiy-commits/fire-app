@@ -5,7 +5,7 @@ import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
 import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
-import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday } from "./src/friend-progress.js?v=profile-day-1";
+import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday,fExactReadToday,fTodayReadings } from "./src/friend-progress.js?v=exact-checkmarks-1";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const $ = (id) => document.getElementById(id);
@@ -221,7 +221,7 @@ async function main() {
   const myG = () => { try { return (window.ogGender && window.ogGender()) || ""; } catch (e) { return ""; } };
   const sameSex = (d) => { const g = myG(), h = d && d.gender; return !g || !h || g === h; };
   function friendAction(uid, d) {
-    if (!sameSex(d)) return null;
+    if (!sameSex(d) || profileReadToday(d, uid, O().today())) return null;
     if (canCheer(d)) return actionButton(uid, d, "cheer");
     if (canInvite(d)) return actionButton(uid, d, "invite");
     return null;
@@ -337,6 +337,17 @@ async function main() {
   }
 
   function fmtAhead(n) { n = n || 0; return n > 0 ? "+" + n + " " + O().daysWord(n) : n < 0 ? "−" + Math.abs(n) + " " + O().daysWord(Math.abs(n)) : "по плану"; }
+  function shortPassageLabel(label) {
+    return ({"Новый Завет":"НЗ","Ветхий Завет":"ВЗ"})[label] || label || "Отрывок";
+  }
+  function validReadingUrl(url) {
+    try { const u = new URL(url); return u.protocol === "https:" ? u.href : ""; } catch (_) { return ""; }
+  }
+  function appendReadingRef(target, ref, url) {
+    const safe = validReadingUrl(url) || (O().urlOfRef && validReadingUrl(O().urlOfRef(ref)));
+    if (safe) { const a = el("a", null, ref); a.href = safe; a.target = "_blank"; a.rel = "noopener"; target.append(a); }
+    else target.append(el("b", null, ref));
+  }
 
   // расписание друга: у каждого может быть своё — показываем его собственные отрывки
   function friendPassages(d) {
@@ -352,16 +363,30 @@ async function main() {
     const mid = el("div"); mid.style.minWidth = "0";
     mid.append(el("div", "fname", isMe ? "Вы" : (d.name || "Читатель")));
     const lit = profileReadToday(d, isMe ? me.uid : uid, t);
-    if (lit) mid.append(el("span", "freadtoday on", "✓ Прочитано сегодня"));
-    fKeys(d).forEach((k) => {
+    const passages = friendPassages(d), displayed = new Set(), planName = d.globeSchedule && d.globeSchedule.name || d.planName || "";
+    const miniLine = (label, ref, read, pace) => {
       const line = el("div", "fline");
-      const readToday = d[k + "Last"] === t;
-      line.append(el("span", null, fShort(d, k) + ": " + (fDone(d, k) ? "пройден" : fRef(d, k))));
-      const st = el("span", readToday ? "ok" : null, readToday ? "✓" : "—"); st.title = readToday ? "Прочитано сегодня" : "Сегодня ещё не читал(а)"; line.append(st);
+      line.append(el("span", null, label + ": " + (ref || "пройдено")));
+      if (read) { const mark = el("span", "ok", "✓"); mark.title = "Прочитан именно этот отрывок"; line.append(mark); }
+      if (Number.isFinite(pace)) line.append(el("small", "hint", fmtAhead(pace)));
       mid.append(line);
-    });
+    };
+    if (passages) {
+      passages.forEach(p => {
+        const actual = fExactReadToday(p, t);
+        const label = shortPassageLabel(p.label);
+        miniLine(label, actual || p.ref, !!actual, p.ahead);
+        if (actual) displayed.add(planName + "|" + label + "|" + actual);
+      });
+    } else {
+      fKeys(d).forEach(k => miniLine(fShort(d,k), fDone(d,k) ? "пройден" : fRef(d,k), false, d[k+"Ahead"]));
+    }
+    // A reader can mark another active schedule while the globe still
+    // shows their selected main schedule. List the exact extra excerpts.
+    fTodayReadings(d,t).filter(r => !displayed.has(r.plan+"|"+shortPassageLabel(r.label)+"|"+r.ref))
+      .slice(0,3).forEach(r => miniLine(shortPassageLabel(r.label), r.ref, true, r.ahead));
     const right = el("div", "fstreak");
-    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)), ...fKeys(d).map((k) => el("span", "fahead", fShort(d, k) + " " + fmtAhead(d[k + "Ahead"]))));
+    right.append(flameSvg(lit), el("span", null, String(d.streak || 0)));
     row.append(av, mid, right);
     const act = !isMe && myFriends.includes(uid) && friendAction(uid, d); if (act) row.append(act);
     row.tabIndex = 0; row.setAttribute("role", "button");
@@ -430,15 +455,22 @@ async function main() {
 
     const head = el("div", "fhead"), ht = el("div");
     ht.append(el("h2", null, isMe ? (d.name || "Вы") + " (вы)" : (d.name || "Читатель")), el("div", "hint", (d.streak || 0) + " " + O().plural(d.streak || 0, "день подряд", "дня подряд", "дней подряд")));
-    ht.append(el("div", "freadtoday" + (readToday ? " on" : ""), readToday ? "✓ Прочитано сегодня" : "Сегодня ещё нет отметки"));
-    const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
+     const x = el("button", "fclose", "×"); x.type = "button"; x.setAttribute("aria-label", "Закрыть"); x.addEventListener("click", closeProfile);
     head.append(avatarEl(d.name, d.photo, 64, isMe ? myPhotoHQ() : (d.photoHQ || "")), ht, x);
 
     const stats = el("div", "fstats");
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
-    const passages = friendPassages(d);
+    const passages = friendPassages(d), displayed = new Set();
+    const appendNext = (ref, url) => {
+      if (!ref) return;
+      const next = el("div", "frow"), left = el("div");
+      left.append(el("small", "hint", "Следующий отрывок"));
+      appendReadingRef(left,ref,url);
+      next.append(left);
+      reading.append(next);
+    };
     if (passages) {
       reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
       passages.forEach((p) => {
@@ -448,29 +480,49 @@ async function main() {
         const pace = Number.isFinite(p.ahead) ? p.ahead : matchingKey && Number.isFinite(d[matchingKey+"Ahead"]) ? d[matchingKey+"Ahead"] : null;
         const label = p.label === "НЗ" ? "Новый Завет" : p.label === "ВЗ" ? "Ветхий Завет" : p.label || "Отрывок";
         left.append(el("small", null, label + (pace === null ? " · нет данных о темпе" : " · " + fmtAhead(pace))));
-        const safeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch (_) { return ""; } };
-        const matching = fKeys(d).find(k => fRef(d, k) === p.ref);
-        const url = p.ref && (safeUrl(p.url) || (matching && safeUrl(fUrl(d, matching))) || (O().urlOfRef && safeUrl(O().urlOfRef(p.ref))));
-        if (url) { const a = el("a", null, p.ref); a.href = url; a.target = "_blank"; a.rel = "noopener"; left.append(a); }
-        else left.append(el("b", null, p.ref || "Пройдено"));
-        // The reference is the NEXT passage; its completion must not be inferred
-        // from a flame earned on another schedule or from the previous passage.
-        const readOnPlan = fScheduleReadToday(p, t);
-        row.append(left, el("span", readOnPlan ? "ok" : "hint", readOnPlan ? "✓ сегодня по плану" : "следующий отрывок"));
-        reading.append(row);
+        const actual = fExactReadToday(p,t);
+        if (actual) {
+          appendReadingRef(left, actual, p.readUrl);
+          row.append(left, el("span", "ok", "✓"));
+          displayed.add((d.globeSchedule.name||"") + "|" + shortPassageLabel(p.label) + "|" + actual);
+          reading.append(row);
+          appendNext(p.ref,p.url);
+        } else if (fScheduleReadToday(p,t)) {
+          // Older clients did not publish readRef; never put ✓ on the NEXT ref.
+          left.append(el("small", "hint", "Отрывок отмечен"));
+          row.append(left, el("span", "ok", "✓"));
+          reading.append(row);
+          appendNext(p.ref,p.url);
+        } else {
+          left.append(el("small", "hint", "Следующий отрывок"));
+          if (p.ref) appendReadingRef(left,p.ref,p.url);
+          else left.append(el("b",null,"Расписание пройдено"));
+          row.append(left);
+          reading.append(row);
+        }
       });
     } else {
     if (d.planName && (d.plan || "spb") !== O().planId) reading.append(el("small", "hint", "Расписание: " + d.planName));
     fKeys(d).forEach((k) => {
-      const done = fDone(d, k), planReadToday = d[k + "Last"] === t;
+      const done = fDone(d, k);
       const row = el("div", "frow"), left = el("div");
       left.append(el("small", null, fLabel(d, k) + " · " + fmtAhead(d[k + "Ahead"])));
-      if (done) left.append(el("b", null, "Пройдено"));
-      else { const a = el("a", null, fRef(d, k)); a.href = fUrl(d, k); a.target = "_blank"; a.rel = "noopener"; left.append(a); }
-      row.append(left, el("span", planReadToday ? "ok" : "hint", planReadToday ? "✓ сегодня по плану" : "следующий отрывок"));
+      left.append(el("small","hint",done ? "Расписание пройдено" : "Следующий отрывок"));
+      if (!done) appendReadingRef(left,fRef(d,k),fUrl(d,k));
+      row.append(left);
       reading.append(row);
     });
     }
+    fTodayReadings(d,t).filter(r => !displayed.has(r.plan+"|"+shortPassageLabel(r.label)+"|"+r.ref))
+      .forEach(r => {
+        const row=el("div","frow"),left=el("div");
+        left.append(el("small",null,(r.plan||"Расписание")+
+          (r.label?" · "+shortPassageLabel(r.label):"")+
+          (Number.isFinite(r.ahead)?" · "+fmtAhead(r.ahead):"")));
+        appendReadingRef(left,r.ref,r.url);
+        row.append(left,el("span","ok","✓"));
+        reading.append(row);
+      });
 
     const aboutBox = el("div", "freading"); aboutBox.append(el("span", "label", "О себе"));
     if (isMe && edit) {
