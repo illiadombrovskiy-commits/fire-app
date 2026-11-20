@@ -1,5 +1,6 @@
+import assert from "node:assert/strict";
 import {initializeTestEnvironment,assertSucceeds,assertFails} from "@firebase/rules-unit-testing";
-import {doc,setDoc,getDoc,deleteDoc,serverTimestamp,onSnapshot} from "firebase/firestore";
+import {doc,setDoc,getDoc,deleteDoc,serverTimestamp,onSnapshot,writeBatch} from "firebase/firestore";
 import {readFileSync} from "node:fs";
 const env=await initializeTestEnvironment({projectId:"demo-v-slove",firestore:{rules:readFileSync("firestore.rules","utf8")}});
 try {
@@ -28,8 +29,27 @@ try {
  await changed;
  // Restore the day used by the encouragement rules test.
  await assertSucceeds(setDoc(doc(a,"globe/a"),globe));
- await assertSucceeds(setDoc(doc(a,"users/a"),{progress:1}));
+ // Private chapter, friend-visible chapter, and globe flame MUST change together.
+ const triple=writeBatch(a);
+ triple.set(doc(a,"users/a"),{v:3,ot:{read:[0,1],log:[{p:1,d:day}]}});
+ triple.set(doc(a,"profiles/a"),{globeSchedule:{name:"Церковь",passages:[
+   {ref:"Исх. 2:1–25",label:"Ветхий Завет",last:day}]},heroFlameDay:day}, {merge:true});
+ triple.set(doc(a,"globe/a"),{...globe,refs:["Ветхий Завет: Исх. 2:1–25"]});
+ await assertSucceeds(triple.commit());
+ const publicProfile=await assertSucceeds(getDoc(doc(b,"profiles/a")));
+ const publicGlobe=await assertSucceeds(getDoc(doc(b,"globe/a")));
+ const privateUser=await assertSucceeds(getDoc(doc(a,"users/a")));
+ assert.equal(publicProfile.data().globeSchedule.passages[0].ref,"Исх. 2:1–25");
+ assert.equal(publicGlobe.data().refs[0],"Ветхий Завет: Исх. 2:1–25");
+ assert.deepEqual(privateUser.data().ot.read,[0,1]);
  await assertFails(getDoc(doc(b,"users/a")));
+ // A rejected batched write must not update even the authorized documents.
+ const denied=writeBatch(b);
+ denied.set(doc(b,"users/a"),{v:3,ot:{read:[999]}});
+ denied.set(doc(b,"profiles/b"),{about:"should not be saved"}, {merge:true});
+ await assertFails(denied.commit());
+ const unaffected=await assertSucceeds(getDoc(doc(a,"profiles/b")));
+ assert.equal(unaffected.data().about,undefined);
  const msg={from:"a",name:"A",photo:"",msg:0,day,at:serverTimestamp()};
  const path="cheers/b/inbox/a_"+day;
  await assertFails(setDoc(doc(c,path),msg));
