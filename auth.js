@@ -1282,6 +1282,7 @@ async function main() {
 
     const ref = F.doc(db, "users", user.uid);
     myRef = F.doc(db, "profiles", user.uid);
+    progressRecoveryBusy = true;
     try {
       // getDoc may return a stale cached snapshot after a failed connection.
       // Publish reading to friends only after checking the server itself.
@@ -1294,6 +1295,8 @@ async function main() {
        } else await F.setDoc(ref, local);
       progressVerified = true;
     } catch (e) { console.warn(e); O().toast("Не удалось загрузить прогресс. Проверьте интернет."); }
+    finally { progressRecoveryBusy = false; }
+    if (!me || me.uid !== user.uid) return;
     if (O().progressLoaded) O().progressLoaded();
     try { window.dispatchEvent(new Event("og-auth")); } catch (e) {}
     let chain = Promise.resolve();
@@ -1303,8 +1306,11 @@ async function main() {
     publishSummary();
 
     try {
-      try { await ensureProfile(user); profileReady = true; }
+      profileRecoveryBusy = true;
+      try { await ensureProfile(user); if (!me || me.uid !== user.uid) return; profileReady = true; }
       catch (e) { console.warn("Profile initialization failed; keep reading sync active", e); O().toast("Не удалось полностью загрузить профиль. Синхронизация продолжится при подключении."); }
+      finally { profileRecoveryBusy = false; }
+      if (!me || me.uid !== user.uid) return;
       if (!myNameSet && !window.__onbActive && !document.body.classList.contains("onbon")) await askName(user); // в «первом входе» имя спрашивается на своём шаге
       if (user.email) await F.setDoc(F.doc(db, "emails", user.email.toLowerCase()), { uid: user.uid }).catch((e) => console.warn(e));
       $("myEmail").textContent = user.email || "";
