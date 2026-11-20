@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 async function load(name){return import("data:text/javascript;base64,"+Buffer.from(await readFile(new URL("../src/"+name+".js",import.meta.url))).toString("base64"))}
 globalThis.window={Ogonek:{planId:"spb",DAYS:364}};
-const {fLit,fProfileReadToday,fScheduleReadToday,fExactReadToday,fTodayReadings}=await load("friend-progress");
+const {fLit,fProfileReadToday,fScheduleReadToday}=await load("friend-progress");
 const {createEncouragementConfig}=await load("encouragement-config");
 const {createEncouragementService}=await load("encouragement-service");
 const {createFriendActions}=await load("friend-actions");
@@ -27,16 +27,6 @@ assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:dayRead,seen:dayRead,s
 assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:"",seen:dayRead,spots:[{l:true}]}),true);
 assert.equal(fProfileReadToday(profileUnread,dayRead,{lit:"2026-11-19",seen:"2026-11-19",spots:[{l:true}]}),false);
 assert.equal(fScheduleReadToday(profileUnread.globeSchedule.passages[0],dayRead),false);
-const passage={ref:"Мф. 20:1–16",last:dayRead,readRef:"Мф. 19:16–30",ahead:-3};
-assert.equal(fExactReadToday(passage,dayRead),"Мф. 19:16–30");
-assert.notEqual(fExactReadToday(passage,dayRead),passage.ref); // do not tick the NEXT passage
-assert.equal(fExactReadToday({...passage,last:"2026-11-19"},dayRead),"");
-assert.equal(fExactReadToday({ref:"Мф. 20:1–16",last:dayRead},dayRead),""); // old profile lacks exact ref
-const readings={todayReadings:[{day:dayRead,plan:"Церковь",label:"Новый Завет",ref:"Мф. 19:16–30",ahead:-3},
-{day:"2026-11-19",plan:"Церковь",label:"Ветхий Завет",ref:"Быт. 50:1–26",ahead:2}]};
-assert.deepEqual(fTodayReadings(readings,dayRead).map(r=>r.ref),["Мф. 19:16–30"]);
-assert.deepEqual(fTodayReadings(readings,"2026-11-21"),[]);
-
 let day="2026-11-20", lit=true, profile={}, fail=false, peerRead=false, peerUnavailable=false, peerGlobeRead=false, peerGlobeSpot=false;
 const writes=[], messages=[], storage=new Map();
 const O=()=>({today:()=>day,summary:()=>({lit:lit?day:""}),toast:m=>messages.push(m)});

@@ -24,13 +24,5 @@ const O=()=>window.Ogonek;
   };
   const fProfileReadToday = (d, day, globe) => fLit(d, day) || fGlobeReadToday(globe, day);
   const fScheduleReadToday = (passage, day) => !!passage && passage.last === day;
-  // The profile's "ref" points to the next unread passage. Only the logged
-  // readRef may receive a green check mark.
-  const fExactReadToday = (passage, day) =>
-    passage && passage.last === day && typeof passage.readRef === "string" ? passage.readRef : "";
-  const fTodayReadings = (profile, day) =>
-    profile && Array.isArray(profile.todayReadings)
-      ? profile.todayReadings.filter(r => r && r.day === day && typeof r.ref === "string" && !!r.ref).slice(-8)
-      : [];
 
-export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fGlobeReadToday,fProfileReadToday,fScheduleReadToday,fExactReadToday,fTodayReadings};
+export {fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fGlobeReadToday,fProfileReadToday,fScheduleReadToday};
