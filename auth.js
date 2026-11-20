@@ -502,13 +502,9 @@ async function main() {
           displayed.add((d.globeSchedule.name||"") + "|" + shortPassageLabel(p.label) + "|" + actual);
           reading.append(row);
           appendNext(p.ref,p.url);
-        } else if (fScheduleReadToday(p,t)) {
-          // Older clients did not publish readRef; never put ✓ on the NEXT ref.
-          left.append(el("small", "hint", "Отрывок отмечен"));
-          row.append(left, el("span", "ok", "✓"));
-          reading.append(row);
-          appendNext(p.ref,p.url);
         } else {
+          // Old clients may report today's date without the exact passage.
+          // Do not draw a tick until we know which text was actually read.
           left.append(el("small", "hint", "Следующий отрывок"));
           if (p.ref) appendReadingRef(left,p.ref,p.url);
           else left.append(el("b",null,"Расписание пройдено"));
