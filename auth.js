@@ -120,6 +120,49 @@ async function main() {
   // имя, которое видят друзья: своё (если задано) или из Google
   const myName = () => (myNick || (me && me.displayName) || "Читатель").slice(0, 40);
   function setTopName() { if (me) top.textContent = myName().split(" ")[0]; }
+  // Publish the friend profile and the public globe as ONE Firestore commit.
+  // Otherwise the flame can show today while the friend still sees Genesis.
+  async function commitReadingPresence(s, profileUpdate) {
+    const uid = me && me.uid;
+    if (!uid || !myRef) return false;
+    const profileRef = myRef, globeRef = F.doc(db, "globe", uid);
+    const visible = !globeHide, initial = globeDoc(s);
+    const commit = (globeData) => {
+      const batch = F.writeBatch(db);
+      batch.set(profileRef, profileUpdate, { merge: true });
+      if (visible) batch.set(globeRef, globeData);
+      else batch.delete(globeRef);
+      return batch.commit();
+    };
+    try {
+      await commit(initial);
+      return true;
+    } catch (first) {
+      // Keep the existing backwards-compatible fallback if an old photo or
+      // verse note is rejected by the globe's stricter public document rules.
+      if (visible) {
+        const reduced = Object.assign({}, initial);
+        if (String(reduced.photo || "").length > 500)
+          reduced.photo = (me && me.photoURL || "").slice(0, 500);
+        try {
+          await commit(reduced);
+          return true;
+        } catch (second) {
+          delete reduced.note;
+          delete reduced.nd;
+          try {
+            await commit(reduced);
+            return true;
+          } catch (third) {
+            console.warn("Unable to commit profile and globe together", third);
+          }
+        }
+      } else console.warn("Unable to commit hidden profile and globe together", first);
+      if (me && me.uid === uid) O().toast("Отметка сохранена на телефоне, но не синхронизирована с друзьями. Проверьте интернет.");
+      return false;
+    }
+  }
+
   function publishSummary(immediate = false) {
     // A failed startup read must never replace a current cloud profile with
     // yesterday's locally cached progress, nor reveal a previously hidden globe.
@@ -136,15 +179,13 @@ async function main() {
       lastFof = JSON.stringify(fof);
       const profileUpdate = Object.assign(s, { flameDay: fLit(s, O().today()) ? O().today() : "", fof, name: myName(), photo: myPhoto(), updated: F.serverTimestamp() });
       if (myCode) profileUpdate.code = myCode; // never erase codes when initialization fails
-      const profileWrite = F.setDoc(myRef, profileUpdate, { merge: true }).then(() => true, (e) => {
-        console.warn("Could not publish reading status", e);
-        O().toast("Чтение сохранено на телефоне, но пока не синхронизировано с друзьями.");
-        return false;
-      });
-      F.setDoc(F.doc(db, "cards", me.uid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
-      Promise.all([profileWrite, publishGlobe(s)]).then(([profileOk, globeOk]) => {
+      // A single atomic batch prevents today's globe flame from getting ahead
+      // of yesterday's reading chapters in the friend-facing profile.
+      const commitPending = commitReadingPresence(s, profileUpdate);
+      F.setDoc(F.doc(db, "cards", publisherUid), { name: myName(), photo: myPhoto() }).catch((e) => console.warn(e));
+      commitPending.then((ok) => {
         if (me && me.uid === publisherUid && sequence === presenceSequence) {
-          presencePending = !(profileOk && globeOk);
+          presencePending = !ok;
         }
       });
     };
