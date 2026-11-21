@@ -348,14 +348,14 @@
       const bx = Math.floor(p.sx / CR), by = Math.floor(p.sy / CR), m = [];
       for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) (grid.get(gk(bx + i, by + j)) || []).forEach((q) => { if (!q.cl && !q.solo && q.rel !== "me" && q !== sel && Math.hypot(q.sx - p.sx, q.sy - p.sy) < CR) m.push(q); });
       if (m.length <= 2) { m.forEach((q) => { q.solo = true; solo.push(q); }); if (!m.includes(p)) { p.solo = true; solo.push(p); } return; }
-      const c = { x: p.sx, y: p.sy, z: p.z, lead: p, m, lit: m.filter((q) => q.fire).length, verse: m.some((q) => hasVerse(q) && !q.twin), friend: m.some((q) => q.rel === "friend"), any: m.some(match) };
+      const c = { x: p.sx, y: p.sy, z: p.z, lead: p, m, lit: m.filter((q) => q.fire).length, verse: m.some((q) => hasVerse(q) && !q.twin), any: m.some(match) };
       m.forEach((q) => { q.cl = c; }); clusters.push(c);
     });
+    // Костры без круговых обводок: кольца остаются только у «Выбирают» и «Других расписаний».
     // костры
     clusters.sort((x, y) => x.z - y.z).forEach((c) => {
       const s = (0.6 + 0.4 * c.z) * Math.min(1.5, 0.8 + 0.25 * zoom) * 1.15;
       ctx.globalAlpha = (c.any ? 1 : 0.22) * Math.min(1, c.z * 3);
-      if (c.friend) { ctx.lineWidth = 2; ctx.strokeStyle = "#8fd0ff"; ctx.beginPath(); ctx.arc(c.x, c.y - 5 * s, 11 * s, 0, TAU); ctx.stroke(); }
       if (c.lit) flame(c.x, c.y, s, 1 + 0.1 * Math.sin(t * 9 + c.lead.ph)); else sleepFlame(c.x, c.y, s * 0.9, 1);
       const n = c.m.filter((q) => !q.twin).length || c.m.length, vmode = filt === "verse", txt = (vmode ? "❞ " : "") + n;
       ctx.font = "800 " + Math.round(11 * Math.min(1.3, s)) + "px system-ui,sans-serif"; ctx.textAlign = "center";
@@ -370,11 +370,9 @@
     solo.sort((x, y) => x.z - y.z).forEach((p) => {
       const s = (0.6 + 0.4 * p.z) * Math.min(1.5, 0.8 + 0.25 * zoom);
       ctx.globalAlpha = (match(p) ? 1 : 0.22) * Math.min(1, p.z * 3);
-      if (p.rel && p.rel !== "req") { ctx.lineWidth = 2; ctx.strokeStyle = p.rel === "me" ? "#5be38a" : p.rel === "pending" ? "#ffd36b" : "#8fd0ff"; if (p.rel === "pending") ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 10 * s, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
       if (p.fire) flame(p.sx + Math.sin(t * 5 + p.ph) * 0.6, p.sy, s, 1 + 0.13 * Math.sin(t * 11 + p.ph));
       else sleepFlame(p.sx, p.sy, s * 0.9, 1 + 0.04 * Math.sin(t * 1.6 + p.ph));
       if (hasVerse(p) && !p.twin && (filt === "verse" || p === sel || p.rel === "me" || p.rel === "friend" || zoom >= 3)) { const bx = p.sx + 10 * s, by = p.sy - 19 * s, br = 6.5 * s; ctx.fillStyle = "#ffb020"; ctx.strokeStyle = "#0b1030"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.font = "900 " + Math.round(10 * s) + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.fillText("❞", bx, by + 3.6 * s); }
-      if (p === sel) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.sx, p.sy - 5 * s, 14 * s + 3 * Math.sin(t * 4), 0, TAU); ctx.stroke(); }
       ctx.globalAlpha = 1;
     });
   }
