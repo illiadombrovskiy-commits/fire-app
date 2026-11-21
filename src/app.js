@@ -1714,6 +1714,13 @@ function xMark(id,k,p){const bkB=bkSnap();setTimeout(()=>{try{bkCheck(bkB)}catch
   const c=xCount();try{if(first)ignite($("heroFlame"),1)}catch(e){}toast(first?"Пламя зажглось — день засчитан в серию":"Отмечено ✓")}
 function xUndo(id,k){const st=xSt(id),l=st[k].log;for(let i=l.length-1;i>=0;i--)if(l[i].d===today()){const p=l.splice(i,1)[0].p;if(!l.some(y=>y.p===p))st[k].read=st[k].read.filter(x=>x!==p);break}save();render()}
 function xDate(S,p){return parse(add(S.start,p)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"})}
+// На главной у Жизнеизучения номер сообщения и страницы — отдельные строки;
+// заголовок сообщения не показываем, дату оставляем без изменений.
+function xCardRef(x,S){
+  if(S.ms&&/^(Сообщ\.|Гл\.)\s/.test(x.book||""))
+    return [el("span","name",(x.book||"").replace(/,\s*$/,"")),el("span","name",x.ref||"")];
+  return [el("span","name",refStr(x))];
+}
 function xName(id){return id==="spb"?"Церковь":(xDef(id)||{}).name||"Моё расписание"}
 function churchOn(){return (SCHED.spb&&tracks().spb&&!noPlan())||!!(state.extra||{}).spb&&tracks().spb}
 function enableChurch(){state.planChosen=true;
@@ -1846,7 +1853,7 @@ function renderExtras(){
       const shown=done?tod[tod.length-1].p:np,x=part2(S,k,shown);try{if(x&&x.book)th.append(verseBtn(k,shown,x,id))}catch(e){}
       const cols=el("div","tcols"),left=el("div","tcol"),right=el("div","tcol");
       const a=el("a","tlink");a.href=chapterUrl(x);a.target="_blank";a.rel="noopener";
-      a.append(el("span","label",done?"Прочитано сегодня":shown<xCut(id,S)?"Догнать":shown<=ti?"Сегодня":"Заранее"),el("span","name",refStr(x)),...(x.title?[el("span","mst",x.title)]:[]),el("span","sub",xDate(S,shown)));
+      a.append(el("span","label",done?"Прочитано сегодня":shown<xCut(id,S)?"Догнать":shown<=ti?"Сегодня":"Заранее"),...xCardRef(x,S),...(!S.ms&&x.title?[el("span","mst",x.title)]:[]),el("span","sub",xDate(S,shown)));
       const btn=el("button","tbtn");btn.type="button";
       if(done){btn.textContent="Прочитано ✓";btn.classList.add("done");btn.disabled=true}else{btn.textContent="Прочитал(а)";btn.classList.add("nudge");confirmTap(btn,"Нажмите ещё раз",()=>xMark(id,k,np))}
       left.append(a,btn);
@@ -1854,7 +1861,7 @@ function renderExtras(){
       if(done){const u=el("button","linkbtn undolink","Отменить");u.type="button";u.addEventListener("click",()=>xUndo(id,k));left.append(u)}
       const nx=done?np:np+1;
       if(nx<S.plan.length&&part2(S,k,nx).book){const y=part2(S,k,nx),a2=el("a","nextlink"+(done?"":" later"));a2.href=chapterUrl(y);a2.target="_blank";a2.rel="noopener";
-        a2.append(el("span","label",done?"Следующий":"Потом"),el("span","name",refStr(y)),...(y.title?[el("span","mst",y.title)]:[]),el("span","sub",xDate(S,nx)));right.append(a2);
+        a2.append(el("span","label",done?"Следующий":"Потом"),...xCardRef(y,S),...(!S.ms&&y.title?[el("span","mst",y.title)]:[]),el("span","sub",xDate(S,nx)));right.append(a2);
         if(done){const b2=el("button","tbtn nextmark","Прочитал(а)");b2.type="button";confirmTap(b2,"Нажмите ещё раз",()=>xMark(id,k,np));right.append(b2)}}
       cols.append(left,right);tcd.append(cols);tg.append(tcd)});
     // «Где я» — отдельный вид: пока открыт, чтение на сегодня скрыто
