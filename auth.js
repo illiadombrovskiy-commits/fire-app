@@ -567,13 +567,6 @@ async function main() {
     [[d.streak || 0, "подряд"], [d.best || 0, "рекорд"], [(d.ntRead || 0) + (d.otRead || 0), "отрывков"], [d.gems || 0, "алмазов"]].forEach(([v, l]) => { const c = el("div", "fstat"); c.append(el("b", null, String(v)), el("span", null, l)); stats.append(c); });
 
     const reading = el("div", "freading"); reading.append(el("span", "label", "Где читает"));
-    // Дата нужна, чтобы отличать реальный отрывок друга от давно
-    // не обновлявшегося профиля. Опережение выше считается на сегодня.
-    const synced = d.updated && typeof d.updated.toDate === "function" ? d.updated.toDate() : null;
-    if (!isMe && synced instanceof Date && Number.isFinite(synced.getTime())) {
-      reading.append(el("small", "hint", "Последняя синхронизация: " +
-        synced.toLocaleString("ru-RU", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" })));
-    }
     const passages = friendPassages(d);
     if (passages) {
       reading.append(el("small", "hint", "Расписание: " + (d.globeSchedule.name || d.planName || "Моё расписание")));
