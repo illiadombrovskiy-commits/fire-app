@@ -139,7 +139,7 @@
 .gmodal .gres{display:flex;flex-wrap:wrap;gap:6px}.gmodal .gres:empty{display:none}
 .gmodal .gchips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gmodal .gchips::-webkit-scrollbar{display:none}
 .gmodal .gchip{flex:none;white-space:nowrap;font:inherit;font-size:.84rem;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#c9cff0;cursor:pointer}
-.gmodal .gchip{display:inline-flex;align-items:center;gap:6px}
+.gmodal .gchip{display:inline-flex;align-items:center;gap:6px}.gmodal .gchips .gchip{padding-inline:8px}
 .gmodal .gchip.gisl{border-color:rgba(47,196,168,.7);color:#bff3e8;background:rgba(47,196,168,.14)}.gmodal .gchip.gisl.on{background:rgba(47,196,168,.32)}
 .gmodal .gchip.on{background:rgba(255,138,31,.2);border-color:#ff8a1f;color:#ffe2c4}
 .gstk{display:inline-grid;place-items:center;flex:none}.gstk svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
@@ -148,7 +148,7 @@
 .gmodal canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .gmodal .gzoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
 .gmodal .gzoom button{width:38px;height:38px;border-radius:10px;background:rgba(20,26,58,.8);border:1px solid rgba(255,255,255,.2);color:#eef0fa;font-size:1.2rem;cursor:pointer}
-.gmodal .gstat{position:absolute;left:10px;top:10px;font-size:.78rem;color:#aab2e6;pointer-events:none}
+.gmodal .gstat{position:absolute;left:10px;top:10px;max-width:calc(100% - 64px);line-height:1.3;font-size:.78rem;color:#aab2e6;pointer-events:none}
 .gmodal .ghint{position:absolute;left:10px;bottom:8px;font-size:.78rem;color:#7e86b8;pointer-events:none}
 .gmodal .gcard{position:absolute;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;box-shadow:0 -6px 24px rgba(0,0,0,.35);background:#141a3a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px;max-height:38vh;overflow-y:auto}
 .gmodal .gmuted{font-size:.88rem;color:#a9b0d6;margin:0}
@@ -505,7 +505,7 @@
     const s = root.querySelector(".gstat"), ids = new Set(), lit = new Set(), t0 = today();
     // считаем всех читателей, даже тех, кого пока некуда поставить на карте (иначе число «прыгало» по мере загрузки)
     people.forEach((p) => { ids.add(p.id); if (p.o ? p.fire : p.lit === t0) lit.add(p.id); });
-    s.textContent = opts && opts.loading ? "Загружаю читателей…" : "Читателей «В Слове»: " + ids.size + " · горят сегодня: " + lit.size;
+    s.textContent = opts && opts.loading ? "Загружаю читателей…" : "Читателей «В Слове»: " + ids.size + " · пламенеют сегодня: " + lit.size;
     const n = new Set(ICE.people.map((p) => p.id)).size, ic = root.querySelector(".gisl");
     if (ic) { ic.hidden = !n; ic.lastChild.textContent = "Выбирают · " + n; }
     // Другие расписания доступны прямо на карте, без отдельной кнопки сверху.
@@ -529,7 +529,7 @@
     const topb = el("div", "gtop"); topb.append(el("h2", null, "Глобус читателей"));
 
     const chips = el("div", "gchips");
-    [["all", "Все", "globe"], ["fire", "Горят", "flame"], ["verse", "Стихи", ""], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
+    [["all", "Все", "globe"], ["fire", "Пламенеют", "flame"], ["verse", "Стихи", ""], ["me", "Я", "pin"]].forEach(([f, txt, ic]) => {
       const c = el("button", "gchip" + (f === "all" ? " on" : "")); c.type = "button"; c.append(ic ? stkEl(ic, 20) : el("span", "gvchip", "❞"), el("span", null, txt));
       if (f === "verse") c.title = "Стихи, которые затронули сегодня и вчера. Нажимайте ещё — покажет следующий";
       if (f === "new") c.title = "Те, кто не у вас в друзьях. Нажимайте ещё — покажет следующего";
@@ -538,7 +538,7 @@
         filt = f; root.querySelectorAll(".gchip").forEach((z) => z.classList.toggle("on", z === c));
         if (f === "new") nextNew();
         else if (f === "verse") nextVerse();
-        // «Все» и «Горят» — снова вся планета: отдаляемся, карточку закрываем
+        // «Все» и «Пламенеют» — снова вся планета: отдаляемся, карточку закрываем
         else { sel = selB = null; card(); goTo(yaw, pitch, 1, 1100); }
       });
       chips.append(c);
