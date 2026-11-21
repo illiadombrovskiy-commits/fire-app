@@ -1,8 +1,8 @@
 // Вход через Google (Firebase Authentication), прогресс и друзья (Cloud Firestore).
 import { firebaseConfig } from "./firebase-config.js?v=202610031821";
-import { createEncouragementService } from "./src/encouragement-service.js?v=globe-day-2";
+import { createEncouragementService } from "./src/encouragement-service.js?v=flame-words-1";
 import { createFriendActions } from "./src/friend-actions.js?v=refactor11";
-import { createEncouragementConfig } from "./src/encouragement-config.js?v=refactor10";
+import { createEncouragementConfig } from "./src/encouragement-config.js?v=flame-words-1";
 import { createFriendLookup } from "./src/friend-lookup.js?v=refactor10";
 import { shrinkPhoto } from "./src/profile-photo.js?v=refactor9";
 import { fKeys,fLabel,fShort,fDone,fRef,fUrl,fLit,fProfileReadToday,fScheduleReadToday,fLiveAhead } from "./src/friend-progress.js?v=live-pace-1";
@@ -396,7 +396,7 @@ async function main() {
     const acts = el("div", "acts");
     const ck = kindOf(c), isConf = ck === "conf" || ck === "confjoin";
     const lit = isConf ? false : litToday(O().summary());
-    const go = el("button", "btn-main", isConf ? (ck === "confjoin" ? "Присоединиться" : "Открыть челлендж") : lit ? "Спасибо!" : inv ? "Читать вместе" : "Зажечь огонёк"); go.type = "button";
+    const go = el("button", "btn-main", isConf ? (ck === "confjoin" ? "Присоединиться" : "Открыть челлендж") : lit ? "Спасибо!" : inv ? "Читать вместе" : "Зажечь пламя"); go.type = "button";
     acts.append(go);
     const done = () => {
       modal.remove(); document.removeEventListener("keydown", esc);
@@ -682,7 +682,7 @@ async function main() {
     sheet.append(head, stats, shelfBtn, prow, reading);
     const act = !isMe && myFriends.includes(id) && friendAction(id, d);
     if (act) sheet.append(act);
-    else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Зажгите сегодня свой огонёк — и сможете воодушевить друга."));
+    else if (!isMe && myFriends.includes(id) && !litToday(d) && !litToday(O().summary())) sheet.append(el("p", "hint", "Прочитайте сегодняшний отрывок — и сможете воодушевить друга."));
     // стихи, которые затронули (из сводки профиля)
     try { const nb = O().notesEl && O().notesEl(d.notes, isMe); if (nb) sheet.append(nb); } catch (e) { console.warn(e); }
     sheet.append(aboutBox, badges);
@@ -1209,7 +1209,7 @@ async function main() {
       },
       test: async () => {
         if (notifyStatus() !== "granted") { O().toast("Сначала разрешите уведомления"); return; }
-        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("В Слове", { body: "Так будет выглядеть напоминание: огонёк сегодня ещё не горит 🙏", icon: "icon-192.png", tag: "ogonek-test" }); }
+        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification("В Слове", { body: "Так будет выглядеть напоминание: пламя сегодня ещё не горит 🙏", icon: "icon-192.png", tag: "ogonek-test" }); }
         catch (e) { console.warn(e); O().toast("Не получилось показать уведомление"); }
       }
     });
