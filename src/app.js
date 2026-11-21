@@ -1842,8 +1842,10 @@ function renderExtras(){
   ids.forEach(id=>{const S=xS(id);if(!S)return;if(String(id).indexOf("fire-")===0)return;const card=el("section","card xcard");
     const hd=el("div","reading-head"),dn=S.keys.filter(k=>xToday(id,k).length).length;
     const hr=el("span","xhr");const km=el("span","kmark "+(id==="spb"?"k-spb":"k-my"));km.append(icoEl(id==="spb"?"flame":myEmb(xDef(id))),id==="spb"?"Церковь":"Моё");hr.append(km);if(dn===S.keys.length)hr.append(el("span","xst ok","готово ✓")); // счётчик «0 из 1» убран — показываем только «готово»
-    if(id!=="spb"&&S.ms)hr.append(xmapBtn(id));
-    hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);card.append(hd);
+    hd.append(el("h2",null,id==="spb"?"Расписание церкви":xName(id)),hr);
+    // Кнопка «Где я» — самостоятельный элемент заголовка, справа, как в карточке Библии.
+    if(id!=="spb"&&S.ms)hd.append(xmapBtn(id));
+    card.append(hd);
     if(id!=="spb"&&S.ms&&xmapOpen.has(id)){try{const m=xmapEl(id);if(m)card.append(m)}catch(e){console.warn(e)}}
     if(id!=="spb"&&(state.finished||[]).some(f=>f.id===id&&!f.gone)){card.classList.add("xfin");card.append(el("p","xfinhint","🎉 Прочитано до конца! Сегодня ещё можно отменить отметку. Завтра расписание само уйдёт в «Архив» (вкладка «Библиотека»)."))}
     const tg=el("div","tgrid");
