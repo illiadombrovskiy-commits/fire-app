@@ -30,7 +30,7 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fProfil
     try {
       if (kind === "cheer") {
         const s = O().summary();
-        if (!litToday(s)) { O().toast("Сначала зажгите свой огонёк"); return false; }
+        if (!litToday(s)) { O().toast("Сначала прочитайте сегодняшний отрывок"); return false; }
         // A friend's cached profile can be hours old. Never send a cheer
         // without checking the recipient's latest reading on the server.
         let peer;
@@ -58,7 +58,7 @@ export function createEncouragementService({KIND,lsGet,lsSet,O,F,db,fLit,fProfil
           globe = await (F.getDocFromServer ? F.getDocFromServer(ref) : F.getDoc(ref));
         } catch (e) {
           console.warn("Could not verify friend's globe", e);
-          O().toast("Не удалось проверить огонёк друга. Попробуйте позже.");
+          O().toast("Не удалось проверить чтение друга. Попробуйте позже.");
           return false;
         }
         if (globe && globe.exists() && fProfileReadToday(peer.data(), day, globe.data())) {
