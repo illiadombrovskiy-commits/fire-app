@@ -793,7 +793,7 @@ function complete(k,pp){
     const s=streak(k);
     toast(T[k].label+": "+s+" "+plural(s,"день подряд","дня подряд","дней подряд")+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }else{
-    toast("Огонёк зажжён: "+refStr(part(k,p))+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
+    toast( "Пламя зажглось: "+refStr(part(k,p))+(newAw>0?" · Новая награда!":""),{label:"Отменить",fn:undoLast});
   }
   const frzAfter=freezesNow();
   if(frzAfter>frzBefore&&!bothNow)flyFreeze(fromBox,frzBefore,frzAfter);
@@ -1118,8 +1118,8 @@ $("freezeChip").addEventListener("click",()=>toast("Заморозка — эт�
     // 6. что значат цифры
     d=sec("Что значат цифры и значки");
     const ul=el("ul","gkeys");
-    [[fl(false)+"","<b>Серия — дней подряд.</b> Каждый день, когда вы прочитали хотя бы один отрывок, огонёк горит и серия растёт. Прочитали оба завета — огонь горит в полную силу. Пропустили день — огонёк тлеет: в течение 7 дней прочитайте по одному лишнему отрывку за каждый пропущенный день, и серия вернётся. Если пропущено больше 7 дней подряд или срок прошёл — серия начинается заново, рекорд сохраняется."],
-     [fl(true),"<b>Маленький огонёк</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
+    [[fl(false)+"","<b>Серия — дней подряд.</b> Каждый день, когда вы прочитали хотя бы один отрывок, пламя горит и серия растёт. Прочитали оба завета — огонь горит в полную силу. Пропустили день — пламя тлеет: в течение 7 дней прочитайте по одному лишнему отрывку за каждый пропущенный день, и серия вернётся. Если пропущено больше 7 дней подряд или срок прошёл — серия начинается заново, рекорд сохраняется."],
+     [fl(true),"<b>Маленькое пламя</b> — сегодня прочитан один завет из двух. Серия уже засчитана, но можно дочитать и второй."],
      ['<span style="color:var(--ok)">+2</span>',"<b>Опережение.</b> НЗ и ВЗ — на сколько дней вы впереди плана (зелёным) или позади (красным). «По плану» — вы идёте точно в график."],
      [SNOW,"<b>Заморозки.</b> Если читаете вперёд графика по обоим заветам, копятся заморозки. Пропустили день — заморозка сохранит серию."],
      ['<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="var(--flame)"/><text x="15" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">12</text></svg>',"<b>Кружки на пути</b> — дни расписания церкви, в кружке число месяца. Оранжевый — прочитаны оба завета, светлый — один. Синий пунктир «По плану сегодня» показывает, где все должны быть сегодня. Кто читает по своему расписанию, стоит в тот день, где читается его книга и глава."],
@@ -1711,7 +1711,7 @@ function xCount(bible){let d=0,t=0;const left=[];xOn().forEach(id=>{const S=xS(i
     const rd=confSt().log.some(x=>x.d===today());if(!all||rd){t++;if(rd)d++;else left.push("челлендж «Божья гора»")}}
   xCount.left=left;return [d,t]}
 function xMark(id,k,p){const bkB=bkSnap();setTimeout(()=>{try{bkCheck(bkB)}catch(e){}},0);try{const S=xS(id);askVerseSoon(k,p,1400,part2(S,k,p),id)}catch(e){}const st=xSt(id);const first=!anySet().has(today());st[k].log.push({d:today(),p});if(!st[k].read.includes(p))st[k].read.push(p);state.xp=(state.xp||0)+5;save();render();
-  const c=xCount();try{if(first)ignite($("heroFlame"),1)}catch(e){}toast(first?"Огонёк зажёгся — день засчитан в серию":"Отмечено ✓")}
+  const c=xCount();try{if(first)ignite($("heroFlame"),1)}catch(e){}toast(first?"Пламя зажглось — день засчитан в серию":"Отмечено ✓")}
 function xUndo(id,k){const st=xSt(id),l=st[k].log;for(let i=l.length-1;i>=0;i--)if(l[i].d===today()){const p=l.splice(i,1)[0].p;if(!l.some(y=>y.p===p))st[k].read=st[k].read.filter(x=>x!==p);break}save();render()}
 function xDate(S,p){return parse(add(S.start,p)).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"})}
 function xName(id){return id==="spb"?"Церковь":(xDef(id)||{}).name||"Моё расписание"}
@@ -2051,7 +2051,7 @@ function renderSchedList(){
     if(rows.length){
       const main=mainSchedule(rows), ordered=[main,...rows.filter(r=>r!==main)];
       L.append(el("div","slgrp","Читаю · "+rows.length));
-      L.append(el("p","hint","На глобусе видны отрывки и огонёк главного расписания."));
+      L.append(el("p","hint","На глобусе видны отрывки и пламя главного расписания."));
       ordered.forEach((r,i)=>{
         const entry=card(r);
         const lb=el("div","schedno sllab"+(i===0?" main":""),i===0?"✓ Главное расписание":"Расписание "+(i+1));
@@ -2252,7 +2252,7 @@ function openOnb(startStep){
   const btn=(cls,t,fn)=>{const b=el("button",cls,t);b.type="button";b.addEventListener("click",fn);return b};
   const hero=()=>{const h=el("div","ohero");h.innerHTML=ONB_FL;return h};
   // 0 — приветствие
-  function d0(s){s.append(hero(),el("h1",null,"В Слове"),el("p",null,"Немного Библии каждый день — и огонёк разгорается. Читайте вместе с друзьями и церковью."),
+  function d0(s){s.append(hero(),el("h1",null,"В Слове"),el("p",null,"Немного Библии каждый день — и пламя разгорается. Читайте вместе с друзьями и церковью."),
     foot(btn("ogo","Начать",()=>to(1)),btn("olink","Я уже читаю в приложении «В Слове» — войти",()=>{onbLS.set("ogonek-onb-step","login");signIn()})))}
   // 1 — что читать
   function d1(s){s.append(el("h2",null,"Что будем читать?"),el("p",null,"Выберите одно — потом можно добавить ещё или поменять."));
@@ -2273,7 +2273,7 @@ function openOnb(startStep){
     to(2)} // своё — книги выберет в конце
   // 2 — вход и имя
   function d2(s){s.textContent="";
-    if(!logged()){s.append(el("h2",null,"Сохраним ваш огонёк"),el("p",null,"Войдите — прогресс не потеряется, и друзья увидят, где вы читаете."),hero());
+    if(!logged()){s.append(el("h2",null,"Сохраним ваш прогресс"),el("p",null,"Войдите — прогресс не потеряется, и друзья увидят, где вы читаете."),hero());
       const g=btn("ogoogle","",()=>{g.disabled=true;g.lastChild.textContent="Вхожу…";signIn();setTimeout(()=>{g.disabled=false;g.lastChild.textContent="Войти через Google"},9000)});g.append(el("span","g"),el("span",null,"Войти через Google"));
       s.append(foot(g,btn("olink","Пока без входа — только на этом телефоне",()=>{try{window.ogSkipLogin&&window.ogSkipLogin()}catch(e){}to(4)})));return}
     const nm=(info().name||"").trim();s.append(el("h2",null,"Как вас зовут?"),el("p",null,"Так вас увидят друзья. Можно поправить."));
@@ -2299,7 +2299,7 @@ function openOnb(startStep){
     const c=el("div","ofirst");c.append(el("small",null,"Ваше первое чтение · сегодня"));
     if(S.plan==="own"&&noPlan())c.append(el("b",null,"Сейчас выберете книги и темп"));
     else{try{KEYS.forEach(k=>{const x=part(k,Math.min(Math.max(0,nextP(k)),DAYS-1));if(x&&x.book)c.append(el("b",null,refStr(x)))})}catch(e){}}
-    c.append(el("p",null,"Прочитали — нажмите «Прочитал(а)», и огонёк загорится."));
+    c.append(el("p",null,"Прочитали — нажмите «Прочитал(а)», и пламя загорится."));
     const later=el("div","olater");later.append(el("b",null,"Остальное покажем потом, по одному:"));[["❞","Отметить стих, который затронул"],["👥","Позвать друзей"],["🌍","Глобус читателей"]].forEach(([i,t])=>{const sp=el("span");sp.append(el("span",null,i),el("span",null,t));later.append(sp)});
     s.append(c,later,foot(btn("ogo",S.plan==="own"&&noPlan()?"Выбрать книги":"Начать читать",()=>finish(false))))}
   const draw=[d0,d1,d2,d3,d4];
@@ -2819,7 +2819,7 @@ function openConf(tab,teamCode){
     mem.forEach(u=>{const r=(d.read||{})[u]||{},on=r.d===today();if(on)lit++;const m=el("div","tmem"+(on?" lit":""));m.style.setProperty("--pc",tColor(d,u));
       const fl=confFlame("flame"+(on?"":" off"));m.append(fl,el("b",null,tName(d,u)+(u===me?" (вы)":"")),el("span",null,(r.pct||0)+"% · "+(r.st||0)+" "+plural(r.st||0,"день","дня","дней")));ms.append(m)});
     body.append(ms);
-    const fire=el("div","tfire"+(lit===mem.length&&mem.length>1?" on":""));fire.textContent=lit===mem.length&&mem.length>1?"🔥 Сегодня прочитала вся команда — общий огонёк горит!":"Общий огонёк загорится, когда прочитают все: сегодня "+lit+" из "+mem.length;body.append(fire);
+    const fire=el("div","tfire"+(lit===mem.length&&mem.length>1?" on":""));fire.textContent=lit===mem.length&&mem.length>1?"🔥 Сегодня прочитала вся команда — общее пламя горит!":"Общее пламя загорится, когда прочитают все: сегодня "+lit+" из "+mem.length;body.append(fire);
     // позвать друзей
     if(mem.length<3){const fr=NET.friends().filter(f=>!mem.includes(f.uid));const inv=el("details","pacetable tinvite");inv.open=mem.length<2;
       inv.append(el("summary",null,mem.length<2?"Пригласить друга":"Пригласить ещё одного друга"));
@@ -3169,7 +3169,7 @@ function cheerPicker(targets,onDone){
   CONF_CHEERS.forEach((t,i)=>{const o=el("button","cheeropt",t);o.type="button";o.addEventListener("click",async()=>{
     list.querySelectorAll("button").forEach(b=>b.disabled=true);let ok=0;
     for(const tg of targets){try{if(await NET.cheer(tg.id,i))ok++}catch(e){console.warn(e)}}
-    close();if(ok){toast(ok>1?"Отправлено "+ok+" друзьям! Пусть все поднимутся на Синай":"Отправлено! Пусть огонёк разгорится");vibrate&&vibrate([30,40,30])}onDone&&onDone()});list.append(o)});
+    close();if(ok){toast(ok>1?"Отправлено "+ok+" друзьям! Пусть все поднимутся на Синай":"Отправлено! Пусть пламя разгорится");vibrate&&vibrate([30,40,30])}onDone&&onDone()});list.append(o)});
   sheet.append(h,el("p","hint","Воодушевить можно до "+CHEER_LIMIT+" друзей в день. Сегодня осталось: "+cheerLeft()+"."),el("span","label","Выберите слова"),list);
   modal.append(sheet);document.body.append(modal);
 }
@@ -3366,7 +3366,7 @@ function openNotify(opts){
     const main=el("div","ntrow ntmain");const mt=el("div","nttx");mt.append(el("b",null,"Напоминать о чтении"),el("small",null,c.on?"Напомню в "+ntText(c):"Сейчас выключено"));
     main.append(mt,sw(c.on,v=>{c.on=v;save();draw()},"Напоминать о чтении"));sh.append(main);
     // времена
-    const box=el("div","ntgroup"+(c.on?"":" off"));box.append(el("div","label","Если огонёк ещё не горит, напомнить"));
+    const box=el("div","ntgroup"+(c.on?"":" off"));box.append(el("div","label","Если пламя ещё не горит, напомнить"));
     c.times.slice().sort((a,b)=>a.h-b.h).forEach(t=>{
       const r=el("div","ntrow");const tm=el("div","nttime");tm.append(el("b",null,String(t.h).padStart(2,"0")+":00"),el("small",null,ntPart(t.h)));
       const del=el("button","ntdel","Убрать");del.type="button";del.setAttribute("aria-label","Убрать "+t.h+":00");del.addEventListener("click",()=>{c.times=c.times.filter(z=>z!==t);save();draw()});
@@ -3383,7 +3383,7 @@ function openNotify(opts){
     fr.append(ft,sw(c.friends,v=>{c.friends=v;save()},"Уведомления от друзей"));sh.append(fr);
     // проверка
     if(opts.test){const tb=el("button","btn ntbtn","Прислать пробное уведомление");tb.type="button";tb.addEventListener("click",()=>opts.test(c));sh.append(tb)}
-    sh.append(el("p","hint ntfoot","Время — по часам вашего телефона. Если огонёк уже горит, напоминание не придёт."));
+    sh.append(el("p","hint ntfoot","Время — по часам вашего телефона. Если пламя уже горит, напоминание не придёт."));
   }
   draw();modal.append(sh);document.body.append(modal);
 }
@@ -3452,7 +3452,7 @@ function libLayout(){
   // путеводитель
   {const gb=go.querySelector(".gbshelf");if(gb)gb.replaceWith(tile("lguide","📖"));const t=go.querySelector(".gbt");if(t)t.textContent="Что это за книга и как читать ссылки вроде «Мф. 3:7–17»"}
   // как это работает
-  {const h=hw.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lhow","💡"),two("Как работает «В Слове»","Огонёк, серия дней и заморозки"))}}
+  {const h=hw.querySelector(".foldhead h2");if(h){h.textContent="";h.append(tile("lhow","💡"),two("Как работает «В Слове»","Пламя, серия дней и заморозки"))}}
 }
 function applyPage(){
   pagesSetup();
@@ -3529,7 +3529,7 @@ function renderRepair(){
   const n=g.gap.length,need=n+(g.todayRead?0:1),total=g.before+n+g.after+(g.todayRead?0:1);
   const days=n===1?fmt(g.gap[0]):fmt(g.gap[0])+" – "+fmt(g.gap[n-1]);
   const dueTxt=g.due===today()?"сегодня":parse(g.due).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"});
-  const tx=el("div","srtx");tx.append(el("b",null,"Огонёк тлеет · пропущено: "+days),
+  const tx=el("div","srtx");tx.append(el("b",null,"Пламя тлеет · пропущено: "+days),
     el("span",null,"Наверстайте до "+(g.due===today()?"конца дня":dueTxt)+": прочитайте ещё "+need+" "+plural(need,"отрывок","отрывка","отрывков")+(g.todayRead?"":" (с сегодняшним)")+" — по одному за каждый пропущенный день — и серия вернётся: "+total+" "+plural(total,"день","дня","дней")+" подряд."));
   box.append(tx);
 }
